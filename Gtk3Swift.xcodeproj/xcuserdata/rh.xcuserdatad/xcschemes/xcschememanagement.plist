@@ -9,10 +9,20 @@
 			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
+		<key>girparser.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
 		<key>F110CA9B1CA09C7C00F615C9</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>F1938DAC1CA09CBD006811D1</key>
 		<dict>
 			<key>primary</key>
 			<true/>
