@@ -1,0 +1,26 @@
+//
+//  getopt.swift
+//  Gtk3Swift
+//
+//  Created by Rene Hexel on 22/03/2016.
+//  Copyright © 2016 Rene Hexel. All rights reserved.
+//
+#if os(Linux)
+    import Glibc
+#else
+    import Darwin
+#endif
+
+///
+/// Wrapper for POSIX `getopt()` to return a Swift tuple.
+/// Returns `nil` if the `getopt()` returned -1,
+/// otherwise returns a tuple of the option character
+/// with an optional argument
+///
+func get_opt(options: String) -> (Character, String?)? {
+    let ch = getopt(Process.argc, Process.unsafeArgv, options)
+    guard ch != -1 else { return nil }
+    let option = Character(UnicodeScalar(UInt32(ch)))
+    let argument = String.fromCString(optarg)
+    return (option, argument)
+}
