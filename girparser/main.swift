@@ -39,9 +39,14 @@ func process_gir(file: String) {
         for element in xml {
             print(element.debugDescription)
         }
-//        for record in xml.xpath("//record") {
-//            print("\(record["name"]): \(record["c:type"])")
-//        }
+        guard let path = xml.xpath("//record") else {
+            fputs("Cannot create xpath\n", stderr)
+            return
+        }
+        print("\nXPath:")
+        for record in path {
+            print(record.debugDescription)
+        }
     }
 }
 
