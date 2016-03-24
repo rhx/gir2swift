@@ -8,69 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		F110CAA01CA09C7C00F615C9 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = F110CA9F1CA09C7C00F615C9 /* main.swift */; };
-		F16EA7071CA0A48700D4C108 /* Fuzi.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F16EA6FC1CA0A44500D4C108 /* Fuzi.framework */; };
+		F169AFD01CA33F58006767E2 /* XMLDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = F169AFCF1CA33F58006767E2 /* XMLDocument.swift */; };
+		F169AFD71CA3517E006767E2 /* XMLElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = F169AFD61CA3517E006767E2 /* XMLElement.swift */; };
 		F16EA7091CA0A52600D4C108 /* getopt.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16EA7081CA0A52600D4C108 /* getopt.swift */; };
+		F16EA71E1CA0AF5E00D4C108 /* FileLen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16EA71D1CA0AF5E00D4C108 /* FileLen.swift */; };
+		F16EA7221CA0B61800D4C108 /* String+ContentsOfFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16EA7211CA0B61800D4C108 /* String+ContentsOfFile.swift */; };
+		F16EA7241CA0B81200D4C108 /* mmap.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16EA7231CA0B81200D4C108 /* mmap.swift */; };
 		F1938DB01CA09CBD006811D1 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1938DAF1CA09CBD006811D1 /* main.swift */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		F16EA6F71CA0A44500D4C108 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F16EA6ED1CA0A44500D4C108 /* Fuzi.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 7913917D1B53B09F00BC07C3;
-			remoteInfo = "Fuzi-iOS";
-		};
-		F16EA6F91CA0A44500D4C108 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F16EA6ED1CA0A44500D4C108 /* Fuzi.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 791391871B53B09F00BC07C3;
-			remoteInfo = "Fuzi-iOSTests";
-		};
-		F16EA6FB1CA0A44500D4C108 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F16EA6ED1CA0A44500D4C108 /* Fuzi.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 792500AB1BA6CF6B0011671B;
-			remoteInfo = "Fuzi-OSX";
-		};
-		F16EA6FD1CA0A44500D4C108 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F16EA6ED1CA0A44500D4C108 /* Fuzi.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 792500B71BA6CFBB0011671B;
-			remoteInfo = "Fuzi-OSXTests";
-		};
-		F16EA6FF1CA0A44500D4C108 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F16EA6ED1CA0A44500D4C108 /* Fuzi.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 7932B11C1BA7F25A008CA6F5;
-			remoteInfo = "Fuzi-WatchOS";
-		};
-		F16EA7011CA0A44500D4C108 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F16EA6ED1CA0A44500D4C108 /* Fuzi.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 7930508F1BD89A3E0040127B;
-			remoteInfo = "Fuzi-tvOS";
-		};
-		F16EA7031CA0A44500D4C108 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F16EA6ED1CA0A44500D4C108 /* Fuzi.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 793050981BD89A3E0040127B;
-			remoteInfo = "Fuzi-tvOSTests";
-		};
-		F16EA7051CA0A47D00D4C108 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F16EA6ED1CA0A44500D4C108 /* Fuzi.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 792500AA1BA6CF6B0011671B;
-			remoteInfo = "Fuzi-OSX";
-		};
-/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		F110CA9A1CA09C7C00F615C9 /* CopyFiles */ = {
@@ -96,8 +41,15 @@
 /* Begin PBXFileReference section */
 		F110CA9C1CA09C7C00F615C9 /* Gtk3Swift */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Gtk3Swift; sourceTree = BUILT_PRODUCTS_DIR; };
 		F110CA9F1CA09C7C00F615C9 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		F16EA6ED1CA0A44500D4C108 /* Fuzi.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Fuzi.xcodeproj; path = Carthage/Checkouts/Fuzi/Fuzi.xcodeproj; sourceTree = "<group>"; };
+		F169AFCF1CA33F58006767E2 /* XMLDocument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = XMLDocument.swift; sourceTree = "<group>"; };
+		F169AFD21CA3422D006767E2 /* libxml2-import.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "libxml2-import.h"; sourceTree = "<group>"; };
+		F169AFD41CA343E0006767E2 /* libxml */ = {isa = PBXFileReference; lastKnownFileType = folder; name = libxml; path = usr/include/libxml2/libxml; sourceTree = SDKROOT; };
+		F169AFD51CA34425006767E2 /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
+		F169AFD61CA3517E006767E2 /* XMLElement.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = XMLElement.swift; sourceTree = "<group>"; };
 		F16EA7081CA0A52600D4C108 /* getopt.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = getopt.swift; sourceTree = "<group>"; };
+		F16EA71D1CA0AF5E00D4C108 /* FileLen.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileLen.swift; sourceTree = "<group>"; };
+		F16EA7211CA0B61800D4C108 /* String+ContentsOfFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+ContentsOfFile.swift"; sourceTree = "<group>"; };
+		F16EA7231CA0B81200D4C108 /* mmap.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = mmap.swift; sourceTree = "<group>"; };
 		F1938DAD1CA09CBD006811D1 /* girparser */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = girparser; sourceTree = BUILT_PRODUCTS_DIR; };
 		F1938DAF1CA09CBD006811D1 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -114,7 +66,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F16EA7071CA0A48700D4C108 /* Fuzi.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -124,7 +75,7 @@
 		F110CA931CA09C7C00F615C9 = {
 			isa = PBXGroup;
 			children = (
-				F16EA6ED1CA0A44500D4C108 /* Fuzi.xcodeproj */,
+				F169AFCE1CA33EC5006767E2 /* XML */,
 				F110CA9E1CA09C7C00F615C9 /* Gtk3Swift */,
 				F1938DAE1CA09CBD006811D1 /* girparser */,
 				F110CA9D1CA09C7C00F615C9 /* Products */,
@@ -148,30 +99,49 @@
 			path = Gtk3Swift;
 			sourceTree = "<group>";
 		};
-		F16EA6EE1CA0A44500D4C108 /* Products */ = {
+		F169AFCE1CA33EC5006767E2 /* XML */ = {
 			isa = PBXGroup;
 			children = (
-				F16EA6F81CA0A44500D4C108 /* Fuzi.framework */,
-				F16EA6FA1CA0A44500D4C108 /* Fuzi-iOSTests.xctest */,
-				F16EA6FC1CA0A44500D4C108 /* Fuzi.framework */,
-				F16EA6FE1CA0A44500D4C108 /* Fuzi-OSXTests.xctest */,
-				F16EA7001CA0A44500D4C108 /* Fuzi.framework */,
-				F16EA7021CA0A44500D4C108 /* Fuzi.framework */,
-				F16EA7041CA0A44500D4C108 /* Fuzi-tvOSTests.xctest */,
+				F169AFD11CA341E1006767E2 /* libxml2 */,
+				F169AFCF1CA33F58006767E2 /* XMLDocument.swift */,
+				F169AFD61CA3517E006767E2 /* XMLElement.swift */,
 			);
-			name = Products;
+			path = XML;
+			sourceTree = "<group>";
+		};
+		F169AFD11CA341E1006767E2 /* libxml2 */ = {
+			isa = PBXGroup;
+			children = (
+				F169AFD41CA343E0006767E2 /* libxml */,
+				F169AFD21CA3422D006767E2 /* libxml2-import.h */,
+				F169AFD51CA34425006767E2 /* module.modulemap */,
+			);
+			path = libxml2;
 			sourceTree = "<group>";
 		};
 		F1938DAE1CA09CBD006811D1 /* girparser */ = {
 			isa = PBXGroup;
 			children = (
 				F1938DAF1CA09CBD006811D1 /* main.swift */,
+				F16EA7231CA0B81200D4C108 /* mmap.swift */,
+				F16EA71D1CA0AF5E00D4C108 /* FileLen.swift */,
+				F16EA7211CA0B61800D4C108 /* String+ContentsOfFile.swift */,
 				F16EA7081CA0A52600D4C108 /* getopt.swift */,
 			);
 			path = girparser;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		F16EA71A1CA0AAB800D4C108 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
 		F110CA9B1CA09C7C00F615C9 /* Gtk3Swift */ = {
@@ -198,11 +168,11 @@
 				F1938DA91CA09CBD006811D1 /* Sources */,
 				F1938DAA1CA09CBD006811D1 /* Frameworks */,
 				F1938DAB1CA09CBD006811D1 /* CopyFiles */,
+				F16EA71A1CA0AAB800D4C108 /* Headers */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				F16EA7061CA0A47D00D4C108 /* PBXTargetDependency */,
 			);
 			name = girparser;
 			productName = girparser;
@@ -237,12 +207,6 @@
 			mainGroup = F110CA931CA09C7C00F615C9;
 			productRefGroup = F110CA9D1CA09C7C00F615C9 /* Products */;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = F16EA6EE1CA0A44500D4C108 /* Products */;
-					ProjectRef = F16EA6ED1CA0A44500D4C108 /* Fuzi.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
 				F110CA9B1CA09C7C00F615C9 /* Gtk3Swift */,
@@ -250,58 +214,6 @@
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXReferenceProxy section */
-		F16EA6F81CA0A44500D4C108 /* Fuzi.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = Fuzi.framework;
-			remoteRef = F16EA6F71CA0A44500D4C108 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		F16EA6FA1CA0A44500D4C108 /* Fuzi-iOSTests.xctest */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.cfbundle;
-			path = "Fuzi-iOSTests.xctest";
-			remoteRef = F16EA6F91CA0A44500D4C108 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		F16EA6FC1CA0A44500D4C108 /* Fuzi.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = Fuzi.framework;
-			remoteRef = F16EA6FB1CA0A44500D4C108 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		F16EA6FE1CA0A44500D4C108 /* Fuzi-OSXTests.xctest */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.cfbundle;
-			path = "Fuzi-OSXTests.xctest";
-			remoteRef = F16EA6FD1CA0A44500D4C108 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		F16EA7001CA0A44500D4C108 /* Fuzi.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = Fuzi.framework;
-			remoteRef = F16EA6FF1CA0A44500D4C108 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		F16EA7021CA0A44500D4C108 /* Fuzi.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = Fuzi.framework;
-			remoteRef = F16EA7011CA0A44500D4C108 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		F16EA7041CA0A44500D4C108 /* Fuzi-tvOSTests.xctest */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.cfbundle;
-			path = "Fuzi-tvOSTests.xctest";
-			remoteRef = F16EA7031CA0A44500D4C108 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-/* End PBXReferenceProxy section */
 
 /* Begin PBXSourcesBuildPhase section */
 		F110CA981CA09C7C00F615C9 /* Sources */ = {
@@ -316,20 +228,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F169AFD01CA33F58006767E2 /* XMLDocument.swift in Sources */,
 				F16EA7091CA0A52600D4C108 /* getopt.swift in Sources */,
 				F1938DB01CA09CBD006811D1 /* main.swift in Sources */,
+				F16EA7241CA0B81200D4C108 /* mmap.swift in Sources */,
+				F169AFD71CA3517E006767E2 /* XMLElement.swift in Sources */,
+				F16EA7221CA0B61800D4C108 /* String+ContentsOfFile.swift in Sources */,
+				F16EA71E1CA0AF5E00D4C108 /* FileLen.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		F16EA7061CA0A47D00D4C108 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = "Fuzi-OSX";
-			targetProxy = F16EA7051CA0A47D00D4C108 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		F110CAA11CA09C7C00F615C9 /* Debug */ = {
@@ -369,10 +278,12 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "$(SDKROOT)/usr/include/libxml2";
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/XML/libxml2";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -408,9 +319,11 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "$(SDKROOT)/usr/include/libxml2";
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = macosx;
+				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/XML/libxml2";
 			};
 			name = Release;
 		};
@@ -431,6 +344,10 @@
 		F1938DB11CA09CBD006811D1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				OTHER_LDFLAGS = (
+					"-L/usr/lib",
+					"-lxml2",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -438,6 +355,10 @@
 		F1938DB21CA09CBD006811D1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				OTHER_LDFLAGS = (
+					"-L/usr/lib",
+					"-lxml2",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
