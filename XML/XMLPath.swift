@@ -28,7 +28,7 @@ extension XMLPath: CollectionType {
     public typealias Generator = AnyGenerator<XMLElement>
 
     var nodeSet: xmlNodeSetPtr { return xpath.memory.nodesetval }
-    public var count: Int { return Int(nodeSet.memory.nodeNr) }
+    public var count: Int { return nodeSet != nil ? Int(nodeSet.memory.nodeNr) : 0 }
     public var startIndex: Index { return 0 }
     public var endIndex: Index { return count }
     public var first: XMLElement? {

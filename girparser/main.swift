@@ -39,7 +39,7 @@ func process_gir(file: String) {
         for element in xml {
             print(element.debugDescription)
         }
-        guard let path = xml.xpath("//record", inNameSpaces: [XMLNameSpace(prefix: "libxml2", ns: "http://www.gtk.org/introspection/core/1.0")]) else {
+        guard let path = xml.xpath("//*", inNameSpaces: [XMLNameSpace(prefix: "libxml2", ns: "http://www.gtk.org/introspection/core/1.0")]) else {
             fputs("Cannot create xpath\n", stderr)
             return
         }
