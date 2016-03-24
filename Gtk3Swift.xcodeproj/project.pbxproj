@@ -16,6 +16,7 @@
 		F16EA7241CA0B81200D4C108 /* mmap.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16EA7231CA0B81200D4C108 /* mmap.swift */; };
 		F1938DB01CA09CBD006811D1 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1938DAF1CA09CBD006811D1 /* main.swift */; };
 		F1E1C38A1CA4920F0080006E /* XMLPath.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C3881CA490340080006E /* XMLPath.swift */; };
+		F1E1C38D1CA49A240080006E /* XMLNameSpace.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C38B1CA499CB0080006E /* XMLNameSpace.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -54,6 +55,7 @@
 		F1938DAD1CA09CBD006811D1 /* girparser */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = girparser; sourceTree = BUILT_PRODUCTS_DIR; };
 		F1938DAF1CA09CBD006811D1 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		F1E1C3881CA490340080006E /* XMLPath.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = XMLPath.swift; sourceTree = "<group>"; };
+		F1E1C38B1CA499CB0080006E /* XMLNameSpace.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = XMLNameSpace.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -106,6 +108,7 @@
 			children = (
 				F169AFD11CA341E1006767E2 /* libxml2 */,
 				F169AFCF1CA33F58006767E2 /* XMLDocument.swift */,
+				F1E1C38B1CA499CB0080006E /* XMLNameSpace.swift */,
 				F169AFD61CA3517E006767E2 /* XMLElement.swift */,
 				F1E1C3881CA490340080006E /* XMLPath.swift */,
 			);
@@ -234,6 +237,7 @@
 				F169AFD01CA33F58006767E2 /* XMLDocument.swift in Sources */,
 				F16EA7091CA0A52600D4C108 /* getopt.swift in Sources */,
 				F1938DB01CA09CBD006811D1 /* main.swift in Sources */,
+				F1E1C38D1CA49A240080006E /* XMLNameSpace.swift in Sources */,
 				F16EA7241CA0B81200D4C108 /* mmap.swift in Sources */,
 				F169AFD71CA3517E006767E2 /* XMLElement.swift in Sources */,
 				F16EA7221CA0B61800D4C108 /* String+ContentsOfFile.swift in Sources */,
