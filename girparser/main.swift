@@ -36,16 +36,21 @@ func process_gir(file: String) {
             perror("Cannot parse GIR file '\(file)'")
             return
         }
-        for element in xml {
-            print(element.debugDescription)
-        }
-        guard let path = xml.xpath("//*", inNameSpaces: [XMLNameSpace(prefix: "libxml2", ns: "http://www.gtk.org/introspection/core/1.0")]) else {
+//        for element in xml {
+//            print(element.debugDescription)
+//        }
+        guard let path = xml.xpath("//*") else {
             fputs("Cannot create xpath\n", stderr)
             return
         }
-        print("\nXPath:")
-        for record in path {
-            print(record.debugDescription)
+//        print("\nXPath:")
+//        for record in path {
+//            print(record.debugDescription)
+//        }
+        let records = path.filter { $0.name == "record" }
+        print("\nRecords:")
+        for record in records {
+            print(record.children)
         }
     }
 }

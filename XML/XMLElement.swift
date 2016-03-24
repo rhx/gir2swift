@@ -20,17 +20,26 @@ public struct XMLElement {
     let node: xmlNodePtr
 }
 
+extension XMLElement {
+    /// name of the XML element
+    public var name: String {
+        guard node != nil else { return "(NULL)" }
+        guard let description = String.fromCString(UnsafePointer(node.memory.name)) else { return "" }
+        return description
+    }
+
+    /// children of the XML element
+    public var children: AnySequence<XMLElement> {
+        guard node.memory.children != nil else { return emptySequence() }
+        return AnySequence { XMLElement(node: self.node.memory.children).generate() }
+    }
+}
+
 //
 // MARK: - Conversion to String
 //
 extension XMLElement: CustomStringConvertible {
-    public var description: String {
-        guard node != nil else { return "(NULL)" }
-        guard let description = String.fromCString(UnsafePointer(node.memory.name)) else {
-            return "<drats>"
-        }
-        return description
-    }
+    public var description: String { return name }
 }
 
 extension XMLElement: CustomDebugStringConvertible {

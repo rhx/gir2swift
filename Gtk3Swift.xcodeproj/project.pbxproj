@@ -17,6 +17,7 @@
 		F1938DB01CA09CBD006811D1 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1938DAF1CA09CBD006811D1 /* main.swift */; };
 		F1E1C38A1CA4920F0080006E /* XMLPath.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C3881CA490340080006E /* XMLPath.swift */; };
 		F1E1C38D1CA49A240080006E /* XMLNameSpace.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C38B1CA499CB0080006E /* XMLNameSpace.swift */; };
+		F1E1C3901CA4A2000080006E /* EmptySequence.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C38E1CA4A1450080006E /* EmptySequence.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -56,6 +57,7 @@
 		F1938DAF1CA09CBD006811D1 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		F1E1C3881CA490340080006E /* XMLPath.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = XMLPath.swift; sourceTree = "<group>"; };
 		F1E1C38B1CA499CB0080006E /* XMLNameSpace.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = XMLNameSpace.swift; sourceTree = "<group>"; };
+		F1E1C38E1CA4A1450080006E /* EmptySequence.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EmptySequence.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -111,6 +113,7 @@
 				F1E1C38B1CA499CB0080006E /* XMLNameSpace.swift */,
 				F169AFD61CA3517E006767E2 /* XMLElement.swift */,
 				F1E1C3881CA490340080006E /* XMLPath.swift */,
+				F1E1C38E1CA4A1450080006E /* EmptySequence.swift */,
 			);
 			path = XML;
 			sourceTree = "<group>";
@@ -234,6 +237,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F1E1C3901CA4A2000080006E /* EmptySequence.swift in Sources */,
 				F169AFD01CA33F58006767E2 /* XMLDocument.swift in Sources */,
 				F16EA7091CA0A52600D4C108 /* getopt.swift in Sources */,
 				F1938DB01CA09CBD006811D1 /* main.swift in Sources */,
