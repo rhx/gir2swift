@@ -28,6 +28,12 @@ extension XMLElement {
         return description
     }
 
+    /// attributes of the XML element
+    public var attributes: AnySequence<XMLAttribute> {
+        guard node.memory.properties != nil else { return emptySequence() }
+        return AnySequence { XMLAttribute(attr: self.node.memory.properties).generate() }
+    }
+
     /// children of the XML element
     public var children: AnySequence<XMLElement> {
         guard node.memory.children != nil else { return emptySequence() }
@@ -45,7 +51,6 @@ extension XMLElement: CustomStringConvertible {
 extension XMLElement: CustomDebugStringConvertible {
     public var debugDescription: String {
         guard node != nil else { return "(NULL)" }
-        let description = String.fromCString(UnsafePointer(node.memory.name)) ?? "<drats>"
         return "\(description): \(node.memory.type)"
     }
 }

@@ -32,6 +32,7 @@ while let (opt, param) = get_opt("v") {
 func process_gir(file: String) {
     with_mmap(file) { (content: UnsafeBufferPointer<CChar>) in
         write(STDOUT_FILENO, content.baseAddress, content.count)
+//        guard let xml = XMLDocument(fromFile: file) else {
         guard let xml = XMLDocument(buffer: content) else {
             perror("Cannot parse GIR file '\(file)'")
             return
@@ -39,18 +40,25 @@ func process_gir(file: String) {
 //        for element in xml {
 //            print(element.debugDescription)
 //        }
-        guard let path = xml.xpath("//*") else {
-            fputs("Cannot create xpath\n", stderr)
-            return
-        }
+//        guard let path = xml.xpath("//*") else {
+//            fputs("Cannot create xpath\n", stderr)
+//            return
+//        }
 //        print("\nXPath:")
 //        for record in path {
 //            print(record.debugDescription)
 //        }
-        let records = path.filter { $0.name == "record" }
-        print("\nRecords:")
+        let records = xml //.filter { $0.name == "record" }
         for record in records {
-            print(record.children)
+            print("\(record.name):")
+            for attribute in record.attributes {
+                print("    ", terminator: "")
+                if let value = xml.valueFor(attribute) {
+                    print(attribute.name, "\"\(value)\"" , separator: "=")
+                } else {
+                    print(attribute.name)
+                }
+            }
         }
     }
 }

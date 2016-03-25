@@ -18,6 +18,7 @@
 		F1E1C38A1CA4920F0080006E /* XMLPath.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C3881CA490340080006E /* XMLPath.swift */; };
 		F1E1C38D1CA49A240080006E /* XMLNameSpace.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C38B1CA499CB0080006E /* XMLNameSpace.swift */; };
 		F1E1C3901CA4A2000080006E /* EmptySequence.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C38E1CA4A1450080006E /* EmptySequence.swift */; };
+		F1E1C3931CA4E4820080006E /* XMLAttribute.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C3911CA4E3D40080006E /* XMLAttribute.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -58,6 +59,7 @@
 		F1E1C3881CA490340080006E /* XMLPath.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = XMLPath.swift; sourceTree = "<group>"; };
 		F1E1C38B1CA499CB0080006E /* XMLNameSpace.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = XMLNameSpace.swift; sourceTree = "<group>"; };
 		F1E1C38E1CA4A1450080006E /* EmptySequence.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EmptySequence.swift; sourceTree = "<group>"; };
+		F1E1C3911CA4E3D40080006E /* XMLAttribute.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = XMLAttribute.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -113,6 +115,7 @@
 				F1E1C38B1CA499CB0080006E /* XMLNameSpace.swift */,
 				F169AFD61CA3517E006767E2 /* XMLElement.swift */,
 				F1E1C3881CA490340080006E /* XMLPath.swift */,
+				F1E1C3911CA4E3D40080006E /* XMLAttribute.swift */,
 				F1E1C38E1CA4A1450080006E /* EmptySequence.swift */,
 			);
 			path = XML;
@@ -242,6 +245,7 @@
 				F16EA7091CA0A52600D4C108 /* getopt.swift in Sources */,
 				F1938DB01CA09CBD006811D1 /* main.swift in Sources */,
 				F1E1C38D1CA49A240080006E /* XMLNameSpace.swift in Sources */,
+				F1E1C3931CA4E4820080006E /* XMLAttribute.swift in Sources */,
 				F16EA7241CA0B81200D4C108 /* mmap.swift in Sources */,
 				F169AFD71CA3517E006767E2 /* XMLElement.swift in Sources */,
 				F16EA7221CA0B61800D4C108 /* String+ContentsOfFile.swift in Sources */,

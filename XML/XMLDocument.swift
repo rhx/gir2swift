@@ -18,6 +18,7 @@ import libxml2
 ///
 public class XMLDocument {
     let xml: xmlDocPtr
+    let ctx: xmlParserCtxtPtr = nil
 
     /// private constructor from a libxml document
     init(xmlDocument: xmlDocPtr) {
@@ -33,9 +34,25 @@ public class XMLDocument {
         self.init(xmlDocument: xml)
     }
 
+    /// initialise from a file
+    public convenience init?(fromFile fileName: UnsafePointer<CChar>, options: Int32 = Int32(XML_PARSE_NOWARNING.rawValue | XML_PARSE_NOERROR.rawValue | XML_PARSE_RECOVER.rawValue)) {
+        let xml = xmlParseFile(fileName)
+        guard xml != nil else { return nil }
+        self.init(xmlDocument: xml)
+    }
+
     /// clean up
     deinit {
         xmlFreeDoc(xml)
+    }
+
+    /// get an attribute value
+    func valueFor(attribute: XMLAttribute) -> String? {
+        guard attribute.attr != nil && attribute.attr.memory.children != nil else { return nil }
+        let s = xmlNodeListGetString(xml, attribute.attr.memory.children, 1)
+        let value = String.fromCString(UnsafePointer(s)) ?? ""
+        xmlFree(s)
+        return value
     }
 }
 
