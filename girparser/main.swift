@@ -31,12 +31,25 @@ while let (opt, param) = get_opt("v") {
 
 func process_gir(file: String) {
     with_mmap(file) { (content: UnsafeBufferPointer<CChar>) in
-        write(STDOUT_FILENO, content.baseAddress, content.count)
+  //      write(STDOUT_FILENO, content.baseAddress, content.count)
 //        guard let xml = XMLDocument(fromFile: file) else {
         guard let xml = XMLDocument(buffer: content) else {
             perror("Cannot parse GIR file '\(file)'")
             return
         }
+//        guard let path = xml.xpath("//namespace") else {
+//            fputs("Cannot create xpath\n", stderr)
+//            return
+//        }
+        let gir = GIR()
+        if let namespace = xml.findFirstWhere({ $0.name == "namespace" }) {
+            gir.namespace = namespace.name
+            gir.identifierPrefixes = namespace.sortedSubAttributesFor("identifier-prefixes")
+            gir.symbolPrefixes     = namespace.sortedSubAttributesFor("symbol-prefixes")
+        } else {
+            fputs("Warning: no namespace in GIR file '\(file)'\n", stderr)
+        }
+//        gir.nameSpace = path.first!.
 //        for element in xml {
 //            print(element.debugDescription)
 //        }
@@ -44,12 +57,12 @@ func process_gir(file: String) {
 //            fputs("Cannot create xpath\n", stderr)
 //            return
 //        }
-//        print("\nXPath:")
+       print("\nXPath:")
 //        for record in path {
 //            print(record.debugDescription)
 //        }
-        let records = xml //.filter { $0.name == "record" }
-        for record in records {
+        //let records = xml //.filter { $0.name == "record" }
+        for record in xml.filter({ $0.name == "namespace" }) {
             print("\(record.name):")
             for attribute in record.attributes {
                 print("    ", terminator: "")

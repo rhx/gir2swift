@@ -47,12 +47,18 @@ public class XMLDocument {
     }
 
     /// get an attribute value
-    func valueFor(attribute: XMLAttribute) -> String? {
+    public func valueFor(attribute: XMLAttribute) -> String? {
         guard attribute.attr != nil && attribute.attr.memory.children != nil else { return nil }
         let s = xmlNodeListGetString(xml, attribute.attr.memory.children, 1)
         let value = String.fromCString(UnsafePointer(s)) ?? ""
         xmlFree(s)
         return value
+    }
+
+    /// get the value for a named attribute
+    public func valueFor(attribute name: String, inElement e: XMLElement) -> String? {
+        guard let attr = (e.attributes.filter { $0.name == name }.first) else { return nil }
+        return valueFor(attr)
     }
 }
 

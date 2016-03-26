@@ -39,7 +39,14 @@ extension XMLElement {
         guard node.memory.children != nil else { return emptySequence() }
         return AnySequence { XMLElement(node: self.node.memory.children).generate() }
     }
+
+    /// return the value of a given attribute
+    public func attribute(name: String) -> String? {
+        let value = xmlGetProp(node, name)
+        return String.fromCString(UnsafePointer(value))
+    }
 }
+
 
 //
 // MARK: - Conversion to String
