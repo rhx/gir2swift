@@ -31,22 +31,13 @@ while let (opt, param) = get_opt("v") {
 
 func process_gir(file: String) {
     with_mmap(file) { (content: UnsafeBufferPointer<CChar>) in
-  //      write(STDOUT_FILENO, content.baseAddress, content.count)
-//        guard let xml = XMLDocument(fromFile: file) else {
-        guard let xml = XMLDocument(buffer: content) else {
+        write(STDOUT_FILENO, content.baseAddress, content.count)
+        //        guard let xml = XMLDocument(fromFile: file) else {
+        guard let gir = GIR(buffer: content) else {
             perror("Cannot parse GIR file '\(file)'")
             return
         }
-//        guard let path = xml.xpath("//namespace") else {
-//            fputs("Cannot create xpath\n", stderr)
-//            return
-//        }
-        let gir = GIR()
-        if let namespace = xml.findFirstWhere({ $0.name == "namespace" }) {
-            gir.namespace = namespace.name
-            gir.identifierPrefixes = namespace.sortedSubAttributesFor("identifier-prefixes")
-            gir.symbolPrefixes     = namespace.sortedSubAttributesFor("symbol-prefixes")
-        } else {
+        if gir.namespace.isEmpty {
             fputs("Warning: no namespace in GIR file '\(file)'\n", stderr)
         }
 //        gir.nameSpace = path.first!.
@@ -61,12 +52,14 @@ func process_gir(file: String) {
 //        for record in path {
 //            print(record.debugDescription)
 //        }
+        let swift = gir.dumpSwift()
+        print(swift)
         //let records = xml //.filter { $0.name == "record" }
-        for record in xml.filter({ $0.name == "namespace" }) {
+        for record in gir.xml.filter({ $0.name == "namespace" }) {
             print("\(record.name):")
             for attribute in record.attributes {
                 print("    ", terminator: "")
-                if let value = xml.valueFor(attribute) {
+                if let value = gir.xml.valueFor(attribute) {
                     print(attribute.name, "\"\(value)\"" , separator: "=")
                 } else {
                     print(attribute.name)

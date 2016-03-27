@@ -46,6 +46,16 @@ public class XMLDocument {
         xmlFreeDoc(xml)
     }
 
+    /// get the root element
+    public var rootElement: XMLElement {
+        return XMLElement(node: xmlDocGetRootElement(xml))
+    }
+
+    /// get the XML tree for enumeration
+    public var xmlTree: XMLTree {
+        return XMLTree(xml: self)
+    }
+
     /// get an attribute value
     public func valueFor(attribute: XMLAttribute) -> String? {
         guard attribute.attr != nil && attribute.attr.memory.children != nil else { return nil }
@@ -69,6 +79,45 @@ public class XMLDocument {
 extension XMLDocument: SequenceType {
     public typealias Generator = XMLElement.Generator
     public func generate() -> Generator {
-        return Generator(root: XMLElement(node: xmlDocGetRootElement(xml)))
+        return Generator(root: rootElement)
+    }
+}
+
+
+///
+/// Tree enumeration
+///
+public struct XMLTree: SequenceType {
+    let document: XMLDocument
+
+    public init(xml: XMLDocument) {
+        document = xml
+    }
+
+    public class Generator: GeneratorType {
+        let parent: XMLElement?
+        var element: XMLElement
+        var child: Generator?
+
+        /// create a generator from a root element
+        init(root: XMLElement, parent: XMLElement? = nil) {
+            self.parent = parent
+            element = root
+        }
+
+        /// return the next element following a depth-first pre-order traversal
+        public func next() -> (node: XMLElement, parent: XMLElement?)? {
+            if let c = child {
+                if let element = c.next() { return element }         // children
+                element = XMLElement(node: element.node.memory.next) // sibling
+            }
+            guard element.node != nil else { return nil }
+            child = Generator(root: XMLElement(node: element.node.memory.children), parent: element)
+            return (element, parent)
+        }
+    }
+
+    public func generate() -> Generator {
+        return Generator(root: document.rootElement)
     }
 }

@@ -45,6 +45,12 @@ extension XMLElement {
         let value = xmlGetProp(node, name)
         return String.fromCString(UnsafePointer(value))
     }
+
+    /// return the value of a given attribute in a given name space
+    public func attribute(name: String, namespace: String) -> String? {
+        let value = xmlGetNsProp(node, name, namespace)
+        return String.fromCString(UnsafePointer(value))
+    }
 }
 
 
