@@ -88,6 +88,7 @@ extension XMLDocument: SequenceType {
 /// Tree enumeration
 ///
 public struct XMLTree: SequenceType {
+    public typealias Node = (level: Int, node: XMLElement, parent: XMLElement?)
     let document: XMLDocument
 
     public init(xml: XMLDocument) {
@@ -108,7 +109,7 @@ public struct XMLTree: SequenceType {
         }
 
         /// return the next element following a depth-first pre-order traversal
-        public func next() -> (level: Int, node: XMLElement, parent: XMLElement?)? {
+        public func next() -> Node? {
             if let c = child {
                 if let element = c.next() { return element }         // children
                 element = XMLElement(node: element.node.memory.next) // sibling

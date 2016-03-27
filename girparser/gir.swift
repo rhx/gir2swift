@@ -35,17 +35,58 @@ public class GIR {
     }
 }
 
-private func toSwift(e: (level: Int, node: XMLElement, parent: XMLElement?)) -> String {
-    return "\(e.level): " + e.node.toSwift() + (e.parent != nil ? ", parent: \(e.parent!.toSwift())" : "")
+/// helper context class for tree traversal
+class ConversionContext {
+    let level: Int
+    let parent: ConversionContext?
+    let parentNode: XMLTree.Node?
+    let conversion: [String : XMLTree.Node -> String]
+
+    init(_ conversion: [String : XMLTree.Node -> String] = [:], level: Int = 0, parent: ConversionContext? = nil, parentNode: XMLTree.Node? = nil) {
+        self.level = level
+        self.parent = parent
+        self.parentNode = parentNode
+        self.conversion = conversion
+    }
+
+    /// push a context
+    func push(node: XMLTree.Node, _ fs: [String : XMLTree.Node -> String]) -> ConversionContext {
+        return ConversionContext(fs, level: node.level+1, parent: self, parentNode: node)
+    }
+}
+
+private func indent(level: Int, s: String = "") -> String {
+    return String(count: level * 4, repeatedValue: Character(" ")) + s
 }
 
 extension GIR {
     public func dumpSwift() -> String {
-        return xml.tree.map(toSwift).reduce("") { $0 + "\($1)\n" }
+        var context = ConversionContext([:])
+        context = ConversionContext(["repository": {
+            let s = indent($0.level, s: "// \($0.node.name) @ \($0.level)+\(context.level)")
+            context = context.push($0, ["namespace": {
+                let s = indent($0.level, s: "// \($0.node.name) @ \($0.level)+\(context.level)")
+                context = context.push($0, ["alias": {
+                    let s = indent($0.level, s: "// \($0.node.name) @ \($0.level)+\(context.level)")
+                    context = context.push($0, [:])
+                    return s
+                }])
+                return s
+            }])
+            return s
+        }])
+        return (xml.tree.map { (tn: XMLTree.Node) -> String in
+            if let f = context.conversion[tn.node.name] { return f(tn) }
+            while context.level > tn.level {
+                if let parent = context.parent { context = parent }
+                else { assert(context.level == 0) }
+            }
+            return indent(tn.level, s: "// unhandled: \(tn.node.name) @ \(tn.level)+\(context.level)")
+            }).reduce("") { (output: String, element: String) -> String in
+                output + "\(element)\n"
+        }
     }
 }
-
-private let conversion: [String : XMLElement -> String] = [:]
 
 extension XMLElement {
     ///
@@ -55,12 +96,6 @@ extension XMLElement {
     public func sortedSubAttributesFor(attr: String, splitBy char: Character = ",", orderedBy: (String, String) -> Bool = { $0.characters.count > $1.characters.count || ($0.characters.count == $1.characters.count && $0 < $1)}) -> [String] {
         guard let attrs = ((attribute(attr)?.characters)?.split(char))?.map(String.init) else { return [] }
         return attrs.sort(orderedBy)
-    }
-
-    /// convert a given element to the corresponding Swift code
-    public func toSwift() -> String {
-        if let f = conversion[name] { return f(self) }
-        return "// \(name)\n"
     }
 }
 
