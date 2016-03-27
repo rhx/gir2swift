@@ -95,25 +95,27 @@ public struct XMLTree: SequenceType {
     }
 
     public class Generator: GeneratorType {
+        let level: Int
         let parent: XMLElement?
         var element: XMLElement
         var child: Generator?
 
         /// create a generator from a root element
-        init(root: XMLElement, parent: XMLElement? = nil) {
+        init(root: XMLElement, parent: XMLElement? = nil, level: Int = 0) {
+            self.level = 0
             self.parent = parent
             element = root
         }
 
         /// return the next element following a depth-first pre-order traversal
-        public func next() -> (node: XMLElement, parent: XMLElement?)? {
+        public func next() -> (level: Int, node: XMLElement, parent: XMLElement?)? {
             if let c = child {
                 if let element = c.next() { return element }         // children
                 element = XMLElement(node: element.node.memory.next) // sibling
             }
             guard element.node != nil else { return nil }
-            child = Generator(root: XMLElement(node: element.node.memory.children), parent: element)
-            return (element, parent)
+            child = Generator(root: XMLElement(node: element.node.memory.children), parent: element, level: level+1)
+            return (level, element, parent)
         }
     }
 
