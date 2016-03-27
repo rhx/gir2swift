@@ -35,11 +35,13 @@ public class GIR {
     }
 }
 
-private func toSwift(e: XMLElement) -> String { return e.toSwift() }
+private func toSwift(e: (level: Int, node: XMLElement, parent: XMLElement?)) -> String {
+    return "\(e.level): " + e.node.toSwift() + (e.parent != nil ? ", parent: \(e.parent!.toSwift())" : "")
+}
 
 extension GIR {
     public func dumpSwift() -> String {
-        return xml.map(toSwift).reduce("") { $0 + "\($1)\n" }
+        return xml.tree.map(toSwift).reduce("") { $0 + "\($1)\n" }
     }
 }
 

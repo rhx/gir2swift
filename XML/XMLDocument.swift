@@ -52,7 +52,7 @@ public class XMLDocument {
     }
 
     /// get the XML tree for enumeration
-    public var xmlTree: XMLTree {
+    public var tree: XMLTree {
         return XMLTree(xml: self)
     }
 
@@ -102,7 +102,7 @@ public struct XMLTree: SequenceType {
 
         /// create a generator from a root element
         init(root: XMLElement, parent: XMLElement? = nil, level: Int = 0) {
-            self.level = 0
+            self.level = level
             self.parent = parent
             element = root
         }
