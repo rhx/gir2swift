@@ -28,7 +28,7 @@ extension XMLAttribute {
         return description
     }
 
-    /// children of the XML element
+    /// children of the XML attribute
     public var children: AnySequence<XMLElement> {
         guard attr.memory.children != nil else { return emptySequence() }
         return AnySequence { XMLElement(node: self.attr.memory.children).generate() }
@@ -51,7 +51,7 @@ extension XMLAttribute: CustomDebugStringConvertible {
 }
 
 //
-// MARK: - Enumerating XML Elements
+// MARK: - Enumerating XML Attributes
 //
 extension XMLAttribute: SequenceType {
     public func generate() -> XMLAttribute.Generator {

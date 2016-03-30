@@ -100,3 +100,15 @@ extension XMLElement {
         }
     }
 }
+
+
+//
+// MARK: - Namespaces
+//
+extension XMLElement {
+    /// name spaces of the XML element
+    public var namespaces: AnySequence<XMLNameSpace> {
+        guard node.memory.nsDef != nil else { return emptySequence() }
+        return AnySequence { XMLNameSpace(ns: self.node.memory.nsDef).generate() }
+    }
+}

@@ -59,13 +59,11 @@ extension XMLPath: CollectionType {
 
 extension XMLDocument {
     /// compile a given XPath for queries
-    func xpath(xpath: String, inNameSpaces ns: [XMLNameSpace] = []) -> XMLPath? {
+    func xpath(xpath: String, inNameSpaces ns: AnySequence<XMLNameSpace> = emptySequence()) -> XMLPath? {
         let context = xmlXPathNewContext(xml)
         guard context != nil else { return nil }
         defer { xmlXPathFreeContext(context) }
-        for n in ns {
-            xmlXPathRegisterNs(context, n.prefix, n.ns)
-        }
+        ns.filter { $0.prefix != nil }.forEach { xmlXPathRegisterNs(context, $0.prefix!, $0.href ?? "") }
         let xmlXPath = xmlXPathEvalExpression(xpath, context)
         guard xmlXPath != nil else { return nil }
         return XMLPath(xpath: xmlXPath)

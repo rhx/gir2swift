@@ -4,15 +4,51 @@
 <xsl:variable name="ptrcontent">ptr</xsl:variable>
 <xsl:variable name="content">content</xsl:variable>
 
+<!-- translate method parameters to Swift -->
+<xsl:template name="methodparams">
+	<xsl:param name ="params"/>
+	<xsl:param name ="type"/>
+	<xsl:param name ="cname"/>
+	<xsl:variable name="i" select="0" />
+    <xsl:for-each select="$params">
+		<xsl:variable name="i" select="1+$i" />
+		<xsl:variable name="tname" select="type/@name" />
+		<xsl:variable name="name" select="@name" />
+		<xsl:variable name="lname" select="lower-case($name)" />
+<xsl:if test="not(position()=1)">, _ </xsl:if><xsl:value-of select="$lname"/>: <xsl:value-of select="$tname"/>
+    </xsl:for-each>
+</xsl:template>
+
+<xsl:template name="paramvals">
+	<xsl:param name ="params"/>
+	<xsl:param name ="type"/>
+	<xsl:param name ="cname"/>
+	<xsl:variable name="i" select="0" />
+    <xsl:for-each select="$params">
+		<xsl:variable name="i" select="1+$i" />
+		<xsl:variable name="tname" select="type/@name" />
+		<xsl:variable name="name" select="@name" />
+		<xsl:variable name="lname" select="lower-case($name)" />, <xsl:value-of select="$lname"/>
+    </xsl:for-each>
+</xsl:template>
+
 <!-- Method wrapper -->
 <xsl:template name="method">
 	<xsl:param name ="name"/>
 	<xsl:param name ="params"/>
 	<xsl:param name ="type"/>
 	<xsl:param name ="cname"/>
-    public func <xsl:value-of select="$name"/>(<xsl:value-of select="$params" />) -> <xsl:apply-templates select="$type" /> {
-        return <xsl:value-of select="$cname"/>(<xsl:value-of select="$ptrcontent"/>, <xsl:apply-templates select="parameters" />)
-}
+    public func <xsl:value-of select="$name"/>(<xsl:call-template name ="methodparams">
+	    <xsl:with-param name ="params" select="$params" />
+	    <xsl:with-param name ="type" select="$type" />
+	    <xsl:with-param name ="cname" select="$cname" />
+	    </xsl:call-template>) -> <xsl:value-of select="$type" /> {
+        return <xsl:value-of select="$cname"/>(<xsl:value-of select="$ptrcontent"/><xsl:call-template name ="paramvals">
+	    <xsl:with-param name ="params" select="$params" />
+	    <xsl:with-param name ="type" select="$type" />
+	    <xsl:with-param name ="cname" select="$cname" />
+	    </xsl:call-template>)
+    }
 </xsl:template>
 
 <!-- Base protocol for all records -->
@@ -33,19 +69,26 @@ public protocol <xsl:value-of select="$ns"/><xsl:value-of select="$type"/>Type {
 	<xsl:param name ="ctype"/>
 public extension <xsl:value-of select="$ns"/><xsl:value-of select="$type"/>Type {
     <xsl:for-each select="function">
-		<xsl:variable name="firsttype" select="parameters[1]/type/@name" />
-		<xsl:variable name="arraytype" select="parameters[1]/array/type/@name" />
-		<!-- xsl:if test="($firsttype=$type) or ($arraytype=$type) or ($arraytype=concat($ns, '.', $type)) or ($arraytype=concat('Glib.', $type))"-->
+		<xsl:variable name="qinstance" select="parameters/instance-parameter/type/@name" />
+		<xsl:variable name="qarraytype" select="parameters/parameter[1]/array/@name" />
+		<xsl:variable name="instance" select="replace($qinstance, '^[^.]*\.', '')" />
+		<xsl:variable name="arraytype" select="replace($qarraytype, '^[^.]*\.', '')" />
+		<xsl:variable name="allparameters" select="parameters/parameter" />
+		<xsl:if test="($instance=$type) or ($arraytype=$type)">
 			<xsl:variable name="name" select="@name" />
-			<xsl:variable name="parameters" select="$firsttype" />
-			<xsl:variable name="rv" select="return-value" />
+			<xsl:variable name ="parameters" select="if ($instance=$type) then ($allparameters) else (subsequence($allparameters,2))" />
+			<xsl:variable name="qrv" select="return-value/type/@name" />
+			<xsl:variable name="qarv" select="return-value/array/type/@name" />
+			<xsl:variable name="irv" select="replace($qrv, '^[^.]*\.', '')" />
+			<xsl:variable name="arv" select="replace($qarv, '^[^.]*\.', '')" />
+			<xsl:variable name="rv" select="if ($irv='') then (if (($arv=$type) or ($arv='')) then ('Void') else ($arv)) else ($irv)" />
 			<xsl:call-template name ="method">
      		   <xsl:with-param name ="name" select="$name" />
-	 		   <xsl:with-param name ="params" select="$parameters" />
+     		   <xsl:with-param name ="params" select="$parameters" />
 	 		   <xsl:with-param name ="type" select="$rv" />
 	 		   <xsl:with-param name ="cname" select="@c:identifier" />
     		</xsl:call-template>
-		<!--/xsl:if-->
+		</xsl:if>
     </xsl:for-each>
 }
 </xsl:template>

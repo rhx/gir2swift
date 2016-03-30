@@ -11,10 +11,17 @@ public class GIR {
     public var namespace = ""
     public var identifierPrefixes = Array<String>()
     public var symbolPrefixes = Array<String>()
+    public var namespaces: AnySequence<XMLNameSpace> = emptySequence()
 
     /// designated constructor
     public init(xmlDocument: XMLDocument) {
         xml = xmlDocument
+        if let rp = xml.findFirstWhere({ $0.name == "repository" }) {
+            namespaces = rp.namespaces
+            for n in namespaces {
+                print("Got \(n.prefix) at \(n.href)")
+            }
+        }
         if let ns = xml.findFirstWhere({ $0.name == "namespace" }) {
             namespace = ns.name
             identifierPrefixes = ns.sortedSubAttributesFor("identifier-prefixes")
@@ -69,7 +76,6 @@ extension GIR {
                 let s = indent($0.level, "// \($0.node.name) @ \($0.level)+\(context.level)")
                 context = context.push($0, ["alias": {
                     context = context.push($0, ["type": {
-                        let s: String
                         if let type  = $0.node.attribute("name"),
                            let alias = context.parentNode.node.attribute("name") where !alias.isEmpty && !type.isEmpty {
                             context.outputs = ["public typealias \(alias) = \(type)"]
@@ -81,7 +87,7 @@ extension GIR {
                     return s
                 }, "function": {
                     let s: String
-                    if let name = $0.node.attribute("name") where !name.isEmtpy {
+                    if let name = $0.node.attribute("name") where !name.isEmpty {
                         s = "func \(name)("
                     } else { s = "// empty function " }
                     context = context.push($0, ["type": {
@@ -89,10 +95,11 @@ extension GIR {
                             let alias = context.parentNode.node.attribute("name") where !alias.isEmpty && !type.isEmpty {
                             context.outputs = ["public typealias \(alias) = \(type)"]
                         } else {
-                            context.output = "// error alias \($0.node.attribute("name")) = \(context.parentNode.node.attribute("name"))"
+                            context.outputs = ["// error alias \($0.node.attribute("name")) = \(context.parentNode.node.attribute("name"))"]
                         }
                         return ""
                         }])
+                    return s
                 }])
                 return s
             }])
