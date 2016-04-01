@@ -60,6 +60,26 @@ extension XMLElement {
         let value = xmlGetNsProp(node, name, namespace)
         return String.fromCString(UnsafePointer(value))
     }
+
+    /// return the boolean value of a given attribute
+    public func bool(name: String) -> Bool {
+        if let str = attribute(name),
+           let val = Int(str) where val != 0 {
+            return true
+        } else {
+            return false
+        }
+    }
+
+    /// return the boolean value of a given attribute in a given name space
+    public func bool(name: String, namespace: String) -> Bool {
+        if let str = attribute(name, namespace:  namespace),
+           let val = Int(str) where val != 0 {
+            return true
+        } else {
+            return false
+        }
+    }
 }
 
 
