@@ -23,9 +23,18 @@ public struct XMLElement {
 extension XMLElement {
     /// name of the XML element
     public var name: String {
-        guard node != nil else { return "(NULL)" }
+        guard node != nil else { return "" }
         guard let description = String.fromCString(UnsafePointer(node.memory.name)) else { return "" }
         return description
+    }
+
+    /// content of the XML element
+    public var content: String {
+        let content = xmlNodeGetContent(node)
+        guard content != nil else { return "" }
+        let txt = String.fromCString(UnsafePointer(content)) ?? ""
+        xmlFree(content)
+        return txt
     }
 
     /// attributes of the XML element
