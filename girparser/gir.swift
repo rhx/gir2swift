@@ -15,7 +15,9 @@ public class GIR {
     public var aliases: [Alias] = []
     public var constants: [Constant] = []
     public var enumerations: [Enumeration] = []
+    public var bitfields: [Bitfield] = []
     public var records: [Record] = []
+    public var classes: [Class] = []
 
     /// designated constructor
     public init(xmlDocument: XMLDocument) {
@@ -59,6 +61,12 @@ public class GIR {
         //
         if let recs = xml.xpath("//gir:record", namespaces: namespaces, defaultPrefix: "gir") {
             records = recs.enumerate().map { Record(node: $0.1, atIndex: $0.0) }
+        }
+        //
+        // get all class records
+        //
+        if let recs = xml.xpath("//gir:class", namespaces: namespaces, defaultPrefix: "gir") {
+            classes = recs.enumerate().map { Class(node: $0.1, atIndex: $0.0) }
         }
     }
 
@@ -199,17 +207,22 @@ public class GIR {
         }
     }
 
+    /// a bitfield is an enumeration
+    public typealias Bitfield = Enumeration
+
 
     /// a data type record to create a protocol/struct/class for
     public class Record: CType {
-        public let cprefix: String      ///< C language symbol prefix
-        public let typegetter: String   ///< C type getter function
-        public let methods: [Method]    ///< all associated methods
+        public let cprefix: String          ///< C language symbol prefix
+        public let typegetter: String       ///< C type getter function
+        public let methods: [Method]        ///< all associated methods
+        public let functions: [Function]    ///< all associated functions
 
-        public init(name: String, type: String, ctype: String, cprefix: String, typegetter: String, methods: [Method], comment: String, introspectable: Bool = false, deprecated: String? = nil) {
+        public init(name: String, type: String, ctype: String, cprefix: String, typegetter: String, methods: [Method], functions: [Function], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
             self.cprefix = cprefix
             self.typegetter = typegetter
             self.methods = methods
+            self.functions = functions
             super.init(name: name, type: type, ctype: ctype, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
@@ -217,8 +230,10 @@ public class GIR {
             cprefix = node.attribute("symbol-prefix") ?? ""
             typegetter = node.attribute("get-type") ?? ""
             let children = node.children.lazy
-            let functions = children.filter { $0.name == "function" }
-            methods = functions.enumerate().map { Method(node: $0.1, atIndex: $0.0) }
+            let funcs = children.filter { $0.name == "function" }
+            functions = funcs.enumerate().map { Function(node: $0.1, atIndex: $0.0) }
+            let meths = children.filter { $0.name == "function" }
+            methods = meths.enumerate().map { Method(node: $0.1, atIndex: $0.0) }
             super.init(node: node, atIndex: i, typeAttr: "type-name", cTypeAttr: "type")
         }
     }
@@ -232,7 +247,7 @@ public class GIR {
             let children = node.children.lazy
             let cons = children.filter { $0.name == "constructor" }
             constructors = cons.enumerate().map { Method(node: $0.1, atIndex: $0.0) }
-            parent = ""
+            parent = node.attribute("parent") ?? ""
             super.init(node: node, atIndex: i)
         }
     }
@@ -264,6 +279,9 @@ public class GIR {
             super.init(node: node, atIndex: i)
         }
     }
+
+    /// a function is the same as a method
+    public typealias Function = Method
 
 
     /// data type representing a function/method argument or return type
