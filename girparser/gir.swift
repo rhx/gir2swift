@@ -13,6 +13,7 @@ public class GIR {
     public var symbolPrefixes = Array<String>()
     public var namespaces: AnySequence<XMLNameSpace> = emptySequence()
     public var aliases: [Alias] = []
+    public var constants: [Constant] = []
     public var enumerations: [Enumeration] = []
     public var records: [Record] = []
 
@@ -39,13 +40,19 @@ public class GIR {
         // get all type alias records
         //
         if let entries = xml.xpath("//gir:alias", namespaces: namespaces, defaultPrefix: "gir") {
-            aliases = entries.enumerate().map { Alias.fromNode($0.1, atIndex: $0.0) }
+            aliases = entries.enumerate().map { Alias(node: $0.1, atIndex: $0.0) }
+        }
+        //
+        // get all constants
+        //
+        if let entries = xml.xpath("//gir:constant", namespaces: namespaces, defaultPrefix: "gir") {
+            constants = entries.enumerate().map { Constant(node: $0.1, atIndex: $0.0) }
         }
         //
         // get all enums
         //
         if let entries = xml.xpath("//gir:enumeration", namespaces: namespaces, defaultPrefix: "gir") {
-            enumerations = entries.enumerate().map { Enumeration.fromNode($0.1, atIndex: $0.0) }
+            enumerations = entries.enumerate().map { Enumeration(node: $0.1, atIndex: $0.0) }
         }
         //
         // get all type records
@@ -68,127 +75,151 @@ public class GIR {
     }
 
 
-    /// a type alias entry
-    public struct Alias {
+    /// GIR named thing class
+    public class Thing {
         public let name: String         ///< type name without namespace/prefix
-        public let type: String         ///< C typedef name
-        public let ctype: String        ///< underlying C type
         public let comment: String      ///< documentation
+        public let introspectable: Bool ///< is this thing introspectable?
+        public let deprecated: String?  ///< alternative to use if deprecated
 
-        /// factory method to construct an alias from XML
-        static func fromNode(node: XMLElement, atIndex i: Int) -> Alias {
-            let name = node.attribute("name") ?? "Unknown\(i)"
-            let type = node.attribute("type") ?? ""
+        public init(name: String, comment: String, introspectable: Bool = false, deprecated: String? = nil) {
+            self.name = name
+            self.comment = comment
+            self.introspectable = introspectable
+            self.deprecated = deprecated
+        }
+
+        public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name") {
+            name = node.attribute(nameAttr) ?? "Unknown\(i)"
             let children = node.children.lazy
-            var types = children.filter { $0.name == "type" }.generate()
-            let ctype: String
-            if let typeEntry = types.next() {
-                ctype = typeEntry.attribute("name") ?? (typeEntry.attribute("type") ?? "Void /* unknown type \(i) */")
-            } else {
-                ctype = "Void /* unknown type \(i) */"
-            }
-            let docs = GIR.docs(children)
-            return Alias(name: name, type: !type.isEmpty ? type : ctype, ctype: ctype, comment: docs)
+            comment = GIR.docs(children)
+            deprecated = GIR.deprecatedDocumentation(children) ?? ( node.bool("deprecated") ? "This method is deprecated." : nil )
+            introspectable = node.bool("introspectable")
         }
     }
 
 
-    /// an entry for a constant
-    public struct Constant {
-        public let name: String         ///< type name without namespace/prefix
+    /// GIR type class
+    public class Type: Thing {
         public let type: String         ///< C typedef name
+
+        public init(name: String, type: String, comment: String, introspectable: Bool = false, deprecated: String? = nil) {
+            self.type = type
+            super.init(name: name, comment: comment, introspectable: introspectable, deprecated: deprecated)
+        }
+
+        public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type") {
+            type = node.attribute(typeAttr) ?? ""
+            super.init(node: node, atIndex: i, nameAttr: nameAttr)
+        }
+
+        public init(node: XMLElement, atIndex i: Int, withType t: String, nameAttr: String = "name") {
+            type = t
+            super.init(node: node, atIndex: i, nameAttr: nameAttr)
+        }
+    }
+
+
+    /// a type with an underlying C type entry
+    public class CType: Type {
         public let ctype: String        ///< underlying C type
-        public let comment: String      ///< documentation
+
+        public init(name: String, type: String, ctype: String, comment: String, introspectable: Bool = false, deprecated: String? = nil) {
+            self.ctype = ctype
+            super.init(name: name, type: type, comment: comment, introspectable: introspectable, deprecated: deprecated)
+        }
 
         /// factory method to construct an alias from XML
-        static func fromNode(node: XMLElement, atIndex i: Int) -> Alias {
-            let name = node.attribute("name") ?? "Unknown\(i)"
-            let type = node.attribute("type") ?? ""
-            let children = node.children.lazy
-            var types = children.filter { $0.name == "type" }.generate()
-            let ctype: String
-            if let typeEntry = types.next() {
-                ctype = typeEntry.attribute("name") ?? (typeEntry.attribute("type") ?? "Void /* unknown type \(i) */")
+        public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", cTypeAttr: String? = nil) {
+            if let cta = cTypeAttr {
+                ctype = node.attribute(cta) ?? "Void /* unknown \(i) */"
             } else {
-                ctype = "Void /* unknown type \(i) */"
+                let children = node.children.lazy
+                var types = children.filter { $0.name == "type" }.generate()
+                if let typeEntry = types.next() {
+                    ctype = typeEntry.attribute("name") ?? (typeEntry.attribute("type") ?? "Void /* unknown type \(i) */")
+                } else {
+                    ctype = "Void /* unknown type \(i) */"
+                }
             }
-            let docs = GIR.docs(children)
-            return Alias(name: name, type: !type.isEmpty ? type : ctype, ctype: ctype, comment: docs)
+            super.init(node: node, atIndex: i, nameAttr: nameAttr, typeAttr: typeAttr)
+        }
+
+        /// factory method to construct an alias from XML with types taken from children
+        public init(fromChildrenOf node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type") {
+            let (type, ctype) = GIR.types(node, at: i)
+            self.ctype = ctype
+            super.init(node: node, atIndex: i, withType: type, nameAttr: nameAttr)
+        }
+    }
+
+    /// a type alias is just a type with an underlying C type
+    public typealias Alias = CType
+
+
+    /// an entry for a constant
+    public class Constant: CType {
+        public let value: Int           ///< raw value
+
+        public init(name: String, type: String, ctype: String, value: Int, comment: String, introspectable: Bool = false, deprecated: String? = nil) {
+            self.value = value
+            super.init(name: name, type: type, ctype: ctype, comment: comment, introspectable: introspectable, deprecated: deprecated)
+        }
+
+        /// factory method to construct a constant from XML
+        public override init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", cTypeAttr: String? = nil) {
+            if let val = node.attribute("value"), let v = Int(val) {
+                value = v
+            } else {
+                value = i
+            }
+            super.init(node: node, atIndex: i, nameAttr: nameAttr, typeAttr: typeAttr, cTypeAttr: cTypeAttr)
         }
     }
 
 
     /// an enumeration entry
-    public struct Enumeration {
-        public let name: String         ///< type name without namespace/prefix
-        public let type: String         ///< C typedef name
-        public let members: [Member]    ///< enumeration values
-        public let comment: String      ///< documentation
+    public class Enumeration: Type {
+        /// an enumeration value is a constant
+        public typealias Member = Constant
 
-        /// factory method to construct an enumeration entry from XML
-        static func fromNode(node: XMLElement, atIndex i: Int) -> Enumeration {
-            let name = node.attribute("name") ?? "Unknown\(i)"
-            let type = node.attribute("type") ?? "Int"
-            let children = node.children.lazy
-            let mem = children.filter { $0.name == "member" }
-            let members = mem.enumerate().map { Member.fromNode($0.1, atIndex: $0.0) }
-            let docs = GIR.docs(children)
-            return Enumeration(name: name, type: type, members: members, comment: docs)
+        /// enumeration values
+        public let members: [Member]
+
+        public init(name: String, type: String, members: [Member], comment: String, introspectable: Bool = false, deprecated: String? = nil) {
+            self.members = members
+            super.init(name: name, type: type, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
-        public struct Member {
-            public let name: String         ///< member type name
-            public let cname: String        ///< C identifier (#define)
-            public let value: Int           ///< raw value
-            public let comment: String      ///< documentation
-
-            /// factory method to construct an enumeration entry member from XML
-            static func fromNode(node: XMLElement, atIndex i: Int) -> Member {
-                let name = node.attribute("name") ?? "Unknown\(i)"
-                let cname = node.attribute("identifier") ?? "\(i) /* unknown */"
-                let val: Int
-                if let value = node.attribute("value"), let v = Int(value) {
-                    val = v
-                } else {
-                    val = i
-                }
-                let children = node.children.lazy
-                let docs = GIR.docs(children)
-                return Member(name: name, cname: cname, value: val, comment: docs)
-            }
+        /// factory method to construct an enumeration entry from XML
+        public init(node: XMLElement, atIndex i: Int) {
+            let mem = node.children.lazy.filter { $0.name == "member" }
+            members = mem.enumerate().map { Member(node: $0.1, atIndex: $0.0) }
+            super.init(node: node, atIndex: i)
         }
     }
 
+
     /// a data type record to create a protocol/struct/class for
-    public class Record {
-        public let name: String         ///< type name without namespace/prefix
-        public let type: String         ///< original type name
-        public let ctype: String        ///< C language type name
+    public class Record: CType {
         public let cprefix: String      ///< C language symbol prefix
         public let typegetter: String   ///< C type getter function
         public let methods: [Method]    ///< all associated methods
-        public let comment: String      ///< documentation
 
-        public init(name: String, type: String, ctype: String, cprefix: String, typegetter: String, methods: [Method], comment: String) {
-            self.name = name
-            self.type = type
-            self.ctype = ctype
+        public init(name: String, type: String, ctype: String, cprefix: String, typegetter: String, methods: [Method], comment: String, introspectable: Bool = false, deprecated: String? = nil) {
             self.cprefix = cprefix
             self.typegetter = typegetter
             self.methods = methods
-            self.comment = comment
+            super.init(name: name, type: type, ctype: ctype, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
-        init(node: XMLElement, atIndex i: Int) {
-            name = node.attribute("name") ?? "unknown\(i)"
-            type = node.attribute("type-name") ?? ""
-            ctype = node.attribute("type") ?? "void /* unknown \(i) */"
+        public init(node: XMLElement, atIndex i: Int) {
             cprefix = node.attribute("symbol-prefix") ?? ""
             typegetter = node.attribute("get-type") ?? ""
             let children = node.children.lazy
-            comment = GIR.docs(children)
             let functions = children.filter { $0.name == "function" }
-            methods = functions.enumerate().map { Method.fromNode($0.1, atIndex: $0.0) }
+            methods = functions.enumerate().map { Method(node: $0.1, atIndex: $0.0) }
+            super.init(node: node, atIndex: i, typeAttr: "type-name", cTypeAttr: "type")
         }
     }
 
@@ -200,56 +231,53 @@ public class GIR {
         override init(node: XMLElement, atIndex i: Int) {
             let children = node.children.lazy
             let cons = children.filter { $0.name == "constructor" }
-            constructors = cons.enumerate().map { Method.fromNode($0.1, atIndex: $0.0) }
+            constructors = cons.enumerate().map { Method(node: $0.1, atIndex: $0.0) }
             parent = ""
             super.init(node: node, atIndex: i)
         }
     }
 
+
     /// data type representing a function/method
-    public struct Method {
-        public let name: String         ///< type name without namespace/prefix
+    public class Method: Thing {
         public let cname: String        ///< original C function name
         public let returns: Argument    ///< C language type name
         public let args: [Argument]     ///< all associated methods
-        public let introspectable: Bool ///< is this method introspectable?
-        public let comment: String      ///< documentation
-        public let deprecated: String?  ///< alternative to use if deprecated
 
-        static func fromNode(node: XMLElement, atIndex i: Int) -> Method {
-            let name = node.attribute("name") ?? "unknownMethod\(i)"
-            let cname = node.attribute("identifier") ?? ""
+        public init(name: String, cname: String, returns: Argument, args: [Argument] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
+            self.cname = cname
+            self.returns = returns
+            self.args = args
+            super.init(name: name, comment: comment, introspectable: introspectable, deprecated: deprecated)
+        }
+
+        public init(node: XMLElement, atIndex i: Int) {
+            cname = node.attribute("identifier") ?? ""
             let children = node.children.lazy
-            let rv: Argument
             if let ret = children.findFirstWhere({ $0.name == "return-value"}) {
-                let arg = Argument.fromNode(ret, atIndex: -1)
-                rv = arg
+                let arg = Argument(node: ret, atIndex: -1)
+                returns = arg
             } else {
-                rv = Argument(name: "", type: "Void", ctype: "void", comment: "", instance: false)
+                returns = Argument(name: "", type: "Void", ctype: "void", instance: false, comment: "")
             }
-            let args = GIR.args(children)
-            let docs = GIR.docs(children)
-            let depr = GIR.deprecatedDocumentation(children) ?? ( node.bool("deprecated") ? "This method is deprecated." : nil )
-            let introspect = node.bool("introspectable")
-            return Method(name: name, cname: cname, returns: rv, args: args, introspectable: introspect, comment: docs, deprecated:  depr)
+            args = GIR.args(children)
+            super.init(node: node, atIndex: i)
         }
     }
 
+
     /// data type representing a function/method argument or return type
-    public struct Argument {
-        public let name: String         ///< name without namespace/prefix
-        public let type: String         ///< type name without namespace/prefix
-        public let ctype: String        ///< C lanaguage type name
-        public let comment: String      ///< documentation
+    public class Argument: CType {
         public let instance: Bool       ///< is this an instance parameter?
 
-        static func fromNode(node: XMLElement, atIndex i: Int) -> Argument {
-            let inst = node.name.hasPrefix("instance")
-            let name = node.attribute("name") ?? ""
-            let (type, ctype) = GIR.types(node, at: i)
-            let children = node.children.lazy
-            let docs = GIR.docs(children)
-            return Argument(name: name, type: type, ctype: ctype, comment: docs, instance: inst)
+        public init(name: String, type: String, ctype: String, instance: Bool, comment: String, introspectable: Bool = false, deprecated: String? = nil) {
+            self.instance = instance
+            super.init(name: name, type: type, ctype: ctype, comment: comment, introspectable: introspectable, deprecated: deprecated)
+        }
+
+        public init(node: XMLElement, atIndex i: Int) {
+            instance = node.name.hasPrefix("instance")
+            super.init(fromChildrenOf: node, atIndex: i)
         }
     }
 }
@@ -310,7 +338,7 @@ extension GIR {
     ///
     public class func args(children: LazySequence<AnySequence<XMLElement>>) -> [Argument] {
         let parameters = children.filter { $0.name.hasSuffix("parameter") }
-        let args = parameters.enumerate().map { Argument.fromNode($1, atIndex: $0) }
+        let args = parameters.enumerate().map { Argument(node: $1, atIndex: $0) }
         return args
     }
 
