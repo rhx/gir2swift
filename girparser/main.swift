@@ -40,18 +40,20 @@ func process_gir(file: String) {
         if gir.prefix.isEmpty {
             fputs("Warning: no namespace in GIR file '\(file)'\n", stderr)
         }
+        print(gir.aliases.map(swiftCode).joinWithSeparator("\n\n"))
+        print(gir.constants.map(swiftCode).joinWithSeparator("\n\n"))
 //        gir.nameSpace = path.first!.
 //        for element in xml {
 //            print(element.debugDescription)
 //        }
-        guard let path = gir.xml.xpath("//gir:record", namespaces: gir.namespaces, defaultPrefix: "gir") else {
-            fputs("Cannot create xpath\n", stderr)
-            return
-        }
-       print("\nXPath:")
-        for record in path {
-            print(record.debugDescription)
-        }
+//        guard let path = gir.xml.xpath("//gir:record", namespaces: gir.namespaces, defaultPrefix: "gir") else {
+//            fputs("Cannot create xpath\n", stderr)
+//            return
+//        }
+//       print("\nXPath:")
+//        for record in path {
+//            print(record.debugDescription)
+//        }
 //        let swift = gir.dumpSwift()
 //        print(swift)
 //        //let records = xml //.filter { $0.name == "record" }

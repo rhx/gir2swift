@@ -16,6 +16,7 @@
 		F16EA7221CA0B61800D4C108 /* String+ContentsOfFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16EA7211CA0B61800D4C108 /* String+ContentsOfFile.swift */; };
 		F16EA7241CA0B81200D4C108 /* mmap.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16EA7231CA0B81200D4C108 /* mmap.swift */; };
 		F1938DB01CA09CBD006811D1 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1938DAF1CA09CBD006811D1 /* main.swift */; };
+		F1C6BBD51CAF3D05002F0267 /* gir+swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1C6BBD41CAF3D05002F0267 /* gir+swift.swift */; };
 		F1E1C38A1CA4920F0080006E /* XMLPath.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C3881CA490340080006E /* XMLPath.swift */; };
 		F1E1C38D1CA49A240080006E /* XMLNameSpace.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C38B1CA499CB0080006E /* XMLNameSpace.swift */; };
 		F1E1C3901CA4A2000080006E /* EmptySequence.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C38E1CA4A1450080006E /* EmptySequence.swift */; };
@@ -59,6 +60,7 @@
 		F16EA7231CA0B81200D4C108 /* mmap.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = mmap.swift; sourceTree = "<group>"; };
 		F1938DAD1CA09CBD006811D1 /* girparser */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = girparser; sourceTree = BUILT_PRODUCTS_DIR; };
 		F1938DAF1CA09CBD006811D1 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		F1C6BBD41CAF3D05002F0267 /* gir+swift.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "gir+swift.swift"; sourceTree = "<group>"; };
 		F1E1C3881CA490340080006E /* XMLPath.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = XMLPath.swift; sourceTree = "<group>"; };
 		F1E1C38B1CA499CB0080006E /* XMLNameSpace.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = XMLNameSpace.swift; sourceTree = "<group>"; };
 		F1E1C38E1CA4A1450080006E /* EmptySequence.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EmptySequence.swift; sourceTree = "<group>"; };
@@ -140,6 +142,7 @@
 			children = (
 				F1938DAF1CA09CBD006811D1 /* main.swift */,
 				F1E1C3941CA5548C0080006E /* gir.swift */,
+				F1C6BBD41CAF3D05002F0267 /* gir+swift.swift */,
 				F16EA7231CA0B81200D4C108 /* mmap.swift */,
 				F16EA71D1CA0AF5E00D4C108 /* FileLen.swift */,
 				F16EA7211CA0B61800D4C108 /* String+ContentsOfFile.swift */,
@@ -258,6 +261,7 @@
 				F16EA7221CA0B61800D4C108 /* String+ContentsOfFile.swift in Sources */,
 				F1E1C38A1CA4920F0080006E /* XMLPath.swift in Sources */,
 				F1E1C3951CA5548C0080006E /* gir.swift in Sources */,
+				F1C6BBD51CAF3D05002F0267 /* gir+swift.swift in Sources */,
 				F16EA71E1CA0AF5E00D4C108 /* FileLen.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
