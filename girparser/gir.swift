@@ -232,7 +232,7 @@ public class GIR {
             let children = node.children.lazy
             let funcs = children.filter { $0.name == "function" }
             functions = funcs.enumerate().map { Function(node: $0.1, atIndex: $0.0) }
-            let meths = children.filter { $0.name == "function" }
+            let meths = children.filter { $0.name == "method" }
             methods = meths.enumerate().map { Method(node: $0.1, atIndex: $0.0) }
             super.init(node: node, atIndex: i, typeAttr: "type-name", cTypeAttr: "type")
         }

@@ -43,8 +43,20 @@ extension XMLElement {
         return AnySequence { XMLAttribute(attr: self.node.memory.properties).generate() }
     }
 
+    /// siblings of the XML element
+    public var siblings: AnySequence<XMLElement> {
+        guard node.memory.next != nil else { return emptySequence() }
+        return AnySequence { XMLElement(node: self.node.memory.next).generateLevel() }
+    }
+
     /// children of the XML element
     public var children: AnySequence<XMLElement> {
+        guard node.memory.children != nil else { return emptySequence() }
+        return AnySequence { XMLElement(node: self.node.memory.children).generateLevel() }
+    }
+
+    /// recursive pre-order descendants of the XML element
+    public var descendants: AnySequence<XMLElement> {
         guard node.memory.children != nil else { return emptySequence() }
         return AnySequence { XMLElement(node: self.node.memory.children).generate() }
     }
@@ -101,13 +113,20 @@ extension XMLElement: CustomDebugStringConvertible {
 // MARK: - Enumerating XML Elements
 //
 extension XMLElement: SequenceType {
+    /// return a recursive, depth-first, pre-order traversal generator
     public func generate() -> XMLElement.Generator {
         return Generator(root: self)
+    }
+
+    /// return a one-level (breadth-only) generator
+    public func generateLevel() -> XMLElement.LevelGenerator {
+        return LevelGenerator(root: self)
     }
 }
 
 
 extension XMLElement {
+    /// Generator for depth-first, pre-order enumeration
     public class Generator: GeneratorType {
         var element: XMLElement
         var child: Generator?
@@ -126,6 +145,24 @@ extension XMLElement {
             guard element.node != nil else { return nil }
             child = XMLElement(node: element.node.memory.children).generate()
             return element
+        }
+    }
+
+    /// Flat generator for horizontally traversing one level of the tree
+    public class LevelGenerator: GeneratorType {
+        var element: XMLElement
+
+        /// create a sibling generator from a root element
+        init(root: XMLElement) {
+            element = root
+        }
+
+        /// return the next element following the list of siblings
+        public func next() -> XMLElement? {
+            let e = element
+            guard e.node != nil else { return nil }
+            element = XMLElement(node: e.node.memory.next)          // sibling
+            return e
         }
     }
 }
