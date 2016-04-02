@@ -42,6 +42,7 @@ func process_gir(file: String) {
         }
         print(gir.aliases.map(swiftCode).joinWithSeparator("\n\n"))
         print(gir.constants.map(swiftCode).joinWithSeparator("\n\n"))
+        print(gir.enumerations.map(swiftCode).joinWithSeparator("\n\n"))
 //        gir.nameSpace = path.first!.
 //        for element in xml {
 //            print(element.debugDescription)

@@ -202,7 +202,7 @@ public class GIR {
         /// factory method to construct an enumeration entry from XML
         public init(node: XMLElement, atIndex i: Int) {
             let mem = node.children.lazy.filter { $0.name == "member" }
-            members = mem.enumerate().map { Member(node: $0.1, atIndex: $0.0) }
+            members = mem.enumerate().map { Member(node: $0.1, atIndex: $0.0, cTypeAttr: "identifier") }
             super.init(node: node, atIndex: i)
         }
     }
