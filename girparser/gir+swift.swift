@@ -62,3 +62,14 @@ public func valueCode(indentation: String) -> GIR.Enumeration.Member -> String {
         swiftCode(m, indentation + "public static let \(m.name) = \(m.ctype) /* \(m.value) */", indentation: indentation)
     }
 }
+
+
+/// Swift protocol representation of a record/class as a wrapper of a pointer
+public func recordProtocolCode(e: GIR.Record, parent: String, indentation: String = "    ") -> String {
+    let p = (parent.isEmpty ? "" : ": \(parent)")
+    let code = "public protocol \(e.name)Type\(p) {\n" + indentation +
+        "var ptr: UnsafeMutablePointer<\(e.ctype)> { get }\n"
+    "}"
+    return code
+}
+
