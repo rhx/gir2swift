@@ -44,15 +44,30 @@ public func swiftCode(constant: GIR.Constant) -> String {
     return swiftCode(constant, "public let \(constant.name.swift) = \(constant.type.swift) /* \(constant.value) */")
 }
 
+/// Magic error type for throwing
+let errorType = "ErrorType"
+
+/// underlying error number
+var gerrorType = "GErrorType"
+
+/// underlying error type
+let gerror = "GError"
+
 /// Swift code type alias representation of an enum
 public func typeAlias(e: GIR.Enumeration) -> String {
+    let name = e.name.swift
+    guard name != errorType else {
+        return swiftCode(e, "public protocol \(e.type.swift): \(errorType) {}")
+    }
     return swiftCode(e, "public typealias \(e.name.swift) = \(e.type.swift)")
 }
 
 /// Swift code representation of an enum
 public func swiftCode(e: GIR.Enumeration) -> String {
     let alias = typeAlias(e)
-    let code = alias + "\n\npublic extension \(e.name.swift) {\n" + e.members.map(valueCode("    ")).joinWithSeparator("\n") + "\n}"
+    let swift = e.name.swift
+    let name = swift == errorType ? e.type.swift : swift
+    let code = alias + "\n\npublic extension \(name) {\n" + e.members.map(valueCode("    ")).joinWithSeparator("\n") + "\n}"
     return code
 }
 
@@ -88,6 +103,9 @@ public func recordProtocolExtensionCode(e: GIR.Record, indentation: String = "  
 public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> String {
     return { (record: GIR.Record) -> GIR.Method-> String in { (method: GIR.Method) -> String in
         let args = method.args.lazy
+        let isVoid = method.returns.isVoid
+        let throwsError = method.throwsError
+        let throwCode = throwsError ? "thows " : ""
 //        let n = args.count
 //        print("\(method.name): \(n) arguments:")
 //        method.args.forEach {
@@ -95,8 +113,9 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
 //        }
         return indentation + "public func \(method.name.swift)(" +
             args.filter { !$0.instance } .map(argumentCode).joinWithSeparator(", ") +
-        ") -> \(method.returns.ctype == "" ? method.returns.type.swift : toSwift(method.returns.ctype)) {\n" + indentation +
-            ( method.returns.isVoid ? "    " : "    return " ) +
+        ") -> \(method.returns.ctype == "" ? method.returns.type.swift : toSwift(method.returns.ctype)) \(throwCode){\n" + indentation +
+            ( throwsError ? "" : "") +
+            ( isVoid ? "    " : "    return " ) +
         "\(method.cname.swift)(\(args.map(toSwift).joinWithSeparator(", ")))\n" + indentation +
         "}\n"
         }}

@@ -29,6 +29,7 @@ extension String {
     var swift: String {
         guard !swiftKeywords.contains(self) else { return self + "_" }
         guard self != "void" else { return "Void" }
+        guard self != "utf8" else { return "String" }
         guard let f = utf16.first else { return self }
         guard isalpha(Int32(f)) != 0 || Character(UnicodeScalar(f)) == "_" else { return "_" + self }
         return self

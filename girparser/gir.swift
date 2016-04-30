@@ -119,11 +119,17 @@ public class GIR {
         public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type") {
             type = node.attribute(typeAttr) ?? ""
             super.init(node: node, atIndex: i, nameAttr: nameAttr)
+
+            // handle the magic error type
+            if name == errorType { gerrorType = type.swift }
         }
 
         public init(node: XMLElement, atIndex i: Int, withType t: String, nameAttr: String = "name") {
             type = t
             super.init(node: node, atIndex: i, nameAttr: nameAttr)
+
+            // handle the magic error type
+            if name == errorType { gerrorType = type.swift }
         }
 
         public var isVoid: Bool {
@@ -262,16 +268,20 @@ public class GIR {
         public let cname: String        ///< original C function name
         public let returns: Argument    ///< C language type name
         public let args: [Argument]     ///< all associated methods
+        public let throwsError: Bool    ///< does this method throw an error?
 
-        public init(name: String, cname: String, returns: Argument, args: [Argument] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
+        public init(name: String, cname: String, returns: Argument, args: [Argument] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil, throwsAnError: Bool = false) {
             self.cname = cname
             self.returns = returns
             self.args = args
+            throwsError = throwsAnError
             super.init(name: name, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
         public init(node: XMLElement, atIndex i: Int) {
             cname = node.attribute("identifier") ?? ""
+            let thrAttr = node.attribute("throws") ?? "0"
+            throwsError = (Int(thrAttr) ?? 0) != 0
             let children = node.children.lazy
             if let ret = children.findFirstWhere({ $0.name == "return-value"}) {
                 let arg = Argument(node: ret, atIndex: -1)
