@@ -67,7 +67,7 @@ public func valueCode(indentation: String) -> GIR.Enumeration.Member -> String {
 /// Swift protocol representation of a record/class as a wrapper of a pointer
 public func recordProtocolCode(e: GIR.Record, parent: String, indentation: String = "    ") -> String {
     let p = (parent.isEmpty ? "" : ": \(parent)")
-    let code = "public protocol \(e.node)Type\(p) {\n" + indentation +
+    let code = "public protocol \(e.node)Protocol\(p) {\n" + indentation +
         "var ptr: UnsafeMutablePointer<\(e.ctype)> { get }\n" +
     "}\n\n"
     return code
@@ -77,7 +77,7 @@ public func recordProtocolCode(e: GIR.Record, parent: String, indentation: Strin
 /// Default implementation for record methods as protocol extension
 public func recordProtocolExtensionCode(e: GIR.Record, indentation: String = "    ") -> String {
     let mcode = methodCode(indentation)(e)
-    let code = "public extension \(e.node)Type {\n" +
+    let code = "public extension \(e.node)Protocol {\n" +
         e.methods.lazy.map(mcode).joinWithSeparator("\n") +
     "}\n\n"
     return code
@@ -119,18 +119,18 @@ public func toSwift(_ arg: GIR.Argument) -> String {
 
 /// Swift struct representation of a record/class as a wrapper of a pointer
 public func recordStructCode(e: GIR.Record, indentation: String = "    ") -> String {
-    let code = "public struct \(e.node)Struct: \(e.node)Type {\n" + indentation +
+    let code = "public struct \(e.node)Ref: \(e.node)Protocol {\n" + indentation +
         "public let ptr: UnsafeMutablePointer<\(e.ctype)>\n" +
     "}\n\n" +
-    "public extension \(e.node)Struct {\n" + indentation +
-        "public init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + indentation +
-        "    ptr = UnsafeMutablePointer<\(e.ctype)>(cPointer)\n" + indentation +
+    "public extension \(e.node)Ref {\n" + indentation +
+        "public init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + indentation + indentation +
+            "ptr = UnsafeMutablePointer<\(e.ctype)>(cPointer)\n" + indentation +
         "}\n\n" + indentation +
-//        "public init<T>(cPointer: UnsafePointer<T>) {\n" + indentation +
-//        "    ptr = UnsafeMutablePointer<\(e.ctype)>(cPointer)\n" + indentation +
-//        "}\n\n" + indentation +
-        "public init(opaquePointer: COpaquePointer) {\n" + indentation +
-        "    ptr = UnsafeMutablePointer<\(e.ctype)>(opaquePointer)\n" + indentation +
+        "public init<T>(constPointer: UnsafePointer<T>) {\n" + indentation + indentation +
+            "ptr = UnsafeMutablePointer<\(e.ctype)>(constPointer)\n" + indentation +
+        "}\n\n" + indentation +
+        "public init(opaquePointer: COpaquePointer) {\n" + indentation + indentation +
+            "ptr = UnsafeMutablePointer<\(e.ctype)>(opaquePointer)\n" + indentation +
         "}\n\n" +
     "}\n\n"
 
@@ -141,21 +141,24 @@ public func recordStructCode(e: GIR.Record, indentation: String = "    ") -> Str
 /// Swift struct representation of a record/class as a wrapper of a pointer
 public func recordClassCode(e: GIR.Record, parent: String, indentation: String = "    ") -> String {
     let p = parent.isEmpty ? "" : "\(parent), "
-    let code = "public class \(e.name): \(p)\(e.node)Type {\n" + indentation +
-        "    public let ptr: UnsafeMutablePointer<\(e.ctype)>\n\n" +
-        "    public init(ptr: UnsafeMutablePointer<\(e.ctype)>) {\n" +
-        "        self.ptr = ptr\n" +
-        "    }\n" +
-        "}\n\n" +
-        "public extension \(e.name) {\n" + indentation +
-        "public convenience init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + indentation +
-        "    self.init(ptr: UnsafeMutablePointer<\(e.ctype)>(cPointer))\n" + indentation +
+    let code = "public class \(e.name): \(p)\(e.node)Protocol {\n" + indentation +
+        "public let ptr: UnsafeMutablePointer<\(e.ctype)>\n\n" + indentation +
+        "public init(ptr: UnsafeMutablePointer<\(e.ctype)>) {\n" + indentation + indentation +
+            "self.ptr = ptr\n" + indentation +
         "}\n\n" + indentation +
-//        "public convenience init<T>(cPointer: UnsafePointer<T>) {\n" + indentation +
+        "public deinit() {\n" + indentation + indentation +
+            "g_free(UnsafeMutablePointer(ptr))\n" + indentation +
+        "}\n\n" +
+    "}\n\n" +
+        "public extension \(e.name) {\n" + indentation +
+        "public convenience init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + indentation + indentation +
+            "self.init(ptr: UnsafeMutablePointer<\(e.ctype)>(cPointer))\n" + indentation +
+        "}\n\n" + indentation +
+//        "public convenience init<T>(cPointer: UnsafePointer<T>) {\n" + indentation + indentation +
 //        "    self.init(ptr: UnsafeMutablePointer<\(e.ctype)>(cPointer))\n" + indentation +
 //        "}\n\n" + indentation +
-        "public convenience init(opaquePointer: COpaquePointer) {\n" + indentation +
-        "    self.init(ptr: UnsafeMutablePointer<\(e.ctype)>(opaquePointer))\n" + indentation +
+        "public convenience init(opaquePointer: COpaquePointer) {\n" + indentation + indentation +
+            "self.init(ptr: UnsafeMutablePointer<\(e.ctype)>(opaquePointer))\n" + indentation +
         "}\n\n" +
     "}\n\n"
 
