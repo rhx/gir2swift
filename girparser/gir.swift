@@ -24,9 +24,9 @@ public class GIR {
         xml = xmlDocument
         if let rp = xml.findFirstWhere({ $0.name == "repository" }) {
             namespaces = rp.namespaces
-            for n in namespaces {
-                print("Got \(n.prefix) at \(n.href)")
-            }
+//            for n in namespaces {
+//                print("Got \(n.prefix) at \(n.href)")
+//            }
         }
         //
         // set up name space prefix

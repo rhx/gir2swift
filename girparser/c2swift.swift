@@ -9,7 +9,25 @@ import Foundation
 
 private let wsnl = NSCharacterSet.whitespaceAndNewlineCharacterSet()
 
+private let trueS  = "true"
+private let falseS = "false"
+private let nilS   = "nil"
+private let declarationKeywords: Set = ["associatedtype", "class", "deinit", "enum", "extension", "func", "import", "init", "inout", "internal", "let", "operator", "private", "protocol", "public", "static", "struct", "subscript", "typealias", "var"];
+private let statementKeywords: Set = ["break", "case", "continue", "default", "defer", "do", "else", "fallthrough", "for", "guard", "if", "in", "repeat", "return", "switch", "where", "while"]
+private let expressionKeywords: Set = ["as", "catch", "dynamicType", "false", "is", "nil", "rethrows", "super", "self", "Self", "throw", "throws", "true", "try", "#column", "#file", "#function", "#line."]
+private let specificKeywords: Set = ["associativity", "convenience", "dynamic", "didSet", "final", "get", "infix", "indirect", "lazy", "left", "mutating", "none", "nonmutating", "optional", "override", "postfix", "precedence", "prefix", "Protocol", "required", "right", "set", "Type", "unowned", "weak", "willSet"]
+
+infix operator ∪ { associativity left precedence 140 }
+
+func ∪<T>(left: Set<T>, right: Set<T>) -> Set<T> {
+    return left.union(right)
+}
+let swiftKeywords = declarationKeywords ∪ statementKeywords ∪ expressionKeywords ∪ specificKeywords
+
 extension String {
+    /// return a swift representation of an identifier string (escaped if necessary)
+    var swift: String { return swiftKeywords.contains(self) ? "`\(self)`" : self }
+
     /// return whether the type represented by the receiver is a constant
     public var isCConst: Bool {
         let ns = stringByTrimmingCharactersInSet(wsnl)
@@ -59,7 +77,7 @@ extension String {
             let wrapped = pointer + "<\(base.swiftRepresentationOfCType)>"
             return wrapped
         }
-        return typeWithoutConst
+        return typeWithoutConst.swift
     }
 }
 
