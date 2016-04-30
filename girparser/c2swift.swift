@@ -26,7 +26,13 @@ let swiftKeywords = declarationKeywords ∪ statementKeywords ∪ expressionKeyw
 
 extension String {
     /// return a swift representation of an identifier string (escaped if necessary)
-    var swift: String { return swiftKeywords.contains(self) ? "`\(self)`" : self }
+    var swift: String {
+        guard !swiftKeywords.contains(self) else { return self + "_" }
+        guard self != "void" else { return "Void" }
+        guard let f = utf16.first else { return self }
+        guard isalpha(Int32(f)) != 0 || Character(UnicodeScalar(f)) == "_" else { return "_" + self }
+        return self
+    }
 
     /// return whether the type represented by the receiver is a constant
     public var isCConst: Bool {

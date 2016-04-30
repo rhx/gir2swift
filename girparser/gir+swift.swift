@@ -146,7 +146,7 @@ public func recordClassCode(e: GIR.Record, parent: String, indentation: String =
         "public init(ptr: UnsafeMutablePointer<\(e.ctype.swift)>) {\n" + indentation + indentation +
             "self.ptr = ptr\n" + indentation +
         "}\n\n" + indentation +
-        "public deinit {\n" + indentation + indentation +
+        "deinit {\n" + indentation + indentation +
             "g_free(UnsafeMutablePointer(ptr))\n" + indentation +
         "}\n\n" +
     "}\n\n" +
