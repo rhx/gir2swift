@@ -125,6 +125,10 @@ public class GIR {
             type = t
             super.init(node: node, atIndex: i, nameAttr: nameAttr)
         }
+
+        public var isVoid: Bool {
+            return type.hasPrefix("Void")
+        }
     }
 
 
@@ -275,7 +279,12 @@ public class GIR {
             } else {
                 returns = Argument(name: "", type: "Void", ctype: "void", instance: false, comment: "")
             }
-            args = GIR.args(children)
+            if let params = children.findFirstWhere({ $0.name == "parameters"}) {
+                let children = params.children.lazy
+                args = GIR.args(children)
+            } else {
+                args = GIR.args(children)
+            }
             super.init(node: node, atIndex: i)
         }
     }
@@ -297,6 +306,32 @@ public class GIR {
             instance = node.name.hasPrefix("instance")
             super.init(fromChildrenOf: node, atIndex: i)
         }
+    }
+}
+
+/// some utility methods for things
+public extension GIR.Thing {
+    /// type name without 'Private' suffix (nil if public)
+    public var priv: String? {
+        return name.stringByRemoving(suffix: "Private")
+    }
+    /// Type name without 'Class', 'Iface', etc. suffix
+    public var node: String {
+        let nodeName: String
+        let privateSuffix: String
+        if let p = priv {
+            nodeName = p
+            privateSuffix = "Private"
+        } else {
+            nodeName = name
+            privateSuffix = ""
+        }
+        for s in ["Class", "Iface"] {
+            if let n = nodeName.stringByRemoving(suffix: s) {
+                return n + privateSuffix
+            }
+        }
+        return name
     }
 }
 
