@@ -146,9 +146,9 @@
 			isa = PBXGroup;
 			children = (
 				F1938DAF1CA09CBD006811D1 /* main.swift */,
-				F12789EB1CD2C17F002AF814 /* c2swift.swift */,
 				F1E1C3941CA5548C0080006E /* gir.swift */,
 				F1C6BBD41CAF3D05002F0267 /* gir+swift.swift */,
+				F12789EB1CD2C17F002AF814 /* c2swift.swift */,
 				F16EA7231CA0B81200D4C108 /* mmap.swift */,
 				F16EA71D1CA0AF5E00D4C108 /* FileLen.swift */,
 				F16EA7211CA0B61800D4C108 /* String+ContentsOfFile.swift */,

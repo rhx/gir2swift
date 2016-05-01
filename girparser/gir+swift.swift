@@ -103,8 +103,11 @@ public func recordProtocolExtensionCode(e: GIR.Record, indentation: String = "  
 public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> String {
     return { (record: GIR.Record) -> GIR.Method-> String in { (method: GIR.Method) -> String in
         let args = method.args.lazy
-        let isVoid = method.returns.isVoid
-        let returnType = isVoid ? "" : " -> \(method.returns.ctype == "" ? method.returns.type.swift : toSwift(method.returns.ctype))"
+        let rv = method.returns
+        let isVoid = rv.isVoid
+        let returnType = rv.ctype == "" ? rv.type.swift : rv.ctype.swiftRepresentationOfCType
+        let cType = rv.ctype == "" ? returnType : rv.ctype.unwrappedCType
+        let returnCode = isVoid ? "" : " -> \(returnType)"
         let throwsError = method.throwsError
         let throwCode = throwsError ? "throws " : ""
 //        let n = args.count
@@ -112,17 +115,17 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
 //        method.args.forEach {
 //            print("\($0.name)[instance=\($0.instance)]: \($0.type) = '\($0.ctype)'")
 //        }
-        return indentation + "public func \(method.name.swift)(" +
+        return swiftCode(method, indentation + "public func \(method.name.swift)(" +
             args.filter { !$0.instance } .map(argumentCode).joinWithSeparator(", ") +
-        ")\(returnType) \(throwCode){\n" + indentation + indentation +
+        ")\(returnCode) \(throwCode){\n" + indentation + indentation +
             ( throwsError ? "let error: UnsafeMutablePointer<\(gerror)> = nil\n" + indentation + indentation : "") +
             ( isVoid ? "" : "let rv = " ) +
         "\(method.cname.swift)(\(args.map(toSwift).joinWithSeparator(", "))" +
             ( throwsError ? ", &error" : "" ) +
             ")\n" + indentation +
             ( throwsError ? indentation + "guard error == nil else {\n" + indentation + indentation + indentation + "throw GError(ptr: error)\n" + indentation + indentation + "}\n" + indentation : "" ) +
-            ( isVoid ? "" : indentation + "return rv\n" + indentation ) +
-        "}\n"
+            ( isVoid ? "" : indentation + "return \(cast_to_swift("rv", forType: cType))\n" + indentation ) +
+        "}\n", indentation: indentation)
         }}
 }
 

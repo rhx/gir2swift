@@ -10,7 +10,7 @@ import Foundation
 private let castables = [ "gint" : "Int", "guint" : "UInt", "glong" : "Int",
     "gint8"  : "Int8",  "guint8"  : "UInt8",  "gint16" : "Int16", "guint16" : "UInt16",
     "gint32" : "Int32", "guint32" : "UInt32", "gint64" : "Int64", "guint64" : "UInt64",
-    "gulong" : "UInt", "gpointer" : "COpaquePointer" ]
+    "gulong" : "UInt",  "gsize"   : "Int",  "gboolean" : "Bool", "gpointer" : "COpaquePointer" ]
 private let reversecast = castables.reduce(Dictionary<String,String>()) {
     var dict = $0
     dict[$1.1] = $1.0
@@ -87,14 +87,19 @@ extension String {
         return String(cs[s..<e])
     }
 
-    /// return the Swift type for a given C type
-    public var swiftRepresentationOfCType: String {
+    /// return the C type unwrapped and without const
+    public var unwrappedCType: String {
         if let base = underlyingTypeForCPointer {
             let pointer = isCConst ? "UnsafePointer" : "UnsafeMutablePointer"
-            let wrapped = pointer + "<\(base.swiftRepresentationOfCType)>"
+            let wrapped = pointer + "<\(base.unwrappedCType)>"
             return wrapped
         }
-        return typeWithoutConst.swift
+        return typeWithoutConst
+    }
+
+    /// return the Swift type for a given C type
+    public var swiftRepresentationOfCType: String {
+        return unwrappedCType.swift
     }
 
     /// return the string (value) cast to Swift
@@ -116,7 +121,7 @@ func toSwift(_ ctype: String) -> String {
 
 /// C type cast to swift
 func cast_to_swift(_ value: String, forType t: String) -> String {
-    if let s = castables[t] { return "\(s)(\(value))" }
+    if let s = castables[t] { return "\(s)(\(s == "Bool" ? value + " != 0" : value))" }
     return value
 }
 
