@@ -27,6 +27,7 @@ public class GIR {
     /// context of known types
     static var knownTypes:   [ String : Type ] = [:]
     static var knownRecords: [ String : Type ] = [:]
+    static var gerrorType = "GErrorType"
 
     /// designated constructor
     public init(xmlDocument: XMLDocument) {

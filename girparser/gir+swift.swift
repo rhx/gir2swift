@@ -15,7 +15,7 @@ public extension GIR.Argument {
     public var isKnownRecord: Bool { return GIR.knownRecords[type.swift] != nil }
 
     /// return whether the receiver is an instance of the given record (class)
-    public func isInstanceOf(record: GIR.Record?) -> Bool {
+    public func isInstanceOf(_ record: GIR.Record?) -> Bool {
         if let r = record where r.node == type.swift {
             return true
         } else {
@@ -66,14 +66,11 @@ public func swiftCode(constant: GIR.Constant) -> String {
 /// Magic error type for throwing
 let errorType = "ErrorType"
 
-/// underlying error number
-var gerrorType = "GErrorType"
-
 /// underlying error type
 let gerror = "GError"
 
 /// Swift code type alias representation of an enum
-public func typeAlias(e: GIR.Enumeration) -> String {
+public func typeAlias(_ e: GIR.Enumeration) -> String {
     let name = e.name.swift
     guard name != errorType else {
         return swiftCode(e, "public protocol \(e.type.swift): \(errorType) {}")
@@ -82,7 +79,7 @@ public func typeAlias(e: GIR.Enumeration) -> String {
 }
 
 /// Swift code representation of an enum
-public func swiftCode(e: GIR.Enumeration) -> String {
+public func swiftCode(_ e: GIR.Enumeration) -> String {
     let alias = typeAlias(e)
     let swift = e.name.swift
     let name = swift == errorType ? e.type.swift : swift
@@ -91,7 +88,7 @@ public func swiftCode(e: GIR.Enumeration) -> String {
 }
 
 /// Swift code representation of an enum value
-public func valueCode(indentation: String) -> GIR.Enumeration.Member -> String {
+public func valueCode(_ indentation: String) -> GIR.Enumeration.Member -> String {
     return { (m: GIR.Enumeration.Member) -> String in
         swiftCode(m, indentation + "public static let \(m.name.swift) = \(m.ctype.swift) /* \(m.value) */", indentation: indentation)
     }
@@ -99,7 +96,7 @@ public func valueCode(indentation: String) -> GIR.Enumeration.Member -> String {
 
 
 /// Swift protocol representation of a record/class as a wrapper of a pointer
-public func recordProtocolCode(e: GIR.Record, parent: String, indentation: String = "    ") -> String {
+public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: String = "    ") -> String {
     let p = (parent.isEmpty ? "" : ": \(parent)")
     let code = "public protocol \(e.node)Protocol\(p) {\n" + indentation +
         "var ptr: UnsafeMutablePointer<\(e.ctype.swift)> { get }\n" +
@@ -109,7 +106,7 @@ public func recordProtocolCode(e: GIR.Record, parent: String, indentation: Strin
 
 
 /// Default implementation for record methods as protocol extension
-public func recordProtocolExtensionCode(e: GIR.Record, indentation: String = "    ") -> String {
+public func recordProtocolExtensionCode(_ e: GIR.Record, indentation: String = "    ") -> String {
     let mcode = methodCode(indentation)(e)
     let code = "public extension \(e.node)Protocol {\n" +
         e.methods.lazy.map(mcode).joinWithSeparator("\n") +
@@ -150,7 +147,7 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
 
 
 /// Swift code for methods
-public func argumentCode(arg: GIR.Argument) -> String {
+public func argumentCode(_ arg: GIR.Argument) -> String {
     let name = arg.name.swift
     let ctype = arg.ctype
     let swift = arg.type.swift
@@ -169,7 +166,7 @@ public func toSwift(_ arg: GIR.Argument) -> String {
 
 
 /// Swift struct representation of a record/class as a wrapper of a pointer
-public func recordStructCode(e: GIR.Record, indentation: String = "    ") -> String {
+public func recordStructCode(_ e: GIR.Record, indentation: String = "    ") -> String {
     let code = "public struct \(e.node)Ref: \(e.node)Protocol {\n" + indentation +
         "public let ptr: UnsafeMutablePointer<\(e.ctype.swift)>\n" +
     "}\n\n" +
@@ -190,7 +187,7 @@ public func recordStructCode(e: GIR.Record, indentation: String = "    ") -> Str
 
 
 /// Swift struct representation of a record/class as a wrapper of a pointer
-public func recordClassCode(e: GIR.Record, parent: String, indentation: String = "    ") -> String {
+public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String = "    ") -> String {
     let p = parent.isEmpty ? "" : "\(parent), "
     let code = "public class \(e.name.swift): \(p)\(e.node)Protocol {\n" + indentation +
         "public let ptr: UnsafeMutablePointer<\(e.ctype.swift)>\n\n" + indentation +
@@ -220,7 +217,7 @@ public func recordClassCode(e: GIR.Record, parent: String, indentation: String =
 
 
 /// Swift code representation of a record
-public func swiftCode(e: GIR.Record) -> String {
+public func swiftCode(_ e: GIR.Record) -> String {
     let p = recordProtocolCode(e, parent: "")
     let s = recordStructCode(e)
     let c = recordClassCode(e, parent: "")
