@@ -104,8 +104,9 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
     return { (record: GIR.Record) -> GIR.Method-> String in { (method: GIR.Method) -> String in
         let args = method.args.lazy
         let isVoid = method.returns.isVoid
+        let returnType = isVoid ? "" : " -> \(method.returns.ctype == "" ? method.returns.type.swift : toSwift(method.returns.ctype))"
         let throwsError = method.throwsError
-        let throwCode = throwsError ? "thows " : ""
+        let throwCode = throwsError ? "throws " : ""
 //        let n = args.count
 //        print("\(method.name): \(n) arguments:")
 //        method.args.forEach {
@@ -113,10 +114,14 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
 //        }
         return indentation + "public func \(method.name.swift)(" +
             args.filter { !$0.instance } .map(argumentCode).joinWithSeparator(", ") +
-        ") -> \(method.returns.ctype == "" ? method.returns.type.swift : toSwift(method.returns.ctype)) \(throwCode){\n" + indentation +
-            ( throwsError ? "" : "") +
-            ( isVoid ? "    " : "    return " ) +
-        "\(method.cname.swift)(\(args.map(toSwift).joinWithSeparator(", ")))\n" + indentation +
+        ")\(returnType) \(throwCode){\n" + indentation + indentation +
+            ( throwsError ? "let error: UnsafeMutablePointer<\(gerror)> = nil\n" + indentation + indentation : "") +
+            ( isVoid ? "" : "let rv = " ) +
+        "\(method.cname.swift)(\(args.map(toSwift).joinWithSeparator(", "))" +
+            ( throwsError ? ", &error" : "" ) +
+            ")\n" + indentation +
+            ( throwsError ? indentation + "guard error == nil else {\n" + indentation + indentation + indentation + "throw GError(ptr: error)\n" + indentation + indentation + "}\n" + indentation : "" ) +
+            ( isVoid ? "" : indentation + "return rv\n" + indentation ) +
         "}\n"
         }}
 }
