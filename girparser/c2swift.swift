@@ -7,6 +7,15 @@
 //
 import Foundation
 
+private let castables = [ "gint" : "Int", "guint" : "UInt", "glong" : "Int",
+    "gint8"  : "Int8",  "guint8"  : "UInt8",  "gint16" : "Int16", "guint16" : "UInt16",
+    "gint32" : "Int32", "guint32" : "UInt32", "gint64" : "Int64", "guint64" : "UInt64",
+    "gulong" : "UInt", "gpointer" : "COpaquePointer" ]
+private let reversecast = castables.reduce(Dictionary<String,String>()) {
+    var dict = $0
+    dict[$1.1] = $1.0
+    return dict
+}
 private let wsnl = NSCharacterSet.whitespaceAndNewlineCharacterSet()
 
 private let trueS  = "true"
@@ -27,6 +36,7 @@ let swiftKeywords = declarationKeywords ∪ statementKeywords ∪ expressionKeyw
 extension String {
     /// return a swift representation of an identifier string (escaped if necessary)
     var swift: String {
+        if let s = castables[self] { return s }
         guard !swiftKeywords.contains(self) else { return self + "_" }
         guard self != "void" else { return "Void" }
         guard self != "utf8" else { return "String" }
@@ -86,9 +96,32 @@ extension String {
         }
         return typeWithoutConst.swift
     }
+
+    /// return the string (value) cast to Swift
+    func cast_as_swift(_ type: String) -> String {
+        return cast_to_swift(self, forType: type)
+    }
+
+    /// return the string (value) cast to Swift
+    func cast_as_c(_ type: String) -> String {
+        return cast_from_swift(self, forType: type)
+    }
 }
 
 /// convert the given C type to a Swift type
 func toSwift(_ ctype: String) -> String {
     return ctype.swiftRepresentationOfCType
+}
+
+
+/// C type cast to swift
+func cast_to_swift(_ value: String, forType t: String) -> String {
+    if let s = castables[t] { return "\(s)(\(value))" }
+    return value
+}
+
+/// C type cast from swift
+func cast_from_swift(_ value: String, forType t: String) -> String {
+    if let s = reversecast[t] { return "\(s)(\(value))" }
+    return value
 }

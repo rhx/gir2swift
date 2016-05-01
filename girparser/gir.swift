@@ -133,7 +133,7 @@ public class GIR {
         }
 
         public var isVoid: Bool {
-            return type.hasPrefix("Void")
+            return type.hasPrefix("Void") || type.hasPrefix("void")
         }
     }
 
@@ -168,6 +168,12 @@ public class GIR {
             let (type, ctype) = GIR.types(node, at: i)
             self.ctype = ctype
             super.init(node: node, atIndex: i, withType: type, nameAttr: nameAttr)
+        }
+
+        /// return whether the give C type is void
+        override public var isVoid: Bool {
+            let t = ctype == "" ? type.swift : toSwift(ctype)
+            return t.hasPrefix("Void")
         }
     }
 

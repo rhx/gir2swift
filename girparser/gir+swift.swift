@@ -129,13 +129,13 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
 
 /// Swift code for methods
 public func argumentCode(arg: GIR.Argument) -> String {
-    return "\(arg.name.swift): \(arg.type.swift)"
+    return "\(arg.name.swift): \(arg.ctype.isCPointer ? arg.ctype.swiftRepresentationOfCType : arg.type.swift)"
 }
 
 
 /// Swift code for argument
 public func toSwift(_ arg: GIR.Argument) -> String {
-    return arg.instance ? "ptr" : arg.name.swift
+    return arg.instance ? "ptr" : arg.name.swift.cast_as_c(arg.type.swift)
 }
 
 
