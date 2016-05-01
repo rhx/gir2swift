@@ -5,6 +5,11 @@
 //  Created by Rene Hexel on 25/03/2016.
 //  Copyright © 2016 Rene Hexel. All rights reserved.
 //
+#if os(Linux)
+    import GLibc
+#else
+    import Darwin
+#endif
 
 public class GIR {
     public let xml: XMLDocument
@@ -18,6 +23,10 @@ public class GIR {
     public var bitfields: [Bitfield] = []
     public var records: [Record] = []
     public var classes: [Class] = []
+
+    /// context of known types
+    static var knownTypes:   [ String : Type ] = [:]
+    static var knownRecords: [ String : Type ] = [:]
 
     /// designated constructor
     public init(xmlDocument: XMLDocument) {
@@ -42,31 +51,73 @@ public class GIR {
         // get all type alias records
         //
         if let entries = xml.xpath("//gir:alias", namespaces: namespaces, defaultPrefix: "gir") {
-            aliases = entries.enumerate().map { Alias(node: $0.1, atIndex: $0.0) }
+            aliases = entries.enumerate().map { Alias(node: $0.1, atIndex: $0.0) }.filter {
+                let name = $0.node
+                guard GIR.knownTypes[name] == nil else {
+                    fputs("Warning: duplicate type '\(name)' for alias ignored!\n", stderr)
+                    return false
+                }
+                GIR.knownTypes[name] = $0
+                return true
+            }
         }
         //
         // get all constants
         //
         if let entries = xml.xpath("//gir:constant", namespaces: namespaces, defaultPrefix: "gir") {
-            constants = entries.enumerate().map { Constant(node: $0.1, atIndex: $0.0) }
+            constants = entries.enumerate().map { Constant(node: $0.1, atIndex: $0.0) }.filter {
+                let name = $0.node
+                guard GIR.knownTypes[name] == nil else {
+                    fputs("Warning: duplicate type '\(name)' for constant ignored!\n", stderr)
+                    return false
+                }
+                GIR.knownTypes[name] = $0
+                return true
+            }
         }
         //
         // get all enums
         //
         if let entries = xml.xpath("//gir:enumeration", namespaces: namespaces, defaultPrefix: "gir") {
-            enumerations = entries.enumerate().map { Enumeration(node: $0.1, atIndex: $0.0) }
+            enumerations = entries.enumerate().map { Enumeration(node: $0.1, atIndex: $0.0) }.filter {
+                let name = $0.node
+                guard GIR.knownTypes[name] == nil else {
+                    fputs("Warning: duplicate type '\(name)' for enum ignored!\n", stderr)
+                    return false
+                }
+                GIR.knownTypes[name] = $0
+                return true
+            }
         }
         //
         // get all type records
         //
         if let recs = xml.xpath("//gir:record", namespaces: namespaces, defaultPrefix: "gir") {
-            records = recs.enumerate().map { Record(node: $0.1, atIndex: $0.0) }
+            records = recs.enumerate().map { Record(node: $0.1, atIndex: $0.0) }.filter {
+                let name = $0.node
+                guard GIR.knownTypes[name] == nil else {
+                    fputs("Warning: duplicate type '\(name)' for record ignored!\n", stderr)
+                    return false
+                }
+                GIR.knownTypes[name] = $0
+                GIR.knownRecords[name] = $0
+                return true
+            }
         }
         //
         // get all class records
         //
         if let recs = xml.xpath("//gir:class", namespaces: namespaces, defaultPrefix: "gir") {
-            classes = recs.enumerate().map { Class(node: $0.1, atIndex: $0.0) }
+            classes = recs.enumerate().map { Class(node: $0.1, atIndex: $0.0) }.filter {
+                let name = $0.node
+                guard GIR.knownTypes[name] == nil else {
+                    fputs("Warning: duplicate type '\(name)' for class ignored!\n", stderr)
+                    return false
+                }
+                GIR.knownTypes[name] = $0
+                GIR.knownRecords[name] = $0
+                return true
+            }
         }
     }
 

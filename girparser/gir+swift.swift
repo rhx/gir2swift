@@ -6,6 +6,25 @@
 //  Copyright © 2016 Rene Hexel. All rights reserved.
 //
 
+/// Swift extension for arguments
+public extension GIR.Argument {
+    /// return whether the receiver is a known type
+    public var isKnownType: Bool { return GIR.knownTypes[type.swift] != nil }
+
+    /// return whether the receiver is a known class or record
+    public var isKnownRecord: Bool { return GIR.knownRecords[type.swift] != nil }
+
+    /// return whether the receiver is an instance of the given record (class)
+    public func isInstanceOf(record: GIR.Record?) -> Bool {
+        if let r = record where r.node == type.swift {
+            return true
+        } else {
+            return false
+        }
+    }
+}
+
+
 /// Swift representation of comments
 public func commentCode(thing: GIR.Thing, indentation: String = "") -> String {
     return thing.comment.isEmpty ? "" : thing.comment.characters.reduce(indentation + "/// ") {
@@ -132,13 +151,18 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
 
 /// Swift code for methods
 public func argumentCode(arg: GIR.Argument) -> String {
-    return "\(arg.name.swift): \(arg.ctype.isCPointer ? arg.ctype.swiftRepresentationOfCType : arg.type.swift)"
+    let name = arg.name.swift
+    let ctype = arg.ctype
+    let swift = arg.type.swift
+    let isPtr  = ctype.isPointer
+    let code = "\(name): \(isPtr ? (arg.isKnownRecord ? swift + "Protocol" : ctype.swiftRepresentationOfCType) : swift)"
+    return code
 }
 
 
 /// Swift code for argument
 public func toSwift(_ arg: GIR.Argument) -> String {
-    return arg.instance ? "ptr" : arg.name.swift.cast_as_c(arg.type.swift)
+    return arg.instance ? "ptr" : arg.name.swift.cast_as_c(arg.type.swift) + (arg.isKnownRecord ? ".ptr" : "")
 }
 
 

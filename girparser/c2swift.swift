@@ -72,9 +72,29 @@ extension String {
         return ns.stringByTrimmingCharactersInSet(wsnl)
     }
 
+    /// return whether the untrimmed string is a C pointer
+    var isTrimmedCPointer: Bool { return self.hasSuffix("*") }
+
+
+    /// return whether the untrimmed string is a gpointer or gconstpointer
+    var isTrimmedGPointer: Bool { return self == "gpointer" || self == "gconstpointer" }
+
+    /// return whether the untrimmed string is a pointer
+    var isTrimmedPointer: Bool { return isTrimmedGPointer || isTrimmedCPointer }
+
     /// return whether the underlying C type is a pointer
     public var isCPointer: Bool {
-        return typeWithoutTrailingConst.stringByTrimmingCharactersInSet(wsnl).hasSuffix("*")
+        return typeWithoutTrailingConst.stringByTrimmingCharactersInSet(wsnl).isTrimmedCPointer
+    }
+
+    /// return whether the underlying C type is a gpointer
+    public var isGPointer: Bool {
+        return typeWithoutTrailingConst.stringByTrimmingCharactersInSet(wsnl).isTrimmedGPointer
+    }
+
+    /// return whether the underlying C type is a pointer of any kind
+    public var isPointer: Bool {
+        return typeWithoutTrailingConst.stringByTrimmingCharactersInSet(wsnl).isTrimmedPointer
     }
 
     /// return the underlying C type for a pointer, nil if not a pointer
