@@ -46,7 +46,7 @@ public extension GIR {
         "}\n\n" +
 
         "private extension gboolean {\n" +
-        "    private init(b: Bool) { self = b ? gboolean(1) : gboolean(0) }\n" +
+        "    private init(_ b: Bool) { self = b ? gboolean(1) : gboolean(0) }\n" +
         "}\n\n"
     }
 }
