@@ -6,6 +6,36 @@
 //  Copyright © 2016 Rene Hexel. All rights reserved.
 //
 
+public extension GIR {
+    /// code boiler plate
+    public var boilerPlate: String {
+        return "private func cast<S, T>(_ param: UnsafeMutablePointer<S>) -> UnsafeMutablePointer<T> {\n" +
+        "    return UnsafeMutablePointer<T>(param)\n" +
+        "}\n\n" +
+
+        "private func cast<S, T>(_ param: UnsafeMutablePointer<S>) -> UnsafePointer<T> {\n" +
+        "    return UnsafePointer<T>(param)\n" +
+        "}\n\n" +
+
+        "private func cast<S, T>(_ param: COpaquePointer) -> UnsafeMutablePointer<T> {\n" +
+        "    return UnsafeMutablePointer<T>(param)\n" +
+        "}\n\n" +
+
+        "private func cast<S, T>(_ param: COpaquePointer) -> UnsafePointer<T> {\n" +
+        "    return UnsafePointer<T>(param)\n" +
+        "}\n\n" +
+
+        "private func mutable_cast<S, T>(_ param: UnsafePointer<S>) -> UnsafeMutablePointer<T> {\n" +
+        "    return UnsafeMutablePointer<T>(param)\n" +
+        "}\n\n" +
+
+        "private func mutable_cast<S, T>(_ param: COpaquePointer) -> UnsafeMutablePointer<T> {\n" +
+        "    return UnsafeMutablePointer<T>(param)n" +
+        "}\n\n"
+    }
+}
+
+
 /// Swift extension for arguments
 public extension GIR.Argument {
     /// return whether the receiver is a known type
@@ -125,7 +155,7 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
         let cType = rv.ctype == "" ? returnType : rv.ctype.unwrappedCType
         let returnCode = isVoid ? "" : " -> \(returnType)"
         let throwsError = method.throwsError
-        let throwCode = throwsError ? "throws " : ""
+        let throwCode = throwsError ? " throws" : ""
 //        let n = args.count
 //        print("\(method.name): \(n) arguments:")
 //        method.args.forEach {
@@ -133,14 +163,14 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
 //        }
         return swiftCode(method, indentation + "public func \(method.name.swift)(" +
             args.filter { !$0.instance } .map(argumentCode).joinWithSeparator(", ") +
-        ")\(returnCode) \(throwCode){\n" + indentation + indentation +
+        ")\(throwCode)\(returnCode) {\n" + indentation + indentation +
             ( throwsError ? "let error: UnsafeMutablePointer<\(gerror)> = nil\n" + indentation + indentation : "") +
             ( isVoid ? "" : "let rv = " ) +
         "\(method.cname.swift)(\(args.map(toSwift).joinWithSeparator(", "))" +
             ( throwsError ? ", &error" : "" ) +
             ")\n" + indentation +
             ( throwsError ? indentation + "guard error == nil else {\n" + indentation + indentation + indentation + "throw GError(ptr: error)\n" + indentation + indentation + "}\n" + indentation : "" ) +
-            ( isVoid ? "" : indentation + "return \(cast_to_swift("rv", forType: cType))\n" + indentation ) +
+            ( isVoid ? "" : indentation + "return \(rv.ctype.isCPointer ? "cast(rv)" : cast_to_swift("rv", forType: cType))\n" + indentation ) +
         "}\n", indentation: indentation)
         }}
 }
@@ -159,7 +189,7 @@ public func argumentCode(_ arg: GIR.Argument) -> String {
 
 /// Swift code for argument
 public func toSwift(_ arg: GIR.Argument) -> String {
-    return arg.instance ? "ptr" : arg.name.swift.cast_as_c(arg.type.swift) + (arg.isKnownRecord ? ".ptr" : "")
+    return "cast(" + (arg.instance ? "ptr" : arg.name.swift.cast_as_c(arg.type.swift) + (arg.isKnownRecord ? ".ptr" : "")) + ")"
 }
 
 

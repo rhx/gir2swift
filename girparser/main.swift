@@ -40,6 +40,7 @@ func process_gir(file: String) {
         if gir.prefix.isEmpty {
             fputs("Warning: no namespace in GIR file '\(file)'\n", stderr)
         }
+        print(gir.boilerPlate)
         print(gir.aliases.map(swiftCode).joinWithSeparator("\n\n"))
         print(gir.constants.map(swiftCode).joinWithSeparator("\n\n"))
         print(gir.enumerations.map(swiftCode).joinWithSeparator("\n\n"))
