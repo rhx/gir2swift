@@ -38,11 +38,15 @@ public extension GIR {
         "}\n\n" +
 
         "private func cast<T>(_ param: UnsafePointer<T>) -> COpaquePointer {\n" +
-            "    return COpaquePointer(param)\n" +
+        "    return COpaquePointer(param)\n" +
         "}\n\n" +
 
         "private func cast<T>(_ param: UnsafeMutablePointer<T>) -> COpaquePointer {\n" +
-            "    return COpaquePointer(param)\n" +
+        "    return COpaquePointer(param)\n" +
+        "}\n\n" +
+
+        "private extension gboolean {\n" +
+        "    private init(b: Bool) { self = b ? gboolean(1) : gboolean(0) }\n" +
         "}\n\n"
     }
 }
