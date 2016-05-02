@@ -177,7 +177,7 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
         "\(method.cname.swift)(\(args.map(toSwift).joinWithSeparator(", "))" +
             ( throwsError ? ", &error" : "" ) +
             ")\n" + indentation +
-            ( throwsError ? indentation + "guard error == nil else {\n" + indentation + indentation + indentation + "throw GError(ptr: error)\n" + indentation + indentation + "}\n" + indentation : "" ) +
+            ( throwsError ? indentation + "guard error == nil else {\n" + indentation + indentation + indentation + "throw Error(ptr: error)\n" + indentation + indentation + "}\n" + indentation : "" ) +
             ( isVoid ? "" : indentation + "return \(rv.ctype.isCPointer ? "cast(rv)" : cast_to_swift("rv", forType: cType))\n" + indentation ) +
         "}\n", indentation: indentation)
         }}
