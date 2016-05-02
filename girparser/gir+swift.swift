@@ -172,7 +172,7 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
         return swiftCode(method, indentation + "public func \(method.name.swift)(" +
             args.filter { !$0.instance } .map(argumentCode).joinWithSeparator(", ") +
         ")\(throwCode)\(returnCode) {\n" + indentation + indentation +
-            ( throwsError ? "let error: UnsafeMutablePointer<\(gerror)> = nil\n" + indentation + indentation : "") +
+            ( throwsError ? "var error: UnsafeMutablePointer<\(gerror)> = nil\n" + indentation + indentation : "") +
             ( isVoid ? "" : "let rv = " ) +
         "\(method.cname.swift)(\(args.map(toSwift).joinWithSeparator(", "))" +
             ( throwsError ? ", &error" : "" ) +
