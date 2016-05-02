@@ -17,11 +17,11 @@ public extension GIR {
         "    return UnsafePointer<T>(param)\n" +
         "}\n\n" +
 
-        "private func cast<S, T>(_ param: COpaquePointer) -> UnsafeMutablePointer<T> {\n" +
+        "private func cast<T>(_ param: COpaquePointer) -> UnsafeMutablePointer<T> {\n" +
         "    return UnsafeMutablePointer<T>(param)\n" +
         "}\n\n" +
 
-        "private func cast<S, T>(_ param: COpaquePointer) -> UnsafePointer<T> {\n" +
+        "private func cast<T>(_ param: COpaquePointer) -> UnsafePointer<T> {\n" +
         "    return UnsafePointer<T>(param)\n" +
         "}\n\n" +
 
@@ -29,7 +29,7 @@ public extension GIR {
         "    return UnsafeMutablePointer<T>(param)\n" +
         "}\n\n" +
 
-        "private func mutable_cast<S, T>(_ param: COpaquePointer) -> UnsafeMutablePointer<T> {\n" +
+        "private func mutable_cast<T>(_ param: COpaquePointer) -> UnsafeMutablePointer<T> {\n" +
         "    return UnsafeMutablePointer<T>(param)\n" +
         "}\n\n" +
 
