@@ -197,7 +197,8 @@ public func argumentCode(_ arg: GIR.Argument) -> String {
 
 /// Swift code for argument
 public func toSwift(_ arg: GIR.Argument) -> String {
-    return "cast(" + (arg.instance ? "ptr" : arg.name.swift.cast_as_c(arg.type.swift) + (arg.isKnownRecord ? ".ptr" : "")) + ")"
+    let isPtr = arg.ctype.isCPointer
+    return (isPtr ? "cast(" : "") + (arg.instance ? "ptr" : arg.name.swift.cast_as_c(arg.type.swift) + (arg.isKnownRecord ? ".ptr" : "")) + (isPtr ? ")" : "")
 }
 
 
