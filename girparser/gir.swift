@@ -41,7 +41,7 @@ public class GIR {
         //
         // set up name space prefix
         //
-        if let ns = xml.xpath("//gir:namespace", namespaces: namespaces, defaultPrefix: "gir")?.generate().next() {
+        if let ns = xml.xpath("/*/*/gir:namespace", namespaces: namespaces, defaultPrefix: "gir")?.generate().next() {
             if let name = ns.attribute("name") {
                 prefix = name
             }
@@ -65,7 +65,7 @@ public class GIR {
         //
         // get all constants
         //
-        if let entries = xml.xpath("//gir:constant", namespaces: namespaces, defaultPrefix: "gir") {
+        if let entries = xml.xpath("/*/*/gir:constant", namespaces: namespaces, defaultPrefix: "gir") {
             constants = entries.enumerate().map { Constant(node: $0.1, atIndex: $0.0) }.filter {
                 let name = $0.node
                 guard GIR.knownTypes[name] == nil else {
@@ -79,7 +79,7 @@ public class GIR {
         //
         // get all enums
         //
-        if let entries = xml.xpath("//gir:enumeration", namespaces: namespaces, defaultPrefix: "gir") {
+        if let entries = xml.xpath("/*/*/gir:enumeration", namespaces: namespaces, defaultPrefix: "gir") {
             enumerations = entries.enumerate().map { Enumeration(node: $0.1, atIndex: $0.0) }.filter {
                 let name = $0.node
                 guard GIR.knownTypes[name] == nil else {
@@ -93,7 +93,7 @@ public class GIR {
         //
         // get all type records
         //
-        if let recs = xml.xpath("//gir:record", namespaces: namespaces, defaultPrefix: "gir") {
+        if let recs = xml.xpath("/*/*/gir:record", namespaces: namespaces, defaultPrefix: "gir") {
             records = recs.enumerate().map { Record(node: $0.1, atIndex: $0.0) }.filter {
                 let name = $0.node
                 guard GIR.knownTypes[name] == nil else {
@@ -108,7 +108,7 @@ public class GIR {
         //
         // get all class records
         //
-        if let recs = xml.xpath("//gir:class", namespaces: namespaces, defaultPrefix: "gir") {
+        if let recs = xml.xpath("/*/*/gir:class", namespaces: namespaces, defaultPrefix: "gir") {
             classes = recs.enumerate().map { Class(node: $0.1, atIndex: $0.0) }.filter {
                 let name = $0.node
                 guard GIR.knownTypes[name] == nil else {

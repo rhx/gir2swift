@@ -106,7 +106,7 @@ public func swiftCode(alias: GIR.Alias) -> String {
 
 /// Swift code representation of a constant
 public func swiftCode(constant: GIR.Constant) -> String {
-    return swiftCode(constant, "public let \(constant.name.swift) = \(constant.type.swift) /* \(constant.value) */")
+    return swiftCode(constant, "public let \(constant.name.swift): \(constant.ctype.swift) = \(constant.value) /* \(constant.type.swift) */")
 }
 
 /// Magic error type for throwing
