@@ -172,7 +172,7 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
         let returnCode = isVoid ? "" : " -> \(returnType)"
         let throwsError = method.throwsError
         let throwCode = throwsError ? " throws" : ""
-        let deprecated = method.deprecated != nil ? "" : "@available(*, deprecated=1.0) "
+        let deprecated = method.deprecated != nil ? "@available(*, deprecated=1.0) " : ""
         let removeCode = !method.markedAsDeprecated && (method.deprecated != nil)
         let conditional = removeCode ? "#ifdef _COMPILE_DEPRECATED_CODE\n" : ""
         let closing_conditional = removeCode ? "#endif // _COMPILE_DEPRECATED_CODE\n" : ""
