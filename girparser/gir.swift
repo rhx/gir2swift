@@ -137,16 +137,18 @@ public class GIR {
 
     /// GIR named thing class
     public class Thing {
-        public let name: String         ///< type name without namespace/prefix
-        public let comment: String      ///< documentation
-        public let introspectable: Bool ///< is this thing introspectable?
-        public let deprecated: String?  ///< alternative to use if deprecated
+        public let name: String             ///< type name without namespace/prefix
+        public let comment: String          ///< documentation
+        public let introspectable: Bool     ///< is this thing introspectable?
+        public let deprecated: String?      ///< alternative to use if deprecated
+        public let markedAsDeprecated: Bool ///< explicitly marked as deprecated
 
-        public init(name: String, comment: String, introspectable: Bool = false, deprecated: String? = nil) {
+        public init(name: String, comment: String, introspectable: Bool = false, deprecated: String? = nil, markedAsDeprecated: Bool = false) {
             self.name = name
             self.comment = comment
             self.introspectable = introspectable
             self.deprecated = deprecated
+            self.markedAsDeprecated = markedAsDeprecated
         }
 
         public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name") {
@@ -155,6 +157,7 @@ public class GIR {
             comment = GIR.docs(children)
             deprecated = GIR.deprecatedDocumentation(children) ?? ( node.bool("deprecated") ? "This method is deprecated." : nil )
             introspectable = node.bool("introspectable")
+            markedAsDeprecated = node.bool("deprecated")
         }
     }
 

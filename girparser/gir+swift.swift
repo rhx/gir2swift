@@ -92,7 +92,7 @@ public func swiftCode(thing: GIR.Thing, _ postfix: String = "", indentation: Str
     let s = commentCode(thing, indentation: indentation)
     let t: String
     if let d = deprecatedCode(thing, indentation: indentation) {
-        t = s + d
+        t = s + "\n\(indentation)///\n\(indentation)/// **\(thing.name) is deprecated:**\n" + d
     } else {
         t = s
     }
@@ -106,7 +106,7 @@ public func swiftCode(alias: GIR.Alias) -> String {
 
 /// Swift code representation of a constant
 public func swiftCode(constant: GIR.Constant) -> String {
-    return swiftCode(constant, "public let \(constant.name.swift) = \(constant.type.swift) /* \(constant.value) */")
+    return swiftCode(constant, "public let \(constant.name.swift) = \(constant.type.swift) /* \(constant.ctype) \(constant.value) */")
 }
 
 /// Magic error type for throwing
@@ -172,12 +172,16 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
         let returnCode = isVoid ? "" : " -> \(returnType)"
         let throwsError = method.throwsError
         let throwCode = throwsError ? " throws" : ""
+        let deprecated = method.deprecated != nil ? "" : "@available(*, deprecated=1.0) "
+        let removeCode = !method.markedAsDeprecated && (method.deprecated != nil)
+        let conditional = removeCode ? "#ifdef _COMPILE_DEPRECATED_CODE\n" : ""
+        let closing_conditional = removeCode ? "#endif // _COMPILE_DEPRECATED_CODE\n" : ""
 //        let n = args.count
 //        print("\(method.name): \(n) arguments:")
 //        method.args.forEach {
 //            print("\($0.name)[instance=\($0.instance)]: \($0.type) = '\($0.ctype)'")
 //        }
-        return swiftCode(method, indentation + "public func \(method.name.swift)(" +
+        let code = swiftCode(method, indentation + "\(conditional)\(deprecated)public func \(method.name.swift)(" +
             args.filter { !$0.instance } .map(argumentCode).joinWithSeparator(", ") +
         ")\(throwCode)\(returnCode) {\n" + indentation + indentation +
             ( throwsError ? "var error: UnsafeMutablePointer<\(gerror)> = nil\n" + indentation + indentation : "") +
@@ -187,7 +191,8 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
             ")\n" + indentation +
             ( throwsError ? indentation + "guard error == nil else {\n" + indentation + indentation + indentation + "throw Error(ptr: error)\n" + indentation + indentation + "}\n" + indentation : "" ) +
             ( isVoid ? "" : indentation + "return \(rv.ctype.isCPointer ? "cast(rv)" : cast_to_swift("rv", forType: cType))\n" + indentation ) +
-        "}\n", indentation: indentation)
+        "}\n\(closing_conditional)", indentation: indentation)
+        return code
         }}
 }
 
