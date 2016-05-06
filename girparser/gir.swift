@@ -41,7 +41,7 @@ public class GIR {
         //
         // set up name space prefix
         //
-        if let ns = xml.xpath("/*/*/gir:namespace", namespaces: namespaces, defaultPrefix: "gir")?.generate().next() {
+        if let ns = xml.xpath("//gir:namespace", namespaces: namespaces, defaultPrefix: "gir")?.generate().next() {
             if let name = ns.attribute("name") {
                 prefix = name
             }
@@ -51,7 +51,7 @@ public class GIR {
         //
         // get all type alias records
         //
-        if let entries = xml.xpath("//gir:alias", namespaces: namespaces, defaultPrefix: "gir") {
+        if let entries = xml.xpath("/*/*/gir:alias", namespaces: namespaces, defaultPrefix: "gir") {
             aliases = entries.enumerate().map { Alias(node: $0.1, atIndex: $0.0) }.filter {
                 let name = $0.node
                 guard GIR.knownTypes[name] == nil else {
