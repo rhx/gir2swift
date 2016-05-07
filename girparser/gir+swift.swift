@@ -207,7 +207,7 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
             ( throwsError ? ", &error" : "" ) +
             ")\n" + indentation +
             ( throwsError ? indentation + "guard error == nil else {\n" + indentation + indentation + indentation + "throw Error(ptr: error)\n" + indentation + indentation + "}\n" + indentation : "" ) +
-            ( isVoid ? "" : indentation + "return \(cast2swift))\n" + indentation ) +
+            ( isVoid ? "" : indentation + "return \(cast2swift)\n" + indentation ) +
         "}\n\(closing_conditional)", indentation: indentation)
         return code
         }}
