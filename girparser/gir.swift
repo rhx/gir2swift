@@ -156,10 +156,11 @@ public class GIR {
         public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name") {
             name = node.attribute(nameAttr) ?? "Unknown\(i)"
             let children = node.children.lazy
+            let depr = node.bool("deprecated")
             comment = GIR.docs(children)
-            deprecated = GIR.deprecatedDocumentation(children) ?? ( node.bool("deprecated") ? "This method is deprecated." : nil )
+            markedAsDeprecated = depr
+            deprecated = GIR.deprecatedDocumentation(children) ?? ( depr ? "This method is deprecated." : nil )
             introspectable = node.bool("introspectable")
-            markedAsDeprecated = node.bool("deprecated")
             version = node.attribute("version")
         }
     }

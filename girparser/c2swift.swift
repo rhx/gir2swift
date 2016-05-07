@@ -16,6 +16,8 @@ private let reversecast = castables.reduce(Dictionary<String,String>()) {
     dict[$1.1] = $1.0
     return dict
 }
+private let reservedTypes: Set = ["String", "Array", "Optional", "Set"]
+private let typeNames: Set = reservedTypes.union(reversecast.keys)
 private let wsnl = NSCharacterSet.whitespaceAndNewlineCharacterSet()
 
 private let trueS  = "true"
@@ -32,12 +34,13 @@ func ∪<T>(left: Set<T>, right: Set<T>) -> Set<T> {
     return left.union(right)
 }
 let swiftKeywords = declarationKeywords ∪ statementKeywords ∪ expressionKeywords ∪ specificKeywords
+let reservedNames = typeNames ∪ swiftKeywords
 
 extension String {
     /// return a swift representation of an identifier string (escaped if necessary)
     var swift: String {
         if let s = castables[self] { return s }
-        guard !swiftKeywords.contains(self) else { return self + "_" }
+        guard !reservedNames.contains(self) else { return self + "_" }
         guard self != "void" else { return "Void" }
         guard self != "utf8" else { return "String" }
         guard let f = utf16.first else { return self }
@@ -107,14 +110,19 @@ extension String {
         return String(cs[s..<e])
     }
 
+    public func unwrappedCTypeWithCount(_ pointerCount: Int = 0, _ constCount: Int = 0) -> (cType: String, pointerCount: Int, constCount: Int) {
+        if let base = underlyingTypeForCPointer {
+            let (pointer, cc) = isCConst ? ("UnsafePointer", constCount+1) : ("UnsafeMutablePointer", constCount)
+            let t = base.unwrappedCTypeWithCount(pointerCount+1, cc)
+            let wrapped = pointer + "<\(t.cType)>"
+            return (cType: wrapped, pointerCount: t.pointerCount, constCount: t.constCount)
+        }
+        return (cType: typeWithoutConst, pointerCount: pointerCount, constCount: constCount)
+    }
+
     /// return the C type unwrapped and without const
     public var unwrappedCType: String {
-        if let base = underlyingTypeForCPointer {
-            let pointer = isCConst ? "UnsafePointer" : "UnsafeMutablePointer"
-            let wrapped = pointer + "<\(base.unwrappedCType)>"
-            return wrapped
-        }
-        return typeWithoutConst
+        return unwrappedCTypeWithCount().cType
     }
 
     /// return the Swift type for a given C type
@@ -149,4 +157,27 @@ func cast_to_swift(_ value: String, forType t: String) -> String {
 func cast_from_swift(_ value: String, forType t: String) -> String {
     if let s = reversecast[t] { return "\(s)(\(value))" }
     return value
+}
+
+typealias TypeCastTuple = (c: String, swift: String, toC: String, toSwift: String)
+
+/// return a C+Swift type pair
+func typeCastTuple(_ ctype: String, _ swiftType: String, varName: String = "rv") -> TypeCastTuple {
+    let u = ctype.unwrappedCTypeWithCount()
+    let ct = u.cType != "" ? u.cType : swiftType
+    let st = ct.swift
+    let cast = "cast(\(varName))"
+    let cswift: TypeCastTuple
+    switch (ct, st) {
+    case ("utf8", _), (_, "String"):
+        cswift = u.pointerCount == 1 ? (ct, st, varName, cast) : (ct, "[String]", varName, "asStringArray(\(cast))")
+        if u.pointerCount > 2 {
+            fputs("Warning: unhandled pointer count of \(u.pointerCount) for '\(ct)' as '\(st)'", stderr)
+        }
+    default:
+        cswift = (ct, st,
+            u.pointerCount == 0 ? cast_from_swift(varName, forType: st) : cast,
+            u.pointerCount == 0 ?   cast_to_swift(varName, forType: ct) : cast)
+    }
+    return cswift
 }

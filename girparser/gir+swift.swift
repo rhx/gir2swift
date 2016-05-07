@@ -47,6 +47,24 @@ public extension GIR {
 
         "private extension gboolean {\n" +
         "    private init(_ b: Bool) { self = b ? gboolean(1) : gboolean(0) }\n" +
+        "}\n\n" +
+
+        "private func asStringArray<T>(_ param: UnsafePointer<UnsafePointer<CChar>>) -> [String] {\n" +
+        "    var ptr = param\n" +
+        "    var rv = [String]()\n" +
+        "    while ptr.memory != nil {\n" +
+        "        if let s = String.fromCString(ptr.memory) {\n" +
+        "            rv.append(s)\n" +
+        "        }\n" +
+        "        ptr = ptr.successor()\n" +
+        "    }\n" +
+        "    return rv\n" +
+        "}\n\n" +
+
+        "private func asStringArray<T>(_ param: UnsafePointer<UnsafePointer<CChar>>, release: (UnsafePointer<T> -> Void)) -> [String] {\n" +
+        "    let rv = asString(param)\n" +
+        "    release(UnsafePointer<T>(param))\n" +
+        "    return rv\n" +
         "}\n\n"
     }
 }
@@ -167,8 +185,7 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
         let args = method.args.lazy
         let rv = method.returns
         let isVoid = rv.isVoid
-        let returnType = rv.ctype == "" ? rv.type.swift : rv.ctype.swiftRepresentationOfCType
-        let cType = rv.ctype == "" ? returnType : rv.ctype.unwrappedCType
+        let (/*cType*/_, returnType, /*cast2c*/_, cast2swift) = typeCastTuple(rv.ctype, rv.type.swift)
         let returnCode = isVoid ? "" : " -> \(returnType)"
         let throwsError = method.throwsError
         let throwCode = throwsError ? " throws" : ""
@@ -190,7 +207,7 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
             ( throwsError ? ", &error" : "" ) +
             ")\n" + indentation +
             ( throwsError ? indentation + "guard error == nil else {\n" + indentation + indentation + indentation + "throw Error(ptr: error)\n" + indentation + indentation + "}\n" + indentation : "" ) +
-            ( isVoid ? "" : indentation + "return \(rv.ctype.isCPointer ? "cast(rv)" : cast_to_swift("rv", forType: cType))\n" + indentation ) +
+            ( isVoid ? "" : indentation + "return \(cast2swift))\n" + indentation ) +
         "}\n\(closing_conditional)", indentation: indentation)
         return code
         }}
@@ -272,7 +289,8 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
 
 /// Swift code representation of a record
 public func swiftCode(_ e: GIR.Record) -> String {
-    let p = recordProtocolCode(e, parent: "")
+    let errorProtocol = e.ctype == gerror ? errorType : ""
+    let p = recordProtocolCode(e, parent: errorProtocol)
     let s = recordStructCode(e)
     let c = recordClassCode(e, parent: "")
     let e = recordProtocolExtensionCode(e)
