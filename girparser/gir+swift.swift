@@ -269,7 +269,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
             "g_free(UnsafeMutablePointer(ptr))\n" + indentation +
         "}\n\n" +
     "}\n\n" +
-        "public extension \(e.name) {\n" + indentation +
+        "public extension \(e.name.swift) {\n" + indentation +
         "public convenience init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + indentation + indentation +
             "self.init(ptr: UnsafeMutablePointer<\(e.ctype.swift)>(cPointer))\n" + indentation +
         "}\n\n" + indentation +
