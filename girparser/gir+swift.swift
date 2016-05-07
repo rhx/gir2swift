@@ -225,12 +225,14 @@ public func argumentCode(_ arg: GIR.Argument) -> String {
 }
 
 
-/// Swift code for argument
+/// Swift code for passing an argument
 public func toSwift(_ arg: GIR.Argument) -> String {
-    let isPtr = arg.ctype.isCPointer
-    return (isPtr ? "cast(" : "") +
-        (arg.instance ? "ptr" : (isPtr ? arg.name.swift : arg.name.swift.cast_as_c(arg.type.swift)) + (arg.isKnownRecord ? ".ptr" : "")) +
-    (isPtr ? ")" : "")
+    let types = typeCastTuple(arg.ctype, arg.type.swift, varName: arg.instance ? "ptr" : (arg.name.swift + (arg.isKnownRecord ? ".ptr" : "")))
+    return types.toC
+//    let isPtr = arg.ctype.isCPointer
+//    return (isPtr ? "cast(" : "") +
+//        (arg.instance ? "ptr" : (isPtr ? arg.name.swift : arg.name.swift.cast_as_c(arg.type.swift)) + (arg.isKnownRecord ? ".ptr" : "")) +
+//    (isPtr ? ")" : "")
 }
 
 

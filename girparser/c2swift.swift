@@ -132,12 +132,12 @@ extension String {
 
     /// return the string (value) cast to Swift
     func cast_as_swift(_ type: String) -> String {
-        return cast_to_swift(self, forType: type)
+        return cast_to_swift(self, forCType: type)
     }
 
     /// return the string (value) cast to Swift
-    func cast_as_c(_ type: String) -> String {
-        return cast_from_swift(self, forType: type)
+    func cast_as_c(_ cType: String) -> String {
+        return cast_from_swift(self, forCType: cType)
     }
 }
 
@@ -148,14 +148,14 @@ func toSwift(_ ctype: String) -> String {
 
 
 /// C type cast to swift
-func cast_to_swift(_ value: String, forType t: String) -> String {
+func cast_to_swift(_ value: String, forCType t: String) -> String {
     if let s = castables[t] { return "\(s)(\(s == "Bool" ? value + " != 0" : value))" }
     return value
 }
 
 /// C type cast from swift
-func cast_from_swift(_ value: String, forType t: String) -> String {
-    if let s = reversecast[t] { return "\(s)(\(value))" }
+func cast_from_swift(_ value: String, forCType t: String) -> String {
+    if let s = castables[t] { return "\(t)(\(s == "Bool" ? value + " ? 1 : 0": value))"  }
     return value
 }
 
@@ -176,8 +176,8 @@ func typeCastTuple(_ ctype: String, _ swiftType: String, varName: String = "rv")
         }
     default:
         cswift = (ct, st,
-            u.pointerCount == 0 ? cast_from_swift(varName, forType: st) : cast,
-            u.pointerCount == 0 ?   cast_to_swift(varName, forType: ct) : cast)
+            u.pointerCount == 0 ? cast_from_swift(varName, forCType: ct) : cast,
+            u.pointerCount == 0 ?   cast_to_swift(varName, forCType: ct) : cast)
     }
     return cswift
 }
