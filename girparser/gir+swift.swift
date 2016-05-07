@@ -49,7 +49,7 @@ public extension GIR {
         "    private init(_ b: Bool) { self = b ? gboolean(1) : gboolean(0) }\n" +
         "}\n\n" +
 
-        "private func asStringArray<T>(_ param: UnsafePointer<UnsafePointer<CChar>>) -> [String] {\n" +
+        "private func asStringArray(_ param: UnsafePointer<UnsafePointer<CChar>>) -> [String] {\n" +
         "    var ptr = param\n" +
         "    var rv = [String]()\n" +
         "    while ptr.memory != nil {\n" +
@@ -62,7 +62,7 @@ public extension GIR {
         "}\n\n" +
 
         "private func asStringArray<T>(_ param: UnsafePointer<UnsafePointer<CChar>>, release: (UnsafePointer<T> -> Void)) -> [String] {\n" +
-        "    let rv = asString(param)\n" +
+        "    let rv = asStringArray(param)\n" +
         "    release(UnsafePointer<T>(param))\n" +
         "    return rv\n" +
         "}\n\n"
