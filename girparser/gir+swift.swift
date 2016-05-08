@@ -126,24 +126,28 @@ public func swiftCode(constant: GIR.Constant) -> String {
 /// Magic error type for throwing
 let errorType = "ErrorType"
 
+/// Escaped version of the Error type
+let errorTypeEscaped = errorType + "Enum"
+
 /// underlying error type
 let gerror = "GError"
 
 /// Swift code type alias representation of an enum
 public func typeAlias(_ e: GIR.Enumeration) -> String {
-    let name = e.name.swift
-    guard name != errorType else {
-        return swiftCode(e, "public protocol \(e.type.swift): \(errorType) {}")
-    }
-    return swiftCode(e, "public typealias \(e.name.swift) = \(e.type.swift)")
+    let swift = e.name.swift
+    let name = swift == errorType ? errorTypeEscaped : swift
+    return swiftCode(e, "public typealias \(name) = \(e.type.swift)")
 }
 
 /// Swift code representation of an enum
 public func swiftCode(_ e: GIR.Enumeration) -> String {
     let alias = typeAlias(e)
     let swift = e.name.swift
-    let name = swift == errorType ? e.type.swift : swift
-    let code = alias + "\n\npublic extension \(name) {\n" + e.members.map(valueCode("    ")).joinWithSeparator("\n") + "\n}"
+    let isErrorType = swift == errorType
+    let name = isErrorType ? errorTypeEscaped : swift
+    let ext = isErrorType ? ": \(errorType)" : ""
+    let pub = isErrorType ? "" : "public "
+    let code = alias + "\n\n\(pub)extension \(name)\(ext) {\n" + e.members.map(valueCode("    ")).joinWithSeparator("\n") + "\n}"
     return code
 }
 
