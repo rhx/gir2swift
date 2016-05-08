@@ -33,10 +33,6 @@ public extension GIR {
         "    return UnsafeMutablePointer<T>(param)\n" +
         "}\n\n" +
 
-        "private func cast<T>(_ param: COpaquePointer) -> UnsafeMutablePointer<T> {\n" +
-        "    return UnsafeMutablePointer<T>(param)\n" +
-        "}\n\n" +
-
         "private func cast<T>(_ param: UnsafePointer<T>) -> COpaquePointer {\n" +
         "    return COpaquePointer(param)\n" +
         "}\n\n" +

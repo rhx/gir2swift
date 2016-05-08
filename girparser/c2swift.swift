@@ -7,7 +7,7 @@
 //
 import Foundation
 
-private let castables = [ "gint" : "Int", "guint" : "UInt", "glong" : "Int",
+private let castables = [ "gint" : "Int", "guint" : "UInt", "glong" : "Int", "char" : "Int8",
     "gint8"  : "Int8",  "guint8"  : "UInt8",  "gint16" : "Int16", "guint16" : "UInt16",
     "gint32" : "Int32", "guint32" : "UInt32", "gint64" : "Int64", "guint64" : "UInt64",
     "gulong" : "UInt",  "gsize"   : "Int",  "gboolean" : "Bool", "gpointer" : "COpaquePointer" ]
@@ -16,6 +16,7 @@ private let reversecast = castables.reduce(Dictionary<String,String>()) {
     dict[$1.1] = $1.0
     return dict
 }
+private let swiftReplacementsForC = [ "char" : "CChar", "int" : "CInt", "void" : "Void", "utf8" : "String" ]
 private let reservedTypes: Set = ["String", "Array", "Optional", "Set"]
 private let typeNames: Set = reservedTypes.union(reversecast.keys)
 private let wsnl = NSCharacterSet.whitespaceAndNewlineCharacterSet()
@@ -37,12 +38,17 @@ let swiftKeywords = declarationKeywords ∪ statementKeywords ∪ expressionKeyw
 let reservedNames = typeNames ∪ swiftKeywords
 
 extension String {
+    /// return a valid Swift type for an underlying C type
+    var swiftType: String {
+        if let s = swiftReplacementsForC[self] { return s }
+        return self
+    }
+
     /// return a swift representation of an identifier string (escaped if necessary)
     var swift: String {
         if let s = castables[self] { return s }
+        if let s = swiftReplacementsForC[self] { return s }
         guard !reservedNames.contains(self) else { return self + "_" }
-        guard self != "void" else { return "Void" }
-        guard self != "utf8" else { return "String" }
         guard let f = utf16.first else { return self }
         guard isalpha(Int32(f)) != 0 || Character(UnicodeScalar(f)) == "_" else { return "_" + self }
         return self
@@ -67,6 +73,26 @@ extension String {
             p = ns
         }
         return p
+    }
+
+    /// return the C type without a leading "const"
+    public var typeWithoutLeadingConst: String {
+        let ns = stringByTrimmingCharactersInSet(wsnl)
+        let p: String
+        if (ns.hasPrefix("const ")) {
+            let cs = ns.characters
+            let s = cs.startIndex.advancedBy(5)
+            let e = cs.endIndex
+            p = String(ns.characters[s..<e])
+        } else {
+            p = ns
+        }
+        return p
+    }
+
+    /// return the C type without a leading or trailing "const"
+    public var typeWithoutLeadingOrTrailingConst: String {
+        return typeWithoutLeadingConst.typeWithoutTrailingConst
     }
 
     /// return the C type without "const"
@@ -117,7 +143,7 @@ extension String {
             let wrapped = pointer + "<\(t.cType)>"
             return (cType: wrapped, pointerCount: t.pointerCount, constCount: t.constCount)
         }
-        return (cType: typeWithoutConst, pointerCount: pointerCount, constCount: constCount)
+        return (cType: typeWithoutLeadingOrTrailingConst.swiftType, pointerCount: pointerCount, constCount: constCount)
     }
 
     /// return the C type unwrapped and without const
