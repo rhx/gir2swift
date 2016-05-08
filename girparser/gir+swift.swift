@@ -172,8 +172,9 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
 /// Default implementation for record methods as protocol extension
 public func recordProtocolExtensionCode(_ e: GIR.Record, indentation: String = "    ") -> String {
     let mcode = methodCode(indentation)(e)
+//    let methods = e.methods + e.functions
     let code = "public extension \(e.node)Protocol {\n" +
-        e.methods.lazy.map(mcode).joinWithSeparator("\n") +
+        e.methods.map(mcode).joinWithSeparator("\n") +
     "}\n\n"
     return code
 }
@@ -182,6 +183,7 @@ public func recordProtocolExtensionCode(_ e: GIR.Record, indentation: String = "
 /// Swift code for methods (with a given indentation)
 public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> String {
     return { (record: GIR.Record) -> GIR.Method-> String in { (method: GIR.Method) -> String in
+        let name = method.name.isEmpty ? method.cname : method.name
         let args = method.args.lazy
         let rv = method.returns
         let isVoid = rv.isVoid
@@ -194,11 +196,11 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
         let conditional = removeCode ? "#ifdef _COMPILE_DEPRECATED_CODE\n" : ""
         let closing_conditional = removeCode ? "#endif // _COMPILE_DEPRECATED_CODE\n" : ""
 //        let n = args.count
-//        print("\(method.name): \(n) arguments:")
+//        print("\(name): \(n) arguments:")
 //        method.args.forEach {
 //            print("\($0.name)[instance=\($0.instance)]: \($0.type) = '\($0.ctype)'")
 //        }
-        let code = swiftCode(method, indentation + "\(conditional)\(deprecated)public func \(method.name.swift)(" +
+        let code = swiftCode(method, indentation + "\(conditional)\(deprecated)public func \(name.swift)(" +
             args.filter { !$0.instance } .map(argumentCode).joinWithSeparator(", ") +
         ")\(throwCode)\(returnCode) {\n" + indentation + indentation +
             ( throwsError ? "var error: UnsafeMutablePointer<\(gerror)> = nil\n" + indentation + indentation : "") +

@@ -247,7 +247,7 @@ public class GIR {
 
         /// return whether the give C type is void
         override public var isVoid: Bool {
-            let t = ctype == "" ? type.swift : toSwift(ctype)
+            let t = ctype.isEmpty ? type.swift : toSwift(ctype)
             return t.hasPrefix("Void")
         }
     }
