@@ -199,24 +199,31 @@ public class GIR {
 
     /// a type with an underlying C type entry
     public class CType: Type {
-        public let ctype: String        ///< underlying C type
+        public let ctype: String            ///< underlying C type
+        public let containedTypes: [CType]  ///< list of contained types
 
-        public init(name: String, type: String, ctype: String, comment: String, introspectable: Bool = false, deprecated: String? = nil) {
+        public init(name: String, type: String, ctype: String, comment: String, introspectable: Bool = false, deprecated: String? = nil, contains: [CType] = []) {
             self.ctype = ctype
+            self.containedTypes = contains
             super.init(name: name, type: type, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
         /// factory method to construct an alias from XML
         public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", cTypeAttr: String? = nil) {
+            containedTypes = node.children.filter { $0.name == "type" }.map { CType(node: $0, atIndex: i, cTypeAttr: "type") }
             if let cta = cTypeAttr {
                 ctype = node.attribute(cta) ?? "Void /* unknown \(i) */"
             } else {
-                let children = node.children.lazy
-                var types = children.filter { $0.name == "type" }.generate()
-                if let typeEntry = types.next() {
-                    ctype = typeEntry.attribute("name") ?? (typeEntry.attribute("type") ?? "Void /* unknown type \(i) */")
+                if node.name == "array" {
+                    ctype = node.attribute("type") ?? "Void /* unknown \(i) */"
                 } else {
-                    ctype = "Void /* unknown type \(i) */"
+                    let children = node.children.lazy
+                    var types = children.filter { $0.name == "type" }.generate()
+                    if let typeEntry = types.next() {
+                        ctype = typeEntry.attribute("name") ?? (typeEntry.attribute("type") ?? "Void /* unknown type \(i) */")
+                    } else {
+                        ctype = "Void /* unknown type \(i) */"
+                    }
                 }
             }
             super.init(node: node, atIndex: i, nameAttr: nameAttr, typeAttr: typeAttr)
@@ -224,7 +231,16 @@ public class GIR {
 
         /// factory method to construct an alias from XML with types taken from children
         public init(fromChildrenOf node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type") {
-            let (type, ctype) = GIR.types(node, at: i)
+            let type: String
+            let ctype: String
+            if let array = node.children.lazy.filter({ $0.name == "array" }).first {
+                containedTypes = array.children.filter { $0.name == "type" }.map { CType(node: $0, atIndex: i, cTypeAttr: "type") }
+                ctype = array.attribute("type") ?? "Void /* unknown ctype \(i) */"
+                type  = array.attribute("name") ?? "Void /* unknown type \(i) */"
+            } else {
+                containedTypes = []
+                (type, ctype) = GIR.types(node, at: i)
+            }
             self.ctype = ctype
             super.init(node: node, atIndex: i, withType: type, nameAttr: nameAttr)
         }
