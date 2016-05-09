@@ -185,6 +185,9 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
     return { (record: GIR.Record) -> GIR.Method-> String in { (method: GIR.Method) -> String in
         let name = method.name.isEmpty ? method.cname : method.name
         let args = method.args.lazy
+        guard args.filter({ $0.varargs }).first == nil else {
+            return "\n\(indentation)// *** \(name)() is not available because it has a varargs (...) parameter!\n\n"
+        }
         let rv = method.returns
         let isVoid = rv.isVoid
         let (/*cType*/_, returnType, /*cast2c*/_, cast2swift) = typeCastTuple(rv.ctype, rv.type.swift)
@@ -192,15 +195,15 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
         let throwsError = method.throwsError
         let throwCode = throwsError ? " throws" : ""
         let deprecated = method.deprecated != nil ? "@available(*, deprecated=1.0) " : ""
-        let removeCode = !method.markedAsDeprecated && (method.deprecated != nil)
-        let conditional = removeCode ? "#ifdef _COMPILE_DEPRECATED_CODE\n" : ""
-        let closing_conditional = removeCode ? "#endif // _COMPILE_DEPRECATED_CODE\n" : ""
+//        let removeCode = !method.markedAsDeprecated && (method.deprecated != nil)
+//        let conditional = removeCode ? "#ifdef _COMPILE_DEPRECATED_CODE\n" : ""
+//        let closing_conditional = removeCode ? "#endif // _COMPILE_DEPRECATED_CODE\n" : ""
 //        let n = args.count
 //        print("\(name): \(n) arguments:")
 //        method.args.forEach {
 //            print("\($0.name)[instance=\($0.instance)]: \($0.type) = '\($0.ctype)'")
 //        }
-        let code = swiftCode(method, indentation + "\(conditional)\(deprecated)public func \(name.swift)(" +
+        let code = swiftCode(method, indentation + "\(deprecated)public func \(name.swift)(" +
             args.filter { !$0.instance } .map(argumentCode).joinWithSeparator(", ") +
         ")\(throwCode)\(returnCode) {\n" + indentation + indentation +
             ( throwsError ? "var error: UnsafeMutablePointer<\(gerror)> = nil\n" + indentation + indentation : "") +
@@ -210,7 +213,7 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
             ")\n" + indentation +
             ( throwsError ? indentation + "guard error == nil else {\n" + indentation + indentation + indentation + "throw Error(ptr: error)\n" + indentation + indentation + "}\n" + indentation : "" ) +
             ( isVoid ? "" : indentation + "return \(cast2swift)\n" + indentation ) +
-        "}\n\(closing_conditional)", indentation: indentation)
+        "}\n", indentation: indentation)
         return code
         }}
 }

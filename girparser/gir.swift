@@ -387,14 +387,24 @@ public class GIR {
     /// data type representing a function/method argument or return type
     public class Argument: CType {
         public let instance: Bool       ///< is this an instance parameter?
+        public let _varargs: Bool       ///< is this a varargs (...) parameter?
 
-        public init(name: String, type: String, ctype: String, instance: Bool, comment: String, introspectable: Bool = false, deprecated: String? = nil) {
+        /// indicate whether the given parameter is varargs
+        public var varargs: Bool {
+            return _varargs || name.hasPrefix("...")
+        }
+
+        /// default constructor
+        public init(name: String, type: String, ctype: String, instance: Bool, comment: String, introspectable: Bool = false, deprecated: String? = nil, varargs: Bool = false) {
             self.instance = instance
+            _varargs = varargs
             super.init(name: name, type: type, ctype: ctype, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
+        /// XML constructor
         public init(node: XMLElement, atIndex i: Int) {
             instance = node.name.hasPrefix("instance")
+            _varargs = node.children.lazy.findFirstWhere({ $0.name == "varargs"}) != nil
             super.init(fromChildrenOf: node, atIndex: i)
         }
     }

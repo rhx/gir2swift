@@ -16,7 +16,7 @@ private let reversecast = castables.reduce(Dictionary<String,String>()) {
     dict[$1.1] = $1.0
     return dict
 }
-private let swiftReplacementsForC = [ "char" : "CChar", "int" : "CInt", "void" : "Void", "utf8" : "String" ]
+private let swiftReplacementsForC = [ "char" : "CChar", "int" : "CInt", "void" : "Void", "utf8" : "String", "va_list" : "CVaListPointer" ]
 private let reservedTypes: Set = ["String", "Array", "Optional", "Set"]
 private let typeNames: Set = reservedTypes.union(reversecast.keys)
 private let wsnl = NSCharacterSet.whitespaceAndNewlineCharacterSet()
