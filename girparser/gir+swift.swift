@@ -76,7 +76,7 @@ public extension GIR.Argument {
 
     /// return whether the receiver is an instance of the given record (class)
     public func isInstanceOf(_ record: GIR.Record?) -> Bool {
-        if let r = record where r.node == type.swift {
+        if let r = record where r.node == type.withoutNameSpace {
             return true
         } else {
             return false
@@ -172,9 +172,9 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
 /// Default implementation for record methods as protocol extension
 public func recordProtocolExtensionCode(_ e: GIR.Record, indentation: String = "    ") -> String {
     let mcode = methodCode(indentation)(e)
-//    let methods = e.methods + e.functions
+    let methods = e.methods + e.functions.filter { $0.args.lazy.filter({ $0.isInstanceOf(e) }).first != nil }
     let code = "public extension \(e.node)Protocol {\n" +
-        e.methods.map(mcode).joinWithSeparator("\n") +
+        methods.map(mcode).joinWithSeparator("\n") +
     "}\n\n"
     return code
 }
@@ -203,8 +203,9 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
 //        method.args.forEach {
 //            print("\($0.name)[instance=\($0.instance)]: \($0.type) = '\($0.ctype)'")
 //        }
+        let toSwift = convertArgumentToSwiftFor(record)
         let code = swiftCode(method, indentation + "\(deprecated)public func \(name.swift)(" +
-            args.filter { !$0.instance } .map(argumentCode).joinWithSeparator(", ") +
+            args.filter { !$0.instance && !$0.isInstanceOf(record) } .map(argumentCode).joinWithSeparator(", ") +
         ")\(throwCode)\(returnCode) {\n" + indentation + indentation +
             ( throwsError ? "var error: UnsafeMutablePointer<\(gerror)> = nil\n" + indentation + indentation : "") +
             ( isVoid ? "" : "let rv = " ) +
@@ -230,11 +231,21 @@ public func argumentCode(_ arg: GIR.Argument) -> String {
 }
 
 
-/// Swift code for passing an argument
+/// Swift code for passing an argument to a free standing function
 public func toSwift(_ arg: GIR.Argument) -> String {
     let types = typeCastTuple(arg.ctype, arg.type.swift, varName: arg.instance ? "ptr" : (arg.name.swift + (arg.isKnownRecord ? ".ptr" : "")))
     let param = types.toC.hasSuffix("ptr") ? "cast(\(types.toC))" : types.toC
     return param
+}
+
+
+/// Swift code for passing an argument to a method of a record / class
+public func convertArgumentToSwiftFor(_ record: GIR.Record) -> GIR.Argument -> String {
+    return { arg in
+        let types = typeCastTuple(arg.ctype, arg.type.swift, varName: arg.instance || arg.isInstanceOf(record) ? "ptr" : (arg.name.swift + (arg.isKnownRecord ? ".ptr" : "")))
+        let param = types.toC.hasSuffix("ptr") ? "cast(\(types.toC))" : types.toC
+        return param
+    }
 }
 
 

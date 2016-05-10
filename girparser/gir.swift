@@ -11,6 +11,17 @@
     import Darwin
 #endif
 
+extension String {
+    var withoutNameSpace: String {
+        let chars = characters
+        guard let dot = chars.enumerate().filter({ $0.1 == "." }).last else {
+            return self
+        }
+        return String(chars[chars.startIndex.advancedBy(dot.index+1)..<chars.endIndex])
+    }
+}
+
+
 public class GIR {
     public let xml: XMLDocument
     public var prefix = ""
