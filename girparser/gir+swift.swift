@@ -182,7 +182,10 @@ public func recordProtocolExtensionCode(_ e: GIR.Record, indentation: String = "
 
 /// Swift code for methods (with a given indentation)
 public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> String {
-    return { (record: GIR.Record) -> GIR.Method-> String in { (method: GIR.Method) -> String in
+  return { (record: GIR.Record) -> GIR.Method-> String in
+    let doubleIndent = indentation + indentation
+    let call = callCode(record, indentation: doubleIndent)
+      return { (method: GIR.Method) -> String in
         let name = method.name.isEmpty ? method.cname : method.name
         let args = method.args.lazy
         guard args.filter({ $0.varargs }).first == nil else {
@@ -203,22 +206,32 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
 //        method.args.forEach {
 //            print("\($0.name)[instance=\($0.instance)]: \($0.type) = '\($0.ctype)'")
 //        }
-        let toSwift = convertArgumentToSwiftFor(record)
         let code = swiftCode(method, indentation + "\(deprecated)public func \(name.swift)(" +
             args.filter { !$0.instance && !$0.isInstanceOf(record) } .map(argumentCode).joinWithSeparator(", ") +
-        ")\(throwCode)\(returnCode) {\n" + indentation + indentation +
-            ( throwsError ? "var error: UnsafeMutablePointer<\(gerror)> = nil\n" + indentation + indentation : "") +
-            ( isVoid ? "" : "let rv = " ) +
-        "\(method.cname.swift)(\(args.map(toSwift).joinWithSeparator(", "))" +
-            ( throwsError ? ", &error" : "" ) +
-            ")\n" + indentation +
-            ( throwsError ? indentation + "guard error == nil else {\n" + indentation + indentation + indentation + "throw Error(ptr: error)\n" + indentation + indentation + "}\n" + indentation : "" ) +
+        ")\(throwCode)\(returnCode) {\n" + doubleIndent + call(method) + indentation +
             ( isVoid ? "" : indentation + "return \(cast2swift)\n" + indentation ) +
         "}\n", indentation: indentation)
         return code
-        }}
+      }
+   }
 }
 
+
+/// Swift code for calling the underlying function and assigning the raw return value
+public func callCode(_ record: GIR.Record, indentation: String) -> GIR.Method -> String {
+    let toSwift = convertArgumentToSwiftFor(record)
+    return { method in
+        let throwsError = method.throwsError
+        let args = method.args // not .lazy
+        let rv = method.returns
+        let isVoid = rv.isVoid
+        let code = ( throwsError ? "var error: UnsafeMutablePointer<\(gerror)> = nil\n" + indentation : "") +
+        ( isVoid ? "" : "let rv = " ) +
+        "\(method.cname.swift)(\(args.map(toSwift).joinWithSeparator(", "))" +
+        ( throwsError ? (", &error)\n" + indentation + "guard error == nil else {\n" + indentation + indentation + "throw Error(ptr: error)\n" + indentation + "}\n") : ")\n" )
+        return code
+    }
+}
 
 /// Swift code for methods
 public func argumentCode(_ arg: GIR.Argument) -> String {
