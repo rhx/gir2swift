@@ -68,11 +68,19 @@ public extension GIR {
 
 /// Swift extension for arguments
 public extension GIR.Argument {
-    /// return whether the receiver is a known type
+    /// indicates whether the receiver is a known type
     public var isKnownType: Bool { return GIR.knownTypes[type.swift] != nil }
 
-    /// return whether the receiver is a known class or record
+    /// indicates whether the receiver is a known class or record
     public var isKnownRecord: Bool { return GIR.knownRecords[type.swift] != nil }
+
+    /// indicates whether the receiver is any known kind of pointer
+    public var isAnyKindOfPointer: Bool {
+        return ctype.isGPointer || ctype.isPointer || ctype.isCastablePointer || type.isSwiftPointer
+    }
+
+    /// indicates whether the receiver is an array of scalar values
+    public var isScalarArray: Bool { return isArray && !isAnyKindOfPointer }
 
     /// return whether the receiver is an instance of the given record (class)
     public func isInstanceOf(_ record: GIR.Record?) -> Bool {
@@ -358,9 +366,11 @@ public func constructorPrefix(_ method: GIR.Method) -> String {
 public func argumentCode(_ arg: GIR.Argument) -> String {
     let name = arg.name.swift
     let ctype = arg.ctype
-    let swift = arg.type.swift
+    let type = arg.type
+    let array = arg.isScalarArray
+    let swift = array ? type.swiftType : type.swift
     let isPtr  = ctype.isPointer
-    let code = "\(name): \(isPtr ? (arg.isKnownRecord ? swift + "Protocol" : ctype.swiftRepresentationOfCType) : swift)"
+    let code = "\(array ? "inout " : "")\(name): \(array ? "[" : "")\(isPtr ? (arg.isKnownRecord ? swift + "Protocol" : ctype.swiftRepresentationOfCType) : swift)\(array ? "]" : "")"
     return code
 }
 
@@ -376,6 +386,7 @@ public func toSwift(_ arg: GIR.Argument) -> String {
 /// Swift code for passing an argument to a method of a record / class
 public func convertArgumentToSwiftFor(_ record: GIR.Record?) -> GIR.Argument -> String {
     return { arg in
+        guard !arg.isScalarArray else { return "&" + arg.name.swift }
         let types = typeCastTuple(arg.ctype, arg.type.swift, varName: arg.instance || arg.isInstanceOf(record) ? "ptr" : (arg.name.swift + (arg.isKnownRecord ? ".ptr" : "")))
         let param = types.toC.hasSuffix("ptr") ? "cast(\(types.toC))" : types.toC
         return param

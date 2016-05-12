@@ -7,11 +7,17 @@
 //
 import Foundation
 
-private let castables = [ " gint" : "CInt",    "glong" : "CLong",   "guint" : "CUnsignedInt", "char" : "CChar",
+private let castableScalars = [  "gint" : "CInt",    "glong" : "CLong",   "guint" : "CUnsignedInt", "char" : "CChar",
     "gint8"  : "Int8",  "guint8"  : "UInt8",  "gint16" : "Int16", "guint16" : "UInt16",
     "gint32" : "Int32", "guint32" : "UInt32", "gint64" : "Int64", "guint64" : "UInt64",
-    "gulong" : "CUnsignedLong",  "gsize"   : "Int",  "gboolean" : "Bool", "gpointer" : "COpaquePointer" ]
-private let reversecast = castables.reduce(Dictionary<String,String>()) {
+    "gulong" : "CUnsignedLong",  "gsize"   : "Int",  "gboolean" : "Bool"]
+private let castablePointers = [ "gpointer" : "COpaquePointer" ]
+private let reversePointers = castablePointers.reduce(Dictionary<String,String>()) {
+    var dict = $0
+    dict[$1.1] = $1.0
+    return dict
+}
+private let reversecast = castableScalars.reduce(reversePointers) {
     var dict = $0
     dict[$1.1] = $1.0
     return dict
@@ -41,24 +47,31 @@ extension String {
     /// return a valid Swift type for an underlying C type
     var swiftType: String {
         if let s = swiftReplacementsForC[self] { return s }
-        return self
-    }
-
-    /// return a swift representation of an identifier string (escaped if necessary)
-    var swift: String {
-        if let s = castables[self] { return s }
-        if let s = swiftReplacementsForC[self] { return s }
-        guard !reservedNames.contains(self) else { return self + "_" }
         guard let f = utf16.first else { return self }
         guard isalpha(Int32(f)) != 0 || Character(UnicodeScalar(f)) == "_" else { return "_" + self }
         return self
     }
 
-    /// return whether the type represented by the receiver is a constant
+    /// return a swift representation of an identifier string (escaped if necessary)
+    var swift: String {
+        if let s = castableScalars[self] { return s }
+        if let s = castablePointers[self] { return s }
+        let s = swiftType
+        guard !reservedNames.contains(s) else { return s + "_" }
+        return s
+    }
+
+    /// indicate whether the type represented by the receiver is a constant
     public var isCConst: Bool {
         let ns = stringByTrimmingCharactersInSet(wsnl)
         return ns.hasPrefix("const ") || ns.containsString(" const")
     }
+
+    /// indicate whether the given string is a known g pointer type
+    public var isCastablePointer: Bool { return castablePointers[self] != nil }
+
+    /// indicate whether the given string is a knowns Swift pointer type
+    public var isSwiftPointer: Bool { return hasSuffix("Pointer") }
 
     /// return the C type without a trailing "const"
     public var typeWithoutTrailingConst: String {
@@ -175,13 +188,13 @@ func toSwift(_ ctype: String) -> String {
 
 /// C type cast to swift
 func cast_to_swift(_ value: String, forCType t: String) -> String {
-    if let s = castables[t] { return "\(s)(\(s == "Bool" ? value + " != 0" : value))" }
+    if let s = castableScalars[t] { return "\(s)(\(s == "Bool" ? value + " != 0" : value))" }
     return value
 }
 
 /// C type cast from swift
 func cast_from_swift(_ value: String, forCType t: String) -> String {
-    if let s = castables[t] { return "\(t)(\(s == "Bool" ? value + " ? 1 : 0": value))"  }
+    if let s = castableScalars[t] { return "\(t)(\(s == "Bool" ? value + " ? 1 : 0": value))"  }
     return value
 }
 
@@ -190,20 +203,21 @@ typealias TypeCastTuple = (c: String, swift: String, toC: String, toSwift: Strin
 /// return a C+Swift type pair
 func typeCastTuple(_ ctype: String, _ swiftType: String, varName: String = "rv", forceCast: Bool = false) -> TypeCastTuple {
     let u = ctype.unwrappedCTypeWithCount()
+    let nPointers = u.pointerCount + ((swiftType.isPointer || ctype.isPointer) ? 1 : 0)
     let ct = u.cType != "" ? u.cType : swiftType
     let st = ct.swift
     let cast = "cast(\(varName))"
     let cswift: TypeCastTuple
     switch (ct, st) {
     case ("utf8", _), (_, "String"):
-        cswift = u.pointerCount == 1 ? (ct, st, varName, cast) : (ct, "[String]", varName, "asStringArray(\(cast))")
-        if u.pointerCount > 2 {
-            fputs("Warning: unhandled pointer count of \(u.pointerCount) for '\(ct)' as '\(st)'", stderr)
+        cswift = nPointers == 1 ? (ct, st, varName, cast) : (ct, "[String]", varName, "asStringArray(\(cast))")
+        if nPointers > 2 {
+            fputs("Warning: unhandled pointer count of \(nPointers) for '\(ct)' as '\(st)'", stderr)
         }
     default:
         cswift = (ct, st,
-            forceCast || u.pointerCount != 0 ? cast : cast_from_swift(varName, forCType: ct),
-            forceCast || u.pointerCount != 0 ? cast : cast_to_swift(varName, forCType: ct))
+            forceCast || nPointers != 0 ? cast : cast_from_swift(varName, forCType: ct),
+            forceCast || nPointers != 0 ? cast : cast_to_swift(varName, forCType: ct))
     }
     return cswift
 }

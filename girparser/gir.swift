@@ -213,6 +213,7 @@ public class GIR {
         public let ctype: String            ///< underlying C type
         public let containedTypes: [CType]  ///< list of contained types
 
+        /// designated initialiser
         public init(name: String, type: String, ctype: String, comment: String, introspectable: Bool = false, deprecated: String? = nil, contains: [CType] = []) {
             self.ctype = ctype
             self.containedTypes = contains
@@ -247,7 +248,7 @@ public class GIR {
             if let array = node.children.lazy.filter({ $0.name == "array" }).first {
                 containedTypes = array.children.filter { $0.name == "type" }.map { CType(node: $0, atIndex: i, cTypeAttr: "type") }
                 ctype = array.attribute("type") ?? "Void /* unknown ctype \(i) */"
-                type  = array.attribute("name") ?? "Void /* unknown type \(i) */"
+                type  = array.attribute("name") ?? ctype
             } else {
                 containedTypes = []
                 (type, ctype) = GIR.types(node, at: i)
@@ -261,6 +262,9 @@ public class GIR {
             let t = ctype.isEmpty ? type.swift : toSwift(ctype)
             return t.hasPrefix("Void")
         }
+
+        /// return whether the type is an array
+        public var isArray: Bool { return !containedTypes.isEmpty }
     }
 
     /// a type alias is just a type with an underlying C type
