@@ -326,14 +326,23 @@ public func constructorPrefix(_ method: GIR.Method) -> String {
     guard let from = components.lazy.enumerate().filter({ $0.1 == "from" }).first else {
         let mn = method.name
         let name = mn.isEmpty ? cname : mn
-        let shortened: String
+        let unPrefixed: String
         if let prefix = (["new_", "new"].lazy.filter { name.hasPrefix($0) }.first) {
             let chars = name.characters
             let s = chars.startIndex.advancedBy(prefix.characters.count)
             let e = chars.endIndex
+            unPrefixed = String(chars[s..<e])
+        } else {
+            unPrefixed = name
+        }
+        let shortened: String
+        if let suffix = (["_new"].lazy.filter { unPrefixed.hasSuffix($0) }.first) {
+            let chars = unPrefixed.characters
+            let s = chars.startIndex
+            let e = chars.endIndex.advancedBy(-suffix.characters.count)
             shortened = String(chars[s..<e])
         } else {
-            shortened = name
+            shortened = unPrefixed
         }
         return shortened.isEmpty ? shortened : (shortened.swift + " ")
     }
