@@ -85,6 +85,29 @@ public extension GIR.Argument {
 }
 
 
+/// Swift extension for methods
+public extension GIR.Method {
+    public var isDesignatedConstructor: Bool {
+        return name == "new"
+    }
+
+    /// is this a bare factory method that is not the default constructor
+    public var isBareFactory: Bool {
+        return args.isEmpty && !isDesignatedConstructor
+    }
+
+    /// return whether the method is a constructor of the given record
+    public func isConstructorOf(_ record: GIR.Record?) -> Bool {
+        return returns.isInstanceOf(record) && !(args.first?.isInstanceOf(record) ?? false)
+    }
+
+    /// return whether the method is a factory of the given record
+    public func isFactoryOf(_ record: GIR.Record?) -> Bool {
+        return !isDesignatedConstructor && isConstructorOf(record)
+    }
+}
+
+
 /// Swift representation of comments
 public func commentCode(thing: GIR.Thing, indentation: String = "") -> String {
     return thing.comment.isEmpty ? "" : thing.comment.characters.reduce(indentation + "/// ") {
@@ -184,32 +207,19 @@ public func recordProtocolExtensionCode(_ e: GIR.Record, indentation: String = "
 public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> String {
   return { (record: GIR.Record) -> GIR.Method-> String in
     let doubleIndent = indentation + indentation
-    let call = callCode(record, indentation: doubleIndent)
+    let call = callCode(doubleIndent, record)
+    let returnDeclaration = returnDeclarationCode()
+    let ret = returnCode(indentation)
       return { (method: GIR.Method) -> String in
         let name = method.name.isEmpty ? method.cname : method.name
-        let args = method.args.lazy
-        guard args.filter({ $0.varargs }).first == nil else {
+        guard !method.varargs else {
             return "\n\(indentation)// *** \(name)() is not available because it has a varargs (...) parameter!\n\n"
         }
-        let rv = method.returns
-        let isVoid = rv.isVoid
-        let (/*cType*/_, returnType, /*cast2c*/_, cast2swift) = typeCastTuple(rv.ctype, rv.type.swift)
-        let returnCode = isVoid ? "" : " -> \(returnType)"
-        let throwsError = method.throwsError
-        let throwCode = throwsError ? " throws" : ""
         let deprecated = method.deprecated != nil ? "@available(*, deprecated=1.0) " : ""
-//        let removeCode = !method.markedAsDeprecated && (method.deprecated != nil)
-//        let conditional = removeCode ? "#ifdef _COMPILE_DEPRECATED_CODE\n" : ""
-//        let closing_conditional = removeCode ? "#endif // _COMPILE_DEPRECATED_CODE\n" : ""
-//        let n = args.count
-//        print("\(name): \(n) arguments:")
-//        method.args.forEach {
-//            print("\($0.name)[instance=\($0.instance)]: \($0.type) = '\($0.ctype)'")
-//        }
         let code = swiftCode(method, indentation + "\(deprecated)public func \(name.swift)(" +
-            args.filter { !$0.instance && !$0.isInstanceOf(record) } .map(argumentCode).joinWithSeparator(", ") +
-        ")\(throwCode)\(returnCode) {\n" + doubleIndent + call(method) + indentation +
-            ( isVoid ? "" : indentation + "return \(cast2swift)\n" + indentation ) +
+            funcParam(method, record) + ")\(returnDeclaration(method)) {\n" +
+                doubleIndent + call(method) +
+                indentation  + ret(method)  +
         "}\n", indentation: indentation)
         return code
       }
@@ -217,8 +227,70 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
 }
 
 
+/// Swift code for convenience constructors
+public func convenienceConstructorCode(_ typeName: String, indentation: String, convenience: String = "", factory: Bool = false) -> GIR.Record -> GIR.Method -> String {
+    let isConv = !convenience.isEmpty
+    let conv =  isConv ? "\(convenience) " : ""
+    return { (record: GIR.Record) -> GIR.Method-> String in
+        let doubleIndent = indentation + indentation
+        let call = callCode(doubleIndent)
+        let returnDeclaration = returnDeclarationCode((typeName: typeName, record: record, isConstructor: !factory))
+        let ret = returnCode(indentation, (typeName: typeName, record: record, isConstructor: !factory, isConvenience: isConv))
+        return { (method: GIR.Method) -> String in
+            let name = method.name.isEmpty ? method.cname : method.name
+            guard !method.varargs else {
+                return "\n\(indentation)// *** \(name)() is not available because it has a varargs (...) parameter!\n\n"
+            }
+            let deprecated = method.deprecated != nil ? "@available(*, deprecated=1.0) " : ""
+            let fact = factory ? "static func \(name.swift)(" : "\(conv)init(\(constructorPrefix(method))"
+            let code = swiftCode(method, indentation + "\(deprecated)public \(fact)" +
+                constructorParam(method) + ")\(returnDeclaration(method)) {\n" +
+                    doubleIndent + call(method) +
+                    indentation  + ret(method)  +
+                "}\n", indentation: indentation)
+            return code
+        }
+    }
+}
+
+
+/// Return code declaration for functions/methods/convenience constructors
+public func returnDeclarationCode(_ tr: (typeName: String, record: GIR.Record, isConstructor: Bool)? = nil) -> GIR.Method -> String {
+    return { method in
+        let throwCode = method.throwsError ? " throws" : ""
+        let rv = method.returns
+        guard !(rv.isVoid || (tr != nil && tr!.isConstructor)) else { return throwCode }
+        let returnType: String
+        if rv.isInstanceOf(tr?.record)  {
+            returnType = tr!.typeName
+        } else {
+            returnType = typeCastTuple(rv.ctype, rv.type.swift).swift
+        }
+        return throwCode + " -> \(returnType)"
+    }
+}
+
+
+/// Return code for functions/methods/convenience constructors
+public func returnCode(_ indentation: String, _ tr: (typeName: String, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil) -> GIR.Method -> String {
+    return { method in
+        let rv = method.returns
+        guard !rv.isVoid else { return "" }
+        let isInstance = rv.isInstanceOf(tr?.record)
+        let cast2swift = typeCastTuple(rv.ctype, rv.type.swift, forceCast: isInstance).toSwift
+        guard isInstance else { return indentation + "return \(cast2swift)\n" + indentation }
+        let cons = tr!.isConstructor ? "self.init" : "return \(tr!.typeName)"
+        if tr!.isConvenience || !tr!.isConstructor {
+            return indentation + "\(cons)(ptr: \(cast2swift))\n" + indentation
+        } else {
+            return indentation + "self.ptr = \(cast2swift)\n" + indentation
+        }
+    }
+}
+
+
 /// Swift code for calling the underlying function and assigning the raw return value
-public func callCode(_ record: GIR.Record, indentation: String) -> GIR.Method -> String {
+public func callCode(_ indentation: String, _ record: GIR.Record? = nil) -> GIR.Method -> String {
     let toSwift = convertArgumentToSwiftFor(record)
     return { method in
         let throwsError = method.throwsError
@@ -232,6 +304,46 @@ public func callCode(_ record: GIR.Record, indentation: String) -> GIR.Method ->
         return code
     }
 }
+
+
+/// Swift code for the parameters of a method or function
+public func funcParam(_ method: GIR.Method, _ record: GIR.Record? = nil) -> String {
+    return method.args.lazy.filter { !$0.instance && !$0.isInstanceOf(record) } .map(argumentCode).joinWithSeparator(", ")
+}
+
+
+/// Swift code for the parameters of a constructor
+public func constructorParam(_ method: GIR.Method) -> String {
+    return method.args.lazy.map(argumentCode).joinWithSeparator(", ")
+}
+
+
+/// Swift code for constructor prefix extracted from a method name
+public func constructorPrefix(_ method: GIR.Method) -> String {
+    let cname = method.cname
+    let chars = cname.characters
+    let components = chars.split("_").map { $0.map({ String($0) }).joinWithSeparator("") }
+    guard let from = components.lazy.enumerate().filter({ $0.1 == "from" }).first else {
+        let mn = method.name
+        let name = mn.isEmpty ? cname : mn
+        let shortened: String
+        if let prefix = (["new_", "new"].lazy.filter { name.hasPrefix($0) }.first) {
+            let chars = name.characters
+            let s = chars.startIndex.advancedBy(prefix.characters.count)
+            let e = chars.endIndex
+            shortened = String(chars[s..<e])
+        } else {
+            shortened = name
+        }
+        return shortened.isEmpty ? shortened : (shortened.swift + " ")
+    }
+    let f = components.startIndex + from.index + 1
+    let e = components.endIndex
+    let s = f < e ? f : f - 1
+    let name = components[s..<e].joinWithSeparator("_")
+    return name.swift + " "
+}
+
 
 /// Swift code for methods
 public func argumentCode(_ arg: GIR.Argument) -> String {
@@ -253,7 +365,7 @@ public func toSwift(_ arg: GIR.Argument) -> String {
 
 
 /// Swift code for passing an argument to a method of a record / class
-public func convertArgumentToSwiftFor(_ record: GIR.Record) -> GIR.Argument -> String {
+public func convertArgumentToSwiftFor(_ record: GIR.Record?) -> GIR.Argument -> String {
     return { arg in
         let types = typeCastTuple(arg.ctype, arg.type.swift, varName: arg.instance || arg.isInstanceOf(record) ? "ptr" : (arg.name.swift + (arg.isKnownRecord ? ".ptr" : "")))
         let param = types.toC.hasSuffix("ptr") ? "cast(\(types.toC))" : types.toC
@@ -266,10 +378,15 @@ public func convertArgumentToSwiftFor(_ record: GIR.Record) -> GIR.Argument -> S
 
 /// Swift struct representation of a record/class as a wrapper of a pointer
 public func recordStructCode(_ e: GIR.Record, indentation: String = "    ") -> String {
-    let code = "public struct \(e.node)Ref: \(e.node)Protocol {\n" + indentation +
+    let structType = "\(e.node)Ref"
+    let ccode = convenienceConstructorCode(structType, indentation: indentation)(e)
+    let fcode = convenienceConstructorCode(structType, indentation: indentation, factory: true)(e)
+    let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
+    let factories = (e.constructors + e.methods + e.functions).filter { $0.isFactoryOf(e) }
+    let code = "public struct \(structType): \(e.node)Protocol {\n" + indentation +
         "public let ptr: UnsafeMutablePointer<\(e.ctype.swift)>\n" +
     "}\n\n" +
-    "public extension \(e.node)Ref {\n" + indentation +
+    "public extension \(structType) {\n" + indentation +
         "public init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + indentation + indentation +
             "ptr = UnsafeMutablePointer<\(e.ctype.swift)>(cPointer)\n" + indentation +
         "}\n\n" + indentation +
@@ -278,7 +395,9 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ") -> S
         "}\n\n" + indentation +
         "public init(opaquePointer: COpaquePointer) {\n" + indentation + indentation +
             "ptr = UnsafeMutablePointer<\(e.ctype.swift)>(opaquePointer)\n" + indentation +
-        "}\n\n" +
+        "}\n\n" + indentation +
+        constructors.map(ccode).joinWithSeparator("\n") +
+        factories.map(fcode).joinWithSeparator("\n") +
     "}\n\n"
 
     return code
@@ -287,8 +406,13 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ") -> S
 
 /// Swift struct representation of a record/class as a wrapper of a pointer
 public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String = "    ") -> String {
+    let classType = e.name.swift
+    let ccode = convenienceConstructorCode(classType, indentation: indentation, convenience: "convenience")(e)
+    let fcode = convenienceConstructorCode(classType, indentation: indentation, factory: true)(e)
+    let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
+    let factories = (e.constructors + e.methods + e.functions).filter { $0.isFactoryOf(e) }
     let p = parent.isEmpty ? "" : "\(parent), "
-    let code = "public class \(e.name.swift): \(p)\(e.node)Protocol {\n" + indentation +
+    let code = "public class \(classType): \(p)\(e.node)Protocol {\n" + indentation +
         "public let ptr: UnsafeMutablePointer<\(e.ctype.swift)>\n\n" + indentation +
         "public init(ptr: UnsafeMutablePointer<\(e.ctype.swift)>) {\n" + indentation + indentation +
             "self.ptr = ptr\n" + indentation +
@@ -297,7 +421,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
             "g_free(UnsafeMutablePointer(ptr))\n" + indentation +
         "}\n\n" +
     "}\n\n" +
-        "public extension \(e.name.swift) {\n" + indentation +
+        "public extension \(classType) {\n" + indentation +
         "public convenience init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + indentation + indentation +
             "self.init(ptr: UnsafeMutablePointer<\(e.ctype.swift)>(cPointer))\n" + indentation +
         "}\n\n" + indentation +
@@ -306,7 +430,9 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
 //        "}\n\n" + indentation +
         "public convenience init(opaquePointer: COpaquePointer) {\n" + indentation + indentation +
             "self.init(ptr: UnsafeMutablePointer<\(e.ctype.swift)>(opaquePointer))\n" + indentation +
-        "}\n\n" +
+        "}\n\n" + indentation +
+        constructors.map(ccode).joinWithSeparator("\n") +
+        factories.map(fcode).joinWithSeparator("\n") +
     "}\n\n"
 
     return code

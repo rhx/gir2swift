@@ -319,15 +319,19 @@ public class GIR {
         public let typegetter: String       ///< C type getter function
         public let methods: [Method]        ///< all associated methods
         public let functions: [Function]    ///< all associated functions
+        public let constructors: [Method]   ///< list of constructors
 
-        public init(name: String, type: String, ctype: String, cprefix: String, typegetter: String, methods: [Method], functions: [Function], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
+        /// designated constructor
+        public init(name: String, type: String, ctype: String, cprefix: String, typegetter: String, methods: [Method] = [], functions: [Function] = [], constructors: [Method] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
             self.cprefix = cprefix
             self.typegetter = typegetter
             self.methods = methods
             self.functions = functions
+            self.constructors = constructors
             super.init(name: name, type: type, ctype: ctype, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
+        /// XML constructor
         public init(node: XMLElement, atIndex i: Int) {
             cprefix = node.attribute("symbol-prefix") ?? ""
             typegetter = node.attribute("get-type") ?? ""
@@ -336,6 +340,8 @@ public class GIR {
             functions = funcs.enumerate().map { Function(node: $0.1, atIndex: $0.0) }
             let meths = children.filter { $0.name == "method" }
             methods = meths.enumerate().map { Method(node: $0.1, atIndex: $0.0) }
+            let cons = children.filter { $0.name == "constructor" }
+            constructors = cons.enumerate().map { Method(node: $0.1, atIndex: $0.0) }
             super.init(node: node, atIndex: i, typeAttr: "type-name", cTypeAttr: "type")
         }
     }
@@ -343,12 +349,8 @@ public class GIR {
     /// a class data type record
     public class Class: Record {
         public let parent: String           ///< parent class name
-        public let constructors: [Method]   ///< list of constructors
 
         override init(node: XMLElement, atIndex i: Int) {
-            let children = node.children.lazy
-            let cons = children.filter { $0.name == "constructor" }
-            constructors = cons.enumerate().map { Method(node: $0.1, atIndex: $0.0) }
             parent = node.attribute("parent") ?? ""
             super.init(node: node, atIndex: i)
         }
@@ -362,6 +364,7 @@ public class GIR {
         public let args: [Argument]     ///< all associated methods
         public let throwsError: Bool    ///< does this method throw an error?
 
+        /// designated constructor
         public init(name: String, cname: String, returns: Argument, args: [Argument] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil, throwsAnError: Bool = false) {
             self.cname = cname
             self.returns = returns
@@ -370,6 +373,7 @@ public class GIR {
             super.init(name: name, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
+        /// XML constructor
         public init(node: XMLElement, atIndex i: Int) {
             cname = node.attribute("identifier") ?? ""
             let thrAttr = node.attribute("throws") ?? "0"
@@ -388,6 +392,11 @@ public class GIR {
                 args = GIR.args(children)
             }
             super.init(node: node, atIndex: i)
+        }
+
+        /// indicate whether this is a varargs method
+        public var varargs: Bool {
+            return args.lazy.filter({$0.varargs}).first != nil
         }
     }
 

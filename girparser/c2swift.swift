@@ -188,7 +188,7 @@ func cast_from_swift(_ value: String, forCType t: String) -> String {
 typealias TypeCastTuple = (c: String, swift: String, toC: String, toSwift: String)
 
 /// return a C+Swift type pair
-func typeCastTuple(_ ctype: String, _ swiftType: String, varName: String = "rv") -> TypeCastTuple {
+func typeCastTuple(_ ctype: String, _ swiftType: String, varName: String = "rv", forceCast: Bool = false) -> TypeCastTuple {
     let u = ctype.unwrappedCTypeWithCount()
     let ct = u.cType != "" ? u.cType : swiftType
     let st = ct.swift
@@ -202,8 +202,8 @@ func typeCastTuple(_ ctype: String, _ swiftType: String, varName: String = "rv")
         }
     default:
         cswift = (ct, st,
-            u.pointerCount == 0 ? cast_from_swift(varName, forCType: ct) : cast,
-            u.pointerCount == 0 ?   cast_to_swift(varName, forCType: ct) : cast)
+            forceCast || u.pointerCount != 0 ? cast : cast_from_swift(varName, forCType: ct),
+            forceCast || u.pointerCount != 0 ? cast : cast_to_swift(varName, forCType: ct))
     }
     return cswift
 }
