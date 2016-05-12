@@ -215,7 +215,7 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
         guard !method.varargs else {
             return "\n\(indentation)// *** \(name)() is not available because it has a varargs (...) parameter!\n\n"
         }
-        let deprecated = method.deprecated != nil ? "@available(*, deprecated=1.0) " : ""
+        let deprecated = method.deprecated != nil ? "@available(*, deprecated) " : ""
         let code = swiftCode(method, indentation + "\(deprecated)public func \(name.swift)(" +
             funcParam(method, record) + ")\(returnDeclaration(method)) {\n" +
                 doubleIndent + call(method) +
@@ -241,7 +241,7 @@ public func convenienceConstructorCode(_ typeName: String, indentation: String, 
             guard !method.varargs else {
                 return "\n\(indentation)// *** \(name)() is not available because it has a varargs (...) parameter!\n\n"
             }
-            let deprecated = method.deprecated != nil ? "@available(*, deprecated=1.0) " : ""
+            let deprecated = method.deprecated != nil ? "@available(*, deprecated) " : ""
             let fact = factory ? "static func \(name.swift)(" : "\(conv)init(\(constructorPrefix(method))"
             let code = swiftCode(method, indentation + "\(deprecated)public \(fact)" +
                 constructorParam(method) + ")\(returnDeclaration(method)) {\n" +
