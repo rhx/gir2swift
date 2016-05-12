@@ -250,7 +250,9 @@ public func convenienceConstructorCode(_ typeName: String, indentation: String, 
                 return "\n\(indentation)// *** \(name)() is not available because it has a varargs (...) parameter!\n\n"
             }
             let deprecated = method.deprecated != nil ? "@available(*, deprecated) " : ""
-            let fact = factory ? "static func \(name.swift)(" : "\(conv)init(\(constructorPrefix(method))"
+            let consPrefix = constructorPrefix(method)
+            let prefix = consPrefix == method.args.first?.name.swift ? "" : (consPrefix + " ")
+            let fact = factory ? "static func \(name.swift)(" : "\(conv)init(\(prefix)"
             let code = swiftCode(method, indentation + "\(deprecated)public \(fact)" +
                 constructorParam(method) + ")\(returnDeclaration(method)) {\n" +
                     doubleIndent + call(method) +
@@ -352,13 +354,13 @@ public func constructorPrefix(_ method: GIR.Method) -> String {
         } else {
             shortened = unPrefixed
         }
-        return shortened.isEmpty ? shortened : (shortened.swift + " ")
+        return shortened.swift
     }
     let f = components.startIndex + from.index + 1
     let e = components.endIndex
     let s = f < e ? f : f - 1
     let name = components[s..<e].joinWithSeparator("_")
-    return name.swift + " "
+    return name.swift
 }
 
 
