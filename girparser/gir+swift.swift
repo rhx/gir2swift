@@ -82,6 +82,15 @@ public extension GIR.Argument {
     /// indicates whether the receiver is an array of scalar values
     public var isScalarArray: Bool { return isArray && !isAnyKindOfPointer }
 
+    /// return a non-clashing argument name
+    public var nonClashingName: String {
+        let sw = name.swift
+        let nt = sw + (sw.isKnownType ? "_" : "")
+        let nc = nt == ctype.innerCType ? nt + "_" : nt
+        let ns = nc == type.innerCType  ? nc + "_" : nc
+        return ns
+    }
+
     /// return whether the receiver is an instance of the given record (class)
     public func isInstanceOf(_ record: GIR.Record?) -> Bool {
         if let r = record where r.node == type.withoutNameSpace {
@@ -113,6 +122,13 @@ public extension GIR.Method {
     public func isFactoryOf(_ record: GIR.Record?) -> Bool {
         return !isDesignatedConstructor && isConstructorOf(record)
     }
+}
+
+
+/// GIR extension for Strings
+extension String {
+    /// indicates whether the receiver is a known type
+    public var isKnownType: Bool { return GIR.knownTypes[self] != nil }
 }
 
 
@@ -366,20 +382,22 @@ public func constructorPrefix(_ method: GIR.Method) -> String {
 
 /// Swift code for methods
 public func argumentCode(_ arg: GIR.Argument) -> String {
-    let name = arg.name.swift
+    let name = arg.nonClashingName
+    let swname = arg.name.swift
+    let prefixedname = name == swname ? name : (swname + " " + name)
     let ctype = arg.ctype
     let type = arg.type
     let array = arg.isScalarArray
     let swift = array ? type.swiftType : type.swift
     let isPtr  = ctype.isPointer
-    let code = "\(array ? "inout " : "")\(name): \(array ? "[" : "")\(isPtr ? (arg.isKnownRecord ? swift + "Protocol" : ctype.swiftRepresentationOfCType) : swift)\(array ? "]" : "")"
+    let code = "\(array ? "inout " : "")\(prefixedname): \(array ? "[" : "")\(isPtr ? (arg.isKnownRecord ? swift + "Protocol" : ctype.swiftRepresentationOfCType) : swift)\(array ? "]" : "")"
     return code
 }
 
 
 /// Swift code for passing an argument to a free standing function
 public func toSwift(_ arg: GIR.Argument) -> String {
-    let types = typeCastTuple(arg.ctype, arg.type.swift, varName: arg.instance ? "ptr" : (arg.name.swift + (arg.isKnownRecord ? ".ptr" : "")))
+    let types = typeCastTuple(arg.ctype, arg.type.swift, varName: arg.instance ? "ptr" : (arg.nonClashingName + (arg.isKnownRecord ? ".ptr" : "")))
     let param = types.toC.hasSuffix("ptr") ? "cast(\(types.toC))" : types.toC
     return param
 }
@@ -388,8 +406,9 @@ public func toSwift(_ arg: GIR.Argument) -> String {
 /// Swift code for passing an argument to a method of a record / class
 public func convertArgumentToSwiftFor(_ record: GIR.Record?) -> GIR.Argument -> String {
     return { arg in
-        guard !arg.isScalarArray else { return "&" + arg.name.swift }
-        let types = typeCastTuple(arg.ctype, arg.type.swift, varName: arg.instance || arg.isInstanceOf(record) ? "ptr" : (arg.name.swift + (arg.isKnownRecord ? ".ptr" : "")))
+        let name = arg.nonClashingName
+        guard !arg.isScalarArray else { return "&" + name }
+        let types = typeCastTuple(arg.ctype, arg.type.swift, varName: arg.instance || arg.isInstanceOf(record) ? "ptr" : (name + (arg.isKnownRecord ? ".ptr" : "")))
         let param = types.toC.hasSuffix("ptr") ? "cast(\(types.toC))" : types.toC
         return param
     }

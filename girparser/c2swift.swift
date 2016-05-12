@@ -149,25 +149,25 @@ extension String {
         return String(cs[s..<e])
     }
 
-    public func unwrappedCTypeWithCount(_ pointerCount: Int = 0, _ constCount: Int = 0) -> (cType: String, pointerCount: Int, constCount: Int) {
+    public func unwrappedCTypeWithCount(_ pointerCount: Int = 0, _ constCount: Int = 0) -> (cType: String, pointerCount: Int, constCount: Int, innerType: String) {
         if let base = underlyingTypeForCPointer {
             let (pointer, cc) = isCConst ? ("UnsafePointer", constCount+1) : ("UnsafeMutablePointer", constCount)
             let t = base.unwrappedCTypeWithCount(pointerCount+1, cc)
             let wrapped = pointer + "<\(t.cType)>"
-            return (cType: wrapped, pointerCount: t.pointerCount, constCount: t.constCount)
+            return (cType: wrapped, pointerCount: t.pointerCount, constCount: t.constCount, innerType: t.innerType)
         }
-        return (cType: typeWithoutLeadingOrTrailingConst.swiftType, pointerCount: pointerCount, constCount: constCount)
+        let swift = typeWithoutLeadingOrTrailingConst.swiftType
+        return (cType: swift, pointerCount: pointerCount, constCount: constCount, innerType: swift)
     }
+
+    /// return the inner type of a C type (without pointers and const)
+    public var innerCType: String { return unwrappedCTypeWithCount().innerType }
 
     /// return the C type unwrapped and without const
-    public var unwrappedCType: String {
-        return unwrappedCTypeWithCount().cType
-    }
+    public var unwrappedCType: String { return unwrappedCTypeWithCount().cType }
 
     /// return the Swift type for a given C type
-    public var swiftRepresentationOfCType: String {
-        return unwrappedCType.swift
-    }
+    public var swiftRepresentationOfCType: String { return unwrappedCType.swift }
 
     /// return the string (value) cast to Swift
     func cast_as_swift(_ type: String) -> String {
