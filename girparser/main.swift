@@ -12,27 +12,13 @@
 #endif
 
 @noreturn func usage() {
-    fputs("Usage: \(Process.arguments[0]) [-v] [file.gir ...]\n", stderr)
+    fputs("Usage: \(Process.arguments[0]) [-v]{-p file.gir}[file.gir ...]\n", stderr)
     exit(EXIT_FAILURE)
 }
 
-//
-// get options
-//
-var verbose = false
-while let (opt, param) = get_opt("v") {
-    switch opt {
-        case "v":
-            verbose = true
-        default:
-            usage()
-    }
-}
-
-func process_gir(file: String) {
+/// load a GIR file, then invoke the processing closure
+func load_gir(file: String, process: GIR -> Void) {
     with_mmap(file) { (content: UnsafeBufferPointer<CChar>) in
-        //write(STDOUT_FILENO, content.baseAddress, content.count)
-        //        guard let xml = XMLDocument(fromFile: file) else {
         guard let gir = GIR(buffer: content) else {
             perror("Cannot parse GIR file '\(file)'")
             return
@@ -40,6 +26,20 @@ func process_gir(file: String) {
         if gir.prefix.isEmpty {
             fputs("Warning: no namespace in GIR file '\(file)'\n", stderr)
         }
+        process(gir);
+    }
+}
+
+
+/// pre-load a GIR without processing, but adding to known types / records
+func preload_gir(file: String) {
+    load_gir(file) { _ in }
+}
+
+
+/// process a GIR file
+func process_gir(file: String) {
+    load_gir(file) { gir in
         print(gir.boilerPlate)
         print(gir.aliases.map(swiftCode).joinWithSeparator("\n\n"))
         print(gir.constants.map(swiftCode).joinWithSeparator("\n\n"))
@@ -47,32 +47,23 @@ func process_gir(file: String) {
         print(gir.bitfields.map(swiftCode).joinWithSeparator("\n\n"))
         print(gir.records.map(swiftCode).joinWithSeparator("\n\n"))
         print(gir.classes.map(swiftCode).joinWithSeparator("\n\n"))
-//        gir.nameSpace = path.first!.
-//        for element in xml {
-//            print(element.debugDescription)
-//        }
-//        guard let path = gir.xml.xpath("//gir:record", namespaces: gir.namespaces, defaultPrefix: "gir") else {
-//            fputs("Cannot create xpath\n", stderr)
-//            return
-//        }
-//       print("\nXPath:")
-//        for record in path {
-//            print(record.debugDescription)
-//        }
-//        let swift = gir.dumpSwift()
-//        print(swift)
-//        //let records = xml //.filter { $0.name == "record" }
-//        for record in gir.xml.filter({ $0.name == "namespace" }) {
-//            print("\(record.name):")
-//            for attribute in record.attributes {
-//                print("    ", terminator: "")
-//                if let value = gir.xml.valueFor(attribute) {
-//                    print(attribute.name, "\"\(value)\"" , separator: "=")
-//                } else {
-//                    print(attribute.name)
-//                }
-//            }
-//        }
+    }
+}
+
+
+//
+// get options
+//
+var verbose = false
+while let (opt, param) = get_opt("p:v") {
+    switch opt {
+        case "p":
+            guard let file = param else { usage() }
+            preload_gir(param!)
+        case "v":
+            verbose = true
+        default:
+            usage()
     }
 }
 
