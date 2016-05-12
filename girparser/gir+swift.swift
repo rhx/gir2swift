@@ -9,35 +9,35 @@
 public extension GIR {
     /// code boiler plate
     public var boilerPlate: String {
-        return "private func cast<S, T>(_ param: UnsafeMutablePointer<S>) -> UnsafeMutablePointer<T> {\n" +
+        return "private func cast<S, T>(param: UnsafeMutablePointer<S>) -> UnsafeMutablePointer<T> {\n" +
         "    return UnsafeMutablePointer<T>(param)\n" +
         "}\n\n" +
 
-        "private func cast<S, T>(_ param: UnsafeMutablePointer<S>) -> UnsafePointer<T> {\n" +
+        "private func cast<S, T>(param: UnsafeMutablePointer<S>) -> UnsafePointer<T> {\n" +
         "    return UnsafePointer<T>(param)\n" +
         "}\n\n" +
 
-        "private func cast<S, T>(_ param: UnsafePointer<S>) -> UnsafePointer<T> {\n" +
+        "private func cast<S, T>(param: UnsafePointer<S>) -> UnsafePointer<T> {\n" +
         "    return UnsafePointer<T>(param)\n" +
         "}\n\n" +
 
-        "private func cast<T>(_ param: COpaquePointer) -> UnsafeMutablePointer<T> {\n" +
+        "private func cast<T>(param: COpaquePointer) -> UnsafeMutablePointer<T> {\n" +
         "    return UnsafeMutablePointer<T>(param)\n" +
         "}\n\n" +
 
-        "private func cast<T>(_ param: COpaquePointer) -> UnsafePointer<T> {\n" +
+        "private func cast<T>(param: COpaquePointer) -> UnsafePointer<T> {\n" +
         "    return UnsafePointer<T>(param)\n" +
         "}\n\n" +
 
-        "private func cast<S, T>(_ param: UnsafePointer<S>) -> UnsafeMutablePointer<T> {\n" +
+        "private func cast<S, T>(param: UnsafePointer<S>) -> UnsafeMutablePointer<T> {\n" +
         "    return UnsafeMutablePointer<T>(param)\n" +
         "}\n\n" +
 
-        "private func cast<T>(_ param: UnsafePointer<T>) -> COpaquePointer {\n" +
+        "private func cast<T>(param: UnsafePointer<T>) -> COpaquePointer {\n" +
         "    return COpaquePointer(param)\n" +
         "}\n\n" +
 
-        "private func cast<T>(_ param: UnsafeMutablePointer<T>) -> COpaquePointer {\n" +
+        "private func cast<T>(param: UnsafeMutablePointer<T>) -> COpaquePointer {\n" +
         "    return COpaquePointer(param)\n" +
         "}\n\n" +
 
@@ -45,7 +45,7 @@ public extension GIR {
         "    private init(_ b: Bool) { self = b ? gboolean(1) : gboolean(0) }\n" +
         "}\n\n" +
 
-        "private func asStringArray(_ param: UnsafePointer<UnsafePointer<CChar>>) -> [String] {\n" +
+        "private func asStringArray(param: UnsafePointer<UnsafePointer<CChar>>) -> [String] {\n" +
         "    var ptr = param\n" +
         "    var rv = [String]()\n" +
         "    while ptr.memory != nil {\n" +
@@ -57,7 +57,7 @@ public extension GIR {
         "    return rv\n" +
         "}\n\n" +
 
-        "private func asStringArray<T>(_ param: UnsafePointer<UnsafePointer<CChar>>, release: (UnsafePointer<T> -> Void)) -> [String] {\n" +
+        "private func asStringArray<T>(param: UnsafePointer<UnsafePointer<CChar>>, release: (UnsafePointer<T> -> Void)) -> [String] {\n" +
         "    let rv = asStringArray(param)\n" +
         "    release(UnsafePointer<T>(param))\n" +
         "    return rv\n" +
