@@ -7,10 +7,10 @@
 //
 import Foundation
 
-private let castables = [ " gint" : "Int32",   "guint" : "UInt32",  "glong" : "Int", "char" : "Int8",
+private let castables = [ " gint" : "CInt",    "glong" : "CLong",   "guint" : "CUnsignedInt", "char" : "CChar",
     "gint8"  : "Int8",  "guint8"  : "UInt8",  "gint16" : "Int16", "guint16" : "UInt16",
     "gint32" : "Int32", "guint32" : "UInt32", "gint64" : "Int64", "guint64" : "UInt64",
-    "gulong" : "UInt",  "gsize"   : "Int",  "gboolean" : "Bool", "gpointer" : "COpaquePointer" ]
+    "gulong" : "CUnsignedLong",  "gsize"   : "Int",  "gboolean" : "Bool", "gpointer" : "COpaquePointer" ]
 private let reversecast = castables.reduce(Dictionary<String,String>()) {
     var dict = $0
     dict[$1.1] = $1.0
