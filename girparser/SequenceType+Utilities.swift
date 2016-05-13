@@ -11,8 +11,18 @@ extension SequenceType {
     ///
     /// - Complexity: O(`self.count`).
     @warn_unused_result
-    public func findFirstWhere(@noescape found: Self.Generator.Element -> Bool) -> Self.Generator.Element? {
+    public func findFirstWhere(@noescape found: Generator.Element -> Bool) -> Generator.Element? {
         for element in self { if found(element) { return element } }
         return nil
+    }
+}
+
+
+extension SequenceType where Generator.Element: Hashable {
+    /// return a set containing the elements from the given sequence
+    public var asSet: Set<Generator.Element> {
+        var set = Set<Generator.Element>()
+        self.forEach { set.insert($0) }
+        return set
     }
 }

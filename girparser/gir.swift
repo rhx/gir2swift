@@ -35,10 +35,16 @@ public class GIR {
     public var records: [Record] = []
     public var classes: [Class] = []
 
+    /// names of black-listed identifiers
+    public var blacklist: Set<String> = []
+
+    /// names of constants to be taken verbatim
+    static var VerbatimConstants: Set<String> = []
+
     /// context of known types
-    static var knownTypes:   [ String : Type ] = [:]
-    static var knownRecords: [ String : Type ] = [:]
-    static var gerrorType = "GErrorType"
+    static var KnownTypes:   [ String : Type ] = [:]
+    static var KnownRecords: [ String : Type ] = [:]
+    static var GErrorType = "GErrorType"
 
     /// designated constructor
     public init(xmlDocument: XMLDocument) {
@@ -65,11 +71,11 @@ public class GIR {
         if let entries = xml.xpath("/*/*/gir:alias", namespaces: namespaces, defaultPrefix: "gir") {
             aliases = entries.enumerate().map { Alias(node: $0.1, atIndex: $0.0) }.filter {
                 let name = $0.node
-                guard GIR.knownTypes[name] == nil else {
+                guard GIR.KnownTypes[name] == nil else {
                     fputs("Warning: duplicate type '\(name)' for alias ignored!\n", stderr)
                     return false
                 }
-                GIR.knownTypes[name] = $0
+                GIR.KnownTypes[name] = $0
                 return true
             }
         }
@@ -79,11 +85,11 @@ public class GIR {
         if let entries = xml.xpath("/*/*/gir:constant", namespaces: namespaces, defaultPrefix: "gir") {
             constants = entries.enumerate().map { Constant(node: $0.1, atIndex: $0.0) }.filter {
                 let name = $0.node
-                guard GIR.knownTypes[name] == nil else {
+                guard GIR.KnownTypes[name] == nil else {
                     fputs("Warning: duplicate type '\(name)' for constant ignored!\n", stderr)
                     return false
                 }
-                GIR.knownTypes[name] = $0
+                GIR.KnownTypes[name] = $0
                 return true
             }
         }
@@ -93,11 +99,11 @@ public class GIR {
         if let entries = xml.xpath("/*/*/gir:enumeration", namespaces: namespaces, defaultPrefix: "gir") {
             enumerations = entries.enumerate().map { Enumeration(node: $0.1, atIndex: $0.0) }.filter {
                 let name = $0.node
-                guard GIR.knownTypes[name] == nil else {
+                guard GIR.KnownTypes[name] == nil else {
                     fputs("Warning: duplicate type '\(name)' for enum ignored!\n", stderr)
                     return false
                 }
-                GIR.knownTypes[name] = $0
+                GIR.KnownTypes[name] = $0
                 return true
             }
         }
@@ -107,12 +113,12 @@ public class GIR {
         if let recs = xml.xpath("/*/*/gir:record", namespaces: namespaces, defaultPrefix: "gir") {
             records = recs.enumerate().map { Record(node: $0.1, atIndex: $0.0) }.filter {
                 let name = $0.node
-                guard GIR.knownTypes[name] == nil else {
+                guard GIR.KnownTypes[name] == nil else {
                     fputs("Warning: duplicate type '\(name)' for record ignored!\n", stderr)
                     return false
                 }
-                GIR.knownTypes[name] = $0
-                GIR.knownRecords[name] = $0
+                GIR.KnownTypes[name] = $0
+                GIR.KnownRecords[name] = $0
                 return true
             }
         }
@@ -122,12 +128,12 @@ public class GIR {
         if let recs = xml.xpath("/*/*/gir:class", namespaces: namespaces, defaultPrefix: "gir") {
             classes = recs.enumerate().map { Class(node: $0.1, atIndex: $0.0) }.filter {
                 let name = $0.node
-                guard GIR.knownTypes[name] == nil else {
+                guard GIR.KnownTypes[name] == nil else {
                     fputs("Warning: duplicate type '\(name)' for class ignored!\n", stderr)
                     return false
                 }
-                GIR.knownTypes[name] = $0
-                GIR.knownRecords[name] = $0
+                GIR.KnownTypes[name] = $0
+                GIR.KnownRecords[name] = $0
                 return true
             }
         }
@@ -191,7 +197,7 @@ public class GIR {
             super.init(node: node, atIndex: i, nameAttr: nameAttr)
 
             // handle the magic error type
-            if name == errorType { gerrorType = type.swift }
+            if name == errorType { GErrorType = type.swift }
         }
 
         public init(node: XMLElement, atIndex i: Int, withType t: String, nameAttr: String = "name") {
@@ -199,7 +205,7 @@ public class GIR {
             super.init(node: node, atIndex: i, nameAttr: nameAttr)
 
             // handle the magic error type
-            if name == errorType { gerrorType = type.swift }
+            if name == errorType { GErrorType = type.swift }
         }
 
         public var isVoid: Bool {

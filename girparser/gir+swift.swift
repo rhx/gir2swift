@@ -69,10 +69,10 @@ public extension GIR {
 /// Swift extension for arguments
 public extension GIR.Argument {
     /// indicates whether the receiver is a known type
-    public var isKnownType: Bool { return GIR.knownTypes[type.swift] != nil }
+    public var isKnownType: Bool { return GIR.KnownTypes[type.swift] != nil }
 
     /// indicates whether the receiver is a known class or record
-    public var isKnownRecord: Bool { return GIR.knownRecords[type.swift] != nil }
+    public var isKnownRecord: Bool { return GIR.KnownRecords[type.swift] != nil }
 
     /// indicates whether the receiver is any known kind of pointer
     public var isAnyKindOfPointer: Bool {
@@ -128,7 +128,7 @@ public extension GIR.Method {
 /// GIR extension for Strings
 extension String {
     /// indicates whether the receiver is a known type
-    public var isKnownType: Bool { return GIR.knownTypes[self] != nil }
+    public var isKnownType: Bool { return GIR.KnownTypes[self] != nil }
 }
 
 

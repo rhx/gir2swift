@@ -40,14 +40,26 @@ func preload_gir(file: String) {
 /// process a GIR file
 func process_gir(file: String) {
     load_gir(file) { gir in
+        processSpecialCases(gir, forFile: file)
         print(gir.boilerPlate)
-        print(gir.aliases.map(swiftCode).joinWithSeparator("\n\n"))
-        print(gir.constants.map(swiftCode).joinWithSeparator("\n\n"))
-        print(gir.enumerations.map(swiftCode).joinWithSeparator("\n\n"))
-        print(gir.bitfields.map(swiftCode).joinWithSeparator("\n\n"))
-        print(gir.records.map(swiftCode).joinWithSeparator("\n\n"))
-        print(gir.classes.map(swiftCode).joinWithSeparator("\n\n"))
+        print(gir.aliases.filter{!gir.blacklist.contains($0.name)}.map(swiftCode).joinWithSeparator("\n\n"))
+        print(gir.constants.filter{!gir.blacklist.contains($0.name)}.map(swiftCode).joinWithSeparator("\n\n"))
+        print(gir.enumerations.filter{!gir.blacklist.contains($0.name)}.map(swiftCode).joinWithSeparator("\n\n"))
+        print(gir.bitfields.filter{!gir.blacklist.contains($0.name)}.map(swiftCode).joinWithSeparator("\n\n"))
+        print(gir.records.filter{!gir.blacklist.contains($0.name)}.map(swiftCode).joinWithSeparator("\n\n"))
+        print(gir.classes.filter{!gir.blacklist.contains($0.name)}.map(swiftCode).joinWithSeparator("\n\n"))
     }
+}
+
+
+/// process blacklist and verbatim constants information
+func processSpecialCases(gir: GIR, forFile file: String) {
+    let base = file.baseName
+    let node = base.stringByRemoving(suffix: ".gir") ?? base
+    let blacklist = node + ".blacklist"
+    gir.blacklist = blacklist.contents?.lines.asSet ?? []
+    let consts = node + ".verbatim"
+    GIR.VerbatimConstants = consts.contents?.lines.asSet ?? []
 }
 
 

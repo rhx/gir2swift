@@ -20,6 +20,9 @@
 		F1B1FBF71CCDA68D00C7AC8D /* String+Substring.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B1FBF61CCDA68D00C7AC8D /* String+Substring.swift */; };
 		F1B1FBF81CCDA68D00C7AC8D /* String+Substring.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B1FBF61CCDA68D00C7AC8D /* String+Substring.swift */; };
 		F1C6BBD51CAF3D05002F0267 /* gir+swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1C6BBD41CAF3D05002F0267 /* gir+swift.swift */; };
+		F1CC22A51CE55F9200CEEF9C /* cstring.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CC22A41CE55F9200CEEF9C /* cstring.swift */; };
+		F1CC22A71CE55FCE00CEEF9C /* basename.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CC22A61CE55FCE00CEEF9C /* basename.swift */; };
+		F1CC22A91CE5627E00CEEF9C /* String+Lines.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CC22A81CE5627E00CEEF9C /* String+Lines.swift */; };
 		F1E1C38A1CA4920F0080006E /* XMLPath.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C3881CA490340080006E /* XMLPath.swift */; };
 		F1E1C38D1CA49A240080006E /* XMLNameSpace.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C38B1CA499CB0080006E /* XMLNameSpace.swift */; };
 		F1E1C3901CA4A2000080006E /* EmptySequence.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C38E1CA4A1450080006E /* EmptySequence.swift */; };
@@ -65,7 +68,10 @@
 		F1938DAD1CA09CBD006811D1 /* girparser */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = girparser; sourceTree = BUILT_PRODUCTS_DIR; };
 		F1938DAF1CA09CBD006811D1 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		F1B1FBF61CCDA68D00C7AC8D /* String+Substring.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+Substring.swift"; sourceTree = "<group>"; };
-		F1C6BBD41CAF3D05002F0267 /* gir+swift.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "gir+swift.swift"; sourceTree = "<group>"; };
+		F1C6BBD41CAF3D05002F0267 /* gir+swift.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = "gir+swift.swift"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		F1CC22A41CE55F9200CEEF9C /* cstring.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = cstring.swift; sourceTree = "<group>"; };
+		F1CC22A61CE55FCE00CEEF9C /* basename.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = basename.swift; sourceTree = "<group>"; };
+		F1CC22A81CE5627E00CEEF9C /* String+Lines.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+Lines.swift"; sourceTree = "<group>"; };
 		F1E1C3881CA490340080006E /* XMLPath.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = XMLPath.swift; sourceTree = "<group>"; };
 		F1E1C38B1CA499CB0080006E /* XMLNameSpace.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = XMLNameSpace.swift; sourceTree = "<group>"; };
 		F1E1C38E1CA4A1450080006E /* EmptySequence.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EmptySequence.swift; sourceTree = "<group>"; };
@@ -151,10 +157,13 @@
 				F12789EB1CD2C17F002AF814 /* c2swift.swift */,
 				F16EA7231CA0B81200D4C108 /* mmap.swift */,
 				F16EA71D1CA0AF5E00D4C108 /* FileLen.swift */,
-				F16EA7211CA0B61800D4C108 /* String+ContentsOfFile.swift */,
-				F168EC761CA5E2A3002AFBB0 /* SequenceType+Utilities.swift */,
 				F16EA7081CA0A52600D4C108 /* getopt.swift */,
+				F1CC22A41CE55F9200CEEF9C /* cstring.swift */,
+				F1CC22A61CE55FCE00CEEF9C /* basename.swift */,
+				F16EA7211CA0B61800D4C108 /* String+ContentsOfFile.swift */,
 				F1B1FBF61CCDA68D00C7AC8D /* String+Substring.swift */,
+				F1CC22A81CE5627E00CEEF9C /* String+Lines.swift */,
+				F168EC761CA5E2A3002AFBB0 /* SequenceType+Utilities.swift */,
 			);
 			path = girparser;
 			sourceTree = "<group>";
@@ -262,9 +271,12 @@
 				F16EA7091CA0A52600D4C108 /* getopt.swift in Sources */,
 				F1938DB01CA09CBD006811D1 /* main.swift in Sources */,
 				F168EC771CA5E2A3002AFBB0 /* SequenceType+Utilities.swift in Sources */,
+				F1CC22A71CE55FCE00CEEF9C /* basename.swift in Sources */,
+				F1CC22A91CE5627E00CEEF9C /* String+Lines.swift in Sources */,
 				F1E1C38D1CA49A240080006E /* XMLNameSpace.swift in Sources */,
 				F1E1C3931CA4E4820080006E /* XMLAttribute.swift in Sources */,
 				F16EA7241CA0B81200D4C108 /* mmap.swift in Sources */,
+				F1CC22A51CE55F9200CEEF9C /* cstring.swift in Sources */,
 				F169AFD71CA3517E006767E2 /* XMLElement.swift in Sources */,
 				F16EA7221CA0B61800D4C108 /* String+ContentsOfFile.swift in Sources */,
 				F12789EC1CD2C17F002AF814 /* c2swift.swift in Sources */,
