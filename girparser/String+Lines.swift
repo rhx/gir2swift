@@ -13,9 +13,11 @@
 
 
 extension String {
-    /// split the string into an array of substrings
+    /// Split a string into substrings separated by the given character
     func split(separator s: Character = "\n") -> [String] {
-        return characters.split(separator: s).map { String($0) }
+        let u = String(s).utf16.first!
+        let components = utf16.split(separator: u).map { String($0)! }
+        return components
     }
 
     /// return the lines of the given string

@@ -359,9 +359,7 @@ public func constructorParam(_ method: GIR.Method) -> String {
 /// Swift code for constructor prefix extracted from a method name
 public func constructorPrefix(_ method: GIR.Method) -> String {
     let cname = method.cname
-    let chars = cname.characters
-    let splitChars = chars.split(separator: "_")
-    let components = splitChars.map { $0.map({ String($0) }).joined(separator: "") }
+    let components = cname.split(separator: "_")
     guard let from = components.lazy.enumerated().filter({ $0.1 == "from" }).first else {
         let mn = method.name
         let name = mn.isEmpty ? cname : mn
