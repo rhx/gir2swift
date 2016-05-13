@@ -167,7 +167,12 @@ public func swiftCode(alias: GIR.Alias) -> String {
 
 /// Swift code representation of a constant
 public func swiftCode(constant: GIR.Constant) -> String {
-    return swiftCode(constant, "public let \(constant.name.swift) = \(constant.type.swift) /* \(constant.ctype) \(constant.value) */")
+    let type = constant.type.swift
+    let name = constant.name.swift
+    guard !GIR.VerbatimConstants.contains(name) else {
+        return swiftCode(constant, "public let \(name): \(constant.ctype.swift) = \(constant.value) /* \(type) */")
+    }
+    return swiftCode(constant, "public let \(name) = \(type) /* \(constant.ctype) \(constant.value) */")
 }
 
 /// Magic error type for throwing
@@ -236,6 +241,9 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
     let ret = returnCode(indentation)
       return { (method: GIR.Method) -> String in
         let name = method.name.isEmpty ? method.cname : method.name
+        guard !GIR.Blacklist.contains(name) else {
+            return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
+        }
         guard !method.varargs else {
             return "\n\(indentation)// *** \(name)() is not available because it has a varargs (...) parameter!\n\n"
         }

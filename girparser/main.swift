@@ -11,6 +11,9 @@
     import Darwin
 #endif
 
+/// verbose output
+var verbose = false
+
 @noreturn func usage() {
     fputs("Usage: \(Process.arguments[0]) [-v]{-p file.gir}[file.gir ...]\n", stderr)
     exit(EXIT_FAILURE)
@@ -41,13 +44,19 @@ func preload_gir(file: String) {
 func process_gir(file: String) {
     load_gir(file) { gir in
         processSpecialCases(gir, forFile: file)
+        let blacklist = GIR.Blacklist
         print(gir.boilerPlate)
-        print(gir.aliases.filter{!gir.blacklist.contains($0.name)}.map(swiftCode).joinWithSeparator("\n\n"))
-        print(gir.constants.filter{!gir.blacklist.contains($0.name)}.map(swiftCode).joinWithSeparator("\n\n"))
-        print(gir.enumerations.filter{!gir.blacklist.contains($0.name)}.map(swiftCode).joinWithSeparator("\n\n"))
-        print(gir.bitfields.filter{!gir.blacklist.contains($0.name)}.map(swiftCode).joinWithSeparator("\n\n"))
-        print(gir.records.filter{!gir.blacklist.contains($0.name)}.map(swiftCode).joinWithSeparator("\n\n"))
-        print(gir.classes.filter{!gir.blacklist.contains($0.name)}.map(swiftCode).joinWithSeparator("\n\n"))
+        print(gir.preamble)
+        print(gir.aliases.filter{!blacklist.contains($0.name)}.map(swiftCode).joinWithSeparator("\n\n"))
+        print(gir.constants.filter{!blacklist.contains($0.name)}.map(swiftCode).joinWithSeparator("\n\n"))
+        print(gir.enumerations.filter{!blacklist.contains($0.name)}.map(swiftCode).joinWithSeparator("\n\n"))
+        print(gir.bitfields.filter{!blacklist.contains($0.name)}.map(swiftCode).joinWithSeparator("\n\n"))
+        print(gir.records.filter{!blacklist.contains($0.name)}.map(swiftCode).joinWithSeparator("\n\n"))
+        print(gir.classes.filter{!blacklist.contains($0.name)}.map(swiftCode).joinWithSeparator("\n\n"))
+        if verbose {
+            fputs("** Verbatim: \(GIR.VerbatimConstants.count)\n\(GIR.VerbatimConstants.joinWithSeparator("\n"))\n\n", stderr)
+            fputs("** Blacklisted: \(blacklist.count)\n\(blacklist.joinWithSeparator("\n"))\n\n", stderr)
+        }
     }
 }
 
@@ -56,17 +65,18 @@ func process_gir(file: String) {
 func processSpecialCases(gir: GIR, forFile file: String) {
     let base = file.baseName
     let node = base.stringByRemoving(suffix: ".gir") ?? base
+    let preamble = node + ".preamble"
+    gir.preamble = preamble.contents ?? ""
     let blacklist = node + ".blacklist"
-    gir.blacklist = blacklist.contents?.lines.asSet ?? []
-    let consts = node + ".verbatim"
-    GIR.VerbatimConstants = consts.contents?.lines.asSet ?? []
+    GIR.Blacklist = blacklist.contents?.lines.asSet ?? []
+    let verbatimConstants = node + ".verbatim"
+    GIR.VerbatimConstants = verbatimConstants.contents?.lines.asSet ?? []
 }
 
 
 //
 // get options
 //
-var verbose = false
 while let (opt, param) = get_opt("p:v") {
     switch opt {
         case "p":

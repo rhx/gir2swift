@@ -24,6 +24,7 @@ extension String {
 
 public class GIR {
     public let xml: XMLDocument
+    public var preamble = ""
     public var prefix = ""
     public var identifierPrefixes = Array<String>()
     public var symbolPrefixes = Array<String>()
@@ -36,7 +37,7 @@ public class GIR {
     public var classes: [Class] = []
 
     /// names of black-listed identifiers
-    public var blacklist: Set<String> = []
+    static var Blacklist: Set<String> = []
 
     /// names of constants to be taken verbatim
     static var VerbatimConstants: Set<String> = []
