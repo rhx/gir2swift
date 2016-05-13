@@ -14,8 +14,8 @@
 
 extension String {
     /// split the string into an array of substrings
-    func split(separator: Character = "\n") -> [String] {
-        return characters.split(separator).map { String($0) }
+    func split(separator s: Character = "\n") -> [String] {
+        return characters.split(separator: s).map { String($0) }
     }
 
     /// return the lines of the given string

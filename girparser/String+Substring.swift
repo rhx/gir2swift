@@ -17,7 +17,7 @@ extension String {
     /// return the string resulting from removing the given suffix
     public func stringByRemoving(suffix s: String) -> String? {
         let len = s.characters.count
-        return hasSuffix(s) ? String(characters[startIndex..<endIndex.advancedBy(-len)]) : nil
+        return hasSuffix(s) ? String(characters[startIndex..<index(endIndex, offsetBy: -len)]) : nil
     }
 }
 

@@ -14,7 +14,7 @@
 ///
 /// Return the length of the given file or `nil` if an error occurred
 ///
-func file_len(fn: CInt) -> Int? {
+func file_len(_ fn: CInt) -> Int? {
     let offs = lseek(fn, 0, SEEK_CUR)
     guard offs >= 0 else { return nil }
     defer { lseek(fn, offs, SEEK_SET) }

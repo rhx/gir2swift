@@ -1,27 +1,27 @@
 //
-//  SequenceType+Utilities.swift
+//  Sequence+Utilities.swift
 //  Gtk3Swift
 //
 //  Created by Rene Hexel on 26/03/2016.
 //  Copyright © 2016 Rene Hexel. All rights reserved.
 //
-extension SequenceType {
+extension Sequence {
     /// Returns the first element where the comparison function returns `true`
     /// or `nil` if the comparisun functoin always returns `false`.
     ///
     /// - Complexity: O(`self.count`).
     @warn_unused_result
-    public func findFirstWhere(@noescape found: Generator.Element -> Bool) -> Generator.Element? {
+    public func findFirstWhere(_ found: @noescape(Iterator.Element) -> Bool) -> Iterator.Element? {
         for element in self { if found(element) { return element } }
         return nil
     }
 }
 
 
-extension SequenceType where Generator.Element: Hashable {
+extension Sequence where Iterator.Element: Hashable {
     /// return a set containing the elements from the given sequence
-    public var asSet: Set<Generator.Element> {
-        var set = Set<Generator.Element>()
+    public var asSet: Set<Iterator.Element> {
+        var set = Set<Iterator.Element>()
         self.forEach { set.insert($0) }
         return set
     }

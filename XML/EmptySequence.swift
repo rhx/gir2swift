@@ -6,12 +6,12 @@
 //  Copyright © 2016 Rene Hexel. All rights reserved.
 //
 
-/// Function returning a generator for an empty sequence of T
-public func emptyGenerator<T>() -> AnyGenerator<T> {
-    return AnyGenerator { nil }
+/// Function returning an iterator for an empty sequence of T
+public func emptyIterator<T>() -> AnyIterator<T> {
+    return AnyIterator { nil }
 }
 
 /// Function returning an empty sequence of T
 public func emptySequence<T>() -> AnySequence<T> {
-    return AnySequence(EmptyGenerator())
+    return AnySequence(EmptyIterator())
 }

@@ -23,63 +23,74 @@ public struct XMLPath {
 ///
 /// Extension to make XMLPath behave like an array
 ///
-extension XMLPath: CollectionType {
+extension XMLPath: Sequence {
     public typealias Index = Int
-    public typealias Generator = AnyGenerator<XMLElement>
+    public typealias Iterator = AnyIterator<XMLElement>
+//    public typealias SubSequence = Array<XMLElement>
 
-    var nodeSet: xmlNodeSetPtr { return xpath.memory.nodesetval }
-    public var count: Int { return nodeSet != nil ? Int(nodeSet.memory.nodeNr) : 0 }
+    var nodeSet: xmlNodeSetPtr? { return xpath.pointee.nodesetval }
+    public var count: Int { return nodeSet != nil ? Int(nodeSet!.pointee.nodeNr) : 0 }
     public var startIndex: Index { return 0 }
     public var endIndex: Index { return count }
     public var first: XMLElement? {
         guard count > 0 else { return nil }
-        return self[startIndex]
+        return self.at(index: startIndex)
     }
     public var last: XMLElement? {
         guard count > 0 else { return nil }
-        return self[endIndex]
+        return self.at(index: endIndex)
     }
 
-    public subscript(i: Index) -> XMLElement {
+    public func index(after i: Index) -> Index { return i+1 }
+
+    public func formIndex(after i: inout Index) { i += 1 }
+
+    public func at(index i: Index) -> XMLElement {
         precondition(i >= startIndex)
         precondition(i < endIndex)
-        return XMLElement(node: nodeSet.memory.nodeTab[i])
+        return XMLElement(node: nodeSet!.pointee.nodeTab![i]!)
     }
 
-    public func generate() -> Generator {
+    public subscript(position i: Index) -> XMLElement {
+        return at(index: i)
+    }
+
+//    public subscript(bounds: Range<Index>) -> Array<XMLElement> {
+//        return []
+//    }
+
+    /// Returns an iterator over the elements of the XMLPath.
+    public func makeIterator() -> Iterator {
         var i = 0
-        return AnyGenerator {
+        return AnyIterator {
             let j = i
             guard j < self.count else { return nil }
             i += 1
-            return self[j]
+            return self.at(index: j)
         }
     }
 }
 
 extension XMLDocument {
     /// compile a given XPath for queries
-    func xpath(p: String, namespaces ns: AnySequence<XMLNameSpace> = emptySequence(), defaultPrefix: String = "ns") -> XMLPath? {
-        let context = xmlXPathNewContext(xml)
-        guard context != nil else { return nil }
+    func xpath(_ p: String, namespaces ns: AnySequence<XMLNameSpace> = emptySequence(), defaultPrefix: String = "ns") -> XMLPath? {
+        guard let context = xmlXPathNewContext(xml) else { return nil }
         defer { xmlXPathFreeContext(context) }
         ns.forEach { xmlXPathRegisterNs(context, $0.prefix ?? defaultPrefix, $0.href ?? "") }
         return xpath(p, context: context)
     }
 
     /// compile a given XPath for queries
-    func xpath(p: String, namespaces ns: [(prefix: String, href: String)]) -> XMLPath? {
-        let context = xmlXPathNewContext(xml)
-        guard context != nil else { return nil }
+    func xpath(_ p: String, namespaces ns: [(prefix: String, href: String)]) -> XMLPath? {
+        guard let context = xmlXPathNewContext(xml) else { return nil }
         defer { xmlXPathFreeContext(context) }
         ns.forEach { xmlXPathRegisterNs(context, $0.prefix, $0.href) }
         return xpath(p, context: context)
     }
 
     /// compile an xpath for queries with a given context
-    func xpath(p: String, context: xmlXPathContextPtr) -> XMLPath? {
-        let xmlXPath = xmlXPathEvalExpression(p, context)
-        guard xmlXPath != nil else { return nil }
+    func xpath(_ p: String, context: xmlXPathContextPtr) -> XMLPath? {
+        guard let xmlXPath = xmlXPathEvalExpression(p, context) else { return nil }
         return XMLPath(xpath: xmlXPath)
     }
 }

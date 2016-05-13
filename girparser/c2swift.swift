@@ -25,7 +25,7 @@ private let reversecast = castableScalars.reduce(reversePointers) {
 private let swiftReplacementsForC = [ "char" : "CChar", "int" : "CInt", "void" : "Void", "utf8" : "String", "va_list" : "CVaListPointer" ]
 private let reservedTypes: Set = ["String", "Array", "Optional", "Set"]
 private let typeNames: Set = reservedTypes.union(reversecast.keys)
-private let wsnl = NSCharacterSet.whitespaceAndNewlineCharacterSet()
+private let wsnl = NSCharacterSet.whitespacesAndNewlines()
 
 private let trueS  = "true"
 private let falseS = "false"
@@ -63,8 +63,8 @@ extension String {
 
     /// indicate whether the type represented by the receiver is a constant
     public var isCConst: Bool {
-        let ns = stringByTrimmingCharactersInSet(wsnl)
-        return ns.hasPrefix("const ") || ns.containsString(" const")
+        let ns = (self as NSString).trimmingCharacters(in: wsnl) as NSString
+        return ns.hasPrefix("const ") || ns.contains(" const")
     }
 
     /// indicate whether the given string is a known g pointer type
@@ -75,12 +75,12 @@ extension String {
 
     /// return the C type without a trailing "const"
     public var typeWithoutTrailingConst: String {
-        let ns = stringByTrimmingCharactersInSet(wsnl)
+        let ns = (self as NSString).trimmingCharacters(in: wsnl)
         let p: String
         if (ns.hasSuffix("const")) {
             let cs = ns.characters
             let s = cs.startIndex
-            let e = s.advancedBy(cs.count - 4)
+            let e = cs.index(s, offsetBy: cs.count - 4)
             p = String(ns.characters[s..<e])
         } else {
             p = ns
@@ -90,11 +90,11 @@ extension String {
 
     /// return the C type without a leading "const"
     public var typeWithoutLeadingConst: String {
-        let ns = stringByTrimmingCharactersInSet(wsnl)
+        let ns = (self as NSString).trimmingCharacters(in: wsnl)
         let p: String
         if (ns.hasPrefix("const ")) {
             let cs = ns.characters
-            let s = cs.startIndex.advancedBy(5)
+            let s = cs.index(cs.startIndex, offsetBy: 5)
             let e = cs.endIndex
             p = String(ns.characters[s..<e])
         } else {
@@ -110,8 +110,8 @@ extension String {
 
     /// return the C type without "const"
     public var typeWithoutConst: String {
-        let ns = stringByReplacingOccurrencesOfString("const", withString: "")
-        return ns.stringByTrimmingCharactersInSet(wsnl)
+        let ns = (self as NSString).replacingOccurrences(of: "const", with: "") as NSString
+        return ns.trimmingCharacters(in: wsnl)
     }
 
     /// return whether the untrimmed string is a C pointer
@@ -126,17 +126,17 @@ extension String {
 
     /// return whether the underlying C type is a pointer
     public var isCPointer: Bool {
-        return typeWithoutTrailingConst.stringByTrimmingCharactersInSet(wsnl).isTrimmedCPointer
+        return (typeWithoutTrailingConst as NSString).trimmingCharacters(in: wsnl).isTrimmedCPointer
     }
 
     /// return whether the underlying C type is a gpointer
     public var isGPointer: Bool {
-        return typeWithoutTrailingConst.stringByTrimmingCharactersInSet(wsnl).isTrimmedGPointer
+        return (typeWithoutTrailingConst as NSString).trimmingCharacters(in: wsnl).isTrimmedGPointer
     }
 
     /// return whether the underlying C type is a pointer of any kind
     public var isPointer: Bool {
-        return typeWithoutTrailingConst.stringByTrimmingCharactersInSet(wsnl).isTrimmedPointer
+        return (typeWithoutTrailingConst as NSString).trimmingCharacters(in: wsnl).isTrimmedPointer
     }
 
     /// return the underlying C type for a pointer, nil if not a pointer
@@ -144,8 +144,8 @@ extension String {
         guard isCPointer else { return nil }
         let ns = typeWithoutTrailingConst
         let cs = ns.characters
-        let s = ns.characters.startIndex
-        let e = ns.characters.endIndex.predecessor()
+        let s = cs.startIndex
+        let e = cs.index(before: cs.endIndex)
         return String(cs[s..<e])
     }
 

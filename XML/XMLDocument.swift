@@ -18,26 +18,27 @@ import libxml2
 ///
 public class XMLDocument {
     let xml: xmlDocPtr
-    let ctx: xmlParserCtxtPtr = nil
+    let ctx: xmlParserCtxtPtr? = nil
 
     /// private constructor from a libxml document
     init(xmlDocument: xmlDocPtr) {
-        precondition(xmlDocument != nil)
         xml = xmlDocument
         xmlInitParser()
     }
 
     /// failable initialiser from memory with a given parser function
-    public convenience init?(buffer: UnsafeBufferPointer<CChar>, options: Int32 = Int32(XML_PARSE_NOWARNING.rawValue | XML_PARSE_NOERROR.rawValue | XML_PARSE_RECOVER.rawValue), parser: (UnsafePointer<CChar>, Int32, UnsafePointer<CChar>, UnsafePointer<CChar>, Int32) -> xmlDocPtr = xmlReadMemory) {
-        let xml = parser(buffer.baseAddress, Int32(buffer.count), "", nil, options)
-        guard xml != nil else { return nil }
+    public convenience init?(buffer: UnsafeBufferPointer<CChar>, options: Int32 = Int32(XML_PARSE_NOWARNING.rawValue | XML_PARSE_NOERROR.rawValue | XML_PARSE_RECOVER.rawValue), parser: ((UnsafePointer<CChar>?, Int32, UnsafePointer<CChar>?, UnsafePointer<CChar>?, Int32) -> xmlDocPtr?)? = nil) {
+        guard let base = buffer.baseAddress else { return nil }
+        let maybeXML: xmlDocPtr?
+        if let parse = parser { maybeXML = parse(base, Int32(buffer.count), "", nil, options) }
+        else { maybeXML = xmlReadMemory(base, Int32(buffer.count), "", nil, options) }
+        guard let xml = maybeXML else { return nil }
         self.init(xmlDocument: xml)
     }
 
     /// initialise from a file
     public convenience init?(fromFile fileName: UnsafePointer<CChar>, options: Int32 = Int32(XML_PARSE_NOWARNING.rawValue | XML_PARSE_NOERROR.rawValue | XML_PARSE_RECOVER.rawValue)) {
-        let xml = xmlParseFile(fileName)
-        guard xml != nil else { return nil }
+        guard let xml = xmlParseFile(fileName) else { return nil }
         self.init(xmlDocument: xml)
     }
 
@@ -58,17 +59,18 @@ public class XMLDocument {
 
     /// get an attribute value
     public func valueFor(attribute: XMLAttribute) -> String? {
-        guard attribute.attr != nil && attribute.attr.memory.children != nil else { return nil }
-        let s = xmlNodeListGetString(xml, attribute.attr.memory.children, 1)
-        let value = String.fromCString(UnsafePointer(s)) ?? ""
+        let attr = attribute.attr
+        guard let children = attr.pointee.children,
+            s = xmlNodeListGetString(xml, children, 1) else { return nil }
+        let value = String(cString: UnsafePointer(s)) ?? ""
         xmlFree(s)
         return value
     }
 
     /// get the value for a named attribute
     public func valueFor(attribute name: String, inElement e: XMLElement) -> String? {
-        guard let attr = (e.attributes.filter { $0.name == name }.first) else { return nil }
-        return valueFor(attr)
+        guard let attr = e.attributes.lazy.filter({$0.name == name}).first else { return nil }
+        return valueFor(attribute: attr)
     }
 }
 
@@ -76,10 +78,10 @@ public class XMLDocument {
 //
 // MARK: - Enumerating XML
 //
-extension XMLDocument: SequenceType {
-    public typealias Generator = XMLElement.Generator
-    public func generate() -> Generator {
-        return Generator(root: rootElement)
+extension XMLDocument: Sequence {
+    public typealias Iterator = XMLElement.Iterator
+    public func makeIterator() -> Iterator {
+        return Iterator(root: rootElement)
     }
 }
 
@@ -87,7 +89,7 @@ extension XMLDocument: SequenceType {
 ///
 /// Tree enumeration
 ///
-public struct XMLTree: SequenceType {
+public struct XMLTree: Sequence {
     public typealias Node = (level: Int, node: XMLElement, parent: XMLElement?)
     let document: XMLDocument
 
@@ -95,11 +97,11 @@ public struct XMLTree: SequenceType {
         document = xml
     }
 
-    public class Generator: GeneratorType {
+    public class Iterator: IteratorProtocol {
         let level: Int
         let parent: XMLElement?
-        var element: XMLElement
-        var child: Generator?
+        var element: XMLElement?
+        var child: Iterator?
 
         /// create a generator from a root element
         init(root: XMLElement, parent: XMLElement? = nil, level: Int = 0) {
@@ -112,15 +114,16 @@ public struct XMLTree: SequenceType {
         public func next() -> Node? {
             if let c = child {
                 if let element = c.next() { return element }         // children
-                element = XMLElement(node: element.node.memory.next) // sibling
+                let sibling = element?.node.pointee.next
+                element = sibling.map { XMLElement(node: $0 ) }
             }
-            guard element.node != nil else { return nil }
-            child = Generator(root: XMLElement(node: element.node.memory.children), parent: element, level: level+1)
-            return (level, element, parent)
+            let children = element?.node.pointee.children
+            child = children.map { Iterator(root: XMLElement(node: $0), parent: element, level: level+1) }
+            return element.map { (level, $0, parent) }
         }
     }
 
-    public func generate() -> Generator {
-        return Generator(root: document.rootElement)
+    public func makeIterator() -> Iterator {
+        return Iterator(root: document.rootElement)
     }
 }

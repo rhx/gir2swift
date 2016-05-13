@@ -17,10 +17,10 @@
 /// otherwise returns a tuple of the option character
 /// with an optional argument
 ///
-func get_opt(options: String) -> (Character, String?)? {
+func get_opt(_ options: String) -> (Character, String?)? {
     let ch = getopt(Process.argc, Process.unsafeArgv, options)
     guard ch != -1 else { return nil }
     let option = Character(UnicodeScalar(UInt32(ch)))
-    let argument = String.fromCString(optarg)
+    let argument: String? = optarg != nil ? String(cString: optarg) : nil
     return (option, argument)
 }

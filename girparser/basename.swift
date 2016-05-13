@@ -15,6 +15,6 @@
 /// return the base name of a string
 extension String {
     var baseName: String {
-        return String.fromCString(basename(cstring(self)))!
+        return String(cString: basename(cstring(self)))
     }
 }

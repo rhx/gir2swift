@@ -23,15 +23,15 @@ public struct XMLAttribute {
 extension XMLAttribute {
     /// name of the XML attribute
     public var name: String {
-        guard attr != nil else { return "(NULL)" }
-        guard let description = String.fromCString(UnsafePointer(attr.memory.name)) else { return "" }
+        guard let name = attr.pointee.name else { return "" }
+        let description = String(cString: UnsafePointer(name))
         return description
     }
 
     /// children of the XML attribute
     public var children: AnySequence<XMLElement> {
-        guard attr.memory.children != nil else { return emptySequence() }
-        return AnySequence { XMLElement(node: self.attr.memory.children).generate() }
+        guard attr.pointee.children != nil else { return emptySequence() }
+        return AnySequence { XMLElement(node: self.attr.pointee.children).makeIterator() }
     }
 }
 
@@ -45,23 +45,22 @@ extension XMLAttribute: CustomStringConvertible {
 
 extension XMLAttribute: CustomDebugStringConvertible {
     public var debugDescription: String {
-        guard attr != nil else { return "(NULL)" }
-        return "\(description): \(attr.memory.type)"
+        return "\(description): \(attr.pointee.type)"
     }
 }
 
 //
 // MARK: - Enumerating XML Attributes
 //
-extension XMLAttribute: SequenceType {
-    public func generate() -> XMLAttribute.Generator {
-        return Generator(root: self)
+extension XMLAttribute: Sequence {
+    public func makeIterator() -> XMLAttribute.Iterator {
+        return Iterator(root: self)
     }
 }
 
 
 extension XMLAttribute {
-    public class Generator: GeneratorType {
+    public class Iterator: IteratorProtocol {
         var current: XMLAttribute
 
         /// create a generator from a root element
@@ -71,9 +70,8 @@ extension XMLAttribute {
 
         /// return the next element following a depth-first pre-order traversal
         public func next() -> XMLAttribute? {
-            guard current.attr != nil else { return nil }
             let c = current
-            current = XMLAttribute(attr: current.attr.memory.next) // sibling
+            current = XMLAttribute(attr: c.attr.pointee.next)   // sibling
             return c
         }
     }

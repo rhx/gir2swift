@@ -48,8 +48,8 @@ public extension GIR {
         "private func asStringArray(param: UnsafePointer<UnsafePointer<CChar>>) -> [String] {\n" +
         "    var ptr = param\n" +
         "    var rv = [String]()\n" +
-        "    while ptr.memory != nil {\n" +
-        "        if let s = String.fromCString(ptr.memory) {\n" +
+        "    while ptr.pointee != nil {\n" +
+        "        if let s = String.fromCString(ptr.pointee) {\n" +
         "            rv.append(s)\n" +
         "        }\n" +
         "        ptr = ptr.successor()\n" +
@@ -133,23 +133,27 @@ extension String {
 
 
 /// Swift representation of comments
-public func commentCode(thing: GIR.Thing, indentation: String = "") -> String {
-    return thing.comment.isEmpty ? "" : thing.comment.characters.reduce(indentation + "/// ") {
-        $0 + ($1 == "\n" ? "\n" + indentation + "/// " : String($1))
+public func commentCode(_ thing: GIR.Thing, indentation: String = "") -> String {
+    let comment = thing.comment
+    guard !comment.isEmpty else { return comment }
+    let prefix = indentation + "/// "
+    return comment.characters.reduce(prefix) {
+        $0 + ($1 == "\n" ? "\n" + prefix : String($1))
     }
 }
 
 /// Swift representation of deprecation
-public func deprecatedCode(thing: GIR.Thing, indentation: String) -> String? {
-    return thing.deprecated.map {
-        $0.isEmpty ? "" : $0.characters.reduce(indentation + "/// ") {
-            $0 + ($1 == "\n" ? "\n" + indentation + "/// " : String($1))
+public func deprecatedCode(_ thing: GIR.Thing, indentation: String) -> String? {
+    return thing.deprecated.map { (s: String) -> String in
+        let prefix = indentation + "/// "
+        return s.isEmpty ? "" : s.characters.reduce(prefix) {
+            $0 + ($1 == "\n" ? "\n" + prefix : String($1))
         }
     }
 }
 
 /// Swift code representation with code following the comments
-public func swiftCode(thing: GIR.Thing, _ postfix: String = "", indentation: String = "") -> String {
+public func swiftCode(_ thing: GIR.Thing, _ postfix: String = "", indentation: String = "") -> String {
     let s = commentCode(thing, indentation: indentation)
     let t: String
     if let d = deprecatedCode(thing, indentation: indentation) {
@@ -199,12 +203,12 @@ public func swiftCode(_ e: GIR.Enumeration) -> String {
     let name = isErrorType ? errorTypeEscaped : swift
     let ext = isErrorType ? ": \(errorType)" : ""
     let pub = isErrorType ? "" : "public "
-    let code = alias + "\n\n\(pub)extension \(name)\(ext) {\n" + e.members.map(valueCode("    ")).joinWithSeparator("\n") + "\n}"
+    let code = alias + "\n\n\(pub)extension \(name)\(ext) {\n" + e.members.map(valueCode("    ")).joined(separator: "\n") + "\n}"
     return code
 }
 
 /// Swift code representation of an enum value
-public func valueCode(_ indentation: String) -> GIR.Enumeration.Member -> String {
+public func valueCode(_ indentation: String) -> (GIR.Enumeration.Member) -> String {
     return { (m: GIR.Enumeration.Member) -> String in
         swiftCode(m, indentation + "public static let \(m.name.swift) = \(m.ctype.swift) /* \(m.value) */", indentation: indentation)
     }
@@ -226,15 +230,15 @@ public func recordProtocolExtensionCode(_ e: GIR.Record, indentation: String = "
     let mcode = methodCode(indentation)(e)
     let methods = e.methods + e.functions.filter { $0.args.lazy.filter({ $0.isInstanceOf(e) }).first != nil }
     let code = "public extension \(e.node)Protocol {\n" +
-        methods.map(mcode).joinWithSeparator("\n") +
+        methods.map(mcode).joined(separator: "\n") +
     "}\n\n"
     return code
 }
 
 
 /// Swift code for methods (with a given indentation)
-public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> String {
-  return { (record: GIR.Record) -> GIR.Method-> String in
+public func methodCode(_ indentation: String) -> (GIR.Record) -> (GIR.Method) -> String {
+  return { (record: GIR.Record) -> (GIR.Method)-> String in
     let doubleIndent = indentation + indentation
     let call = callCode(doubleIndent, record)
     let returnDeclaration = returnDeclarationCode()
@@ -260,10 +264,10 @@ public func methodCode(_ indentation: String) -> GIR.Record -> GIR.Method -> Str
 
 
 /// Swift code for convenience constructors
-public func convenienceConstructorCode(_ typeName: String, indentation: String, convenience: String = "", factory: Bool = false) -> GIR.Record -> GIR.Method -> String {
+public func convenienceConstructorCode(_ typeName: String, indentation: String, convenience: String = "", factory: Bool = false) -> (GIR.Record) -> (GIR.Method) -> String {
     let isConv = !convenience.isEmpty
     let conv =  isConv ? "\(convenience) " : ""
-    return { (record: GIR.Record) -> GIR.Method-> String in
+    return { (record: GIR.Record) -> (GIR.Method)-> String in
         let doubleIndent = indentation + indentation
         let call = callCode(doubleIndent)
         let returnDeclaration = returnDeclarationCode((typeName: typeName, record: record, isConstructor: !factory))
@@ -289,7 +293,7 @@ public func convenienceConstructorCode(_ typeName: String, indentation: String, 
 
 
 /// Return code declaration for functions/methods/convenience constructors
-public func returnDeclarationCode(_ tr: (typeName: String, record: GIR.Record, isConstructor: Bool)? = nil) -> GIR.Method -> String {
+public func returnDeclarationCode(_ tr: (typeName: String, record: GIR.Record, isConstructor: Bool)? = nil) -> (GIR.Method) -> String {
     return { method in
         let throwCode = method.throwsError ? " throws" : ""
         let rv = method.returns
@@ -306,7 +310,7 @@ public func returnDeclarationCode(_ tr: (typeName: String, record: GIR.Record, i
 
 
 /// Return code for functions/methods/convenience constructors
-public func returnCode(_ indentation: String, _ tr: (typeName: String, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil) -> GIR.Method -> String {
+public func returnCode(_ indentation: String, _ tr: (typeName: String, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil) -> (GIR.Method) -> String {
     return { method in
         let rv = method.returns
         guard !rv.isVoid else { return "" }
@@ -324,7 +328,7 @@ public func returnCode(_ indentation: String, _ tr: (typeName: String, record: G
 
 
 /// Swift code for calling the underlying function and assigning the raw return value
-public func callCode(_ indentation: String, _ record: GIR.Record? = nil) -> GIR.Method -> String {
+public func callCode(_ indentation: String, _ record: GIR.Record? = nil) -> (GIR.Method) -> String {
     let toSwift = convertArgumentToSwiftFor(record)
     return { method in
         let throwsError = method.throwsError
@@ -333,7 +337,7 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil) -> GIR.
         let isVoid = rv.isVoid
         let code = ( throwsError ? "var error: UnsafeMutablePointer<\(gerror)> = nil\n" + indentation : "") +
         ( isVoid ? "" : "let rv = " ) +
-        "\(method.cname.swift)(\(args.map(toSwift).joinWithSeparator(", "))" +
+        "\(method.cname.swift)(\(args.map(toSwift).joined(separator: ", "))" +
         ( throwsError ? (", &error)\n" + indentation + "guard error == nil else {\n" + indentation + indentation + "throw Error(ptr: error)\n" + indentation + "}\n") : ")\n" )
         return code
     }
@@ -342,13 +346,13 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil) -> GIR.
 
 /// Swift code for the parameters of a method or function
 public func funcParam(_ method: GIR.Method, _ record: GIR.Record? = nil) -> String {
-    return method.args.lazy.filter { !$0.instance && !$0.isInstanceOf(record) } .map(argumentCode).joinWithSeparator(", ")
+    return method.args.lazy.filter { !$0.instance && !$0.isInstanceOf(record) } .map(argumentCode).joined(separator: ", ")
 }
 
 
 /// Swift code for the parameters of a constructor
 public func constructorParam(_ method: GIR.Method) -> String {
-    return method.args.lazy.map(argumentCode).joinWithSeparator(", ")
+    return method.args.lazy.map(argumentCode).joined(separator: ", ")
 }
 
 
@@ -356,14 +360,15 @@ public func constructorParam(_ method: GIR.Method) -> String {
 public func constructorPrefix(_ method: GIR.Method) -> String {
     let cname = method.cname
     let chars = cname.characters
-    let components = chars.split("_").map { $0.map({ String($0) }).joinWithSeparator("") }
-    guard let from = components.lazy.enumerate().filter({ $0.1 == "from" }).first else {
+    let splitChars = chars.split(separator: "_")
+    let components = splitChars.map { $0.map({ String($0) }).joined(separator: "") }
+    guard let from = components.lazy.enumerated().filter({ $0.1 == "from" }).first else {
         let mn = method.name
         let name = mn.isEmpty ? cname : mn
         let unPrefixed: String
         if let prefix = (["new_", "new"].lazy.filter { name.hasPrefix($0) }.first) {
             let chars = name.characters
-            let s = chars.startIndex.advancedBy(prefix.characters.count)
+            let s = chars.index(chars.startIndex, offsetBy: prefix.characters.count)
             let e = chars.endIndex
             unPrefixed = String(chars[s..<e])
         } else {
@@ -373,17 +378,17 @@ public func constructorPrefix(_ method: GIR.Method) -> String {
         if let suffix = (["_new"].lazy.filter { unPrefixed.hasSuffix($0) }.first) {
             let chars = unPrefixed.characters
             let s = chars.startIndex
-            let e = chars.endIndex.advancedBy(-suffix.characters.count)
+            let e = chars.index(chars.endIndex, offsetBy: -suffix.characters.count)
             shortened = String(chars[s..<e])
         } else {
             shortened = unPrefixed
         }
         return shortened.swift
     }
-    let f = components.startIndex + from.index + 1
+    let f = components.startIndex + from.offset + 1
     let e = components.endIndex
     let s = f < e ? f : f - 1
-    let name = components[s..<e].joinWithSeparator("_")
+    let name = components[s..<e].joined(separator: "_")
     return name.swift
 }
 
@@ -412,7 +417,7 @@ public func toSwift(_ arg: GIR.Argument) -> String {
 
 
 /// Swift code for passing an argument to a method of a record / class
-public func convertArgumentToSwiftFor(_ record: GIR.Record?) -> GIR.Argument -> String {
+public func convertArgumentToSwiftFor(_ record: GIR.Record?) -> (GIR.Argument) -> String {
     return { arg in
         let name = arg.nonClashingName
         guard !arg.isScalarArray else { return "&" + name }
@@ -445,8 +450,8 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ") -> S
         "public init(opaquePointer: COpaquePointer) {\n" + indentation + indentation +
             "ptr = UnsafeMutablePointer<\(e.ctype.swift)>(opaquePointer)\n" + indentation +
         "}\n\n" + indentation +
-        constructors.map(ccode).joinWithSeparator("\n") +
-        factories.map(fcode).joinWithSeparator("\n") +
+        constructors.map(ccode).joined(separator: "\n") +
+        factories.map(fcode).joined(separator: "\n") +
     "}\n\n"
 
     return code
@@ -480,8 +485,8 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "public convenience init(opaquePointer: COpaquePointer) {\n" + indentation + indentation +
             "self.init(ptr: UnsafeMutablePointer<\(e.ctype.swift)>(opaquePointer))\n" + indentation +
         "}\n\n" + indentation +
-        constructors.map(ccode).joinWithSeparator("\n") +
-        factories.map(fcode).joinWithSeparator("\n") +
+        constructors.map(ccode).joined(separator: "\n") +
+        factories.map(fcode).joined(separator: "\n") +
     "}\n\n"
 
     return code

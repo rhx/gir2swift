@@ -13,9 +13,9 @@
 
 
 extension String {
-    var contents: String? { return String.fromContentsOfFile(self) }
+    var contents: String? { return String.fromContentsOf(file: self) }
 
-    static func fromContentsOfFile(file: String) -> String? {
+    static func fromContentsOf(file: String) -> String? {
         let fn = open(file, O_RDONLY)
         guard fn >= 0 else {
             perror("Cannot open '\(file)'")
@@ -26,8 +26,7 @@ extension String {
             perror("Cannot get length of '\(file)'")
             return nil
         }
-        let mem = malloc(len+1)
-        guard mem != nil else {
+        guard let mem = malloc(len+1) else {
             perror("malloc")
             return nil
         }
@@ -36,10 +35,9 @@ extension String {
             perror("Error reading '\(file)'")
             return nil
         }
-        let cString = UnsafeMutablePointer<CChar>(mem)
-        cString[len] = 0
-        let (s, _) = String.fromCStringRepairingIllFormedUTF8(cString)
-        return s
+        let cs = UnsafeMutablePointer<CChar>(mem)
+        cs[len] = 0
+        return String(cString: UnsafePointer(cs))
     }
 }
 

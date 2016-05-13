@@ -14,10 +14,10 @@
 extension String {
     var withoutNameSpace: String {
         let chars = characters
-        guard let dot = chars.enumerate().filter({ $0.1 == "." }).last else {
+        guard let dot = chars.enumerated().filter({ $0.1 == "." }).last else {
             return self
         }
-        return String(chars[chars.startIndex.advancedBy(dot.index+1)..<chars.endIndex])
+        return String(chars[chars.index(startIndex, offsetBy: dot.offset+1)..<chars.endIndex])
     }
 }
 
@@ -43,8 +43,8 @@ public class GIR {
     static var VerbatimConstants: Set<String> = []
 
     /// context of known types
-    static var KnownTypes:   [ String : Type ] = [:]
-    static var KnownRecords: [ String : Type ] = [:]
+    static var KnownTypes:   [ String : Datatype ] = [:]
+    static var KnownRecords: [ String : Datatype ] = [:]
     static var GErrorType = "GErrorType"
 
     /// designated constructor
@@ -59,18 +59,18 @@ public class GIR {
         //
         // set up name space prefix
         //
-        if let ns = xml.xpath("//gir:namespace", namespaces: namespaces, defaultPrefix: "gir")?.generate().next() {
-            if let name = ns.attribute("name") {
+        if let ns = xml.xpath("//gir:namespace", namespaces: namespaces, defaultPrefix: "gir")?.makeIterator().next() {
+            if let name = ns.attribute(named: "name") {
                 prefix = name
             }
-            identifierPrefixes = ns.sortedSubAttributesFor("identifier-prefixes")
-            symbolPrefixes     = ns.sortedSubAttributesFor("symbol-prefixes")
+            identifierPrefixes = ns.sortedSubAttributesFor(attr: "identifier-prefixes")
+            symbolPrefixes     = ns.sortedSubAttributesFor(attr: "symbol-prefixes")
         }
         //
         // get all type alias records
         //
         if let entries = xml.xpath("/*/*/gir:alias", namespaces: namespaces, defaultPrefix: "gir") {
-            aliases = entries.enumerate().map { Alias(node: $0.1, atIndex: $0.0) }.filter {
+            aliases = entries.enumerated().map { Alias(node: $0.1, atIndex: $0.0) }.filter {
                 let name = $0.node
                 guard GIR.KnownTypes[name] == nil else {
                     fputs("Warning: duplicate type '\(name)' for alias ignored!\n", stderr)
@@ -84,7 +84,7 @@ public class GIR {
         // get all constants
         //
         if let entries = xml.xpath("/*/*/gir:constant", namespaces: namespaces, defaultPrefix: "gir") {
-            constants = entries.enumerate().map { Constant(node: $0.1, atIndex: $0.0) }.filter {
+            constants = entries.enumerated().map { Constant(node: $0.1, atIndex: $0.0) }.filter {
                 let name = $0.node
                 guard GIR.KnownTypes[name] == nil else {
                     fputs("Warning: duplicate type '\(name)' for constant ignored!\n", stderr)
@@ -98,7 +98,7 @@ public class GIR {
         // get all enums
         //
         if let entries = xml.xpath("/*/*/gir:enumeration", namespaces: namespaces, defaultPrefix: "gir") {
-            enumerations = entries.enumerate().map { Enumeration(node: $0.1, atIndex: $0.0) }.filter {
+            enumerations = entries.enumerated().map { Enumeration(node: $0.1, atIndex: $0.0) }.filter {
                 let name = $0.node
                 guard GIR.KnownTypes[name] == nil else {
                     fputs("Warning: duplicate type '\(name)' for enum ignored!\n", stderr)
@@ -112,7 +112,7 @@ public class GIR {
         // get all type records
         //
         if let recs = xml.xpath("/*/*/gir:record", namespaces: namespaces, defaultPrefix: "gir") {
-            records = recs.enumerate().map { Record(node: $0.1, atIndex: $0.0) }.filter {
+            records = recs.enumerated().map { Record(node: $0.1, atIndex: $0.0) }.filter {
                 let name = $0.node
                 guard GIR.KnownTypes[name] == nil else {
                     fputs("Warning: duplicate type '\(name)' for record ignored!\n", stderr)
@@ -127,7 +127,7 @@ public class GIR {
         // get all class records
         //
         if let recs = xml.xpath("/*/*/gir:class", namespaces: namespaces, defaultPrefix: "gir") {
-            classes = recs.enumerate().map { Class(node: $0.1, atIndex: $0.0) }.filter {
+            classes = recs.enumerated().map { Class(node: $0.1, atIndex: $0.0) }.filter {
                 let name = $0.node
                 guard GIR.KnownTypes[name] == nil else {
                     fputs("Warning: duplicate type '\(name)' for class ignored!\n", stderr)
@@ -172,20 +172,20 @@ public class GIR {
         }
 
         public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name") {
-            name = node.attribute(nameAttr) ?? "Unknown\(i)"
-            let children = node.children.lazy
-            let depr = node.bool("deprecated")
-            comment = GIR.docs(children)
+            name = node.attribute(named: nameAttr) ?? "Unknown\(i)"
+            let c = node.children.lazy
+            let depr = node.bool(named: "deprecated")
+            comment = GIR.docs(children: c)
             markedAsDeprecated = depr
-            deprecated = GIR.deprecatedDocumentation(children) ?? ( depr ? "This method is deprecated." : nil )
-            introspectable = node.bool("introspectable")
-            version = node.attribute("version")
+            deprecated = GIR.deprecatedDocumentation(children: c) ?? ( depr ? "This method is deprecated." : nil )
+            introspectable = node.bool(named: "introspectable")
+            version = node.attribute(named: "version")
         }
     }
 
 
     /// GIR type class
-    public class Type: Thing {
+    public class Datatype: Thing {
         public let type: String         ///< C typedef name
 
         public init(name: String, type: String, comment: String, introspectable: Bool = false, deprecated: String? = nil) {
@@ -194,7 +194,7 @@ public class GIR {
         }
 
         public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type") {
-            type = node.attribute(typeAttr) ?? ""
+            type = node.attribute(named: typeAttr) ?? ""
             super.init(node: node, atIndex: i, nameAttr: nameAttr)
 
             // handle the magic error type
@@ -216,7 +216,7 @@ public class GIR {
 
 
     /// a type with an underlying C type entry
-    public class CType: Type {
+    public class CType: Datatype {
         public let ctype: String            ///< underlying C type
         public let containedTypes: [CType]  ///< list of contained types
 
@@ -231,15 +231,15 @@ public class GIR {
         public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", cTypeAttr: String? = nil) {
             containedTypes = node.children.filter { $0.name == "type" }.map { CType(node: $0, atIndex: i, cTypeAttr: "type") }
             if let cta = cTypeAttr {
-                ctype = node.attribute(cta) ?? "Void /* unknown \(i) */"
+                ctype = node.attribute(named: cta) ?? "Void /* unknown \(i) */"
             } else {
                 if node.name == "array" {
-                    ctype = node.attribute("type") ?? "Void /* unknown \(i) */"
+                    ctype = node.attribute(named: "type") ?? "Void /* unknown \(i) */"
                 } else {
                     let children = node.children.lazy
-                    var types = children.filter { $0.name == "type" }.generate()
+                    var types = children.filter { $0.name == "type" }.makeIterator()
                     if let typeEntry = types.next() {
-                        ctype = typeEntry.attribute("name") ?? (typeEntry.attribute("type") ?? "Void /* unknown type \(i) */")
+                        ctype = typeEntry.attribute(named: "name") ?? (typeEntry.attribute(named: "type") ?? "Void /* unknown type \(i) */")
                     } else {
                         ctype = "Void /* unknown type \(i) */"
                     }
@@ -254,11 +254,11 @@ public class GIR {
             let ctype: String
             if let array = node.children.lazy.filter({ $0.name == "array" }).first {
                 containedTypes = array.children.filter { $0.name == "type" }.map { CType(node: $0, atIndex: i, cTypeAttr: "type") }
-                ctype = array.attribute("type") ?? "Void /* unknown ctype \(i) */"
-                type  = array.attribute("name") ?? ctype
+                ctype = array.attribute(named: "type") ?? "Void /* unknown ctype \(i) */"
+                type  = array.attribute(named: "name") ?? ctype
             } else {
                 containedTypes = []
-                (type, ctype) = GIR.types(node, at: i)
+                (type, ctype) = GIR.types(node: node, at: i)
             }
             self.ctype = ctype
             super.init(node: node, atIndex: i, withType: type, nameAttr: nameAttr)
@@ -275,7 +275,7 @@ public class GIR {
     }
 
     /// a type alias is just a type with an underlying C type
-    public typealias Alias = CType
+    public class Alias: CType {}
 
 
     /// an entry for a constant
@@ -289,7 +289,7 @@ public class GIR {
 
         /// factory method to construct a constant from XML
         public override init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", cTypeAttr: String? = nil) {
-            if let val = node.attribute("value"), let v = Int(val) {
+            if let val = node.attribute(named: "value"), let v = Int(val) {
                 value = v
             } else {
                 value = i
@@ -300,7 +300,7 @@ public class GIR {
 
 
     /// an enumeration entry
-    public class Enumeration: Type {
+    public class Enumeration: Datatype {
         /// an enumeration value is a constant
         public typealias Member = Constant
 
@@ -315,7 +315,7 @@ public class GIR {
         /// factory method to construct an enumeration entry from XML
         public init(node: XMLElement, atIndex i: Int) {
             let mem = node.children.lazy.filter { $0.name == "member" }
-            members = mem.enumerate().map { Member(node: $0.1, atIndex: $0.0, cTypeAttr: "identifier") }
+            members = mem.enumerated().map { Member(node: $0.1, atIndex: $0.0, cTypeAttr: "identifier") }
             super.init(node: node, atIndex: i)
         }
     }
@@ -344,15 +344,15 @@ public class GIR {
 
         /// XML constructor
         public init(node: XMLElement, atIndex i: Int) {
-            cprefix = node.attribute("symbol-prefix") ?? ""
-            typegetter = node.attribute("get-type") ?? ""
+            cprefix = node.attribute(named: "symbol-prefix") ?? ""
+            typegetter = node.attribute(named: "get-type") ?? ""
             let children = node.children.lazy
             let funcs = children.filter { $0.name == "function" }
-            functions = funcs.enumerate().map { Function(node: $0.1, atIndex: $0.0) }
+            functions = funcs.enumerated().map { Function(node: $0.1, atIndex: $0.0) }
             let meths = children.filter { $0.name == "method" }
-            methods = meths.enumerate().map { Method(node: $0.1, atIndex: $0.0) }
+            methods = meths.enumerated().map { Method(node: $0.1, atIndex: $0.0) }
             let cons = children.filter { $0.name == "constructor" }
-            constructors = cons.enumerate().map { Method(node: $0.1, atIndex: $0.0) }
+            constructors = cons.enumerated().map { Method(node: $0.1, atIndex: $0.0) }
             super.init(node: node, atIndex: i, typeAttr: "type-name", cTypeAttr: "type")
         }
     }
@@ -362,7 +362,7 @@ public class GIR {
         public let parent: String           ///< parent class name
 
         override init(node: XMLElement, atIndex i: Int) {
-            parent = node.attribute("parent") ?? ""
+            parent = node.attribute(named: "parent") ?? ""
             super.init(node: node, atIndex: i)
         }
     }
@@ -386,8 +386,8 @@ public class GIR {
 
         /// XML constructor
         public init(node: XMLElement, atIndex i: Int) {
-            cname = node.attribute("identifier") ?? ""
-            let thrAttr = node.attribute("throws") ?? "0"
+            cname = node.attribute(named: "identifier") ?? ""
+            let thrAttr = node.attribute(named: "throws") ?? "0"
             throwsError = (Int(thrAttr) ?? 0) != 0
             let children = node.children.lazy
             if let ret = children.findFirstWhere({ $0.name == "return-value"}) {
@@ -398,9 +398,9 @@ public class GIR {
             }
             if let params = children.findFirstWhere({ $0.name == "parameters"}) {
                 let children = params.children.lazy
-                args = GIR.args(children)
+                args = GIR.args(children: children)
             } else {
-                args = GIR.args(children)
+                args = GIR.args(children: children)
             }
             super.init(node: node, atIndex: i)
         }
@@ -472,10 +472,10 @@ class ConversionContext {
     let level: Int
     let parent: ConversionContext?
     let parentNode: XMLTree.Node!
-    let conversion: [String : XMLTree.Node -> String]
+    let conversion: [String : (XMLTree.Node) -> String]
     var outputs: [String] = []
 
-    init(_ conversion: [String : XMLTree.Node -> String] = [:], level: Int = 0, parent: ConversionContext? = nil, parentNode: XMLTree.Node? = nil) {
+    init(_ conversion: [String : (XMLTree.Node) -> String] = [:], level: Int = 0, parent: ConversionContext? = nil, parentNode: XMLTree.Node? = nil) {
         self.level = level
         self.parent = parent
         self.parentNode = parentNode
@@ -483,13 +483,13 @@ class ConversionContext {
     }
 
     /// push a context
-    func push(node: XMLTree.Node, _ fs: [String : XMLTree.Node -> String]) -> ConversionContext {
+    func push(node: XMLTree.Node, _ fs: [String : (XMLTree.Node) -> String]) -> ConversionContext {
         return ConversionContext(fs, level: node.level+1, parent: self, parentNode: node)
     }
 }
 
 private func indent(level: Int, _ s: String = "") -> String {
-    return String(count: level * 4, repeatedValue: Character(" ")) + s
+    return String(repeating: Character(" "), count: level * 4) + s
 }
 
 extension GIR {
@@ -497,14 +497,14 @@ extension GIR {
     /// return the documentation for the given child nodes
     ///
     public class func docs(children: LazySequence<AnySequence<XMLElement>>) -> String {
-        return documentation("doc", children: children)
+        return documentation(name: "doc", children: children)
     }
 
     ///
     /// return the documentation for the given child nodes
     ///
     public class func deprecatedDocumentation(children: LazySequence<AnySequence<XMLElement>>) -> String? {
-        let doc = documentation("doc-deprecated", children: children)
+        let doc = documentation(name: "doc-deprecated", children: children)
         guard !doc.isEmpty else { return nil }
         return doc
     }
@@ -515,7 +515,7 @@ extension GIR {
     public class func documentation(name: String, children: LazySequence<AnySequence<XMLElement>>) -> String {
         let docs = children.filter { $0.name == name }
         let comments = docs.map { $0.content}
-        return comments.joinWithSeparator("\n")
+        return comments.joined(separator: "\n")
     }
 
     ///
@@ -523,7 +523,7 @@ extension GIR {
     ///
     public class func args(children: LazySequence<AnySequence<XMLElement>>) -> [Argument] {
         let parameters = children.filter { $0.name.hasSuffix("parameter") }
-        let args = parameters.enumerate().map { Argument(node: $1, atIndex: $0) }
+        let args = parameters.enumerated().map { Argument(node: $1, atIndex: $0) }
         return args
     }
 
@@ -532,13 +532,13 @@ extension GIR {
     ///
     class func types(node: XMLElement, at i: Int) -> (type: String, ctype: String) {
         for child in node.children {
-            let type = child.attribute("name") ?? (child.attribute("type") ?? "Void /* unknown type \(i) */")
+            let type = child.attribute(named: "name") ?? (child.attribute(named: "type") ?? "Void /* unknown type \(i) */")
             let t: XMLElement
             if child.name == "type" { t = child }
             else if let at = child.children.filter({ $0.name == "type" }).first {
                 t = at
             } else { continue }
-            let ctype = t.attribute("type") ?? (t.attribute("name") ?? "void /* untyped argument \(i)")
+            let ctype = t.attribute(named: "type") ?? (t.attribute(named: "name") ?? "void /* untyped argument \(i)")
             return (type: type, ctype: ctype)
         }
         return (type: "Void /* missing type \(i) */", ctype: "void /* missing C type \(i)")
@@ -550,31 +550,31 @@ extension GIR {
     public func dumpSwift() -> String {
         var context = ConversionContext([:])
         context = ConversionContext(["repository": {
-            let s = indent($0.level, "// \($0.node.name) @ \($0.level)+\(context.level)")
-            context = context.push($0, ["namespace": {
-                let s = indent($0.level, "// \($0.node.name) @ \($0.level)+\(context.level)")
-                context = context.push($0, ["alias": {
-                    context = context.push($0, ["type": {
-                        if let type  = $0.node.attribute("name"),
-                           let alias = context.parentNode.node.attribute("name") where !alias.isEmpty && !type.isEmpty {
+            let s = indent(level: $0.level, "// \($0.node.name) @ \($0.level)+\(context.level)")
+            context = context.push(node: $0, ["namespace": {
+                let s = indent(level: $0.level, "// \($0.node.name) @ \($0.level)+\(context.level)")
+                context = context.push(node: $0, ["alias": {
+                    context = context.push(node: $0, ["type": {
+                        if let type  = $0.node.attribute(named: "name"),
+                           let alias = context.parentNode.node.attribute(named: "name") where !alias.isEmpty && !type.isEmpty {
                             context.outputs = ["public typealias \(alias) = \(type)"]
                         } else {
-                            context.outputs = ["// error alias \($0.node.attribute("name")) = \(context.parentNode.node.attribute("name"))"]
+                            context.outputs = ["// error alias \($0.node.attribute(named: "name")) = \(context.parentNode.node.attribute(named: "name"))"]
                         }
                         return ""
                         }])
                     return s
                 }, "function": {
                     let s: String
-                    if let name = $0.node.attribute("name") where !name.isEmpty {
+                    if let name = $0.node.attribute(named: "name") where !name.isEmpty {
                         s = "func \(name)("
                     } else { s = "// empty function " }
-                    context = context.push($0, ["type": {
-                        if let type  = $0.node.attribute("name"),
-                            let alias = context.parentNode.node.attribute("name") where !alias.isEmpty && !type.isEmpty {
+                    context = context.push(node: $0, ["type": {
+                        if let type  = $0.node.attribute(named: "name"),
+                            let alias = context.parentNode.node.attribute(named: "name") where !alias.isEmpty && !type.isEmpty {
                             context.outputs = ["public typealias \(alias) = \(type)"]
                         } else {
-                            context.outputs = ["// error alias \($0.node.attribute("name")) = \(context.parentNode.node.attribute("name"))"]
+                            context.outputs = ["// error alias \($0.node.attribute(named: "name")) = \(context.parentNode.node.attribute(named: "name"))"]
                         }
                         return ""
                         }])
@@ -590,7 +590,7 @@ extension GIR {
                 if let parent = context.parent { context = parent }
                 else { assert(context.level == 0) }
             }
-            return indent(tn.level, "// unhandled: \(tn.node.name) @ \(tn.level)+\(context.level)")
+            return indent(level: tn.level, "// unhandled: \(tn.node.name) @ \(tn.level)+\(context.level)")
             }).reduce("") { (output: String, element: String) -> String in
                 output + "\(element)\n"
         }
@@ -603,15 +603,15 @@ extension XMLElement {
     /// and ordered with the longest attribute name first
     ///
     public func sortedSubAttributesFor(attr: String, splitBy char: Character = ",", orderedBy: (String, String) -> Bool = { $0.characters.count > $1.characters.count || ($0.characters.count == $1.characters.count && $0 < $1)}) -> [String] {
-        guard let attrs = ((attribute(attr)?.characters)?.split(char))?.map(String.init) else { return [] }
-        return attrs.sort(orderedBy)
+        guard let attrs = ((attribute(named: attr)?.characters)?.split(separator: char))?.map(String.init) else { return [] }
+        return attrs.sorted(isOrderedBefore: orderedBy)
     }
 
     ///
     /// return the documentation for a given node
     ///
     public func docs() -> String {
-        return GIR.docs(children.lazy)
+        return GIR.docs(children: children.lazy)
     }
 }
 

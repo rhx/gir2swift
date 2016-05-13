@@ -12,7 +12,7 @@
  * Use with caution: the returned pointer is not really mutable, but many
  * C APIs fail to declare them `const'
  */
-func cstring(arg: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar> {
+func cstring(_ arg: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar> {
     return UnsafeMutablePointer<CChar>(arg)
 }
 
@@ -25,6 +25,6 @@ func cstring(arg: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar> {
        return arguments.map { cstring($0) } + [UnsafeMutablePointer<CChar>(nil)]
    }
  */
-func argv(arguments: [String]) -> [UnsafeMutablePointer<CChar>] {
+func argv(_ arguments: [String]) -> [UnsafeMutablePointer<CChar>?] {
     return arguments.map { let s = cstring($0); return s } + [UnsafeMutablePointer<CChar>(nil)]
 }
