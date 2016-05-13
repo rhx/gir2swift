@@ -11,7 +11,7 @@ private let castableScalars = [  "gint" : "CInt",    "glong" : "CLong",   "guint
     "gint8"  : "Int8",  "guint8"  : "UInt8",  "gint16" : "Int16", "guint16" : "UInt16",
     "gint32" : "Int32", "guint32" : "UInt32", "gint64" : "Int64", "guint64" : "UInt64",
     "gulong" : "CUnsignedLong",  "gsize"   : "Int",  "gboolean" : "Bool"]
-private let castablePointers = [ "gpointer" : "COpaquePointer" ]
+private let castablePointers = [ "gpointer" : "OpaquePointer" ]
 private let reversePointers = castablePointers.reduce(Dictionary<String,String>()) {
     var dict = $0
     dict[$1.1] = $1.0
@@ -22,8 +22,10 @@ private let reversecast = castableScalars.reduce(reversePointers) {
     dict[$1.1] = $1.0
     return dict
 }
-private let swiftReplacementsForC = [ "char" : "CChar", "int" : "CInt", "void" : "Void", "utf8" : "String", "va_list" : "CVaListPointer" ]
-private let reservedTypes: Set = ["String", "Array", "Optional", "Set"]
+private let swiftReplacementsForC = [ "char" : "CChar", "int" : "CInt",
+    "void" : "Void", "utf8" : "String", "va_list" : "CVaListPointer",
+    "Error" : "ErrorType", "ErrorType" : "ErrorEnum" ]
+private let reservedTypes: Set = ["String", "Array", "Optional", "Set", "Error", "ErrorProtocol"]
 private let typeNames: Set = reservedTypes.union(reversecast.keys)
 private let wsnl = NSCharacterSet.whitespacesAndNewlines()
 
@@ -57,6 +59,7 @@ extension String {
         if let s = castableScalars[self] { return s }
         if let s = castablePointers[self] { return s }
         let s = swiftType
+        guard !reservedTypes.contains(s) else { return s + "Type" }
         guard !reservedNames.contains(s) else { return s + "_" }
         return s
     }

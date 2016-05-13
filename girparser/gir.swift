@@ -44,7 +44,7 @@ public class GIR {
 
     /// context of known types
     static var KnownTypes:   [ String : Datatype ] = [:]
-    static var KnownRecords: [ String : Datatype ] = [:]
+    static var KnownRecords: [ String : Record ] = [:]
     static var GErrorType = "GErrorType"
 
     /// designated constructor
