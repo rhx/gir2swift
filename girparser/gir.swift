@@ -538,10 +538,10 @@ extension GIR {
             else if let at = child.children.filter({ $0.name == "type" }).first {
                 t = at
             } else { continue }
-            let ctype = t.attribute(named: "type") ?? (t.attribute(named: "name") ?? "void /* untyped argument \(i)")
+            let ctype = t.attribute(named: "type") ?? (t.attribute(named: "name") ?? "void /* untyped argument \(i) */")
             return (type: type, ctype: ctype)
         }
-        return (type: "Void /* missing type \(i) */", ctype: "void /* missing C type \(i)")
+        return (type: "Void /* missing type \(i) */", ctype: "void /* missing C type \(i) */")
     }
 
     ///
