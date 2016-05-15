@@ -10,8 +10,6 @@
 		F110CAA01CA09C7C00F615C9 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = F110CA9F1CA09C7C00F615C9 /* main.swift */; };
 		F12789EC1CD2C17F002AF814 /* c2swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = F12789EB1CD2C17F002AF814 /* c2swift.swift */; };
 		F168EC771CA5E2A3002AFBB0 /* SequenceType+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = F168EC761CA5E2A3002AFBB0 /* SequenceType+Utilities.swift */; };
-		F169AFD01CA33F58006767E2 /* XMLDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = F169AFCF1CA33F58006767E2 /* XMLDocument.swift */; };
-		F169AFD71CA3517E006767E2 /* XMLElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = F169AFD61CA3517E006767E2 /* XMLElement.swift */; };
 		F16EA7091CA0A52600D4C108 /* getopt.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16EA7081CA0A52600D4C108 /* getopt.swift */; };
 		F16EA71E1CA0AF5E00D4C108 /* FileLen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16EA71D1CA0AF5E00D4C108 /* FileLen.swift */; };
 		F16EA7221CA0B61800D4C108 /* String+ContentsOfFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16EA7211CA0B61800D4C108 /* String+ContentsOfFile.swift */; };
@@ -23,10 +21,6 @@
 		F1CC22A51CE55F9200CEEF9C /* cstring.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CC22A41CE55F9200CEEF9C /* cstring.swift */; };
 		F1CC22A71CE55FCE00CEEF9C /* basename.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CC22A61CE55FCE00CEEF9C /* basename.swift */; };
 		F1CC22A91CE5627E00CEEF9C /* String+Lines.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CC22A81CE5627E00CEEF9C /* String+Lines.swift */; };
-		F1E1C38A1CA4920F0080006E /* XMLPath.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C3881CA490340080006E /* XMLPath.swift */; };
-		F1E1C38D1CA49A240080006E /* XMLNameSpace.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C38B1CA499CB0080006E /* XMLNameSpace.swift */; };
-		F1E1C3901CA4A2000080006E /* EmptySequence.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C38E1CA4A1450080006E /* EmptySequence.swift */; };
-		F1E1C3931CA4E4820080006E /* XMLAttribute.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C3911CA4E3D40080006E /* XMLAttribute.swift */; };
 		F1E1C3951CA5548C0080006E /* gir.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C3941CA5548C0080006E /* gir.swift */; };
 /* End PBXBuildFile section */
 
@@ -56,11 +50,6 @@
 		F110CA9F1CA09C7C00F615C9 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		F12789EB1CD2C17F002AF814 /* c2swift.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = c2swift.swift; sourceTree = "<group>"; };
 		F168EC761CA5E2A3002AFBB0 /* SequenceType+Utilities.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "SequenceType+Utilities.swift"; sourceTree = "<group>"; };
-		F169AFCF1CA33F58006767E2 /* XMLDocument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = XMLDocument.swift; sourceTree = "<group>"; };
-		F169AFD21CA3422D006767E2 /* libxml2-import.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "libxml2-import.h"; sourceTree = "<group>"; };
-		F169AFD41CA343E0006767E2 /* libxml */ = {isa = PBXFileReference; lastKnownFileType = folder; name = libxml; path = usr/include/libxml2/libxml; sourceTree = SDKROOT; };
-		F169AFD51CA34425006767E2 /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
-		F169AFD61CA3517E006767E2 /* XMLElement.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = XMLElement.swift; sourceTree = "<group>"; };
 		F16EA7081CA0A52600D4C108 /* getopt.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = getopt.swift; sourceTree = "<group>"; };
 		F16EA71D1CA0AF5E00D4C108 /* FileLen.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileLen.swift; sourceTree = "<group>"; };
 		F16EA7211CA0B61800D4C108 /* String+ContentsOfFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+ContentsOfFile.swift"; sourceTree = "<group>"; };
@@ -72,10 +61,6 @@
 		F1CC22A41CE55F9200CEEF9C /* cstring.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = cstring.swift; sourceTree = "<group>"; };
 		F1CC22A61CE55FCE00CEEF9C /* basename.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = basename.swift; sourceTree = "<group>"; };
 		F1CC22A81CE5627E00CEEF9C /* String+Lines.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+Lines.swift"; sourceTree = "<group>"; };
-		F1E1C3881CA490340080006E /* XMLPath.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = XMLPath.swift; sourceTree = "<group>"; };
-		F1E1C38B1CA499CB0080006E /* XMLNameSpace.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = XMLNameSpace.swift; sourceTree = "<group>"; };
-		F1E1C38E1CA4A1450080006E /* EmptySequence.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EmptySequence.swift; sourceTree = "<group>"; };
-		F1E1C3911CA4E3D40080006E /* XMLAttribute.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = XMLAttribute.swift; sourceTree = "<group>"; };
 		F1E1C3941CA5548C0080006E /* gir.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = gir.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -100,7 +85,6 @@
 		F110CA931CA09C7C00F615C9 = {
 			isa = PBXGroup;
 			children = (
-				F169AFCE1CA33EC5006767E2 /* XML */,
 				F110CA9E1CA09C7C00F615C9 /* Gtk3Swift */,
 				F1938DAE1CA09CBD006811D1 /* girparser */,
 				F110CA9D1CA09C7C00F615C9 /* Products */,
@@ -122,30 +106,6 @@
 				F110CA9F1CA09C7C00F615C9 /* main.swift */,
 			);
 			path = Gtk3Swift;
-			sourceTree = "<group>";
-		};
-		F169AFCE1CA33EC5006767E2 /* XML */ = {
-			isa = PBXGroup;
-			children = (
-				F169AFD11CA341E1006767E2 /* libxml2 */,
-				F169AFCF1CA33F58006767E2 /* XMLDocument.swift */,
-				F1E1C38B1CA499CB0080006E /* XMLNameSpace.swift */,
-				F169AFD61CA3517E006767E2 /* XMLElement.swift */,
-				F1E1C3881CA490340080006E /* XMLPath.swift */,
-				F1E1C3911CA4E3D40080006E /* XMLAttribute.swift */,
-				F1E1C38E1CA4A1450080006E /* EmptySequence.swift */,
-			);
-			path = XML;
-			sourceTree = "<group>";
-		};
-		F169AFD11CA341E1006767E2 /* libxml2 */ = {
-			isa = PBXGroup;
-			children = (
-				F169AFD41CA343E0006767E2 /* libxml */,
-				F169AFD21CA3422D006767E2 /* libxml2-import.h */,
-				F169AFD51CA34425006767E2 /* module.modulemap */,
-			);
-			path = libxml2;
 			sourceTree = "<group>";
 		};
 		F1938DAE1CA09CBD006811D1 /* girparser */ = {
@@ -266,21 +226,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F1E1C3901CA4A2000080006E /* EmptySequence.swift in Sources */,
-				F169AFD01CA33F58006767E2 /* XMLDocument.swift in Sources */,
 				F16EA7091CA0A52600D4C108 /* getopt.swift in Sources */,
 				F1938DB01CA09CBD006811D1 /* main.swift in Sources */,
 				F168EC771CA5E2A3002AFBB0 /* SequenceType+Utilities.swift in Sources */,
 				F1CC22A71CE55FCE00CEEF9C /* basename.swift in Sources */,
 				F1CC22A91CE5627E00CEEF9C /* String+Lines.swift in Sources */,
-				F1E1C38D1CA49A240080006E /* XMLNameSpace.swift in Sources */,
-				F1E1C3931CA4E4820080006E /* XMLAttribute.swift in Sources */,
 				F16EA7241CA0B81200D4C108 /* mmap.swift in Sources */,
 				F1CC22A51CE55F9200CEEF9C /* cstring.swift in Sources */,
-				F169AFD71CA3517E006767E2 /* XMLElement.swift in Sources */,
 				F16EA7221CA0B61800D4C108 /* String+ContentsOfFile.swift in Sources */,
 				F12789EC1CD2C17F002AF814 /* c2swift.swift in Sources */,
-				F1E1C38A1CA4920F0080006E /* XMLPath.swift in Sources */,
 				F1E1C3951CA5548C0080006E /* gir.swift in Sources */,
 				F1C6BBD51CAF3D05002F0267 /* gir+swift.swift in Sources */,
 				F1B1FBF81CCDA68D00C7AC8D /* String+Substring.swift in Sources */,
