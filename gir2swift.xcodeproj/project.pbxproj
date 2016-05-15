@@ -145,7 +145,7 @@
 					};
 				};
 			};
-			buildConfigurationList = F110CA971CA09C7C00F615C9 /* Build configuration list for PBXProject "Gtk3Swift" */;
+			buildConfigurationList = F110CA971CA09C7C00F615C9 /* Build configuration list for PBXProject "gir2swift" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -297,7 +297,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		F110CA971CA09C7C00F615C9 /* Build configuration list for PBXProject "Gtk3Swift" */ = {
+		F110CA971CA09C7C00F615C9 /* Build configuration list for PBXProject "gir2swift" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F110CAA11CA09C7C00F615C9 /* Debug */,

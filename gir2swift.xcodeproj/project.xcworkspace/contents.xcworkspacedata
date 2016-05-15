@@ -2,6 +2,6 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "self:Gtk3Swift.xcodeproj">
+      location = "self:/Users/rh/Dropbox/Developer/src/swift/gtk/Gtk3Swift/gir2swift.xcodeproj">
    </FileRef>
 </Workspace>
