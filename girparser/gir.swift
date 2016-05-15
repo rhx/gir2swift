@@ -10,6 +10,7 @@
 #else
     import Darwin
 #endif
+import SwiftLibXML
 
 extension String {
     var withoutNameSpace: String {

@@ -73,7 +73,7 @@ extension XMLPath: Sequence {
 
 extension XMLDocument {
     /// compile a given XPath for queries
-    func xpath(_ p: String, namespaces ns: AnySequence<XMLNameSpace> = emptySequence(), defaultPrefix: String = "ns") -> XMLPath? {
+    public func xpath(_ p: String, namespaces ns: AnySequence<XMLNameSpace> = emptySequence(), defaultPrefix: String = "ns") -> XMLPath? {
         guard let context = xmlXPathNewContext(xml) else { return nil }
         defer { xmlXPathFreeContext(context) }
         ns.forEach { xmlXPathRegisterNs(context, $0.prefix ?? defaultPrefix, $0.href ?? "") }
@@ -81,7 +81,7 @@ extension XMLDocument {
     }
 
     /// compile a given XPath for queries
-    func xpath(_ p: String, namespaces ns: [(prefix: String, href: String)]) -> XMLPath? {
+    public func xpath(_ p: String, namespaces ns: [(prefix: String, href: String)]) -> XMLPath? {
         guard let context = xmlXPathNewContext(xml) else { return nil }
         defer { xmlXPathFreeContext(context) }
         ns.forEach { xmlXPathRegisterNs(context, $0.prefix, $0.href) }
@@ -89,7 +89,7 @@ extension XMLDocument {
     }
 
     /// compile an xpath for queries with a given context
-    func xpath(_ p: String, context: xmlXPathContextPtr) -> XMLPath? {
+    public func xpath(_ p: String, context: xmlXPathContextPtr) -> XMLPath? {
         guard let xmlXPath = xmlXPathEvalExpression(p, context) else { return nil }
         return XMLPath(xpath: xmlXPath)
     }
