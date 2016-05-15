@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		F110CAA01CA09C7C00F615C9 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = F110CA9F1CA09C7C00F615C9 /* main.swift */; };
 		F12789EC1CD2C17F002AF814 /* c2swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = F12789EB1CD2C17F002AF814 /* c2swift.swift */; };
 		F168EC771CA5E2A3002AFBB0 /* SequenceType+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = F168EC761CA5E2A3002AFBB0 /* SequenceType+Utilities.swift */; };
 		F16EA7091CA0A52600D4C108 /* getopt.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16EA7081CA0A52600D4C108 /* getopt.swift */; };
@@ -15,7 +14,6 @@
 		F16EA7221CA0B61800D4C108 /* String+ContentsOfFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16EA7211CA0B61800D4C108 /* String+ContentsOfFile.swift */; };
 		F16EA7241CA0B81200D4C108 /* mmap.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16EA7231CA0B81200D4C108 /* mmap.swift */; };
 		F1938DB01CA09CBD006811D1 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1938DAF1CA09CBD006811D1 /* main.swift */; };
-		F1B1FBF71CCDA68D00C7AC8D /* String+Substring.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B1FBF61CCDA68D00C7AC8D /* String+Substring.swift */; };
 		F1B1FBF81CCDA68D00C7AC8D /* String+Substring.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B1FBF61CCDA68D00C7AC8D /* String+Substring.swift */; };
 		F1C6BBD51CAF3D05002F0267 /* gir+swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1C6BBD41CAF3D05002F0267 /* gir+swift.swift */; };
 		F1CC22A51CE55F9200CEEF9C /* cstring.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CC22A41CE55F9200CEEF9C /* cstring.swift */; };
@@ -25,15 +23,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		F110CA9A1CA09C7C00F615C9 /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
-		};
 		F1938DAB1CA09CBD006811D1 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -46,8 +35,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		F110CA9C1CA09C7C00F615C9 /* Gtk3Swift */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Gtk3Swift; sourceTree = BUILT_PRODUCTS_DIR; };
-		F110CA9F1CA09C7C00F615C9 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		F12789EB1CD2C17F002AF814 /* c2swift.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = c2swift.swift; sourceTree = "<group>"; };
 		F168EC761CA5E2A3002AFBB0 /* SequenceType+Utilities.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "SequenceType+Utilities.swift"; sourceTree = "<group>"; };
 		F16EA7081CA0A52600D4C108 /* getopt.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = getopt.swift; sourceTree = "<group>"; };
@@ -65,13 +52,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		F110CA991CA09C7C00F615C9 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		F1938DAA1CA09CBD006811D1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -85,8 +65,7 @@
 		F110CA931CA09C7C00F615C9 = {
 			isa = PBXGroup;
 			children = (
-				F110CA9E1CA09C7C00F615C9 /* Gtk3Swift */,
-				F1938DAE1CA09CBD006811D1 /* girparser */,
+				F1938DAE1CA09CBD006811D1 /* Sources */,
 				F110CA9D1CA09C7C00F615C9 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -94,21 +73,12 @@
 		F110CA9D1CA09C7C00F615C9 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				F110CA9C1CA09C7C00F615C9 /* Gtk3Swift */,
 				F1938DAD1CA09CBD006811D1 /* girparser */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		F110CA9E1CA09C7C00F615C9 /* Gtk3Swift */ = {
-			isa = PBXGroup;
-			children = (
-				F110CA9F1CA09C7C00F615C9 /* main.swift */,
-			);
-			path = Gtk3Swift;
-			sourceTree = "<group>";
-		};
-		F1938DAE1CA09CBD006811D1 /* girparser */ = {
+		F1938DAE1CA09CBD006811D1 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
 				F1938DAF1CA09CBD006811D1 /* main.swift */,
@@ -125,6 +95,7 @@
 				F1CC22A81CE5627E00CEEF9C /* String+Lines.swift */,
 				F168EC761CA5E2A3002AFBB0 /* SequenceType+Utilities.swift */,
 			);
+			name = Sources;
 			path = girparser;
 			sourceTree = "<group>";
 		};
@@ -141,23 +112,6 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		F110CA9B1CA09C7C00F615C9 /* Gtk3Swift */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = F110CAA31CA09C7C00F615C9 /* Build configuration list for PBXNativeTarget "Gtk3Swift" */;
-			buildPhases = (
-				F110CA981CA09C7C00F615C9 /* Sources */,
-				F110CA991CA09C7C00F615C9 /* Frameworks */,
-				F110CA9A1CA09C7C00F615C9 /* CopyFiles */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = Gtk3Swift;
-			productName = Gtk3Swift;
-			productReference = F110CA9C1CA09C7C00F615C9 /* Gtk3Swift */;
-			productType = "com.apple.product-type.tool";
-		};
 		F1938DAC1CA09CBD006811D1 /* girparser */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = F1938DB31CA09CBD006811D1 /* Build configuration list for PBXNativeTarget "girparser" */;
@@ -186,9 +140,6 @@
 				LastUpgradeCheck = 0730;
 				ORGANIZATIONNAME = "Rene Hexel";
 				TargetAttributes = {
-					F110CA9B1CA09C7C00F615C9 = {
-						CreatedOnToolsVersion = 7.3;
-					};
 					F1938DAC1CA09CBD006811D1 = {
 						CreatedOnToolsVersion = 7.3;
 					};
@@ -206,22 +157,12 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				F110CA9B1CA09C7C00F615C9 /* Gtk3Swift */,
 				F1938DAC1CA09CBD006811D1 /* girparser */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
-		F110CA981CA09C7C00F615C9 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				F1B1FBF71CCDA68D00C7AC8D /* String+Substring.swift in Sources */,
-				F110CAA01CA09C7C00F615C9 /* main.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		F1938DA91CA09CBD006811D1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -331,20 +272,6 @@
 			};
 			name = Release;
 		};
-		F110CAA41CA09C7C00F615C9 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Debug;
-		};
-		F110CAA51CA09C7C00F615C9 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Release;
-		};
 		F1938DB11CA09CBD006811D1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -375,15 +302,6 @@
 			buildConfigurations = (
 				F110CAA11CA09C7C00F615C9 /* Debug */,
 				F110CAA21CA09C7C00F615C9 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		F110CAA31CA09C7C00F615C9 /* Build configuration list for PBXNativeTarget "Gtk3Swift" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				F110CAA41CA09C7C00F615C9 /* Debug */,
-				F110CAA51CA09C7C00F615C9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
