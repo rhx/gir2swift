@@ -19,8 +19,33 @@
 		F1CC22A51CE55F9200CEEF9C /* cstring.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CC22A41CE55F9200CEEF9C /* cstring.swift */; };
 		F1CC22A71CE55FCE00CEEF9C /* basename.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CC22A61CE55FCE00CEEF9C /* basename.swift */; };
 		F1CC22A91CE5627E00CEEF9C /* String+Lines.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CC22A81CE5627E00CEEF9C /* String+Lines.swift */; };
+		F1DA0D441CE84C5D00BC5143 /* SwiftLibXML.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F1DA0D3F1CE84C3C00BC5143 /* SwiftLibXML.framework */; };
 		F1E1C3951CA5548C0080006E /* gir.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C3941CA5548C0080006E /* gir.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		F1DA0D3E1CE84C3C00BC5143 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F1DA0D391CE84C3C00BC5143 /* SwiftLibXML.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F1DA0D111CE848BB00BC5143;
+			remoteInfo = SwiftLibXML;
+		};
+		F1DA0D401CE84C3C00BC5143 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F1DA0D391CE84C3C00BC5143 /* SwiftLibXML.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F1DA0D1B1CE848BB00BC5143;
+			remoteInfo = SwiftLibXMLTests;
+		};
+		F1DA0D421CE84C5000BC5143 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F1DA0D391CE84C3C00BC5143 /* SwiftLibXML.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F1DA0D101CE848BB00BC5143;
+			remoteInfo = SwiftLibXML;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		F1938DAB1CA09CBD006811D1 /* CopyFiles */ = {
@@ -41,13 +66,14 @@
 		F16EA71D1CA0AF5E00D4C108 /* FileLen.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileLen.swift; sourceTree = "<group>"; };
 		F16EA7211CA0B61800D4C108 /* String+ContentsOfFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+ContentsOfFile.swift"; sourceTree = "<group>"; };
 		F16EA7231CA0B81200D4C108 /* mmap.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = mmap.swift; sourceTree = "<group>"; };
-		F1938DAD1CA09CBD006811D1 /* girparser */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = girparser; sourceTree = BUILT_PRODUCTS_DIR; };
+		F1938DAD1CA09CBD006811D1 /* gir2swift */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = gir2swift; sourceTree = BUILT_PRODUCTS_DIR; };
 		F1938DAF1CA09CBD006811D1 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		F1B1FBF61CCDA68D00C7AC8D /* String+Substring.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+Substring.swift"; sourceTree = "<group>"; };
 		F1C6BBD41CAF3D05002F0267 /* gir+swift.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = "gir+swift.swift"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		F1CC22A41CE55F9200CEEF9C /* cstring.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = cstring.swift; sourceTree = "<group>"; };
 		F1CC22A61CE55FCE00CEEF9C /* basename.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = basename.swift; sourceTree = "<group>"; };
 		F1CC22A81CE5627E00CEEF9C /* String+Lines.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+Lines.swift"; sourceTree = "<group>"; };
+		F1DA0D391CE84C3C00BC5143 /* SwiftLibXML.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SwiftLibXML.xcodeproj; path = ../SwiftLibXML/SwiftLibXML.xcodeproj; sourceTree = "<group>"; };
 		F1E1C3941CA5548C0080006E /* gir.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = gir.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -56,6 +82,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F1DA0D441CE84C5D00BC5143 /* SwiftLibXML.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +92,7 @@
 		F110CA931CA09C7C00F615C9 = {
 			isa = PBXGroup;
 			children = (
+				F1DA0D391CE84C3C00BC5143 /* SwiftLibXML.xcodeproj */,
 				F1938DAE1CA09CBD006811D1 /* Sources */,
 				F110CA9D1CA09C7C00F615C9 /* Products */,
 			);
@@ -73,7 +101,7 @@
 		F110CA9D1CA09C7C00F615C9 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				F1938DAD1CA09CBD006811D1 /* girparser */,
+				F1938DAD1CA09CBD006811D1 /* gir2swift */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -95,8 +123,16 @@
 				F1CC22A81CE5627E00CEEF9C /* String+Lines.swift */,
 				F168EC761CA5E2A3002AFBB0 /* SequenceType+Utilities.swift */,
 			);
-			name = Sources;
-			path = girparser;
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		F1DA0D3A1CE84C3C00BC5143 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F1DA0D3F1CE84C3C00BC5143 /* SwiftLibXML.framework */,
+				F1DA0D411CE84C3C00BC5143 /* SwiftLibXMLTests.xctest */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -112,9 +148,9 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		F1938DAC1CA09CBD006811D1 /* girparser */ = {
+		F1938DAC1CA09CBD006811D1 /* gir2swift */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = F1938DB31CA09CBD006811D1 /* Build configuration list for PBXNativeTarget "girparser" */;
+			buildConfigurationList = F1938DB31CA09CBD006811D1 /* Build configuration list for PBXNativeTarget "gir2swift" */;
 			buildPhases = (
 				F1938DA91CA09CBD006811D1 /* Sources */,
 				F1938DAA1CA09CBD006811D1 /* Frameworks */,
@@ -124,10 +160,11 @@
 			buildRules = (
 			);
 			dependencies = (
+				F1DA0D431CE84C5000BC5143 /* PBXTargetDependency */,
 			);
-			name = girparser;
+			name = gir2swift;
 			productName = girparser;
-			productReference = F1938DAD1CA09CBD006811D1 /* girparser */;
+			productReference = F1938DAD1CA09CBD006811D1 /* gir2swift */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -155,12 +192,35 @@
 			mainGroup = F110CA931CA09C7C00F615C9;
 			productRefGroup = F110CA9D1CA09C7C00F615C9 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = F1DA0D3A1CE84C3C00BC5143 /* Products */;
+					ProjectRef = F1DA0D391CE84C3C00BC5143 /* SwiftLibXML.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
-				F1938DAC1CA09CBD006811D1 /* girparser */,
+				F1938DAC1CA09CBD006811D1 /* gir2swift */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		F1DA0D3F1CE84C3C00BC5143 /* SwiftLibXML.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = SwiftLibXML.framework;
+			remoteRef = F1DA0D3E1CE84C3C00BC5143 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F1DA0D411CE84C3C00BC5143 /* SwiftLibXMLTests.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = SwiftLibXMLTests.xctest;
+			remoteRef = F1DA0D401CE84C3C00BC5143 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXSourcesBuildPhase section */
 		F1938DA91CA09CBD006811D1 /* Sources */ = {
@@ -184,6 +244,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		F1DA0D431CE84C5000BC5143 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = SwiftLibXML;
+			targetProxy = F1DA0D421CE84C5000BC5143 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		F110CAA11CA09C7C00F615C9 /* Debug */ = {
@@ -228,7 +296,7 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
-				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/XML/libxml2";
+				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/../CLibXML2";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -268,7 +336,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = macosx;
-				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/XML/libxml2";
+				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/../CLibXML2";
 			};
 			name = Release;
 		};
@@ -306,7 +374,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		F1938DB31CA09CBD006811D1 /* Build configuration list for PBXNativeTarget "girparser" */ = {
+		F1938DB31CA09CBD006811D1 /* Build configuration list for PBXNativeTarget "gir2swift" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F1938DB11CA09CBD006811D1 /* Debug */,
