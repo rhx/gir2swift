@@ -11,7 +11,7 @@
     import Darwin
 #endif
 
-import libxml2
+import CLibXML2
 
 ///
 /// XML Name space representation
