@@ -6,7 +6,7 @@
 //  Copyright (c) 2014, 2016 Rene Hexel. All rights reserved.
 //
 #if os(Linux)
-    import GLibc
+    import Glibc
 #else
     import Darwin
 #endif
