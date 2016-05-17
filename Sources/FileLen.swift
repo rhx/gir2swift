@@ -1,6 +1,6 @@
 //
 //  FileLen.swift
-//  Gtk3Swift
+//  gir2swift
 //
 //  Created by Rene Hexel on 22/03/2016.
 //  Copyright © 2016 Rene Hexel. All rights reserved.

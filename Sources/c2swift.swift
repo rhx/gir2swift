@@ -1,11 +1,16 @@
 //
 //  c2swift.swift
-//  Gtk3Swift
+//  gir2swift
 //
 //  Created by Rene Hexel on 29/04/2016.
 //  Copyright © 2016 Rene Hexel. All rights reserved.
 //
-import Foundation
+#if os(Linux)
+    import Glibc
+#else
+    import Darwin
+#endif
+
 
 private let castableScalars = [  "gint" : "CInt",    "glong" : "CLong",   "guint" : "CUnsignedInt", "char" : "CChar",
     "gint8"  : "Int8",  "guint8"  : "UInt8",  "gint16" : "Int16", "guint16" : "UInt16",
@@ -27,7 +32,8 @@ private let swiftReplacementsForC = [ "char" : "CChar", "int" : "CInt",
     "Error" : "ErrorType", "ErrorType" : "ErrorEnum" ]
 private let reservedTypes: Set = ["String", "Array", "Optional", "Set", "Error", "ErrorProtocol"]
 private let typeNames: Set = reservedTypes.union(reversecast.keys)
-private let wsnl = NSCharacterSet.whitespacesAndNewlines()
+private let wsnlScalars: Set<UnicodeScalar> = [ " ", "\t", "\n"]
+private let wsnl = wsnlScalars.map { UInt16($0.value) }.asSet
 
 private let trueS  = "true"
 private let falseS = "false"
@@ -46,6 +52,34 @@ let swiftKeywords = declarationKeywords ∪ statementKeywords ∪ expressionKeyw
 let reservedNames = typeNames ∪ swiftKeywords
 
 extension String {
+    /// remove all occurrences of the given substring
+    func remove(_ subString: String) -> String {
+        let utf16View = subString.utf16
+        let n = Int(utf16View.distance(from: utf16View.startIndex, to: utf16View.endIndex))
+        let u = utf16
+        guard u.count >= n else { return self }
+        let s = u.startIndex
+        let e = u.endIndex
+        let f = e.advanced(by: -n)
+        for i in s..<f { let j = i.advanced(by: n)
+            if String(u[i..<j]) == subString {
+                let str = String(u[s..<i]) + String(u[j..<e])
+                return str.remove(subString)
+            }
+        }
+        return self
+    }
+
+    /// trim the characters in the given set of UTF16 values at either end of the string
+    func trimmingCharacters(in: Set<UInt16>) -> String {
+        let u = utf16
+        let s = u.takeFrom(indexWhere: { !wsnl.contains($0) }).trimWhile { wsnl.contains($0) }
+        return String(s)
+    }
+
+    /// return the string trimmed of white space at either end
+    var trimmed: String { return trimmingCharacters(in: wsnl) }
+
     /// return a valid Swift type for an underlying C type
     var swiftType: String {
         if let s = swiftReplacementsForC[self] { return s }
@@ -66,7 +100,7 @@ extension String {
 
     /// indicate whether the type represented by the receiver is a constant
     public var isCConst: Bool {
-        let ns = (self as NSString).trimmingCharacters(in: wsnl) as NSString
+        let ns = trimmed
         return ns.hasPrefix("const ") || ns.contains(" const")
     }
 
@@ -78,7 +112,7 @@ extension String {
 
     /// return the C type without a trailing "const"
     public var typeWithoutTrailingConst: String {
-        let ns = (self as NSString).trimmingCharacters(in: wsnl)
+        let ns = trimmed
         let p: String
         if (ns.hasSuffix("const")) {
             let cs = ns.characters
@@ -93,7 +127,7 @@ extension String {
 
     /// return the C type without a leading "const"
     public var typeWithoutLeadingConst: String {
-        let ns = (self as NSString).trimmingCharacters(in: wsnl)
+        let ns = trimmed
         let p: String
         if (ns.hasPrefix("const ")) {
             let cs = ns.characters
@@ -113,8 +147,8 @@ extension String {
 
     /// return the C type without "const"
     public var typeWithoutConst: String {
-        let ns = (self as NSString).replacingOccurrences(of: "const", with: "") as NSString
-        return ns.trimmingCharacters(in: wsnl)
+        let ns = remove("const")
+        return ns.trimmed
     }
 
     /// return whether the untrimmed string is a C pointer
@@ -129,17 +163,17 @@ extension String {
 
     /// return whether the underlying C type is a pointer
     public var isCPointer: Bool {
-        return (typeWithoutTrailingConst as NSString).trimmingCharacters(in: wsnl).isTrimmedCPointer
+        return typeWithoutTrailingConst.trimmed.isTrimmedCPointer
     }
 
     /// return whether the underlying C type is a gpointer
     public var isGPointer: Bool {
-        return (typeWithoutTrailingConst as NSString).trimmingCharacters(in: wsnl).isTrimmedGPointer
+        return typeWithoutTrailingConst.trimmed.isTrimmedGPointer
     }
 
     /// return whether the underlying C type is a pointer of any kind
     public var isPointer: Bool {
-        return (typeWithoutTrailingConst as NSString).trimmingCharacters(in: wsnl).isTrimmedPointer
+        return typeWithoutTrailingConst.trimmed.isTrimmedPointer
     }
 
     /// return the underlying C type for a pointer, nil if not a pointer

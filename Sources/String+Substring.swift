@@ -1,6 +1,6 @@
 //
 //  String+Substring.swift
-//  Gtk3Swift
+//  gir2swift
 //
 //  Created by Rene Hexel on 25/04/2016.
 //  Copyright © 2016 Rene Hexel. All rights reserved.
