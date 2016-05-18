@@ -105,8 +105,8 @@ extension String {
         guard u.count >= n else { return self }
         let s = u.startIndex
         let e = u.endIndex
-        let f = e.advanced(by: -n)
-        for i in s..<f { let j = i.advanced(by: n)
+        let f = u.index(e, offsetBy: -n)
+        for i in s..<f { let j = u.index(i, offsetBy: n)
             if u[i..<j] == utf16View {
                 let str = String(u[s..<i]) + String(u[j..<e])
                 return str.remove(subString, utf16View)
