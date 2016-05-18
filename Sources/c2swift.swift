@@ -38,22 +38,6 @@
             }
             return true
         }
-
-        /// return whether the receiver contains the given substring
-        func contains(_ subString: String) -> Bool {
-            let utf16View = subString.utf16
-            let k = Int(utf16View.distance(from: utf16View.startIndex, to: utf16View.endIndex))
-            let u = utf16
-            let n = u.count
-            guard n >= k else { return false }
-            let s = u.startIndex
-            for l in 0..<(n-k) {
-                let i = u.index(s, offsetBy: l)
-                let j = u.index(i, offsetBy: k)
-                if u[i..<j] == utf16View { return true }
-            }
-            return false
-        }
     }
 #else
     import Darwin
@@ -133,6 +117,22 @@ extension String {
             }
         }
         return self
+    }
+
+    /// return whether the receiver contains the given substring
+    func contains(_ subString: String) -> Bool {
+        let utf16View = subString.utf16
+        let k = Int(utf16View.distance(from: utf16View.startIndex, to: utf16View.endIndex))
+        let u = utf16
+        let n = u.count
+        guard n >= k else { return false }
+        let s = u.startIndex
+        for l in 0..<(n-k) {
+            let i = u.index(s, offsetBy: l)
+            let j = u.index(i, offsetBy: k)
+            if u[i..<j] == utf16View { return true }
+        }
+        return false
     }
 
     /// trim the characters in the given set of UTF16 values at either end of the string
