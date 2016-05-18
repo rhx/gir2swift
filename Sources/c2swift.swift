@@ -11,6 +11,7 @@
     /// Linux is currently missing some basic String methods,
     /// so add them here
     extension String {
+        /// return whether the receiver has the given prefix
         func hasPrefix(_ prefix: String) -> Bool {
             let p = prefix.utf16
             let s = utf16
@@ -24,6 +25,7 @@
             return true
         }
 
+        /// return whether the receiver has the given suffix
         func hasSuffix(_ suffix: String) -> Bool {
             let u = suffix.utf16
             let v = utf16
@@ -35,6 +37,21 @@
                 guard s == c else { return false }
             }
             return true
+        }
+
+        /// return whether the receiver contains the given substring
+        func contains(_ subString: String) -> Bool {
+            let utf16View = subString.utf16
+            let n = Int(utf16View.distance(from: utf16View.startIndex, to: utf16View.endIndex))
+            let u = utf16
+            guard u.count >= n else { return false }
+            let s = u.startIndex
+            let e = u.endIndex
+            let f = u.index(e, offsetBy: -n)
+            for i in s..<f { let j = u.index(i, offsetBy: n)
+                if u[i..<j] == utf16View { return true }
+            }
+            return false
         }
     }
 #else
