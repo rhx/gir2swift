@@ -7,6 +7,36 @@
 //
 #if os(Linux)
     import Glibc
+
+    /// Linux is currently missing some basic String methods,
+    /// so add them here
+    extension String {
+        func hasPrefix(_ prefix: String) -> Bool {
+            let p = prefix.utf16
+            let s = utf16
+            guard s.count >= p.count else { return false }
+
+            var pi = p.makeIterator()
+            var si = s.makeIterator()
+            while let p = pi.next(), c = si.next() {
+                guard p == c else { return false }
+            }
+            return true
+        }
+
+        func hasSuffix(_ suffix: String) -> Bool {
+            let u = suffix.utf16
+            let v = utf16
+            guard v.count >= u.count else { return false }
+
+            var si = u.reversed().makeIterator()
+            var ci = v.reversed().makeIterator()
+            while let s = si.next(), c = ci.next() {
+                guard s == c else { return false }
+            }
+            return true
+        }
+    }
 #else
     import Darwin
 #endif
@@ -51,10 +81,25 @@ func ∪<T>(left: Set<T>, right: Set<T>) -> Set<T> {
 let swiftKeywords = declarationKeywords ∪ statementKeywords ∪ expressionKeywords ∪ specificKeywords
 let reservedNames = typeNames ∪ swiftKeywords
 
+/// compare two UTF16Views for equality
+public func ==(lhs: String.UTF16View, rhs: String.UTF16View) -> Bool {
+    guard lhs.count == rhs.count else { return false }
+    var li = lhs.makeIterator()
+    var ri = rhs.makeIterator()
+    while let l = li.next(), r = ri.next() {
+        guard l == r else { return false }
+    }
+    return true
+}
+extension String.UTF16View: Equatable {}
+
+
 extension String {
     /// remove all occurrences of the given substring
     func remove(_ subString: String) -> String {
-        let utf16View = subString.utf16
+        return remove(subString, subString.utf16)
+    }
+    private func remove(_ subString: String, _ utf16View: String.UTF16View) -> String {
         let n = Int(utf16View.distance(from: utf16View.startIndex, to: utf16View.endIndex))
         let u = utf16
         guard u.count >= n else { return self }
@@ -62,9 +107,9 @@ extension String {
         let e = u.endIndex
         let f = e.advanced(by: -n)
         for i in s..<f { let j = i.advanced(by: n)
-            if String(u[i..<j]) == subString {
+            if u[i..<j] == utf16View {
                 let str = String(u[s..<i]) + String(u[j..<e])
-                return str.remove(subString)
+                return str.remove(subString, utf16View)
             }
         }
         return self
