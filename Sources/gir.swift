@@ -72,7 +72,7 @@ public class GIR {
         //
         if let entries = xml.xpath("/*/*/gir:alias", namespaces: namespaces, defaultPrefix: "gir") {
             aliases = entries.enumerated().map { Alias(node: $0.1, atIndex: $0.0) }.filter {
-                let name = $0.node
+                let name = $0.name
                 guard GIR.KnownTypes[name] == nil else {
                     fputs("Warning: duplicate type '\(name)' for alias ignored!\n", stderr)
                     return false
@@ -86,7 +86,7 @@ public class GIR {
         //
         if let entries = xml.xpath("/*/*/gir:constant", namespaces: namespaces, defaultPrefix: "gir") {
             constants = entries.enumerated().map { Constant(node: $0.1, atIndex: $0.0) }.filter {
-                let name = $0.node
+                let name = $0.name
                 guard GIR.KnownTypes[name] == nil else {
                     fputs("Warning: duplicate type '\(name)' for constant ignored!\n", stderr)
                     return false
@@ -100,7 +100,7 @@ public class GIR {
         //
         if let entries = xml.xpath("/*/*/gir:enumeration", namespaces: namespaces, defaultPrefix: "gir") {
             enumerations = entries.enumerated().map { Enumeration(node: $0.1, atIndex: $0.0) }.filter {
-                let name = $0.node
+                let name = $0.name
                 guard GIR.KnownTypes[name] == nil else {
                     fputs("Warning: duplicate type '\(name)' for enum ignored!\n", stderr)
                     return false
@@ -114,7 +114,7 @@ public class GIR {
         //
         if let recs = xml.xpath("/*/*/gir:record", namespaces: namespaces, defaultPrefix: "gir") {
             records = recs.enumerated().map { Record(node: $0.1, atIndex: $0.0) }.filter {
-                let name = $0.node
+                let name = $0.name
                 guard GIR.KnownTypes[name] == nil else {
                     fputs("Warning: duplicate type '\(name)' for record ignored!\n", stderr)
                     return false
@@ -129,7 +129,7 @@ public class GIR {
         //
         if let recs = xml.xpath("/*/*/gir:class", namespaces: namespaces, defaultPrefix: "gir") {
             classes = recs.enumerated().map { Class(node: $0.1, atIndex: $0.0) }.filter {
-                let name = $0.node
+                let name = $0.name
                 guard GIR.KnownTypes[name] == nil else {
                     fputs("Warning: duplicate type '\(name)' for class ignored!\n", stderr)
                     return false

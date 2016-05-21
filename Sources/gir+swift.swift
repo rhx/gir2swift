@@ -97,7 +97,7 @@ public extension GIR.Argument {
 
     /// return whether the receiver is an instance of the given record (class)
     public func isInstanceOf(_ record: GIR.Record?) -> Bool {
-        if let r = record where r.node == type.withoutNameSpace {
+        if let r = record where r.name == type.withoutNameSpace {
             return true
         } else {
             return false
@@ -132,7 +132,7 @@ public extension GIR.Method {
 /// Swift extension for records
 public extension GIR.Record {
     /// swift node name for this record
-    public var swift: String { return node.swift }
+    public var swift: String { return name.swift }
 
     /// swift protocol name for this record
     public var protocolName: String { return swift + "Protocol" }
@@ -449,7 +449,7 @@ public func convertArgumentToSwiftFor(_ record: GIR.Record?) -> (GIR.Argument) -
 
 /// Swift struct representation of a record/class as a wrapper of a pointer
 public func recordStructCode(_ e: GIR.Record, indentation: String = "    ") -> String {
-    let structType = "\(e.node)Ref"
+    let structType = "\(e.name)Ref"
     let ccode = convenienceConstructorCode(structType, indentation: indentation)(e)
     let fcode = convenienceConstructorCode(structType, indentation: indentation, factory: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
