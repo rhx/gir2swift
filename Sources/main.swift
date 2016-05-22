@@ -53,6 +53,7 @@ func process_gir(file: String) {
         print(gir.bitfields.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n"))
         print(gir.records.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n"))
         print(gir.classes.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n"))
+        print(gir.functions.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n"))
         if verbose {
             fputs("** Verbatim: \(GIR.VerbatimConstants.count)\n\(GIR.VerbatimConstants.joined(separator: "\n"))\n\n", stderr)
             fputs("** Blacklisted: \(blacklist.count)\n\(blacklist.joined(separator: "\n\n"))\n\n", stderr)

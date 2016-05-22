@@ -47,7 +47,7 @@
 private let castableScalars = [  "gint" : "CInt",    "glong" : "CLong",   "guint" : "CUnsignedInt", "char" : "CChar",
     "gint8"  : "Int8",  "guint8"  : "UInt8",  "gint16" : "Int16", "guint16" : "UInt16",
     "gint32" : "Int32", "guint32" : "UInt32", "gint64" : "Int64", "guint64" : "UInt64",
-    "gulong" : "CUnsignedLong",  "gsize"   : "Int",  "gboolean" : "Bool"]
+    "gulong" : "CUnsignedLong",  "gsize"   : "Int",  "gboolean" : "Bool", "goffset" : "Int"]
 private let castablePointers = [ "gpointer" : "OpaquePointer" ]
 private let reversePointers = castablePointers.reduce(Dictionary<String,String>()) {
     var dict = $0
@@ -60,8 +60,10 @@ private let reversecast = castableScalars.reduce(reversePointers) {
     return dict
 }
 private let swiftReplacementsForC = [ "char" : "CChar", "int" : "CInt",
-    "void" : "Void", "utf8" : "String", "va_list" : "CVaListPointer",
-    "Error" : "ErrorType", "ErrorType" : "ErrorEnum" ]
+  "long" : "CLong", "long long" : "CLongLong", "unsigned long long" : "CUnsignedLongLong", "short" : "CShort",
+  "double" : "CDouble", "float" : "CFloat", "long double" : "Double",
+  "void" : "Void", "utf8" : "String", "va_list" : "CVaListPointer",
+  "Error" : "ErrorType", "ErrorType" : "ErrorEnum" ]
 private let reservedTypes: Set = ["String", "Array", "Optional", "Set", "Error", "ErrorProtocol"]
 private let typeNames: Set = reservedTypes.union(reversecast.keys)
 private let wsnlScalars: Set<UnicodeScalar> = [ " ", "\t", "\n"]
@@ -157,6 +159,7 @@ extension String {
     var swift: String {
         if let s = castableScalars[self] { return s }
         if let s = castablePointers[self] { return s }
+        if let s = swiftReplacementsForC[self] { return s }
         let s = swiftType
         guard !reservedTypes.contains(s) else { return s + "Type" }
         guard !reservedNames.contains(s) else { return s + "_" }
@@ -176,44 +179,89 @@ extension String {
     public var isSwiftPointer: Bool { return hasSuffix("Pointer") }
 
     /// return the C type without a trailing "const"
-    public var typeWithoutTrailingConst: String {
-        let ns = trimmed
-        let p: String
-        if (ns.hasSuffix("const")) {
-            let cs = ns.characters
-            let s = cs.startIndex
-            let e = cs.index(s, offsetBy: cs.count - 4)
-            p = String(ns.characters[s..<e])
-        } else {
-            p = ns
-        }
-        return p
-    }
+    public var typeWithoutTrailingConst: String { return without(suffix: " const") }
+
+    /// return the C type without a trailing "const"
+    public var typeWithoutTrailingVolatile: String { return without(suffix: " volatile") }
 
     /// return the C type without a leading "const"
-    public var typeWithoutLeadingConst: String {
-        let ns = trimmed
-        let p: String
-        if (ns.hasPrefix("const ")) {
-            let cs = ns.characters
-            let s = cs.index(cs.startIndex, offsetBy: 5)
-            let e = cs.endIndex
-            p = String(ns.characters[s..<e])
-        } else {
-            p = ns
-        }
-        return p
-    }
+    public var typeWithoutLeadingConst: String { return without(prefix: "const ") }
+
+    /// return the C type without a leading "volatile"
+    public var typeWithoutLeadingVolatile: String { return without(prefix: "volatile ") }
+
+    /// return the C type without a trailing "const" or "volatile"
+    public var typeWithoutTrailingConstOrVolatile: String { return without(suffixes: [" const", " volatile"]) }
 
     /// return the C type without a leading or trailing "const"
     public var typeWithoutLeadingOrTrailingConst: String {
         return typeWithoutLeadingConst.typeWithoutTrailingConst
     }
 
+    /// return the C type without a leading or trailing "volatile"
+    public var typeWithoutLeadingOrTrailingVolatile: String {
+        return typeWithoutLeadingVolatile.typeWithoutTrailingVolatile
+    }
+
+    /// return the C type without a leading or trailing "const" or "volatile"
+    public var typeWithoutLeadingOrTrailingConstOrVolatile: String {
+        return without(suffixes: [" const", " volatile"]).without(prefixes: ["const ", "volatile "])
+    }
+
     /// return the C type without "const"
-    public var typeWithoutConst: String {
-        let ns = remove("const")
+    public var typeWithoutConst: String { return without("const") }
+
+    /// return the C type without "volatile"
+    public var typeWithoutVolatile: String { return without("volatile") }
+
+    /// return C type without the given word
+    public func without(_ substring: String) -> String {
+        let ns = remove(substring)
         return ns.trimmed
+    }
+
+    /// return C type without the given prefix
+    public func without(prefix: String) -> String {
+        let ns = trimmed
+        guard ns.hasPrefix(prefix) else { return ns }
+        let len = prefix.characters.count
+        let cs = ns.characters
+        let s = cs.index(cs.startIndex, offsetBy: len)
+        let e = cs.endIndex
+        return String(ns.characters[s..<e]).without(prefix: prefix)
+    }
+
+    /// return C type without any of the given prefixes
+    public func without(prefixes: [String]) -> String {
+        let ns = trimmed
+        guard let prefix = prefixes.lazy.filter({ ns.hasPrefix($0) }).first else { return ns }
+        let len = prefix.characters.count
+        let cs = ns.characters
+        let s = cs.index(cs.startIndex, offsetBy: len)
+        let e = cs.endIndex
+        return String(ns.characters[s..<e]).without(prefixes: prefixes)
+    }
+
+    /// return C type without the given suffix
+    public func without(suffix: String) -> String {
+        let ns = trimmed
+        guard ns.hasSuffix(suffix) else { return ns }
+        let len = suffix.characters.count
+        let cs = ns.characters
+        let s = cs.startIndex
+        let e = cs.index(s, offsetBy: cs.count - len)
+        return String(ns.characters[s..<e]).without(suffix: suffix)
+    }
+
+    /// return C type without any of the given suffixes
+    public func without(suffixes: [String]) -> String {
+        let ns = trimmed
+        guard let suffix = suffixes.lazy.filter({ ns.hasSuffix($0) }).first else { return ns }
+        let len = suffix.characters.count
+        let cs = ns.characters
+        let s = cs.startIndex
+        let e = cs.index(s, offsetBy: cs.count - len)
+        return String(ns.characters[s..<e]).without(suffixes: suffixes)
     }
 
     /// return whether the untrimmed string is a C pointer
@@ -228,48 +276,57 @@ extension String {
 
     /// return whether the underlying C type is a pointer
     public var isCPointer: Bool {
-        return typeWithoutTrailingConst.trimmed.isTrimmedCPointer
+        return typeWithoutTrailingConstOrVolatile.trimmed.isTrimmedCPointer
     }
 
     /// return whether the underlying C type is a gpointer
     public var isGPointer: Bool {
-        return typeWithoutTrailingConst.trimmed.isTrimmedGPointer
+        return typeWithoutTrailingConstOrVolatile.trimmed.isTrimmedGPointer
     }
 
     /// return whether the underlying C type is a pointer of any kind
     public var isPointer: Bool {
-        return typeWithoutTrailingConst.trimmed.isTrimmedPointer
+        return typeWithoutTrailingConstOrVolatile.trimmed.isTrimmedPointer
     }
 
     /// return the underlying C type for a pointer, nil if not a pointer
     public var underlyingTypeForCPointer: String? {
         guard isCPointer else { return nil }
-        let ns = typeWithoutTrailingConst
+        let ns = typeWithoutTrailingConstOrVolatile
         let cs = ns.characters
         let s = cs.startIndex
         let e = cs.index(before: cs.endIndex)
         return String(cs[s..<e])
     }
 
-    public func unwrappedCTypeWithCount(_ pointerCount: Int = 0, _ constCount: Int = 0) -> (cType: String, pointerCount: Int, constCount: Int, innerType: String) {
+    /// return the C type unwrapped and converted to Swift
+    public func unwrappedCTypeWithCount(_ pointerCount: Int = 0, _ constCount: Int = 0) -> (gType: String, swift: String, pointerCount: Int, constCount: Int, innerType: String) {
         if let base = underlyingTypeForCPointer {
             let (pointer, cc) = isCConst ? ("UnsafePointer", constCount+1) : ("UnsafeMutablePointer", constCount)
             let t = base.unwrappedCTypeWithCount(pointerCount+1, cc)
-            let wrapped = pointer + "<\(t.cType)>"
-            return (cType: wrapped, pointerCount: t.pointerCount, constCount: t.constCount, innerType: t.innerType)
+            let wrappedOrig = pointer + "<\(t.gType)>"
+            let wrappedSwift = pointer + "<\(t.swift)>"
+            return (gType: wrappedOrig, swift: wrappedSwift, pointerCount: t.pointerCount, constCount: t.constCount, innerType: t.innerType)
         }
-        let swift = typeWithoutLeadingOrTrailingConst.swiftType
-        return (cType: swift, pointerCount: pointerCount, constCount: constCount, innerType: swift)
+        let t = trimmed.typeWithoutLeadingOrTrailingConstOrVolatile
+        let swiftVersionOfCType = t.swiftType
+        return (gType: swiftVersionOfCType, swift: t.swift, pointerCount: pointerCount, constCount: constCount, innerType: t)
     }
 
     /// return the inner type of a C type (without pointers and const)
     public var innerCType: String { return unwrappedCTypeWithCount().innerType }
 
-    /// return the C type unwrapped and without const
-    public var unwrappedCType: String { return unwrappedCTypeWithCount().cType }
+    /// return the swift representation of the inner type of a C type (without pointers and const)
+    public var innerGType: String { return innerCType.swiftType }
 
-    /// return the Swift type for a given C type
-    public var swiftRepresentationOfCType: String { return unwrappedCType.swift }
+    /// return the common swift type used for the inner type of a C type (without pointers and const)
+    public var innerSwiftType: String { return innerCType.swiftType }
+
+    /// return the C type unwrapped, without const, and converted to Swift
+    public var unwrappedCType: String { return unwrappedCTypeWithCount().gType }
+
+    /// return the Swift type common for a given C type
+    public var swiftRepresentationOfCType: String { return unwrappedCTypeWithCount().swift }
 
     /// return the string (value) cast to Swift
     func cast_as_swift(_ type: String) -> String {
@@ -306,8 +363,8 @@ typealias TypeCastTuple = (c: String, swift: String, toC: String, toSwift: Strin
 func typeCastTuple(_ ctype: String, _ swiftType: String, varName: String = "rv", forceCast: Bool = false) -> TypeCastTuple {
     let u = ctype.unwrappedCTypeWithCount()
     let nPointers = u.pointerCount + ((swiftType.isPointer || ctype.isPointer) ? 1 : 0)
-    let ct = u.cType != "" ? u.cType : swiftType
-    let st = ct.swift
+    let ct = u.gType != "" ? u.gType : swiftType
+    let st = u.swift != "" ? u.swift : ct
     let cast = "cast(\(varName))"
     let cswift: TypeCastTuple
     switch (ct, st) {

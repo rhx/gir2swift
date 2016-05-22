@@ -22,6 +22,30 @@ extension String {
     }
 }
 
+func enumerate<T where T: GIR.Thing>(_ xml: XMLDocument, path: String, inNS namespaces: AnySequence<XMLNameSpace>, construct: (XMLElement, Int) -> T?, defaultPrefix prefix: String = "gir", check: (T) -> Bool = { _ in true }) -> [T] {
+    if let entries = xml.xpath(path, namespaces: namespaces, defaultPrefix: prefix) {
+        let things = entries.lazy.enumerated().map { construct($0.1, $0.0) }.filter {
+            guard let node = $0 else { return false }
+            guard check(node) else {
+                fputs("Warning: duplicate type '\(node.name)' for \(path) ignored!\n", stderr)
+                return false
+            }
+
+            return true
+        }
+        .map { $0! }
+
+        return things
+    }
+    return []
+}
+
+
+func isFreeFunction(_ function: XMLElement) -> Bool {
+    let parent = function.parent
+    return parent.name != "record" && parent.name != "class"
+}
+
 
 public class GIR {
     public let xml: XMLDocument
@@ -36,6 +60,7 @@ public class GIR {
     public var bitfields: [Bitfield] = []
     public var records: [Record] = []
     public var classes: [Class] = []
+    public var functions: [Function] = []
 
     /// names of black-listed identifiers
     static var Blacklist: Set<String> = []
@@ -46,6 +71,7 @@ public class GIR {
     /// context of known types
     static var KnownTypes:   [ String : Datatype ] = [:]
     static var KnownRecords: [ String : Record ] = [:]
+    static var KnownFunctions: [ String : Function ] = [:]
     static var GErrorType = "GErrorType"
 
     /// designated constructor
@@ -81,64 +107,31 @@ public class GIR {
                 return true
             }
         }
-        //
-        // get all constants
-        //
-        if let entries = xml.xpath("/*/*/gir:constant", namespaces: namespaces, defaultPrefix: "gir") {
-            constants = entries.enumerated().map { Constant(node: $0.1, atIndex: $0.0) }.filter {
-                let name = $0.name
-                guard GIR.KnownTypes[name] == nil else {
-                    fputs("Warning: duplicate type '\(name)' for constant ignored!\n", stderr)
-                    return false
-                }
-                GIR.KnownTypes[name] = $0
-                return true
-            }
+        // closure for recording known types
+        func isKnownType<T where T: Datatype>(_ e: T) -> Bool {
+            let name = e.name
+            guard GIR.KnownTypes[name] == nil else { return false }
+            GIR.KnownTypes[name] = e
+            return true
         }
-        //
-        // get all enums
-        //
-        if let entries = xml.xpath("/*/*/gir:enumeration", namespaces: namespaces, defaultPrefix: "gir") {
-            enumerations = entries.enumerated().map { Enumeration(node: $0.1, atIndex: $0.0) }.filter {
-                let name = $0.name
-                guard GIR.KnownTypes[name] == nil else {
-                    fputs("Warning: duplicate type '\(name)' for enum ignored!\n", stderr)
-                    return false
-                }
-                GIR.KnownTypes[name] = $0
-                return true
-            }
+        let isKnownRecord: (Record) -> Bool     = { guard isKnownType($0) else { return false } ; GIR.KnownRecords[$0.name] = $0 ;   return true }
+        let isKnownFunction: (Function) -> Bool = {
+            let name = $0.name
+            guard GIR.KnownFunctions[name] == nil else { return false }
+            GIR.KnownFunctions[name] = $0
+            return true
         }
+
         //
-        // get all type records
+        // get all constants, enumerations, records, classes, and functions
         //
-        if let recs = xml.xpath("/*/*/gir:record", namespaces: namespaces, defaultPrefix: "gir") {
-            records = recs.enumerated().map { Record(node: $0.1, atIndex: $0.0) }.filter {
-                let name = $0.name
-                guard GIR.KnownTypes[name] == nil else {
-                    fputs("Warning: duplicate type '\(name)' for record ignored!\n", stderr)
-                    return false
-                }
-                GIR.KnownTypes[name] = $0
-                GIR.KnownRecords[name] = $0
-                return true
-            }
-        }
-        //
-        // get all class records
-        //
-        if let recs = xml.xpath("/*/*/gir:class", namespaces: namespaces, defaultPrefix: "gir") {
-            classes = recs.enumerated().map { Class(node: $0.1, atIndex: $0.0) }.filter {
-                let name = $0.name
-                guard GIR.KnownTypes[name] == nil else {
-                    fputs("Warning: duplicate type '\(name)' for class ignored!\n", stderr)
-                    return false
-                }
-                GIR.KnownTypes[name] = $0
-                GIR.KnownRecords[name] = $0
-                return true
-            }
-        }
+        constants    = enumerate(xml, path: "/*/*/gir:constant",    inNS: namespaces, construct: { Constant(node: $0, atIndex: $1) },    check: isKnownType)
+        enumerations = enumerate(xml, path: "/*/*/gir:enumeration", inNS: namespaces, construct: { Enumeration(node: $0, atIndex: $1) }, check: isKnownType)
+        records      = enumerate(xml, path: "/*/*/gir:record",      inNS: namespaces, construct: { Record(node: $0, atIndex: $1) },    check: isKnownRecord)
+        classes      = enumerate(xml, path: "/*/*/gir:class",       inNS: namespaces, construct: { Class(node: $0, atIndex: $1) },     check: isKnownRecord)
+        functions    = enumerate(xml, path: "//gir:function",       inNS: namespaces, construct: {
+            isFreeFunction($0) ? Function(node: $0, atIndex: $1) : nil
+        }, check: isKnownFunction)
     }
 
     /// convenience constructor to read a gir file
@@ -220,17 +213,20 @@ public class GIR {
     public class CType: Datatype {
         public let ctype: String            ///< underlying C type
         public let containedTypes: [CType]  ///< list of contained types
+        public let nullable: Bool           ///< is this an optional?
 
         /// designated initialiser
-        public init(name: String, type: String, ctype: String, comment: String, introspectable: Bool = false, deprecated: String? = nil, contains: [CType] = []) {
+        public init(name: String, type: String, ctype: String, comment: String, introspectable: Bool = false, deprecated: String? = nil, isNullable: Bool = false, contains: [CType] = []) {
             self.ctype = ctype
+            self.nullable = isNullable
             self.containedTypes = contains
             super.init(name: name, type: type, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
         /// factory method to construct an alias from XML
-        public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", cTypeAttr: String? = nil) {
+        public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", cTypeAttr: String? = nil, nullableAttr: String = "nullable") {
             containedTypes = node.children.filter { $0.name == "type" }.map { CType(node: $0, atIndex: i, cTypeAttr: "type") }
+            nullable = node.attribute(named: nullableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
             if let cta = cTypeAttr {
                 ctype = node.attribute(named: cta) ?? "Void /* unknown \(i) */"
             } else {
@@ -250,9 +246,10 @@ public class GIR {
         }
 
         /// factory method to construct an alias from XML with types taken from children
-        public init(fromChildrenOf node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type") {
+        public init(fromChildrenOf node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", nullableAttr: String = "nullable") {
             let type: String
             let ctype: String
+            nullable = node.attribute(named: nullableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
             if let array = node.children.lazy.filter({ $0.name == "array" }).first {
                 containedTypes = array.children.filter { $0.name == "type" }.map { CType(node: $0, atIndex: i, cTypeAttr: "type") }
                 ctype = array.attribute(named: "type") ?? "Void /* unknown ctype \(i) */"
@@ -289,7 +286,7 @@ public class GIR {
         }
 
         /// factory method to construct a constant from XML
-        public override init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", cTypeAttr: String? = nil) {
+        public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", cTypeAttr: String? = nil) {
             if let val = node.attribute(named: "value"), let v = Int(val) {
                 value = v
             } else {

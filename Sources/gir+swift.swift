@@ -8,7 +8,7 @@
 
 public extension GIR {
     /// code boiler plate
-    public var boilerPlate: String {
+    var boilerPlate: String {
         return "private func cast<S, T>(_ param: UnsafeMutablePointer<S>?) -> UnsafeMutablePointer<T>! {\n" +
         "    return UnsafeMutablePointer<T>(param)\n" +
         "}\n\n" +
@@ -90,9 +90,12 @@ public extension GIR.Argument {
     public var nonClashingName: String {
         let sw = name.swift
         let nt = sw + (sw.isKnownType ? "_" : "")
-        let nc = nt == ctype.innerCType ? nt + "_" : nt
-        let ns = nc == type.innerCType  ? nc + "_" : nc
-        return ns
+        let ct = ctype.innerCType.swiftType // swift name for C type
+        let st = ctype.innerCType.swift     // corresponding Swift type
+        let nc = nt == ct ? nt + "_" : nt
+        let ns = nc == st ? nc + "_" : nc
+        let na = ns == type.swift  ? ns + "_" : ns
+        return na
     }
 
     /// return whether the receiver is an instance of the given record (class)
@@ -245,7 +248,7 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
 
 /// Default implementation for record methods as protocol extension
 public func recordProtocolExtensionCode(_ e: GIR.Record, indentation: String = "    ") -> String {
-    let mcode = methodCode(indentation)(e)
+    let mcode = methodCode(indentation, record: e)
     let methods = e.methods + e.functions.filter { $0.args.lazy.filter({ $0.isInstanceOf(e) }).first != nil }
     let code = "public extension \(e.protocolName) {\n" +
         methods.map(mcode).joined(separator: "\n") +
@@ -254,14 +257,21 @@ public func recordProtocolExtensionCode(_ e: GIR.Record, indentation: String = "
 }
 
 
+/// Default implementation for functions
+public func functionCode(_ f: GIR.Function, indentation: String = "    ") -> String {
+    let mcode = methodCode(indentation)
+    let code = mcode(f) + "\n\n"
+    return code
+}
+
+
 /// Swift code for methods (with a given indentation)
-public func methodCode(_ indentation: String) -> (GIR.Record) -> (GIR.Method) -> String {
-  return { (record: GIR.Record) -> (GIR.Method)-> String in
+public func methodCode(_ indentation: String, record: GIR.Record? = nil) -> (GIR.Method) -> String {
     let doubleIndent = indentation + indentation
     let call = callCode(doubleIndent, record)
     let returnDeclaration = returnDeclarationCode()
     let ret = returnCode(indentation)
-      return { (method: GIR.Method) -> String in
+    return { (method: GIR.Method) -> String in
         let name = method.name.isEmpty ? method.cname : method.name
         guard !GIR.Blacklist.contains(name) else {
             return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
@@ -276,8 +286,7 @@ public func methodCode(_ indentation: String) -> (GIR.Record) -> (GIR.Method) ->
                 indentation  + ret(method)  +
         "}\n", indentation: indentation)
         return code
-      }
-   }
+    }
 }
 
 
@@ -351,12 +360,13 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil) -> (GIR
     return { method in
         let throwsError = method.throwsError
         let args = method.args // not .lazy
+        let n = args.count
         let rv = method.returns
         let isVoid = rv.isVoid
         let code = ( throwsError ? "var error: Optional<UnsafeMutablePointer<\(gerror)>> = nil\n" + indentation : "") +
         ( isVoid ? "" : "let rv = " ) +
         "\(method.cname.swift)(\(args.map(toSwift).joined(separator: ", "))" +
-        ( throwsError ? (", &error)\n" + indentation + "if let error = error {\n" + indentation + indentation + "throw ErrorType(ptr: error)\n" + indentation + "}\n") : ")\n" )
+            ( throwsError ? ((n == 0 ? "" : ", ") + "&error)\n" + indentation + "if let error = error {\n" + indentation + indentation + "throw ErrorType(ptr: error)\n" + indentation + "}\n") : ")\n" )
         return code
     }
 }
@@ -523,3 +533,9 @@ public func swiftCode(_ e: GIR.Record) -> String {
     return code
 }
 
+
+/// Swift code representation of a free standing function
+public func swiftCode(_ f: GIR.Function) -> String {
+    let code = functionCode(f)
+    return code
+}
