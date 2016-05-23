@@ -108,14 +108,18 @@ public class GIR {
             }
         }
         // closure for recording known types
-        func isKnownType<T where T: Datatype>(_ e: T) -> Bool {
+        func notKnownType<T where T: Datatype>(_ e: T) -> Bool {
             let name = e.name
             guard GIR.KnownTypes[name] == nil else { return false }
             GIR.KnownTypes[name] = e
             return true
         }
-        let isKnownRecord: (Record) -> Bool     = { guard isKnownType($0) else { return false } ; GIR.KnownRecords[$0.name] = $0 ;   return true }
-        let isKnownFunction: (Function) -> Bool = {
+        let notKnownRecord: (Record) -> Bool     = {
+            guard notKnownType($0) else { return false }
+            GIR.KnownRecords[$0.name] = $0
+            return true
+        }
+        let notKnownFunction: (Function) -> Bool = {
             let name = $0.name
             guard GIR.KnownFunctions[name] == nil else { return false }
             GIR.KnownFunctions[name] = $0
@@ -125,13 +129,13 @@ public class GIR {
         //
         // get all constants, enumerations, records, classes, and functions
         //
-        constants    = enumerate(xml, path: "/*/*/gir:constant",    inNS: namespaces, construct: { Constant(node: $0, atIndex: $1) },    check: isKnownType)
-        enumerations = enumerate(xml, path: "/*/*/gir:enumeration", inNS: namespaces, construct: { Enumeration(node: $0, atIndex: $1) }, check: isKnownType)
-        records      = enumerate(xml, path: "/*/*/gir:record",      inNS: namespaces, construct: { Record(node: $0, atIndex: $1) },    check: isKnownRecord)
-        classes      = enumerate(xml, path: "/*/*/gir:class",       inNS: namespaces, construct: { Class(node: $0, atIndex: $1) },     check: isKnownRecord)
+        constants    = enumerate(xml, path: "/*/*/gir:constant",    inNS: namespaces, construct: { Constant(node: $0, atIndex: $1) },    check: notKnownType)
+        enumerations = enumerate(xml, path: "/*/*/gir:enumeration", inNS: namespaces, construct: { Enumeration(node: $0, atIndex: $1) }, check: notKnownType)
+        records      = enumerate(xml, path: "/*/*/gir:record",      inNS: namespaces, construct: { Record(node: $0, atIndex: $1) },    check: notKnownRecord)
+        classes      = enumerate(xml, path: "/*/*/gir:class",       inNS: namespaces, construct: { Class(node: $0, atIndex: $1) },     check: notKnownRecord)
         functions    = enumerate(xml, path: "//gir:function",       inNS: namespaces, construct: {
             isFreeFunction($0) ? Function(node: $0, atIndex: $1) : nil
-        }, check: isKnownFunction)
+        }, check: notKnownFunction)
     }
 
     /// convenience constructor to read a gir file

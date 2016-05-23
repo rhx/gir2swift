@@ -51,7 +51,7 @@ func process_gir(file: String) {
         print(gir.constants.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n"))
         print(gir.enumerations.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n"))
         print(gir.bitfields.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n"))
-        print(gir.records.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n"))
+        print(gir.records.filter {!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n"))
         print(gir.classes.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n"))
         print(gir.functions.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n"))
         if verbose {
