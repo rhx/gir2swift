@@ -491,7 +491,14 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let ccode = convenienceConstructorCode(classType, indentation: indentation, convenience: "convenience")(e)
     let fcode = convenienceConstructorCode(classType, indentation: indentation, factory: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
-    let factories = (e.constructors + e.methods + e.functions).filter { $0.isFactoryOf(e) }
+    let allmethods = e.constructors + e.methods + e.functions
+    let factories = allmethods.filter { $0.isFactoryOf(e) }
+    let release: String
+    if let unref = allmethods.lazy.filter({ $0.isUnref }).first {
+        release = unref.cname
+    } else {
+        release = "g_free"
+    }
     let p = parent.isEmpty ? "" : "\(parent), "
     let code = "public class \(classType): \(p)\(e.protocolName) {\n" + indentation +
         "public let ptr: UnsafeMutablePointer<\(e.ctype.swift)>\n\n" + indentation +
@@ -499,7 +506,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
             "self.ptr = ptr\n" + indentation +
         "}\n\n" + indentation +
         "deinit {\n" + indentation + indentation +
-            "g_free(UnsafeMutablePointer(ptr))\n" + indentation +
+            "\(release)(cast(ptr))\n" + indentation +
         "}\n\n" +
     "}\n\n" +
         "public extension \(classType) {\n" + indentation +

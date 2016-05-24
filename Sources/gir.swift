@@ -411,6 +411,11 @@ public class GIR {
         public var varargs: Bool {
             return args.lazy.filter({$0.varargs}).first != nil
         }
+
+        /// indicate whether this is an unref method
+        public var isUnref: Bool {
+            return args.count == 1 && name == "unref"
+        }
     }
 
     /// a function is the same as a method
