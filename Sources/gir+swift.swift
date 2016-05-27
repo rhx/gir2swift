@@ -297,6 +297,11 @@ public func swiftCode(alias: GIR.Alias) -> String {
     return swiftCode(alias, "public typealias \(alias.name.swift) = \(alias.type.swift)")
 }
 
+/// Swift code representation of a callback as a type alias
+public func swiftCallbackAliasCode(callback: GIR.Callback) -> String {
+    return swiftCode(callback, "public typealias \(callback.name.swift) = \(callback.type.swift)")
+}
+
 /// Swift code representation of a constant
 public func swiftCode(constant: GIR.Constant) -> String {
     let type = constant.type.swift

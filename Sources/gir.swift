@@ -58,9 +58,11 @@ public class GIR {
     public var constants: [Constant] = []
     public var enumerations: [Enumeration] = []
     public var bitfields: [Bitfield] = []
+    public var interfaces: [Interface] = []
     public var records: [Record] = []
     public var classes: [Class] = []
     public var functions: [Function] = []
+    public var callbacks: [Callback] = []
 
     /// names of black-listed identifiers
     static var Blacklist: Set<String> = []
@@ -131,8 +133,11 @@ public class GIR {
         //
         constants    = enumerate(xml, path: "/*/*/gir:constant",    inNS: namespaces, construct: { Constant(node: $0, atIndex: $1) },    check: notKnownType)
         enumerations = enumerate(xml, path: "/*/*/gir:enumeration", inNS: namespaces, construct: { Enumeration(node: $0, atIndex: $1) }, check: notKnownType)
+        bitfields    = enumerate(xml, path: "/*/*/gir:bitfield",    inNS: namespaces, construct: { Bitfield(node: $0, atIndex: $1) },    check: notKnownType)
+        interfaces   = enumerate(xml, path: "/*/*/gir:interface",   inNS: namespaces, construct: { Interface(node: $0, atIndex: $1) }, check: notKnownRecord)
         records      = enumerate(xml, path: "/*/*/gir:record",      inNS: namespaces, construct: { Record(node: $0, atIndex: $1) },    check: notKnownRecord)
         classes      = enumerate(xml, path: "/*/*/gir:class",       inNS: namespaces, construct: { Class(node: $0, atIndex: $1) },     check: notKnownRecord)
+        callbacks    = enumerate(xml, path: "/*/*/gir:callback",    inNS: namespaces, construct: { Callback(node: $0, atIndex: $1) },    check: notKnownType)
         functions    = enumerate(xml, path: "//gir:function",       inNS: namespaces, construct: {
             isFreeFunction($0) ? Function(node: $0, atIndex: $1) : nil
         }, check: notKnownFunction)
@@ -359,6 +364,9 @@ public class GIR {
         }
     }
 
+    /// an inteface is a record
+    public typealias Interface = Record
+
     /// a class data type record
     public class Class: Record {
         public let parent: String           ///< parent class name
@@ -371,7 +379,7 @@ public class GIR {
 
 
     /// data type representing a function/method
-    public class Method: Thing {
+    public class Method: Argument {     // superclass type is return type
         public let cname: String        ///< original C function name
         public let returns: Argument    ///< C language type name
         public let args: [Argument]     ///< all associated methods
@@ -383,11 +391,11 @@ public class GIR {
             self.returns = returns
             self.args = args
             throwsError = throwsAnError
-            super.init(name: name, comment: comment, introspectable: introspectable, deprecated: deprecated)
+            super.init(name: name, type: returns.type, ctype: returns.ctype, instance: returns.instance, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
         /// XML constructor
-        public init(node: XMLElement, atIndex i: Int) {
+        public override init(node: XMLElement, atIndex i: Int) {
             cname = node.attribute(named: "identifier") ?? ""
             let thrAttr = node.attribute(named: "throws") ?? "0"
             throwsError = (Int(thrAttr) ?? 0) != 0
@@ -404,12 +412,7 @@ public class GIR {
             } else {
                 args = GIR.args(children: children)
             }
-            super.init(node: node, atIndex: i)
-        }
-
-        /// indicate whether this is a varargs method
-        public var varargs: Bool {
-            return args.lazy.filter({$0.varargs}).first != nil
+            super.init(node: node, atIndex: i, varargs: args.lazy.filter({$0.varargs}).first != nil)
         }
 
         /// indicate whether this is an unref method
@@ -451,6 +454,8 @@ public class GIR {
     /// a function is the same as a method
     public typealias Function = Method
 
+    /// a callback is the same as a function
+    public typealias Callback = Function
 
     /// data type representing a function/method argument or return type
     public class Argument: CType {
@@ -474,6 +479,13 @@ public class GIR {
             instance = node.name.hasPrefix("instance")
             _varargs = node.children.lazy.findFirstWhere({ $0.name == "varargs"}) != nil
             super.init(fromChildrenOf: node, atIndex: i)
+        }
+
+        /// XML constructor for functions/methods/callbacks
+        public init(node: XMLElement, atIndex i: Int, varargs: Bool) {
+            instance = node.name.hasPrefix("instance")
+            _varargs = varargs
+            super.init(node: node, atIndex: i)
         }
     }
 }
