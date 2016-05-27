@@ -5,6 +5,12 @@
 //  Created by Rene Hexel on 2/04/2016.
 //  Copyright © 2016 Rene Hexel. All rights reserved.
 //
+#if os(Linux)
+    import Glibc
+#else
+    import Darwin
+#endif
+
 
 public extension GIR {
     /// code boiler plate
@@ -157,13 +163,47 @@ public struct GetterSetterPair {
     let setter: GIR.Method?
 }
 
+/// constant for "i" and "_" as a code unit
+private let iU = "i".utf16.first
+private let _U = "_".utf16.first!
+
 extension GetterSetterPair {
     /// name of the underlying property for a getter / setter pair
     var name: String {
         let n = getter.name.utf16 ?? setter!.name.utf16
-        let s = n.index(n.startIndex, offsetBy: 4)
+        let o = n.first == iU ? 0 : 4;  // no offset for "is_..."
+
+        // convert the remainder to camel case
+        var s = n.index(n.startIndex, offsetBy: o)
         let e = n.endIndex
-        let name = String(n[s..<e])!
+        var name = String()
+        var i = s
+        while i < e {
+            var j = n.index(after: i)
+            if n[i] == _U {
+                if let str = String(n[s..<i]) {
+                    name += str
+                    s = i
+                }
+                i = j
+                guard i < e else { break }
+                j = n.index(after: i)
+                if let u = String(n[i..<j])?.unicodeScalars.first where u.isASCII {
+                    let c = Int32(u.value)
+                    if islower(c) != 0 {
+                        let upper = Character(UnicodeScalar(UInt32(toupper(c))))
+                        name += String(upper)
+                        s = j
+                    } else {
+                        s = i
+                    }
+                } else {
+                    s = i
+                }
+            }
+            i = j
+        }
+        if let str = String(n[s..<e]) { name += str }
         return name
     }
 }
@@ -173,8 +213,10 @@ public func getterSetterPairs(for allMethods: [GIR.Method]) -> [GetterSetterPair
     let gettersAndSetters = allMethods.filter{ $0.isGetter || $0.isSetter }.sorted {
         let u = $0.name.utf16
         let v = $1.name.utf16
-        let a = u[u.index(u.startIndex, offsetBy: 4)..<u.endIndex]
-        let b = v[v.index(v.startIndex, offsetBy: 4)..<v.endIndex]
+        let o = u.first == iU ? 0 : 4;  // no offset for "is_..."
+        let p = v.first == iU ? 0 : 4;
+        let a = u[u.index(u.startIndex, offsetBy: o)..<u.endIndex]
+        let b = v[v.index(v.startIndex, offsetBy: p)..<v.endIndex]
         return String(a) <= String(b)
     }
     var pairs = Array<GetterSetterPair>()
@@ -583,7 +625,7 @@ public func convertSetterArgumentToSwiftFor(_ record: GIR.Record?) -> (GIR.Argum
     return { arg in
         let name = arg.nonClashingName
         guard !arg.isScalarArray else { return "&" + name }
-        let types = typeCastTuple(arg.ctype, arg.type.swift, varName: arg.instance || arg.isInstanceOf(record) ? "ptr" : ("newValue" + (arg.isKnownRecord ? ".ptr" : "")))
+        let types = typeCastTuple(arg.ctype, arg.type.swift, varName: arg.instance || arg.isInstanceOf(record) ? "ptr" : ("newValue"))
         let param = types.toC.hasSuffix("ptr") ? "cast(\(types.toC))" : types.toC
         return param
     }

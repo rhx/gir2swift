@@ -419,7 +419,7 @@ public class GIR {
 
         /// indicate whether this is a getter method
         public var isGetter: Bool {
-            return !throwsError && args.count == 1 && name.hasPrefix("get_")
+            return !throwsError && args.count == 1 && ( name.hasPrefix("get_") || name.hasPrefix("is_"))
         }
 
         /// indicate whether this is a setter method
