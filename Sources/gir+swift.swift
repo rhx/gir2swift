@@ -98,6 +98,26 @@ public extension GIR.Argument {
         return na
     }
 
+    /// return the, potentially prefixed argument name to use in a method declaration
+    public var prefixedArgumentName: String {
+        let name = nonClashingName
+        let swname = name.swift
+        let prefixedname = name == swname ? name : (swname + " " + name)
+        return prefixedname
+    }
+
+    /// return the swift (known) type of the receiver
+    public var argumentType: String {
+        let ct = ctype
+        let t = type == "" ? ct : type
+        let array = isScalarArray
+        let swift = array ? t.swiftType : t.swift
+        let isPtr  = ct.isPointer
+        let record = knownRecord
+        let code = "\(array ? "inout [" : "")\(isPtr ? (record.map { $0.protocolName } ?? ct.swiftRepresentationOfCType) : swift)\(array ? "]" : "")"
+        return code
+    }
+
     /// return whether the receiver is an instance of the given record (class)
     public func isInstanceOf(_ record: GIR.Record?) -> Bool {
         if let r = record where r.name == type.withoutNameSpace {
@@ -131,6 +151,48 @@ public extension GIR.Method {
     }
 }
 
+/// a pair of getters and setters (both cannot be nil at the same time)
+public struct GetterSetterPair {
+    let getter, setter: GIR.Method?
+}
+
+extension GetterSetterPair {
+    /// name of the underlying property for a getter / setter pair
+    var name: String {
+        let n = getter?.name.utf16 ?? setter!.name.utf16
+        let s = n.index(n.startIndex, offsetBy: 4)
+        let e = n.endIndex
+        let name = String(n[s..<e])!
+        return name
+    }
+}
+
+/// return setter/getter pairs from a list of methods
+public func getterSetterPairs(for allMethods: [GIR.Method]) -> [GetterSetterPair] {
+    let gettersAndSetters = allMethods.filter{ $0.isGetter || $0.isSetter }.sorted {
+        let u = $0.name.utf16
+        let v = $1.name.utf16
+        let a = u[u.index(u.startIndex, offsetBy: 4)..<u.endIndex]
+        let b = v[v.index(v.startIndex, offsetBy: 4)..<v.endIndex]
+        return String(a) <= String(b)
+    }
+    var pairs = Array<GetterSetterPair>()
+    pairs.reserveCapacity(gettersAndSetters.count)
+    var i = gettersAndSetters.makeIterator()
+    var b = i.next()
+    while let a = b {
+        b = i.next()
+        if a.isGetter {
+            guard let s = b where s.isSetterFor(getter: a.name) else { pairs.append(GetterSetterPair(getter: a, setter: nil)) ; continue }
+            pairs.append(GetterSetterPair(getter: a, setter: s))
+        } else {    // isSetter
+            guard let g = b where g.isGetterFor(setter: a.name) else { pairs.append(GetterSetterPair(getter: nil, setter: a)) ; continue }
+            pairs.append(GetterSetterPair(getter: g, setter: a))
+        }
+        b = i.next()
+    }
+    return pairs
+}
 
 /// Swift extension for records
 public extension GIR.Record {
@@ -249,9 +311,12 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
 /// Default implementation for record methods as protocol extension
 public func recordProtocolExtensionCode(_ e: GIR.Record, indentation: String = "    ") -> String {
     let mcode = methodCode(indentation, record: e)
+    let vcode = computedPropertyCode(indentation, record: e)
     let methods = e.methods + e.functions.filter { $0.args.lazy.filter({ $0.isInstanceOf(e) }).first != nil }
+    let gsPairs = getterSetterPairs(for: methods)
     let code = "public extension \(e.protocolName) {\n" +
         methods.map(mcode).joined(separator: "\n") +
+        gsPairs.map(vcode).joined(separator: "\n") +
     "}\n\n"
     return code
 }
@@ -290,6 +355,52 @@ public func methodCode(_ indentation: String, record: GIR.Record? = nil) -> (GIR
 }
 
 
+/// Swift code for computed properties
+public func computedPropertyCode(_ indentation: String, record: GIR.Record) -> (GetterSetterPair) -> String {
+    let doubleIndent = indentation + indentation
+    let gcall = callCode(doubleIndent, record)
+    let scall = callSetter(doubleIndent, record)
+    let ret = returnCode(doubleIndent)
+    return { (pair: GetterSetterPair) -> String in
+        let name = pair.name
+        let type: String
+        if let getter = pair.getter, rt = returnTypeCode()(getter) {
+            type = rt
+        } else {
+            guard let args = pair.setter?.args.filter({ !$0.isInstanceOf(record) }),
+                        at = args.first where args.count == 1 else {
+                return indentation + "// var \(name) is unavailable because it does not have a valid getter or setter\n"
+            }
+            type = at.argumentType
+        }
+        let varDecl = indentation + "public var \(name): \(type) {\n"
+        let getterCode: String
+        if let getter = pair.getter {
+            let deprecated = getter.deprecated != nil ? "@available(*, deprecated) " : ""
+            getterCode = swiftCode(getter, doubleIndent + "\(deprecated)get {\n" +
+                doubleIndent + indentation + gcall(getter) +
+                indentation  + ret(getter)  +
+                "}\n", indentation: doubleIndent)
+        } else {
+            getterCode = ""
+        }
+        let setterCode: String
+        if let setter = pair.setter {
+            let deprecated = setter.deprecated != nil ? "@available(*, deprecated) " : ""
+            setterCode = swiftCode(setter, doubleIndent + "\(deprecated)set {\n" +
+                doubleIndent + indentation + scall(setter) +
+                doubleIndent + "}\n", indentation: doubleIndent)
+        } else {
+            setterCode = ""
+        }
+        let varEnd = indentation + "}\n"
+        return varDecl + getterCode + setterCode + varEnd
+    }
+}
+
+
+
+
 /// Swift code for convenience constructors
 public func convenienceConstructorCode(_ typeName: String, indentation: String, convenience: String = "", factory: Bool = false) -> (GIR.Record) -> (GIR.Method) -> String {
     let isConv = !convenience.isEmpty
@@ -319,18 +430,28 @@ public func convenienceConstructorCode(_ typeName: String, indentation: String, 
 }
 
 
-/// Return code declaration for functions/methods/convenience constructors
-public func returnDeclarationCode(_ tr: (typeName: String, record: GIR.Record, isConstructor: Bool)? = nil) -> (GIR.Method) -> String {
+/// Return the return type of a method, 
+public func returnTypeCode(_ tr: (typeName: String, record: GIR.Record, isConstructor: Bool)? = nil) -> (GIR.Method) -> String? {
     return { method in
-        let throwCode = method.throwsError ? " throws" : ""
         let rv = method.returns
-        guard !(rv.isVoid || (tr != nil && tr!.isConstructor)) else { return throwCode }
+        guard !(rv.isVoid || (tr != nil && tr!.isConstructor)) else { return nil }
         let returnType: String
         if rv.isInstanceOf(tr?.record)  {
             returnType = tr!.typeName + "!"
         } else {
             returnType = typeCastTuple(rv.ctype, rv.type.swift).swift + (rv.isAnyKindOfPointer ? "!" : "")
         }
+        return returnType
+    }
+}
+
+
+
+/// Return code declaration for functions/methods/convenience constructors
+public func returnDeclarationCode(_ tr: (typeName: String, record: GIR.Record, isConstructor: Bool)? = nil) -> (GIR.Method) -> String {
+    return { method in
+        let throwCode = method.throwsError ? " throws" : ""
+        guard let returnType = returnTypeCode(tr)(method) else { return throwCode }
         return throwCode + " -> \(returnType)"
     }
 }
@@ -367,6 +488,18 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil) -> (GIR
         ( isVoid ? "" : "let rv = " ) +
         "\(method.cname.swift)(\(args.map(toSwift).joined(separator: ", "))" +
             ( throwsError ? ((n == 0 ? "" : ", ") + "&error)\n" + indentation + "if let error = error {\n" + indentation + indentation + "throw ErrorType(ptr: error)\n" + indentation + "}\n") : ")\n" )
+        return code
+    }
+}
+
+
+/// Swift code for calling the underlying setter function and assigning the raw return value
+public func callSetter(_ indentation: String, _ record: GIR.Record? = nil) -> (GIR.Method) -> String {
+    let toSwift = convertSetterArgumentToSwiftFor(record)
+    return { method in
+        let args = method.args // not .lazy
+        let code = ( method.returns.isVoid ? "" : "let _ = " ) +
+            "\(method.cname.swift)(\(args.map(toSwift).joined(separator: ", "))))\n"
         return code
     }
 }
@@ -421,16 +554,9 @@ public func constructorPrefix(_ method: GIR.Method) -> String {
 
 /// Swift code for methods
 public func argumentCode(_ arg: GIR.Argument) -> String {
-    let name = arg.nonClashingName
-    let swname = arg.name.swift
-    let prefixedname = name == swname ? name : (swname + " " + name)
-    let ctype = arg.ctype
-    let type = arg.type == "" ? ctype : arg.type
-    let array = arg.isScalarArray
-    let swift = array ? type.swiftType : type.swift
-    let isPtr  = ctype.isPointer
-    let record = arg.knownRecord
-    let code = "\(prefixedname): \(array ? "inout [" : "")\(isPtr ? (record.map { $0.protocolName } ?? ctype.swiftRepresentationOfCType) : swift)\(array ? "]" : "")"
+    let prefixedname = arg.prefixedArgumentName
+    let type = arg.argumentType
+    let code = "\(prefixedname): \(type)"
     return code
 }
 
@@ -454,6 +580,17 @@ public func convertArgumentToSwiftFor(_ record: GIR.Record?) -> (GIR.Argument) -
     }
 }
 
+
+/// Swift code for passing a setter to a method of a record / class
+public func convertSetterArgumentToSwiftFor(_ record: GIR.Record?) -> (GIR.Argument) -> String {
+    return { arg in
+        let name = arg.nonClashingName
+        guard !arg.isScalarArray else { return "&" + name }
+        let types = typeCastTuple(arg.ctype, arg.type.swift, varName: arg.instance || arg.isInstanceOf(record) ? "ptr" : ("newValue" + (arg.isKnownRecord ? ".ptr" : "")))
+        let param = types.toC.hasSuffix("ptr") ? "cast(\(types.toC))" : types.toC
+        return param
+    }
+}
 
 
 

@@ -416,6 +416,36 @@ public class GIR {
         public var isUnref: Bool {
             return args.count == 1 && name == "unref"
         }
+
+        /// indicate whether this is a getter method
+        public var isGetter: Bool {
+            return args.count == 1 && name.hasPrefix("get_")
+        }
+
+        /// indicate whether this is a setter method
+        public var isSetter: Bool {
+            return args.count == 2 && name.hasPrefix("set_")
+        }
+
+        /// indicate whether this is a setter method for the given getter
+        public func isSetterFor(getter: String) -> Bool {
+            guard args.count == 2 else { return false }
+            let u = getter.utf16
+            let s = u.index(after: u.startIndex)
+            let e = u.endIndex
+            let setter = "s" + String(u[s..<e])
+            return name == setter
+        }
+
+        /// indicate whether this is a getter method for the given setter
+        public func isGetterFor(setter: String) -> Bool {
+            guard args.count == 1 else { return false }
+            let u = setter.utf16
+            let s = u.index(after: u.startIndex)
+            let e = u.endIndex
+            let getter = "g" + String(u[s..<e])
+            return name == getter
+        }
     }
 
     /// a function is the same as a method
