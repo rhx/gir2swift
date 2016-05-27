@@ -153,13 +153,14 @@ public extension GIR.Method {
 
 /// a pair of getters and setters (both cannot be nil at the same time)
 public struct GetterSetterPair {
-    let getter, setter: GIR.Method?
+    let getter: GIR.Method
+    let setter: GIR.Method?
 }
 
 extension GetterSetterPair {
     /// name of the underlying property for a getter / setter pair
     var name: String {
-        let n = getter?.name.utf16 ?? setter!.name.utf16
+        let n = getter.name.utf16 ?? setter!.name.utf16
         let s = n.index(n.startIndex, offsetBy: 4)
         let e = n.endIndex
         let name = String(n[s..<e])!
@@ -186,7 +187,7 @@ public func getterSetterPairs(for allMethods: [GIR.Method]) -> [GetterSetterPair
             guard let s = b where s.isSetterFor(getter: a.name) else { pairs.append(GetterSetterPair(getter: a, setter: nil)) ; continue }
             pairs.append(GetterSetterPair(getter: a, setter: s))
         } else {    // isSetter
-            guard let g = b where g.isGetterFor(setter: a.name) else { pairs.append(GetterSetterPair(getter: nil, setter: a)) ; continue }
+            guard let g = b where g.isGetterFor(setter: a.name) else { continue }
             pairs.append(GetterSetterPair(getter: g, setter: a))
         }
         b = i.next()
@@ -363,8 +364,9 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record) -> (
     let ret = returnCode(doubleIndent)
     return { (pair: GetterSetterPair) -> String in
         let name = pair.name
+        let getter = pair.getter
         let type: String
-        if let getter = pair.getter, rt = returnTypeCode()(getter) {
+        if let rt = returnTypeCode()(getter) {
             type = rt
         } else {
             guard let args = pair.setter?.args.filter({ !$0.isInstanceOf(record) }),
@@ -374,16 +376,11 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record) -> (
             type = at.argumentType
         }
         let varDecl = indentation + "public var \(name): \(type) {\n"
-        let getterCode: String
-        if let getter = pair.getter {
-            let deprecated = getter.deprecated != nil ? "@available(*, deprecated) " : ""
-            getterCode = swiftCode(getter, doubleIndent + "\(deprecated)get {\n" +
-                doubleIndent + indentation + gcall(getter) +
-                indentation  + ret(getter)  +
-                "}\n", indentation: doubleIndent)
-        } else {
-            getterCode = ""
-        }
+        let deprecated = getter.deprecated != nil ? "@available(*, deprecated) " : ""
+        let getterCode = swiftCode(getter, doubleIndent + "\(deprecated)get {\n" +
+            doubleIndent + indentation + gcall(getter) +
+            indentation  + ret(getter)  +
+            "}\n", indentation: doubleIndent)
         let setterCode: String
         if let setter = pair.setter {
             let deprecated = setter.deprecated != nil ? "@available(*, deprecated) " : ""
@@ -499,7 +496,7 @@ public func callSetter(_ indentation: String, _ record: GIR.Record? = nil) -> (G
     return { method in
         let args = method.args // not .lazy
         let code = ( method.returns.isVoid ? "" : "let _ = " ) +
-            "\(method.cname.swift)(\(args.map(toSwift).joined(separator: ", "))))\n"
+            "\(method.cname.swift)(\(args.map(toSwift).joined(separator: ", ")))\n"
         return code
     }
 }
