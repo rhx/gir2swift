@@ -405,7 +405,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record) -> (
     let scall = callSetter(doubleIndent, record)
     let ret = returnCode(doubleIndent)
     return { (pair: GetterSetterPair) -> String in
-        let name = pair.name
+        let name = pair.name.swiftName
         let getter = pair.getter
         let type: String
         if let rt = returnTypeCode()(getter) {

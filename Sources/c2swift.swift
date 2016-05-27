@@ -155,6 +155,12 @@ extension String {
         return self
     }
 
+    /// return a valid Swift name by appending '_' to a reserved name
+    var swiftName: String {
+        guard !reservedNames.contains(self) else { return self + "_" }
+        return self
+    }
+
     /// return a swift representation of an identifier string (escaped if necessary)
     var swift: String {
         if let s = castableScalars[self] { return s }
@@ -162,8 +168,7 @@ extension String {
         if let s = swiftReplacementsForC[self] { return s }
         let s = swiftType
         guard !reservedTypes.contains(s) else { return s + "Type" }
-        guard !reservedNames.contains(s) else { return s + "_" }
-        return s
+        return s.swiftName
     }
 
     /// indicate whether the type represented by the receiver is a constant
