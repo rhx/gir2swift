@@ -652,23 +652,25 @@ public func convertSetterArgumentToSwiftFor(_ record: GIR.Record?) -> (GIR.Argum
 public func recordStructCode(_ e: GIR.Record, indentation: String = "    ") -> String {
     let structType = "\(e.name)Ref"
     let parent = e.parentType
+    let root = parent?.rootType
     let p = parent ?? e
+    let r = root ?? p
     let ccode = convenienceConstructorCode(structType, indentation: indentation)(e)
     let fcode = convenienceConstructorCode(structType, indentation: indentation, factory: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
     let factories = (e.constructors + e.methods + e.functions).filter { $0.isFactoryOf(e) }
     let code = "public struct \(structType): \(e.protocolName) {\n" + indentation +
-        "public let ptr: UnsafeMutablePointer<\(p.ctype.swift)>\n" +
+        "public let ptr: UnsafeMutablePointer<\(r.ctype.swift)>\n" +
     "}\n\n" +
     "public extension \(structType) {\n" + indentation +
         "public init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + indentation + indentation +
-            "ptr = UnsafeMutablePointer<\(p.ctype.swift)>(cPointer)\n" + indentation +
+            "ptr = UnsafeMutablePointer<\(r.ctype.swift)>(cPointer)\n" + indentation +
         "}\n\n" + indentation +
         "public init<T>(constPointer: UnsafePointer<T>) {\n" + indentation + indentation +
-            "ptr = UnsafeMutablePointer<\(p.ctype.swift)>(constPointer)\n" + indentation +
+            "ptr = UnsafeMutablePointer<\(r.ctype.swift)>(constPointer)\n" + indentation +
         "}\n\n" + indentation +
         "public init(opaquePointer: OpaquePointer) {\n" + indentation + indentation +
-            "ptr = UnsafeMutablePointer<\(p.ctype.swift)>(opaquePointer)\n" + indentation +
+            "ptr = UnsafeMutablePointer<\(r.ctype.swift)>(opaquePointer)\n" + indentation +
         "}\n\n" + indentation +
         constructors.map(ccode).joined(separator: "\n") +
         factories.map(fcode).joined(separator: "\n") +
@@ -702,9 +704,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "}\n\n" + (hasParent ? "" : (indentation +
         "deinit {\n" + indentation + indentation +
             "\(release)(cast(ptr))\n" + indentation +
-        "}\n\n")) +
-    "}\n\n" +
-        "public extension \(classType) {\n" + (hasParent ? "" : (indentation +
+        "}\n\n")) + (hasParent ? "" : (indentation +
         "public convenience init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + indentation + indentation +
             "self.init(ptr: UnsafeMutablePointer<\(e.ctype.swift)>(cPointer))\n" + indentation +
         "}\n\n" + indentation +
@@ -713,9 +713,11 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
 //        "}\n\n" + indentation +
         "public convenience init(opaquePointer: OpaquePointer) {\n" + indentation + indentation +
             "self.init(ptr: UnsafeMutablePointer<\(e.ctype.swift)>(opaquePointer))\n" + indentation +
-        "}\n\n")) + indentation +
-        constructors.map(ccode).joined(separator: "\n") +
-        factories.map(fcode).joined(separator: "\n") +
+        "}\n\n")) +
+        constructors.map(ccode).joined(separator: "\n") + "\n" +
+    "}\n\n" +
+    "public extension \(classType) {\n" + indentation +
+        factories.map(fcode).joined(separator: "\n") + "\n" +
     "}\n\n"
 
     return code

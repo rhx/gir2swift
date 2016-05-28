@@ -339,6 +339,7 @@ public class GIR {
         public let functions: [Function]    ///< all associated functions
         public let constructors: [Method]   ///< list of constructors
         public var parentType: Record? { return nil }   ///< no parent
+        public var rootType: Record { return self }     ///< no root class
 
         /// designated constructor
         public init(name: String, type: String, ctype: String, cprefix: String, typegetter: String, methods: [Method] = [], functions: [Function] = [], constructors: [Method] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
@@ -376,6 +377,13 @@ public class GIR {
         public override var parentType: Record? {
             guard parent != "" else { return nil }
             return GIR.KnownTypes[parent] as? GIR.Record
+        }
+
+        /// return the top level ancestor type of the given class
+        public override var rootType: Record {
+            guard parent != "" else { return self }
+            guard let p = GIR.KnownTypes[parent] as? GIR.Record else { return self }
+            return p.rootType
         }
 
         /// XML constructor
