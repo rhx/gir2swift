@@ -19,6 +19,15 @@ extension String {
         let len = s.characters.count
         return hasSuffix(s) ? String(characters[startIndex..<index(endIndex, offsetBy: -len)]) : nil
     }
+
+    /// return the string resulting from removing the same number of
+    /// characters as the given substring.  This will crash if the
+    /// receiver is not long enough to have the corresponding number of
+    /// characters removed
+    public func stringByRemovingAnEquivalentNumberOfCharactersAs(suffix s: String) -> String {
+        let len = s.characters.count
+        return String(characters[startIndex..<index(endIndex, offsetBy: -len)])
+    }
 }
 
 

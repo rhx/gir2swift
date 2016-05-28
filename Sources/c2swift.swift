@@ -147,6 +147,17 @@ extension String {
     /// return the string trimmed of white space at either end
     var trimmed: String { return trimmingCharacters(in: wsnl) }
 
+    /// return a name with reserved Ref or Protocol suffixes escaped
+    var typeEscaped: String {
+        let nx: String
+        if let sf = [ "Protocol", "Ref" ].filter({ self.hasSuffix($0) }).first {
+            nx = stringByRemovingAnEquivalentNumberOfCharactersAs(suffix: sf) + "_" + sf
+        } else {
+            nx = self
+        }
+        return nx
+    }
+
     /// return a valid Swift type for an underlying C type
     var swiftType: String {
         if let s = swiftReplacementsForC[self] { return s }

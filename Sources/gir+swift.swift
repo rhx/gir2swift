@@ -70,6 +70,16 @@ public extension GIR {
 }
 
 
+/// Swift extentsion for things
+public extension GIR.Thing {
+    /// return a name with reserved Ref or Protocol suffixes escaped
+    public var escapedName: String {
+        let na = name.typeEscaped
+        return na
+    }
+}
+
+
 /// Swift extension for arguments
 public extension GIR.Argument {
     //// return the known type of the argument (nil if not known)
@@ -117,7 +127,7 @@ public extension GIR.Argument {
         let ct = ctype
         let t = type == "" ? ct : type
         let array = isScalarArray
-        let swift = array ? t.swiftType : t.swift
+        let swift = (array ? t.swiftType : t.swift).typeEscaped
         let isPtr  = ct.isPointer
         let record = knownRecord
         let code = "\(array ? "inout [" : "")\(isPtr ? (record.map { $0.protocolName } ?? ct.swiftRepresentationOfCType) : swift)\(array ? "]" : "")"
@@ -294,18 +304,18 @@ public func swiftCode(_ thing: GIR.Thing, _ postfix: String = "", indentation: S
 
 /// Swift code representation of a type alias
 public func swiftCode(alias: GIR.Alias) -> String {
-    return swiftCode(alias, "public typealias \(alias.name.swift) = \(alias.type.swift)")
+    return swiftCode(alias, "public typealias \(alias.escapedName.swift) = \(alias.type.swift)")
 }
 
 /// Swift code representation of a callback as a type alias
 public func swiftCallbackAliasCode(callback: GIR.Callback) -> String {
-    return swiftCode(callback, "public typealias \(callback.name.swift) = \(callback.type.swift)")
+    return swiftCode(callback, "public typealias \(callback.escapedName.swift) = \(callback.type.swift)")
 }
 
 /// Swift code representation of a constant
 public func swiftCode(constant: GIR.Constant) -> String {
     let type = constant.type.swift
-    let name = constant.name.swift
+    let name = constant.escapedName.swift
     guard !GIR.VerbatimConstants.contains(name) else {
         return swiftCode(constant, "public let \(name): \(constant.ctype.swift) = \(constant.value) /* \(type) */")
     }
@@ -323,13 +333,13 @@ let gerror = "GError"
 
 /// Swift code type alias representation of an enum
 public func typeAlias(_ e: GIR.Enumeration) -> String {
-    return swiftCode(e, "public typealias \(e.name.swift) = \(e.type.swift)")
+    return swiftCode(e, "public typealias \(e.escapedName.swift) = \(e.type.swift)")
 }
 
 /// Swift code representation of an enum
 public func swiftCode(_ e: GIR.Enumeration) -> String {
     let alias = typeAlias(e)
-    let name = e.name
+    let name = e.escapedName
     let swift = name.swift
     let isErrorType = name == errorType || swift == errorType
     let ext = isErrorType ? ": \(errorProtocol)" : ""
