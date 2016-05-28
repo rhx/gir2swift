@@ -697,7 +697,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     if let unref = allmethods.lazy.filter({ $0.isUnref }).first {
         release = unref.cname
     } else {
-        release = "g_free"
+        release = "// no reference counting for "
     }
     let p = parent.isEmpty ? (hasParent ? "\(parentType!.name.swift), " : "") : "\(parent), "
     let code = "public class \(classType): \(p)\(e.protocolName) {\n" + indentation +
