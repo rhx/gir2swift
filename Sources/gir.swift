@@ -40,11 +40,11 @@ func enumerate<T where T: GIR.Thing>(_ xml: XMLDocument, path: String, inNS name
     return []
 }
 
-private let methodContainers: Set<String> = [ "record", "class", "interface" ]
+private let methodContainers: Set<String> = [ "record", "class", "interface", "enumeration", "bitfield" ]
 
 func isFreeFunction(_ function: XMLElement) -> Bool {
-    let parent = function.parent
-    return !methodContainers.contains(parent.name)
+    let isContained = methodContainers.contains(function.parent.name)
+    return !isContained
 }
 
 
