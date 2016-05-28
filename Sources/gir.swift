@@ -338,6 +338,7 @@ public class GIR {
         public let methods: [Method]        ///< all associated methods
         public let functions: [Function]    ///< all associated functions
         public let constructors: [Method]   ///< list of constructors
+        public var parentType: Record? { return nil }   ///< no parent
 
         /// designated constructor
         public init(name: String, type: String, ctype: String, cprefix: String, typegetter: String, methods: [Method] = [], functions: [Function] = [], constructors: [Method] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
@@ -371,6 +372,13 @@ public class GIR {
     public class Class: Record {
         public let parent: String           ///< parent class name
 
+        /// return the parent type of the given class
+        public override var parentType: Record? {
+            guard parent != "" else { return nil }
+            return GIR.KnownTypes[parent] as? GIR.Record
+        }
+
+        /// XML constructor
         override init(node: XMLElement, atIndex i: Int) {
             parent = node.attribute(named: "parent") ?? ""
             super.init(node: node, atIndex: i)
