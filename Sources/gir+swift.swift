@@ -538,8 +538,18 @@ public func returnCode(_ indentation: String, _ tr: (typeName: String, record: G
 
 /// Swift code for calling the underlying function and assigning the raw return value
 public func callCode(_ indentation: String, _ record: GIR.Record? = nil) -> (GIR.Method) -> String {
-    let toSwift = convertArgumentToSwiftFor(record)
+    var hadInstance = false
+    let toSwift: (GIR.Argument) -> String = { arg in
+        let name = arg.nonClashingName
+        guard !arg.isScalarArray else { return "&" + name }
+        let instance = !hadInstance && (arg.instance || arg.isInstanceOf(record))
+        if instance { hadInstance = true }
+        let types = typeCastTuple(arg.ctype, arg.type.swift, varName: instance ? "ptr" : (name + (arg.isKnownRecord ? ".ptr" : "")))
+        let param = types.toC.hasSuffix("ptr") ? "cast(\(types.toC))" : types.toC
+        return param
+    }
     return { method in
+        hadInstance = false
         let throwsError = method.throwsError
         let args = method.args // not .lazy
         let n = args.count
@@ -568,7 +578,13 @@ public func callSetter(_ indentation: String, _ record: GIR.Record? = nil) -> (G
 
 /// Swift code for the parameters of a method or function
 public func funcParam(_ method: GIR.Method, _ record: GIR.Record? = nil) -> String {
-    return method.args.lazy.filter { !$0.instance && !$0.isInstanceOf(record) } .map(argumentCode).joined(separator: ", ")
+    var hadInstance = false
+    return method.args.lazy.filter {
+        guard !hadInstance else { return true }
+        let instance = $0.instance || $0.isInstanceOf(record)
+        if instance { hadInstance = true }
+        return !instance
+    } .map(argumentCode).joined(separator: ", ")
 }
 
 
@@ -627,18 +643,6 @@ public func toSwift(_ arg: GIR.Argument) -> String {
     let types = typeCastTuple(arg.ctype, arg.type.swift, varName: arg.instance ? "ptr" : (arg.nonClashingName + (arg.isKnownRecord ? ".ptr" : "")))
     let param = types.toC.hasSuffix("ptr") ? "cast(\(types.toC))" : types.toC
     return param
-}
-
-
-/// Swift code for passing an argument to a method of a record / class
-public func convertArgumentToSwiftFor(_ record: GIR.Record?) -> (GIR.Argument) -> String {
-    return { arg in
-        let name = arg.nonClashingName
-        guard !arg.isScalarArray else { return "&" + name }
-        let types = typeCastTuple(arg.ctype, arg.type.swift, varName: arg.instance || arg.isInstanceOf(record) ? "ptr" : (name + (arg.isKnownRecord ? ".ptr" : "")))
-        let param = types.toC.hasSuffix("ptr") ? "cast(\(types.toC))" : types.toC
-        return param
-    }
 }
 
 
