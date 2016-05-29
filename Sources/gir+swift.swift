@@ -666,6 +666,9 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ") -> S
         "public init(_ p: UnsafeMutablePointer<\(e.ctype.swift)>) {\n" + indentation + indentation +
             "ptr = UnsafeMutablePointer<\(r.ctype.swift)>(p)\n" + indentation +
         "}\n\n" + indentation +
+        "public init<T: \(e.protocolName)>(_ other: T) {\n" + indentation + indentation +
+            "ptr = other.ptr\n" + indentation +
+        "}\n\n" + indentation +
         "public init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + indentation + indentation +
             "ptr = UnsafeMutablePointer<\(r.ctype.swift)>(cPointer)\n" + indentation +
         "}\n\n" + indentation +
