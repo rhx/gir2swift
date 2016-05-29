@@ -401,6 +401,7 @@ public func methodCode(_ indentation: String, record: GIR.Record? = nil) -> (GIR
     let call = callCode(doubleIndent, record)
     let returnDeclaration = returnDeclarationCode()
     let ret = returnCode(indentation)
+
     return { (method: GIR.Method) -> String in
         let name = method.name.isEmpty ? method.cname : method.name
         guard !GIR.Blacklist.contains(name) else {
@@ -409,9 +410,19 @@ public func methodCode(_ indentation: String, record: GIR.Record? = nil) -> (GIR
         guard !method.varargs else {
             return "\n\(indentation)// *** \(name)() is not available because it has a varargs (...) parameter!\n\n"
         }
+        var hadInstance = false
+        let funcParam = method.args.filter {    // not .lazy !!!
+            guard !hadInstance else {
+                return true
+            }
+            let instance = $0.instance || $0.isInstanceOf(record)
+            if instance { hadInstance = true }
+            return !instance
+        } .map(argumentCode).joined(separator: ", ")
+
         let deprecated = method.deprecated != nil ? "@available(*, deprecated) " : ""
         let code = swiftCode(method, indentation + "\(deprecated)public func \(name.swift)(" +
-            funcParam(method, record) + ")\(returnDeclaration(method)) {\n" +
+            funcParam + ")\(returnDeclaration(method)) {\n" +
                 doubleIndent + call(method) +
                 indentation  + ret(method)  +
         "}\n", indentation: indentation)
@@ -575,17 +586,6 @@ public func callSetter(_ indentation: String, _ record: GIR.Record? = nil) -> (G
     }
 }
 
-
-/// Swift code for the parameters of a method or function
-public func funcParam(_ method: GIR.Method, _ record: GIR.Record? = nil) -> String {
-    var hadInstance = false
-    return method.args.lazy.filter {
-        guard !hadInstance else { return true }
-        let instance = $0.instance || $0.isInstanceOf(record)
-        if instance { hadInstance = true }
-        return !instance
-    } .map(argumentCode).joined(separator: ", ")
-}
 
 
 /// Swift code for the parameters of a constructor
