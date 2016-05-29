@@ -342,6 +342,17 @@ public class GIR {
         public var parentType: Record? { return nil }   ///< no parent
         public var rootType: Record { return self }     ///< no root class
 
+        /// return all functions, methods, and constructors
+        public var allMethods: [Method] {
+            return constructors + methods + functions
+        }
+
+        /// return all functions, methods, and constructors inherited from ancestors
+        public var inheritedMethods: [Method] {
+            guard let parent = parentType else { return [] }
+            return parent.allMethods + parent.inheritedMethods
+        }
+
         /// designated constructor
         public init(name: String, type: String, ctype: String, cprefix: String, typegetter: String, methods: [Method] = [], functions: [Function] = [], constructors: [Method] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
             self.cprefix = cprefix
@@ -365,6 +376,28 @@ public class GIR {
             constructors = cons.enumerated().map { Method(node: $0.1, atIndex: $0.0) }
             super.init(node: node, atIndex: i, typeAttr: "type-name", cTypeAttr: "type")
         }
+
+        /// return the first method where the passed predicate closure returns `true`
+        public func methodMatching(_ predictate: (Method) -> Bool) -> Method? {
+            return allMethods.lazy.filter(predictate).first
+        }
+
+        /// return the first inherited method where the passed predicate closure returns `true`
+        public func inheritedMethodMatching(_ predictate: (Method) -> Bool) -> Method? {
+            return inheritedMethods.lazy.filter(predictate).first
+        }
+
+        /// return the first of my own or inherited methods where the passed predicate closure returns `true`
+        public func anyMethodMatching(_ predictate: (Method) -> Bool) -> Method? {
+            if let match = methodMatching(predictate) { return match }
+            return inheritedMethodMatching(predictate)
+        }
+
+        /// return the `retain` (ref) method for the given record, if any
+        public var ref: Method? { return anyMethodMatching { $0.isRef } }
+
+        /// return the `release` (unref) method for the given record, if any
+        public var unref: Method? { return anyMethodMatching { $0.isUnref } }
     }
 
     /// an inteface is a record
@@ -435,6 +468,11 @@ public class GIR {
         /// indicate whether this is an unref method
         public var isUnref: Bool {
             return args.count == 1 && name == "unref"
+        }
+
+        /// indicate whether this is a ref method
+        public var isRef: Bool {
+            return args.count == 1 && name == "ref"
         }
 
         /// indicate whether this is a getter method

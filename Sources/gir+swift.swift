@@ -694,13 +694,19 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let ccode = convenienceConstructorCode(classType, indentation: indentation, convenience: "convenience")(e)
     let fcode = convenienceConstructorCode(classType, indentation: indentation, factory: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
-    let allmethods = e.constructors + e.methods + e.functions
+    let allmethods = e.allMethods
     let factories = allmethods.filter { $0.isFactoryOf(e) }
+    let retain: String
+    if let ref = e.ref {
+        retain = ref.cname
+    } else {
+        retain = "// no reference counting for \(e.ctype.swift), cannot ref"
+    }
     let release: String
-    if let unref = allmethods.lazy.filter({ $0.isUnref }).first {
+    if let unref = e.unref {
         release = unref.cname
     } else {
-        release = "// no reference counting for "
+        release = "// no reference counting for \(e.ctype.swift), cannot unref"
     }
     let p = parent.isEmpty ? (hasParent ? "\(parentType!.name.swift), " : "") : "\(parent), "
     let code = "public class \(classType): \(p)\(e.protocolName) {\n" + indentation +
@@ -708,6 +714,10 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "public init(_ p: UnsafeMutablePointer<\(e.ctype.swift)>) {\n" + indentation + indentation +
             (hasParent ? "super.init(cast(ptr))\n" : "self.ptr = p\n") + indentation +
         "}\n\n" + (hasParent ? "" : (indentation +
+        "public convenience init<T: \(e.protocolName)>(_ other: T) {\n" + indentation + indentation +
+            "self.init(other.ptr)\n" + indentation + indentation +
+            "\(retain)(cast(ptr))\n" + indentation +
+        "}\n\n" + indentation +
         "deinit {\n" + indentation + indentation +
             "\(release)(cast(ptr))\n" + indentation +
         "}\n\n")) + (hasParent ? "" : (indentation +
