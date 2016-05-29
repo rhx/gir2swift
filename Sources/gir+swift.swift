@@ -521,7 +521,7 @@ public func returnCode(_ indentation: String, _ tr: (typeName: String, record: G
         guard isInstance else { return indentation + "return \(cast2swift)\n" + indentation }
         let (cons, cast, end) = tr!.isConstructor ? ("self.init", cast2swift, "") : ("return rv.map { \(tr!.typeName)", "cast($0)", " }")
         if tr!.isConvenience || !tr!.isConstructor {
-            return indentation + "\(cons)(ptr: \(cast))\(end)\n" + indentation
+            return indentation + "\(cons)(\(cast))\(end)\n" + indentation
         } else {
             return indentation + "self.ptr = \(cast2swift)\n" + indentation
         }
@@ -541,7 +541,7 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil) -> (GIR
         let code = ( throwsError ? "var error: Optional<UnsafeMutablePointer<\(gerror)>> = nil\n" + indentation : "") +
         ( isVoid ? "" : "let rv = " ) +
         "\(method.cname.swift)(\(args.map(toSwift).joined(separator: ", "))" +
-            ( throwsError ? ((n == 0 ? "" : ", ") + "&error)\n" + indentation + "if let error = error {\n" + indentation + indentation + "throw ErrorType(ptr: error)\n" + indentation + "}\n") : ")\n" )
+            ( throwsError ? ((n == 0 ? "" : ", ") + "&error)\n" + indentation + "if let error = error {\n" + indentation + indentation + "throw ErrorType(error)\n" + indentation + "}\n") : ")\n" )
         return code
     }
 }
