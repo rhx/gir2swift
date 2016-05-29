@@ -142,6 +142,13 @@ public extension GIR.Argument {
             return false
         }
     }
+
+    /// return whether the receiver is an instance of the given record (class) or any of its ancestors
+    public func isInstanceOfHierarchy(_ record: GIR.Record) -> Bool {
+        if isInstanceOf(record) { return true }
+        guard let parent = record.parentType else { return false }
+        return isInstanceOfHierarchy(parent)
+    }
 }
 
 

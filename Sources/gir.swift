@@ -394,10 +394,10 @@ public class GIR {
         }
 
         /// return the `retain` (ref) method for the given record, if any
-        public var ref: Method? { return anyMethodMatching { $0.isRef } }
+        public var ref: Method? { return anyMethodMatching { $0.isRef && $0.args.first!.isInstanceOfHierarchy(self) } }
 
         /// return the `release` (unref) method for the given record, if any
-        public var unref: Method? { return anyMethodMatching { $0.isUnref } }
+        public var unref: Method? { return anyMethodMatching { $0.isUnref && $0.args.first!.isInstanceOfHierarchy(self) } }
     }
 
     /// an inteface is a record
