@@ -365,9 +365,10 @@ public func valueCode(_ indentation: String) -> (GIR.Enumeration.Member) -> Stri
 
 /// Swift protocol representation of a record/class as a wrapper of a pointer
 public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: String = "    ") -> String {
+    let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
     let p = (parent.isEmpty ? "" : ": \(parent)")
     let code = "public protocol \(e.protocolName)\(p) {\n" + (e.parentType == nil ?
-        (indentation + "var ptr: UnsafeMutablePointer<\(e.ctype.swift)> { get }\n") : "") +
+        (indentation + "var ptr: UnsafeMutablePointer<\(ctype)> { get }\n") : "") +
     "}\n\n"
     return code
 }
@@ -662,32 +663,35 @@ public func convertSetterArgumentToSwiftFor(_ record: GIR.Record?) -> (GIR.Argum
 /// Swift struct representation of a record/class as a wrapper of a pointer
 public func recordStructCode(_ e: GIR.Record, indentation: String = "    ") -> String {
     let structType = "\(e.name)Ref"
+    let protocolName = e.protocolName
     let parent = e.parentType
     let root = parent?.rootType
     let p = parent ?? e
     let r = root ?? p
+    let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
+    let rtype = r.ctype.isEmpty ? r.type.swift : r.ctype.swift
     let ccode = convenienceConstructorCode(structType, indentation: indentation)(e)
     let fcode = convenienceConstructorCode(structType, indentation: indentation, factory: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
     let factories = (e.constructors + e.methods + e.functions).filter { $0.isFactoryOf(e) }
-    let code = "public struct \(structType): \(e.protocolName) {\n" + indentation +
-        "public let ptr: UnsafeMutablePointer<\(r.ctype.swift)>\n" +
+    let code = "public struct \(structType): \(protocolName) {\n" + indentation +
+        "public let ptr: UnsafeMutablePointer<\(rtype)>\n" +
     "}\n\n" +
     "public extension \(structType) {\n" + indentation +
-        "public init(_ p: UnsafeMutablePointer<\(e.ctype.swift)>) {\n" + indentation + indentation +
-            "ptr = UnsafeMutablePointer<\(r.ctype.swift)>(p)\n" + indentation +
+        "public init(_ p: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
+            "ptr = UnsafeMutablePointer<\(rtype)>(p)\n" + indentation +
         "}\n\n" + indentation +
-        "public init<T: \(e.protocolName)>(_ other: T) {\n" + indentation + indentation +
+        "public init<T: \(protocolName)>(_ other: T) {\n" + indentation + indentation +
             "ptr = other.ptr\n" + indentation +
         "}\n\n" + indentation +
         "public init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + indentation + indentation +
-            "ptr = UnsafeMutablePointer<\(r.ctype.swift)>(cPointer)\n" + indentation +
+            "ptr = UnsafeMutablePointer<\(rtype)>(cPointer)\n" + indentation +
         "}\n\n" + indentation +
         "public init<T>(constPointer: UnsafePointer<T>) {\n" + indentation + indentation +
-            "ptr = UnsafeMutablePointer<\(r.ctype.swift)>(constPointer)\n" + indentation +
+            "ptr = UnsafeMutablePointer<\(rtype)>(constPointer)\n" + indentation +
         "}\n\n" + indentation +
         "public init(opaquePointer: OpaquePointer) {\n" + indentation + indentation +
-            "ptr = UnsafeMutablePointer<\(r.ctype.swift)>(opaquePointer)\n" + indentation +
+            "ptr = UnsafeMutablePointer<\(rtype)>(opaquePointer)\n" + indentation +
         "}\n\n" + indentation +
         constructors.map(ccode).joined(separator: "\n") +
         factories.map(fcode).joined(separator: "\n") +
@@ -702,6 +706,8 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let classType = e.name.swift
     let parentType = e.parentType
     let hasParent = parentType != nil
+    let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
+    let rtype = r.ctype.isEmpty ? r.type.swift : r.ctype.swift
     let ccode = convenienceConstructorCode(classType, indentation: indentation, convenience: "convenience")(e)
     let fcode = convenienceConstructorCode(classType, indentation: indentation, factory: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
@@ -721,8 +727,8 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     }
     let p = parent.isEmpty ? (hasParent ? "\(parentType!.name.swift), " : "") : "\(parent), "
     let code = "public class \(classType): \(p)\(e.protocolName) {\n" + indentation +
-        (hasParent ? "" : ("public let ptr: UnsafeMutablePointer<\(e.ctype.swift)>\n\n" + indentation)) +
-        "public init(_ op: UnsafeMutablePointer<\(e.ctype.swift)>) {\n" + indentation + indentation +
+        (hasParent ? "" : ("public let ptr: UnsafeMutablePointer<\(ctype)>\n\n" + indentation)) +
+        "public init(_ op: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
             (hasParent ? "super.init(cast(op))\n" : "self.ptr = op\n") + indentation +
         "}\n\n" + (hasParent ? "" : (indentation +
         "public convenience init<T: \(e.protocolName)>(_ other: T) {\n" + indentation + indentation +
@@ -733,13 +739,13 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
             "\(release)(cast(ptr))\n" + indentation +
         "}\n\n")) + (hasParent ? "" : (indentation +
         "public convenience init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + indentation + indentation +
-            "self.init(UnsafeMutablePointer<\(e.ctype.swift)>(cPointer))\n" + indentation +
+            "self.init(UnsafeMutablePointer<\(ctype)>(cPointer))\n" + indentation +
         "}\n\n" + indentation +
 //        "public convenience init<T>(cPointer: UnsafePointer<T>) {\n" + indentation + indentation +
-//        "    self.init(UnsafeMutablePointer<\(e.ctype.swift)>(cPointer))\n" + indentation +
+//        "    self.init(UnsafeMutablePointer<\(ctype)>(cPointer))\n" + indentation +
 //        "}\n\n" + indentation +
         "public convenience init(opaquePointer: OpaquePointer) {\n" + indentation + indentation +
-            "self.init(UnsafeMutablePointer<\(e.ctype.swift)>(opaquePointer))\n" + indentation +
+            "self.init(UnsafeMutablePointer<\(ctype)>(opaquePointer))\n" + indentation +
         "}\n\n")) +
         constructors.map(ccode).joined(separator: "\n") + "\n" +
     "}\n\n" +
