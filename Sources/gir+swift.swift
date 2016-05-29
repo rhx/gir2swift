@@ -702,20 +702,20 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let p = parent.isEmpty ? (hasParent ? "\(parentType!.name.swift), " : "") : "\(parent), "
     let code = "public class \(classType): \(p)\(e.protocolName) {\n" + indentation +
         (hasParent ? "" : ("public let ptr: UnsafeMutablePointer<\(e.ctype.swift)>\n\n" + indentation)) +
-        "public init(ptr: UnsafeMutablePointer<\(e.ctype.swift)>) {\n" + indentation + indentation +
-            (hasParent ? "super.init(ptr: cast(ptr))\n" : "self.ptr = ptr\n") + indentation +
+        "public init(_ p: UnsafeMutablePointer<\(e.ctype.swift)>) {\n" + indentation + indentation +
+            (hasParent ? "super.init(cast(ptr))\n" : "self.ptr = p\n") + indentation +
         "}\n\n" + (hasParent ? "" : (indentation +
         "deinit {\n" + indentation + indentation +
             "\(release)(cast(ptr))\n" + indentation +
         "}\n\n")) + (hasParent ? "" : (indentation +
         "public convenience init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + indentation + indentation +
-            "self.init(ptr: UnsafeMutablePointer<\(e.ctype.swift)>(cPointer))\n" + indentation +
+            "self.init(UnsafeMutablePointer<\(e.ctype.swift)>(cPointer))\n" + indentation +
         "}\n\n" + indentation +
 //        "public convenience init<T>(cPointer: UnsafePointer<T>) {\n" + indentation + indentation +
-//        "    self.init(ptr: UnsafeMutablePointer<\(e.ctype.swift)>(cPointer))\n" + indentation +
+//        "    self.init(UnsafeMutablePointer<\(e.ctype.swift)>(cPointer))\n" + indentation +
 //        "}\n\n" + indentation +
         "public convenience init(opaquePointer: OpaquePointer) {\n" + indentation + indentation +
-            "self.init(ptr: UnsafeMutablePointer<\(e.ctype.swift)>(opaquePointer))\n" + indentation +
+            "self.init(UnsafeMutablePointer<\(e.ctype.swift)>(opaquePointer))\n" + indentation +
         "}\n\n")) +
         constructors.map(ccode).joined(separator: "\n") + "\n" +
     "}\n\n" +
