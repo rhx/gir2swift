@@ -42,8 +42,19 @@ func preload_gir(file: String) {
 
 /// process a GIR file
 func process_gir(file: String) {
+    let base = file.baseName
+    let node = base.stringByRemoving(suffix: ".gir") ?? base
+    let wlfile = node + ".whitelist"
+    if let whitelist = wlfile.contents?.lines.asSet {
+        for name in whitelist {
+            GIR.KnownTypes.removeValue(forKey: name)
+            GIR.KnownRecords.removeValue(forKey: name)
+            GIR.KnownFunctions.removeValue(forKey: name)
+        }
+    }
+
     load_gir(file) { gir in
-        processSpecialCases(gir, forFile: file)
+        processSpecialCases(gir, forFile: node)
         let blacklist = GIR.Blacklist
         print(gir.boilerPlate)
         print(gir.preamble)
@@ -65,10 +76,7 @@ func process_gir(file: String) {
 
 
 /// process blacklist and verbatim constants information
-func processSpecialCases(_
-    gir: GIR, forFile file: String) {
-    let base = file.baseName
-    let node = base.stringByRemoving(suffix: ".gir") ?? base
+func processSpecialCases(_ gir: GIR, forFile node: String) {
     let preamble = node + ".preamble"
     gir.preamble = preamble.contents ?? ""
     let blacklist = node + ".blacklist"
