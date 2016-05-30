@@ -45,7 +45,7 @@ func process_gir(file: String) {
     let base = file.baseName
     let node = base.stringByRemoving(suffix: ".gir") ?? base
     let wlfile = node + ".whitelist"
-    if let whitelist = wlfile.contents?.lines.asSet {
+    if let whitelist = String(contentsOfFile: wlfile, quiet: true)?.lines.asSet {
         for name in whitelist {
             GIR.KnownTypes.removeValue(forKey: name)
             GIR.KnownRecords.removeValue(forKey: name)

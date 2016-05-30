@@ -13,12 +13,12 @@
 
 
 extension String {
-    var contents: String? { return String.fromContentsOf(file: self) }
+    var contents: String? { return String(contentsOfFile: self) }
 
-    static func fromContentsOf(file: String) -> String? {
+    init?(contentsOfFile file: String, quiet: Bool = false) {
         let fn = open(file, O_RDONLY)
         guard fn >= 0 else {
-            perror("Cannot open '\(file)'")
+            if !quiet { perror("Cannot open '\(file)'") }
             return nil
         }
         defer { close(fn) }
@@ -37,8 +37,6 @@ extension String {
         }
         let cs = UnsafeMutablePointer<CChar>(mem)
         cs[len] = 0
-        return String(cString: UnsafePointer(cs))
+        self = String(cString: UnsafePointer(cs))
     }
 }
-
-
