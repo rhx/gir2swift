@@ -20,9 +20,9 @@ var verbose = false
 }
 
 /// load a GIR file, then invoke the processing closure
-func load_gir(_ file: String, process: (GIR) -> Void) {
+func load_gir(_ file: String, quiet q: Bool = false, process: (GIR) -> Void =  { _ in }) {
     with_mmap(file) { (content: UnsafeBufferPointer<CChar>) in
-        guard let gir = GIR(buffer: content) else {
+        guard let gir = GIR(buffer: content, quiet: q) else {
             perror("Cannot parse GIR file '\(file)'")
             return
         }
@@ -36,7 +36,7 @@ func load_gir(_ file: String, process: (GIR) -> Void) {
 
 /// pre-load a GIR without processing, but adding to known types / records
 func preload_gir(file: String) {
-    load_gir(file) { _ in }
+    load_gir(file, quiet: true)
 }
 
 

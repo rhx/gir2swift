@@ -22,12 +22,12 @@ extension String {
     }
 }
 
-func enumerate<T where T: GIR.Thing>(_ xml: XMLDocument, path: String, inNS namespaces: AnySequence<XMLNameSpace>, construct: (XMLElement, Int) -> T?, defaultPrefix prefix: String = "gir", check: (T) -> Bool = { _ in true }) -> [T] {
+func enumerate<T where T: GIR.Thing>(_ xml: XMLDocument, path: String, inNS namespaces: AnySequence<XMLNameSpace>, quiet: Bool, construct: (XMLElement, Int) -> T?, defaultPrefix prefix: String = "gir", check: (T) -> Bool = { _ in true }) -> [T] {
     if let entries = xml.xpath(path, namespaces: namespaces, defaultPrefix: prefix) {
         let things = entries.lazy.enumerated().map { construct($0.1, $0.0) }.filter {
             guard let node = $0 else { return false }
             guard check(node) else {
-                fputs("Warning: duplicate type '\(node.name)' for \(path) ignored!\n", stderr)
+                if !quiet { fputs("Warning: duplicate type '\(node.name)' for \(path) ignored!\n", stderr) }
                 return false
             }
 
@@ -78,7 +78,7 @@ public class GIR {
     static var GErrorType = "GErrorType"
 
     /// designated constructor
-    public init(xmlDocument: XMLDocument) {
+    public init(xmlDocument: XMLDocument, quiet: Bool = false) {
         xml = xmlDocument
         if let rp = xml.findFirstWhere({ $0.name == "repository" }) {
             namespaces = rp.namespaces
@@ -103,7 +103,7 @@ public class GIR {
             aliases = entries.enumerated().map { Alias(node: $0.1, atIndex: $0.0) }.filter {
                 let name = $0.name
                 guard GIR.KnownTypes[name] == nil else {
-                    fputs("Warning: duplicate type '\(name)' for alias ignored!\n", stderr)
+                    if !quiet { fputs("Warning: duplicate type '\(name)' for alias ignored!\n", stderr) }
                     return false
                 }
                 GIR.KnownTypes[name] = $0
@@ -132,14 +132,14 @@ public class GIR {
         //
         // get all constants, enumerations, records, classes, and functions
         //
-        constants    = enumerate(xml, path: "/*/*/gir:constant",    inNS: namespaces, construct: { Constant(node: $0, atIndex: $1) },    check: notKnownType)
-        enumerations = enumerate(xml, path: "/*/*/gir:enumeration", inNS: namespaces, construct: { Enumeration(node: $0, atIndex: $1) }, check: notKnownType)
-        bitfields    = enumerate(xml, path: "/*/*/gir:bitfield",    inNS: namespaces, construct: { Bitfield(node: $0, atIndex: $1) },    check: notKnownType)
-        interfaces   = enumerate(xml, path: "/*/*/gir:interface",   inNS: namespaces, construct: { Interface(node: $0, atIndex: $1) }, check: notKnownRecord)
-        records      = enumerate(xml, path: "/*/*/gir:record",      inNS: namespaces, construct: { Record(node: $0, atIndex: $1) },    check: notKnownRecord)
-        classes      = enumerate(xml, path: "/*/*/gir:class",       inNS: namespaces, construct: { Class(node: $0, atIndex: $1) },     check: notKnownRecord)
-        callbacks    = enumerate(xml, path: "/*/*/gir:callback",    inNS: namespaces, construct: { Callback(node: $0, atIndex: $1) },    check: notKnownType)
-        functions    = enumerate(xml, path: "//gir:function",       inNS: namespaces, construct: {
+        constants    = enumerate(xml, path: "/*/*/gir:constant",    inNS: namespaces, quiet: quiet, construct: { Constant(node: $0, atIndex: $1) },    check: notKnownType)
+        enumerations = enumerate(xml, path: "/*/*/gir:enumeration", inNS: namespaces, quiet: quiet, construct: { Enumeration(node: $0, atIndex: $1) }, check: notKnownType)
+        bitfields    = enumerate(xml, path: "/*/*/gir:bitfield",    inNS: namespaces, quiet: quiet, construct: { Bitfield(node: $0, atIndex: $1) },    check: notKnownType)
+        interfaces   = enumerate(xml, path: "/*/*/gir:interface",   inNS: namespaces, quiet: quiet, construct: { Interface(node: $0, atIndex: $1) }, check: notKnownRecord)
+        records      = enumerate(xml, path: "/*/*/gir:record",      inNS: namespaces, quiet: quiet, construct: { Record(node: $0, atIndex: $1) },    check: notKnownRecord)
+        classes      = enumerate(xml, path: "/*/*/gir:class",       inNS: namespaces, quiet: quiet, construct: { Class(node: $0, atIndex: $1) },     check: notKnownRecord)
+        callbacks    = enumerate(xml, path: "/*/*/gir:callback",    inNS: namespaces, quiet: quiet, construct: { Callback(node: $0, atIndex: $1) },    check: notKnownType)
+        functions    = enumerate(xml, path: "//gir:function",       inNS: namespaces, quiet: quiet, construct: {
             isFreeFunction($0) ? Function(node: $0, atIndex: $1) : nil
         }, check: notKnownFunction)
     }
@@ -151,9 +151,9 @@ public class GIR {
     }
 
     /// convenience constructor to read from memory
-    public convenience init?(buffer content: UnsafeBufferPointer<CChar>) {
+    public convenience init?(buffer content: UnsafeBufferPointer<CChar>, quiet q: Bool = false) {
         guard let xml = XMLDocument(buffer: content) else { return nil }
-        self.init(xmlDocument: xml)
+        self.init(xmlDocument: xml, quiet: q)
     }
 
 
