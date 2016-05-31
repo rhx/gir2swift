@@ -83,10 +83,10 @@ public extension GIR.Thing {
 /// Swift extension for arguments
 public extension GIR.Argument {
     //// return the known type of the argument (nil if not known)
-    public var knownType: GIR.Datatype? { return GIR.KnownTypes[type.swift] }
+    public var knownType: GIR.Datatype? { return GIR.KnownTypes[type.isEmpty ? ctype : type] }
 
     //// return the known class/record of the argument (nil if not known)
-    public var knownRecord: GIR.Record? { return GIR.KnownRecords[type.swift] }
+    public var knownRecord: GIR.Record? { return GIR.KnownRecords[type.isEmpty ? ctype : type] }
 
     /// indicates whether the receiver is a known type
     public var isKnownType: Bool { return knownType != nil }
@@ -125,7 +125,7 @@ public extension GIR.Argument {
     /// return the swift (known) type of the receiver
     public var argumentType: String {
         let ct = ctype
-        let t = type == "" ? ct : type
+        let t = type.isEmpty ? ct : type
         let array = isScalarArray
         let swift = (array ? t.swiftType : t.swift).typeEscaped
         let isPtr  = ct.isPointer
