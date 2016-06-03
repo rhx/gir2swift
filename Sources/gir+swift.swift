@@ -302,11 +302,11 @@ public func swiftCode(_ thing: GIR.Thing, _ postfix: String = "", indentation: S
     let s = commentCode(thing, indentation: indentation)
     let t: String
     if let d = deprecatedCode(thing, indentation: indentation) {
-        t = s + "\n\(indentation)///\n\(indentation)/// **\(thing.name) is deprecated:**\n" + d
+        t = s + "\n\(indentation)///\n\(indentation)/// **\(thing.name) is deprecated:**\n" + d + "\n"
     } else {
         t = s
     }
-    return t + (s.isEmpty ? "" : "\n") + postfix
+    return t + ((t.isEmpty || t.hasSuffix("\n")) ? "" : "\n") + postfix
 }
 
 /// Swift code representation of a type alias
