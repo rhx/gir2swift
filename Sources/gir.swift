@@ -96,31 +96,40 @@ public class GIR {
             identifierPrefixes = ns.sortedSubAttributesFor(attr: "identifier-prefixes")
             symbolPrefixes     = ns.sortedSubAttributesFor(attr: "symbol-prefixes")
         }
+        let prefixed: (String) -> String = { $0.prefixed(with: self.prefix) }
+        func isKnown(type: String) -> Bool {
+            return GIR.KnownTypes[type] == nil && GIR.KnownTypes[prefixed(type)] == nil
+        }
+        func setKnown<T>(_ dictionary: inout [ String : T]) -> (String, T) -> Bool {
+            return { (name: String, type: T) -> Bool in
+                guard !isKnown(type: name) else { return false }
+                dictionary[name] = type
+                dictionary[prefixed(name)] = type
+                return true
+            }
+        }
+        let setKnownType   = setKnown(&GIR.KnownTypes)
+        let setKnownRecord = setKnown(&GIR.KnownRecords)
         //
         // get all type alias records
         //
         if let entries = xml.xpath("/*/*/gir:alias", namespaces: namespaces, defaultPrefix: "gir") {
             aliases = entries.enumerated().map { Alias(node: $0.1, atIndex: $0.0) }.filter {
                 let name = $0.name
-                guard GIR.KnownTypes[name] == nil else {
+                guard setKnownType(name, $0) else {
                     if !quiet { fputs("Warning: duplicate type '\(name)' for alias ignored!\n", stderr) }
                     return false
                 }
-                GIR.KnownTypes[name] = $0
                 return true
             }
         }
         // closure for recording known types
         func notKnownType<T where T: Datatype>(_ e: T) -> Bool {
-            let name = e.name
-            guard GIR.KnownTypes[name] == nil else { return false }
-            GIR.KnownTypes[name] = e
-            return true
+            return setKnownType(e.name, e)
         }
         let notKnownRecord: (Record) -> Bool     = {
             guard notKnownType($0) else { return false }
-            GIR.KnownRecords[$0.name] = $0
-            return true
+            return setKnownRecord($0.name, $0)
         }
         let notKnownFunction: (Function) -> Bool = {
             let name = $0.name
@@ -260,7 +269,7 @@ public class GIR {
             let type: String
             let ctype: String
             nullable = node.attribute(named: nullableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
-            if let array = node.children.lazy.filter({ $0.name == "array" }).first {
+            if let array = node.children.filter({ $0.name == "array" }).first {
                 containedTypes = array.children.filter { $0.name == "type" }.map { CType(node: $0, atIndex: i, cTypeAttr: "type") }
                 ctype = array.attribute(named: "type") ?? "Void /* unknown ctype \(i) */"
                 type  = array.attribute(named: "name") ?? ctype

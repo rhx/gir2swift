@@ -14,6 +14,19 @@
 
 
 extension String {
+    /// return the unprefixed version of the string
+    /// (e.g. type without namespace)
+    public var unprefixed: String {
+        guard let suffix = split(separator: ".").last else { return self }
+        return suffix
+    }
+
+    /// return a prefixed version of the string
+    public func prefixed(with prefix: String) -> String {
+        guard !prefix.isEmpty else { return self }
+        return prefix + "." + self
+    }
+
     /// return the string resulting from removing the given suffix
     public func stringByRemoving(suffix s: String) -> String? {
         let len = s.characters.count
