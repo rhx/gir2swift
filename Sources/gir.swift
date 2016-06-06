@@ -100,7 +100,7 @@ public class GIR {
         }
         let prefixed: (String) -> String = { $0.prefixed(with: self.prefix) }
         func isKnown(type: String) -> Bool {
-            return GIR.KnownTypes[type] == nil || GIR.KnownTypes[prefixed(type)] == nil
+            return GIR.KnownTypes[type] != nil && GIR.KnownTypes[prefixed(type)] != nil
         }
         func setKnown<T>(_ dictionary: inout [ String : T]) -> (String, T) -> Bool {
             return { (name: String, type: T) -> Bool in
