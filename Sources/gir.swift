@@ -27,7 +27,9 @@ func enumerate<T where T: GIR.Thing>(_ xml: XMLDocument, path: String, inNS name
         let things = entries.lazy.enumerated().map { construct($0.1, $0.0) }.filter {
             guard let node = $0 else { return false }
             guard check(node) else {
-                if !quiet { fputs("Warning: duplicate type '\(node.name)' for \(path) ignored!\n", stderr) }
+                if !quiet {
+                    fputs("Warning: duplicate type '\(node.name)' for \(path) ignored!\n", stderr)
+                }
                 return false
             }
 
@@ -98,7 +100,7 @@ public class GIR {
         }
         let prefixed: (String) -> String = { $0.prefixed(with: self.prefix) }
         func isKnown(type: String) -> Bool {
-            return GIR.KnownTypes[type] == nil && GIR.KnownTypes[prefixed(type)] == nil
+            return GIR.KnownTypes[type] == nil || GIR.KnownTypes[prefixed(type)] == nil
         }
         func setKnown<T>(_ dictionary: inout [ String : T]) -> (String, T) -> Bool {
             return { (name: String, type: T) -> Bool in
