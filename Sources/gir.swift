@@ -98,61 +98,61 @@ public class GIR {
             identifierPrefixes = ns.sortedSubAttributesFor(attr: "identifier-prefixes")
             symbolPrefixes     = ns.sortedSubAttributesFor(attr: "symbol-prefixes")
         }
-        let prefixed: (String) -> String = { $0.prefixed(with: self.prefix) }
-        func isKnown(type: String) -> Bool {
-            return GIR.KnownTypes[type] != nil && GIR.KnownTypes[prefixed(type)] != nil
-        }
-        func setKnown<T>(_ dictionary: inout [ String : T]) -> (String, T) -> Bool {
-            return { (name: String, type: T) -> Bool in
-                guard !isKnown(type: name) else { return false }
-                dictionary[name] = type
-                dictionary[prefixed(name)] = type
-                return true
-            }
-        }
-        let setKnownType   = setKnown(&GIR.KnownTypes)
-        let setKnownRecord = setKnown(&GIR.KnownRecords)
-        //
-        // get all type alias records
-        //
-        if let entries = xml.xpath("/*/*/gir:alias", namespaces: namespaces, defaultPrefix: "gir") {
-            aliases = entries.enumerated().map { Alias(node: $0.1, atIndex: $0.0) }.filter {
-                let name = $0.name
-                guard setKnownType(name, $0) else {
-                    if !quiet { fputs("Warning: duplicate type '\(name)' for alias ignored!\n", stderr) }
-                    return false
+        withUnsafeMutablePointers(&GIR.KnownTypes, &GIR.KnownRecords) { (knownTypes: UnsafeMutablePointer<[ String : Datatype ]>, knownRecords: UnsafeMutablePointer<[ String : Record]>) -> Void in
+            let prefixed: (String) -> String = { $0.prefixed(with: self.prefix) }
+            
+            func setKnown<T>(_ d: UnsafeMutablePointer<[ String : T]>) -> (String, T) -> Bool {
+                return { (name: String, type: T) -> Bool in
+                    guard d.pointee[name] == nil || d.pointee[prefixed(name)] == nil else { return false }
+                    d.pointee[name] = type
+                    d.pointee[prefixed(name)] = type
+                    return true
                 }
+            }
+            let setKnownType   = setKnown(knownTypes)
+            let setKnownRecord = setKnown(knownRecords)
+            //
+            // get all type alias records
+            //
+            if let entries = xml.xpath("/*/*/gir:alias", namespaces: namespaces, defaultPrefix: "gir") {
+                aliases = entries.enumerated().map { Alias(node: $0.1, atIndex: $0.0) }.filter {
+                    let name = $0.name
+                    guard setKnownType(name, $0) else {
+                        if !quiet { fputs("Warning: duplicate type '\(name)' for alias ignored!\n", stderr) }
+                        return false
+                    }
+                    return true
+                }
+            }
+            // closure for recording known types
+            func notKnownType<T where T: Datatype>(_ e: T) -> Bool {
+                return setKnownType(e.name, e)
+            }
+            let notKnownRecord: (Record) -> Bool     = {
+                guard notKnownType($0) else { return false }
+                return setKnownRecord($0.name, $0)
+            }
+            let notKnownFunction: (Function) -> Bool = {
+                let name = $0.name
+                guard GIR.KnownFunctions[name] == nil else { return false }
+                GIR.KnownFunctions[name] = $0
                 return true
             }
-        }
-        // closure for recording known types
-        func notKnownType<T where T: Datatype>(_ e: T) -> Bool {
-            return setKnownType(e.name, e)
-        }
-        let notKnownRecord: (Record) -> Bool     = {
-            guard notKnownType($0) else { return false }
-            return setKnownRecord($0.name, $0)
-        }
-        let notKnownFunction: (Function) -> Bool = {
-            let name = $0.name
-            guard GIR.KnownFunctions[name] == nil else { return false }
-            GIR.KnownFunctions[name] = $0
-            return true
-        }
 
-        //
-        // get all constants, enumerations, records, classes, and functions
-        //
-        constants    = enumerate(xml, path: "/*/*/gir:constant",    inNS: namespaces, quiet: quiet, construct: { Constant(node: $0, atIndex: $1) },    check: notKnownType)
-        enumerations = enumerate(xml, path: "/*/*/gir:enumeration", inNS: namespaces, quiet: quiet, construct: { Enumeration(node: $0, atIndex: $1) }, check: notKnownType)
-        bitfields    = enumerate(xml, path: "/*/*/gir:bitfield",    inNS: namespaces, quiet: quiet, construct: { Bitfield(node: $0, atIndex: $1) },    check: notKnownType)
-        interfaces   = enumerate(xml, path: "/*/*/gir:interface",   inNS: namespaces, quiet: quiet, construct: { Interface(node: $0, atIndex: $1) }, check: notKnownRecord)
-        records      = enumerate(xml, path: "/*/*/gir:record",      inNS: namespaces, quiet: quiet, construct: { Record(node: $0, atIndex: $1) },    check: notKnownRecord)
-        classes      = enumerate(xml, path: "/*/*/gir:class",       inNS: namespaces, quiet: quiet, construct: { Class(node: $0, atIndex: $1) },     check: notKnownRecord)
-        callbacks    = enumerate(xml, path: "/*/*/gir:callback",    inNS: namespaces, quiet: quiet, construct: { Callback(node: $0, atIndex: $1) },    check: notKnownType)
-        functions    = enumerate(xml, path: "//gir:function",       inNS: namespaces, quiet: quiet, construct: {
-            isFreeFunction($0) ? Function(node: $0, atIndex: $1) : nil
-        }, check: notKnownFunction)
+            //
+            // get all constants, enumerations, records, classes, and functions
+            //
+            constants    = enumerate(xml, path: "/*/*/gir:constant",    inNS: namespaces, quiet: quiet, construct: { Constant(node: $0, atIndex: $1) },    check: notKnownType)
+            enumerations = enumerate(xml, path: "/*/*/gir:enumeration", inNS: namespaces, quiet: quiet, construct: { Enumeration(node: $0, atIndex: $1) }, check: notKnownType)
+            bitfields    = enumerate(xml, path: "/*/*/gir:bitfield",    inNS: namespaces, quiet: quiet, construct: { Bitfield(node: $0, atIndex: $1) },    check: notKnownType)
+            interfaces   = enumerate(xml, path: "/*/*/gir:interface",   inNS: namespaces, quiet: quiet, construct: { Interface(node: $0, atIndex: $1) }, check: notKnownRecord)
+            records      = enumerate(xml, path: "/*/*/gir:record",      inNS: namespaces, quiet: quiet, construct: { Record(node: $0, atIndex: $1) },    check: notKnownRecord)
+            classes      = enumerate(xml, path: "/*/*/gir:class",       inNS: namespaces, quiet: quiet, construct: { Class(node: $0, atIndex: $1) },     check: notKnownRecord)
+            callbacks    = enumerate(xml, path: "/*/*/gir:callback",    inNS: namespaces, quiet: quiet, construct: { Callback(node: $0, atIndex: $1) },    check: notKnownType)
+            functions    = enumerate(xml, path: "//gir:function",       inNS: namespaces, quiet: quiet, construct: {
+                isFreeFunction($0) ? Function(node: $0, atIndex: $1) : nil
+                }, check: notKnownFunction)
+        }
     }
 
     /// convenience constructor to read a gir file
