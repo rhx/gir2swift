@@ -411,8 +411,6 @@ public class GIR {
         public var unref: Method? { return anyMethodMatching { $0.isUnref && $0.args.first!.isInstanceOfHierarchy(self) } }
     }
 
-    /// an inteface is a record
-    public typealias Interface = Record
 
     /// a class data type record
     public class Class: Record {
@@ -420,7 +418,7 @@ public class GIR {
 
         /// return the parent type of the given class
         public override var parentType: Record? {
-            guard parent != "" else { return nil }
+            guard !parent.isEmpty else { return nil }
             return GIR.KnownTypes[parent] as? GIR.Record
         }
 
@@ -433,10 +431,17 @@ public class GIR {
 
         /// XML constructor
         override init(node: XMLElement, atIndex i: Int) {
-            parent = node.attribute(named: "parent") ?? ""
+            var parent = node.attribute(named: "parent") ?? ""
+            if parent.isEmpty {
+                parent = node.children.filter { $0.name ==  "prerequisite" }.first?.attribute(named: "name") ?? ""
+            }
+            self.parent = parent
             super.init(node: node, atIndex: i)
         }
     }
+
+    /// an inteface is similar to a class
+    public typealias Interface = Class
 
 
     /// data type representing a function/method
