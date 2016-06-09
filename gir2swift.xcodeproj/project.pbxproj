@@ -7,387 +7,390 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		F12789EC1CD2C17F002AF814 /* c2swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = F12789EB1CD2C17F002AF814 /* c2swift.swift */; };
-		F168EC771CA5E2A3002AFBB0 /* Sequence+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = F168EC761CA5E2A3002AFBB0 /* Sequence+Utilities.swift */; };
-		F16EA7091CA0A52600D4C108 /* getopt.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16EA7081CA0A52600D4C108 /* getopt.swift */; };
-		F16EA71E1CA0AF5E00D4C108 /* FileLen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16EA71D1CA0AF5E00D4C108 /* FileLen.swift */; };
-		F16EA7221CA0B61800D4C108 /* String+ContentsOfFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16EA7211CA0B61800D4C108 /* String+ContentsOfFile.swift */; };
-		F16EA7241CA0B81200D4C108 /* mmap.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16EA7231CA0B81200D4C108 /* mmap.swift */; };
-		F18473FF1CEADF1700558DCB /* Collection+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = F18473FE1CEADF1700558DCB /* Collection+Utilities.swift */; };
-		F1938DB01CA09CBD006811D1 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1938DAF1CA09CBD006811D1 /* main.swift */; };
-		F1B1FBF81CCDA68D00C7AC8D /* String+Substring.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B1FBF61CCDA68D00C7AC8D /* String+Substring.swift */; };
-		F1C6BBD51CAF3D05002F0267 /* gir+swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1C6BBD41CAF3D05002F0267 /* gir+swift.swift */; };
-		F1CC22A51CE55F9200CEEF9C /* cstring.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CC22A41CE55F9200CEEF9C /* cstring.swift */; };
-		F1CC22A71CE55FCE00CEEF9C /* basename.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CC22A61CE55FCE00CEEF9C /* basename.swift */; };
-		F1CC22A91CE5627E00CEEF9C /* String+Lines.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CC22A81CE5627E00CEEF9C /* String+Lines.swift */; };
-		F1DA0D441CE84C5D00BC5143 /* SwiftLibXML.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F1DA0D3F1CE84C3C00BC5143 /* SwiftLibXML.framework */; };
-		F1E1C3951CA5548C0080006E /* gir.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E1C3941CA5548C0080006E /* gir.swift */; };
+		_LinkFileRef_SwiftLibXML_via_gir2swift /* SwiftLibXML.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "_____Product_SwiftLibXML" /* SwiftLibXML.framework */; };
+		"__src_cc_ref_Packages/SwiftLibXML-1.0.4/Sources/EmptySequence.swift" /* EmptySequence.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/SwiftLibXML-1.0.4/Sources/EmptySequence.swift" /* EmptySequence.swift */; };
+		"__src_cc_ref_Packages/SwiftLibXML-1.0.4/Sources/XMLAttribute.swift" /* XMLAttribute.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/SwiftLibXML-1.0.4/Sources/XMLAttribute.swift" /* XMLAttribute.swift */; };
+		"__src_cc_ref_Packages/SwiftLibXML-1.0.4/Sources/XMLDocument.swift" /* XMLDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/SwiftLibXML-1.0.4/Sources/XMLDocument.swift" /* XMLDocument.swift */; };
+		"__src_cc_ref_Packages/SwiftLibXML-1.0.4/Sources/XMLElement.swift" /* XMLElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/SwiftLibXML-1.0.4/Sources/XMLElement.swift" /* XMLElement.swift */; };
+		"__src_cc_ref_Packages/SwiftLibXML-1.0.4/Sources/XMLNameSpace.swift" /* XMLNameSpace.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/SwiftLibXML-1.0.4/Sources/XMLNameSpace.swift" /* XMLNameSpace.swift */; };
+		"__src_cc_ref_Packages/SwiftLibXML-1.0.4/Sources/XMLPath.swift" /* XMLPath.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/SwiftLibXML-1.0.4/Sources/XMLPath.swift" /* XMLPath.swift */; };
+		"__src_cc_ref_Sources/Collection+Utilities.swift" /* Collection+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Sources/Collection+Utilities.swift" /* Collection+Utilities.swift */; };
+		__src_cc_ref_Sources/FileLen.swift /* FileLen.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/FileLen.swift /* FileLen.swift */; };
+		"__src_cc_ref_Sources/Sequence+Utilities.swift" /* Sequence+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Sources/Sequence+Utilities.swift" /* Sequence+Utilities.swift */; };
+		"__src_cc_ref_Sources/String+ContentsOfFile.swift" /* String+ContentsOfFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Sources/String+ContentsOfFile.swift" /* String+ContentsOfFile.swift */; };
+		"__src_cc_ref_Sources/String+Lines.swift" /* String+Lines.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Sources/String+Lines.swift" /* String+Lines.swift */; };
+		"__src_cc_ref_Sources/String+Substring.swift" /* String+Substring.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Sources/String+Substring.swift" /* String+Substring.swift */; };
+		__src_cc_ref_Sources/basename.swift /* basename.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/basename.swift /* basename.swift */; };
+		__src_cc_ref_Sources/c2swift.swift /* c2swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/c2swift.swift /* c2swift.swift */; };
+		__src_cc_ref_Sources/cstring.swift /* cstring.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/cstring.swift /* cstring.swift */; };
+		__src_cc_ref_Sources/getopt.swift /* getopt.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/getopt.swift /* getopt.swift */; };
+		"__src_cc_ref_Sources/gir+swift.swift" /* gir+swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Sources/gir+swift.swift" /* gir+swift.swift */; };
+		__src_cc_ref_Sources/gir.swift /* gir.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/gir.swift /* gir.swift */; };
+		__src_cc_ref_Sources/main.swift /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/main.swift /* main.swift */; };
+		__src_cc_ref_Sources/mmap.swift /* mmap.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/mmap.swift /* mmap.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		F1DA0D3E1CE84C3C00BC5143 /* PBXContainerItemProxy */ = {
+		F16445BA1D091978000CB162 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = F1DA0D391CE84C3C00BC5143 /* SwiftLibXML.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = F1DA0D111CE848BB00BC5143;
-			remoteInfo = SwiftLibXML;
-		};
-		F1DA0D401CE84C3C00BC5143 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F1DA0D391CE84C3C00BC5143 /* SwiftLibXML.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = F1DA0D1B1CE848BB00BC5143;
-			remoteInfo = SwiftLibXMLTests;
-		};
-		F1DA0D421CE84C5000BC5143 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F1DA0D391CE84C3C00BC5143 /* SwiftLibXML.xcodeproj */;
+			containerPortal = __RootObject_ /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = F1DA0D101CE848BB00BC5143;
+			remoteGlobalIDString = "______Target_SwiftLibXML";
 			remoteInfo = SwiftLibXML;
 		};
 /* End PBXContainerItemProxy section */
 
-/* Begin PBXCopyFilesBuildPhase section */
-		F1938DAB1CA09CBD006811D1 /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
-		F12789EB1CD2C17F002AF814 /* c2swift.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = c2swift.swift; sourceTree = "<group>"; };
-		F168EC761CA5E2A3002AFBB0 /* Sequence+Utilities.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Sequence+Utilities.swift"; sourceTree = "<group>"; };
-		F16EA7081CA0A52600D4C108 /* getopt.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = getopt.swift; sourceTree = "<group>"; };
-		F16EA71D1CA0AF5E00D4C108 /* FileLen.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileLen.swift; sourceTree = "<group>"; };
-		F16EA7211CA0B61800D4C108 /* String+ContentsOfFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+ContentsOfFile.swift"; sourceTree = "<group>"; };
-		F16EA7231CA0B81200D4C108 /* mmap.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = mmap.swift; sourceTree = "<group>"; };
-		F18473FE1CEADF1700558DCB /* Collection+Utilities.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Collection+Utilities.swift"; sourceTree = "<group>"; };
-		F1938DAD1CA09CBD006811D1 /* gir2swift */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = gir2swift; sourceTree = BUILT_PRODUCTS_DIR; };
-		F1938DAF1CA09CBD006811D1 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		F1B1FBF61CCDA68D00C7AC8D /* String+Substring.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+Substring.swift"; sourceTree = "<group>"; };
-		F1C6BBD41CAF3D05002F0267 /* gir+swift.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = "gir+swift.swift"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
-		F1CC22A41CE55F9200CEEF9C /* cstring.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = cstring.swift; sourceTree = "<group>"; };
-		F1CC22A61CE55FCE00CEEF9C /* basename.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = basename.swift; sourceTree = "<group>"; };
-		F1CC22A81CE5627E00CEEF9C /* String+Lines.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+Lines.swift"; sourceTree = "<group>"; };
-		F1DA0D391CE84C3C00BC5143 /* SwiftLibXML.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SwiftLibXML.xcodeproj; path = ../SwiftLibXML/SwiftLibXML.xcodeproj; sourceTree = "<group>"; };
-		F1E1C3941CA5548C0080006E /* gir.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = gir.swift; sourceTree = "<group>"; };
+		__PBXFileRef_Package.swift /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/SwiftLibXML-1.0.4/Sources/EmptySequence.swift" /* EmptySequence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptySequence.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/SwiftLibXML-1.0.4/Sources/XMLAttribute.swift" /* XMLAttribute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XMLAttribute.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/SwiftLibXML-1.0.4/Sources/XMLDocument.swift" /* XMLDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XMLDocument.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/SwiftLibXML-1.0.4/Sources/XMLElement.swift" /* XMLElement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XMLElement.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/SwiftLibXML-1.0.4/Sources/XMLNameSpace.swift" /* XMLNameSpace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XMLNameSpace.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/SwiftLibXML-1.0.4/Sources/XMLPath.swift" /* XMLPath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XMLPath.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Sources/Collection+Utilities.swift" /* Collection+Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Collection+Utilities.swift"; sourceTree = "<group>"; };
+		__PBXFileRef_Sources/FileLen.swift /* FileLen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileLen.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Sources/Sequence+Utilities.swift" /* Sequence+Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sequence+Utilities.swift"; sourceTree = "<group>"; };
+		"__PBXFileRef_Sources/String+ContentsOfFile.swift" /* String+ContentsOfFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+ContentsOfFile.swift"; sourceTree = "<group>"; };
+		"__PBXFileRef_Sources/String+Lines.swift" /* String+Lines.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Lines.swift"; sourceTree = "<group>"; };
+		"__PBXFileRef_Sources/String+Substring.swift" /* String+Substring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Substring.swift"; sourceTree = "<group>"; };
+		__PBXFileRef_Sources/basename.swift /* basename.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = basename.swift; sourceTree = "<group>"; };
+		__PBXFileRef_Sources/c2swift.swift /* c2swift.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = c2swift.swift; sourceTree = "<group>"; };
+		__PBXFileRef_Sources/cstring.swift /* cstring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = cstring.swift; sourceTree = "<group>"; };
+		__PBXFileRef_Sources/getopt.swift /* getopt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = getopt.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Sources/gir+swift.swift" /* gir+swift.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "gir+swift.swift"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		__PBXFileRef_Sources/gir.swift /* gir.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = gir.swift; sourceTree = "<group>"; };
+		__PBXFileRef_Sources/main.swift /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		__PBXFileRef_Sources/mmap.swift /* mmap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = mmap.swift; sourceTree = "<group>"; };
+		__PBXFileRef_SwiftLibXML_Info.plist /* SwiftLibXML_Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = SwiftLibXML_Info.plist; path = gir2swift.xcodeproj/SwiftLibXML_Info.plist; sourceTree = SOURCE_ROOT; };
+		__PBXFileRef_gir2swift.xcodeproj/Configs/Project.xcconfig /* Project.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Project.xcconfig; path = gir2swift.xcodeproj/Configs/Project.xcconfig; sourceTree = "<group>"; };
+		"_____Product_SwiftLibXML" /* SwiftLibXML.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = SwiftLibXML.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		"_____Product_gir2swift" /* gir2swift */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; path = gir2swift; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		F1938DAA1CA09CBD006811D1 /* Frameworks */ = {
+		"___LinkPhase_SwiftLibXML" /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 0;
 			files = (
-				F1DA0D441CE84C5D00BC5143 /* SwiftLibXML.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		"___LinkPhase_gir2swift" /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 0;
+			files = (
+				_LinkFileRef_SwiftLibXML_via_gir2swift /* SwiftLibXML.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		F110CA931CA09C7C00F615C9 = {
+		Dependencies_ /* Dependencies */ = {
 			isa = PBXGroup;
 			children = (
-				F1DA0D391CE84C3C00BC5143 /* SwiftLibXML.xcodeproj */,
-				F1938DAE1CA09CBD006811D1 /* Sources */,
-				F110CA9D1CA09C7C00F615C9 /* Products */,
+				"_______Group_SwiftLibXML" /* SwiftLibXML */,
+			);
+			name = Dependencies;
+			sourceTree = "<group>";
+		};
+		"___RootGroup_" = {
+			isa = PBXGroup;
+			children = (
+				__PBXFileRef_Package.swift /* Package.swift */,
+				"_____Configs_" /* Configs */,
+				"_____Sources_" /* Sources */,
+				Dependencies_ /* Dependencies */,
+				"____Products_" /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		F110CA9D1CA09C7C00F615C9 /* Products */ = {
+		"____Products_" /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				F1938DAD1CA09CBD006811D1 /* gir2swift */,
+				"_____Product_SwiftLibXML" /* SwiftLibXML.framework */,
+				"_____Product_gir2swift" /* gir2swift */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		F1938DAE1CA09CBD006811D1 /* Sources */ = {
+		"_____Configs_" /* Configs */ = {
 			isa = PBXGroup;
 			children = (
-				F1938DAF1CA09CBD006811D1 /* main.swift */,
-				F1E1C3941CA5548C0080006E /* gir.swift */,
-				F1C6BBD41CAF3D05002F0267 /* gir+swift.swift */,
-				F12789EB1CD2C17F002AF814 /* c2swift.swift */,
-				F16EA7231CA0B81200D4C108 /* mmap.swift */,
-				F16EA71D1CA0AF5E00D4C108 /* FileLen.swift */,
-				F16EA7081CA0A52600D4C108 /* getopt.swift */,
-				F1CC22A41CE55F9200CEEF9C /* cstring.swift */,
-				F1CC22A61CE55FCE00CEEF9C /* basename.swift */,
-				F16EA7211CA0B61800D4C108 /* String+ContentsOfFile.swift */,
-				F1B1FBF61CCDA68D00C7AC8D /* String+Substring.swift */,
-				F1CC22A81CE5627E00CEEF9C /* String+Lines.swift */,
-				F168EC761CA5E2A3002AFBB0 /* Sequence+Utilities.swift */,
-				F18473FE1CEADF1700558DCB /* Collection+Utilities.swift */,
+				__PBXFileRef_gir2swift.xcodeproj/Configs/Project.xcconfig /* Project.xcconfig */,
 			);
+			name = Configs;
+			sourceTree = "<group>";
+		};
+		"_____Sources_" /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				"_______Group_gir2swift" /* gir2swift */,
+			);
+			name = Sources;
+			sourceTree = "<group>";
+		};
+		"_______Group_SwiftLibXML" /* SwiftLibXML */ = {
+			isa = PBXGroup;
+			children = (
+				"__PBXFileRef_Packages/SwiftLibXML-1.0.4/Sources/EmptySequence.swift" /* EmptySequence.swift */,
+				"__PBXFileRef_Packages/SwiftLibXML-1.0.4/Sources/XMLAttribute.swift" /* XMLAttribute.swift */,
+				"__PBXFileRef_Packages/SwiftLibXML-1.0.4/Sources/XMLDocument.swift" /* XMLDocument.swift */,
+				"__PBXFileRef_Packages/SwiftLibXML-1.0.4/Sources/XMLElement.swift" /* XMLElement.swift */,
+				"__PBXFileRef_Packages/SwiftLibXML-1.0.4/Sources/XMLNameSpace.swift" /* XMLNameSpace.swift */,
+				"__PBXFileRef_Packages/SwiftLibXML-1.0.4/Sources/XMLPath.swift" /* XMLPath.swift */,
+				__PBXFileRef_SwiftLibXML_Info.plist /* SwiftLibXML_Info.plist */,
+			);
+			name = SwiftLibXML;
+			path = "Packages/SwiftLibXML-1.0.4/Sources";
+			sourceTree = "<group>";
+		};
+		"_______Group_gir2swift" /* gir2swift */ = {
+			isa = PBXGroup;
+			children = (
+				__PBXFileRef_Sources/basename.swift /* basename.swift */,
+				__PBXFileRef_Sources/c2swift.swift /* c2swift.swift */,
+				"__PBXFileRef_Sources/Collection+Utilities.swift" /* Collection+Utilities.swift */,
+				__PBXFileRef_Sources/cstring.swift /* cstring.swift */,
+				__PBXFileRef_Sources/FileLen.swift /* FileLen.swift */,
+				__PBXFileRef_Sources/getopt.swift /* getopt.swift */,
+				"__PBXFileRef_Sources/gir+swift.swift" /* gir+swift.swift */,
+				__PBXFileRef_Sources/gir.swift /* gir.swift */,
+				__PBXFileRef_Sources/main.swift /* main.swift */,
+				__PBXFileRef_Sources/mmap.swift /* mmap.swift */,
+				"__PBXFileRef_Sources/Sequence+Utilities.swift" /* Sequence+Utilities.swift */,
+				"__PBXFileRef_Sources/String+ContentsOfFile.swift" /* String+ContentsOfFile.swift */,
+				"__PBXFileRef_Sources/String+Lines.swift" /* String+Lines.swift */,
+				"__PBXFileRef_Sources/String+Substring.swift" /* String+Substring.swift */,
+			);
+			name = gir2swift;
 			path = Sources;
-			sourceTree = "<group>";
-		};
-		F1DA0D3A1CE84C3C00BC5143 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				F1DA0D3F1CE84C3C00BC5143 /* SwiftLibXML.framework */,
-				F1DA0D411CE84C3C00BC5143 /* SwiftLibXMLTests.xctest */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
-/* Begin PBXHeadersBuildPhase section */
-		F16EA71A1CA0AAB800D4C108 /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXHeadersBuildPhase section */
-
 /* Begin PBXNativeTarget section */
-		F1938DAC1CA09CBD006811D1 /* gir2swift */ = {
+		"______Target_SwiftLibXML" /* SwiftLibXML */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = F1938DB31CA09CBD006811D1 /* Build configuration list for PBXNativeTarget "gir2swift" */;
+			buildConfigurationList = "_______Confs_SwiftLibXML" /* Build configuration list for PBXNativeTarget "SwiftLibXML" */;
 			buildPhases = (
-				F1938DA91CA09CBD006811D1 /* Sources */,
-				F1938DAA1CA09CBD006811D1 /* Frameworks */,
-				F1938DAB1CA09CBD006811D1 /* CopyFiles */,
-				F16EA71A1CA0AAB800D4C108 /* Headers */,
+				CompilePhase_SwiftLibXML /* Sources */,
+				"___LinkPhase_SwiftLibXML" /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				F1DA0D431CE84C5000BC5143 /* PBXTargetDependency */,
+			);
+			name = SwiftLibXML;
+			productName = SwiftLibXML;
+			productReference = "_____Product_SwiftLibXML" /* SwiftLibXML.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		"______Target_gir2swift" /* gir2swift */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = "_______Confs_gir2swift" /* Build configuration list for PBXNativeTarget "gir2swift" */;
+			buildPhases = (
+				CompilePhase_gir2swift /* Sources */,
+				"___LinkPhase_gir2swift" /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				__Dependency_SwiftLibXML /* PBXTargetDependency */,
 			);
 			name = gir2swift;
-			productName = girparser;
-			productReference = F1938DAD1CA09CBD006811D1 /* gir2swift */;
+			productName = gir2swift;
+			productReference = "_____Product_gir2swift" /* gir2swift */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		F110CA941CA09C7C00F615C9 /* Project object */ = {
+		__RootObject_ /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 0730;
-				LastUpgradeCheck = 0730;
-				ORGANIZATIONNAME = "Rene Hexel";
-				TargetAttributes = {
-					F1938DAC1CA09CBD006811D1 = {
-						CreatedOnToolsVersion = 7.3;
-					};
-				};
+				LastUpgradeCheck = 9999;
 			};
-			buildConfigurationList = F110CA971CA09C7C00F615C9 /* Build configuration list for PBXProject "gir2swift" */;
+			buildConfigurationList = "___RootConfs_" /* Build configuration list for PBXProject "gir2swift" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 			);
-			mainGroup = F110CA931CA09C7C00F615C9;
-			productRefGroup = F110CA9D1CA09C7C00F615C9 /* Products */;
+			mainGroup = "___RootGroup_";
+			productRefGroup = "____Products_" /* Products */;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = F1DA0D3A1CE84C3C00BC5143 /* Products */;
-					ProjectRef = F1DA0D391CE84C3C00BC5143 /* SwiftLibXML.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
-				F1938DAC1CA09CBD006811D1 /* gir2swift */,
+				"______Target_SwiftLibXML" /* SwiftLibXML */,
+				"______Target_gir2swift" /* gir2swift */,
 			);
 		};
 /* End PBXProject section */
 
-/* Begin PBXReferenceProxy section */
-		F1DA0D3F1CE84C3C00BC5143 /* SwiftLibXML.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = SwiftLibXML.framework;
-			remoteRef = F1DA0D3E1CE84C3C00BC5143 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		F1DA0D411CE84C3C00BC5143 /* SwiftLibXMLTests.xctest */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.cfbundle;
-			path = SwiftLibXMLTests.xctest;
-			remoteRef = F1DA0D401CE84C3C00BC5143 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-/* End PBXReferenceProxy section */
-
 /* Begin PBXSourcesBuildPhase section */
-		F1938DA91CA09CBD006811D1 /* Sources */ = {
+		CompilePhase_SwiftLibXML /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 0;
 			files = (
-				F18473FF1CEADF1700558DCB /* Collection+Utilities.swift in Sources */,
-				F16EA7091CA0A52600D4C108 /* getopt.swift in Sources */,
-				F1938DB01CA09CBD006811D1 /* main.swift in Sources */,
-				F168EC771CA5E2A3002AFBB0 /* Sequence+Utilities.swift in Sources */,
-				F1CC22A71CE55FCE00CEEF9C /* basename.swift in Sources */,
-				F1CC22A91CE5627E00CEEF9C /* String+Lines.swift in Sources */,
-				F16EA7241CA0B81200D4C108 /* mmap.swift in Sources */,
-				F1CC22A51CE55F9200CEEF9C /* cstring.swift in Sources */,
-				F16EA7221CA0B61800D4C108 /* String+ContentsOfFile.swift in Sources */,
-				F12789EC1CD2C17F002AF814 /* c2swift.swift in Sources */,
-				F1E1C3951CA5548C0080006E /* gir.swift in Sources */,
-				F1C6BBD51CAF3D05002F0267 /* gir+swift.swift in Sources */,
-				F1B1FBF81CCDA68D00C7AC8D /* String+Substring.swift in Sources */,
-				F16EA71E1CA0AF5E00D4C108 /* FileLen.swift in Sources */,
+				"__src_cc_ref_Packages/SwiftLibXML-1.0.4/Sources/EmptySequence.swift" /* EmptySequence.swift in Sources */,
+				"__src_cc_ref_Packages/SwiftLibXML-1.0.4/Sources/XMLAttribute.swift" /* XMLAttribute.swift in Sources */,
+				"__src_cc_ref_Packages/SwiftLibXML-1.0.4/Sources/XMLDocument.swift" /* XMLDocument.swift in Sources */,
+				"__src_cc_ref_Packages/SwiftLibXML-1.0.4/Sources/XMLElement.swift" /* XMLElement.swift in Sources */,
+				"__src_cc_ref_Packages/SwiftLibXML-1.0.4/Sources/XMLNameSpace.swift" /* XMLNameSpace.swift in Sources */,
+				"__src_cc_ref_Packages/SwiftLibXML-1.0.4/Sources/XMLPath.swift" /* XMLPath.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CompilePhase_gir2swift /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 0;
+			files = (
+				__src_cc_ref_Sources/basename.swift /* basename.swift in Sources */,
+				__src_cc_ref_Sources/c2swift.swift /* c2swift.swift in Sources */,
+				"__src_cc_ref_Sources/Collection+Utilities.swift" /* Collection+Utilities.swift in Sources */,
+				__src_cc_ref_Sources/cstring.swift /* cstring.swift in Sources */,
+				__src_cc_ref_Sources/FileLen.swift /* FileLen.swift in Sources */,
+				__src_cc_ref_Sources/getopt.swift /* getopt.swift in Sources */,
+				"__src_cc_ref_Sources/gir+swift.swift" /* gir+swift.swift in Sources */,
+				__src_cc_ref_Sources/gir.swift /* gir.swift in Sources */,
+				__src_cc_ref_Sources/main.swift /* main.swift in Sources */,
+				__src_cc_ref_Sources/mmap.swift /* mmap.swift in Sources */,
+				"__src_cc_ref_Sources/Sequence+Utilities.swift" /* Sequence+Utilities.swift in Sources */,
+				"__src_cc_ref_Sources/String+ContentsOfFile.swift" /* String+ContentsOfFile.swift in Sources */,
+				"__src_cc_ref_Sources/String+Lines.swift" /* String+Lines.swift in Sources */,
+				"__src_cc_ref_Sources/String+Substring.swift" /* String+Substring.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		F1DA0D431CE84C5000BC5143 /* PBXTargetDependency */ = {
+		__Dependency_SwiftLibXML /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			name = SwiftLibXML;
-			targetProxy = F1DA0D421CE84C5000BC5143 /* PBXContainerItemProxy */;
+			target = "______Target_SwiftLibXML" /* SwiftLibXML */;
+			targetProxy = F16445BA1D091978000CB162 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		F110CAA11CA09C7C00F615C9 /* Debug */ = {
+		_ReleaseConf_SwiftLibXML /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "-";
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+				FRAMEWORK_SEARCH_PATHS = "$(PLATFORM_DIR)/Developer/Library/Frameworks";
+				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
+					"/Users/rh/Dropbox/Developer/src/swift/gtk/gir2swift/Packages/CLibXML2-1.0.1",
 				);
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = "$(SDKROOT)/usr/include/libxml2";
-				MACOSX_DEPLOYMENT_TARGET = 10.11;
-				MTL_ENABLE_DEBUG_INFO = YES;
-				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx;
-				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/../CLibXML2";
+				INFOPLIST_FILE = gir2swift.xcodeproj/SwiftLibXML_Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
+				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_SWIFT_FLAGS = "$(inherited)";
+				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+			};
+			name = Release;
+		};
+		_ReleaseConf_gir2swift /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				FRAMEWORK_SEARCH_PATHS = "$(PLATFORM_DIR)/Developer/Library/Frameworks";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"/Users/rh/Dropbox/Developer/src/swift/gtk/gir2swift/Packages/CLibXML2-1.0.1",
+				);
+				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx @executable_path";
+				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_SWIFT_FLAGS = "$(inherited)";
+				SWIFT_FORCE_DYNAMIC_LINK_STDLIB = YES;
+				SWIFT_FORCE_STATIC_LINK_STDLIB = NO;
+			};
+			name = Release;
+		};
+		"___DebugConf_SwiftLibXML" /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = "$(PLATFORM_DIR)/Developer/Library/Frameworks";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"/Users/rh/Dropbox/Developer/src/swift/gtk/gir2swift/Packages/CLibXML2-1.0.1",
+				);
+				INFOPLIST_FILE = gir2swift.xcodeproj/SwiftLibXML_Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
+				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_SWIFT_FLAGS = "$(inherited)";
+				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
-		F110CAA21CA09C7C00F615C9 /* Release */ = {
+		"___DebugConf_gir2swift" /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "-";
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = "$(SDKROOT)/usr/include/libxml2";
-				MACOSX_DEPLOYMENT_TARGET = 10.11;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				SDKROOT = macosx;
-				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/../CLibXML2";
-			};
-			name = Release;
-		};
-		F1938DB11CA09CBD006811D1 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				OTHER_LDFLAGS = (
-					"-L/usr/lib",
-					"-lxml2",
+				FRAMEWORK_SEARCH_PATHS = "$(PLATFORM_DIR)/Developer/Library/Frameworks";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"/Users/rh/Dropbox/Developer/src/swift/gtk/gir2swift/Packages/CLibXML2-1.0.1",
 				);
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx @executable_path";
+				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_SWIFT_FLAGS = "$(inherited)";
+				SWIFT_FORCE_DYNAMIC_LINK_STDLIB = YES;
+				SWIFT_FORCE_STATIC_LINK_STDLIB = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
-		F1938DB21CA09CBD006811D1 /* Release */ = {
+		"_____Release_" /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = __PBXFileRef_gir2swift.xcodeproj/Configs/Project.xcconfig /* Project.xcconfig */;
 			buildSettings = {
-				OTHER_LDFLAGS = (
-					"-L/usr/lib",
-					"-lxml2",
-				);
-				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
+		};
+		"_______Debug_" /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = __PBXFileRef_gir2swift.xcodeproj/Configs/Project.xcconfig /* Project.xcconfig */;
+			buildSettings = {
+			};
+			name = Debug;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		F110CA971CA09C7C00F615C9 /* Build configuration list for PBXProject "gir2swift" */ = {
+		"___RootConfs_" /* Build configuration list for PBXProject "gir2swift" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				F110CAA11CA09C7C00F615C9 /* Debug */,
-				F110CAA21CA09C7C00F615C9 /* Release */,
+				"_______Debug_" /* Debug */,
+				"_____Release_" /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		F1938DB31CA09CBD006811D1 /* Build configuration list for PBXNativeTarget "gir2swift" */ = {
+		"_______Confs_SwiftLibXML" /* Build configuration list for PBXNativeTarget "SwiftLibXML" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				F1938DB11CA09CBD006811D1 /* Debug */,
-				F1938DB21CA09CBD006811D1 /* Release */,
+				"___DebugConf_SwiftLibXML" /* Debug */,
+				_ReleaseConf_SwiftLibXML /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
+		};
+		"_______Confs_gir2swift" /* Build configuration list for PBXNativeTarget "gir2swift" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				"___DebugConf_gir2swift" /* Debug */,
+				_ReleaseConf_gir2swift /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = F110CA941CA09C7C00F615C9 /* Project object */;
+	rootObject = __RootObject_ /* Project object */;
 }
