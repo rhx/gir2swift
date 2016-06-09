@@ -375,10 +375,15 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
 
 
 /// Default implementation for record methods as protocol extension
-public func recordProtocolExtensionCode(_ e: GIR.Record, indentation: String = "    ") -> String {
+public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: GIR.Record, indentation: String = "    ") -> String {
     let mcode = methodCode(indentation, record: e)
     let vcode = computedPropertyCode(indentation, record: e)
-    let methods = e.methods + e.functions.filter { $0.args.lazy.filter({ $0.isInstanceOf(e) }).first != nil }
+    let methods = e.methods + (e.functions + globalFunctions).filter {
+        let fun = $0
+        return fun.args.lazy.filter({ (arg: GIR.Argument) -> Bool in
+            arg.isInstanceOf(e)
+        }).first != nil
+    }
     let gsPairs = getterSetterPairs(for: methods)
     let code = "public extension \(e.protocolName) {\n" +
         methods.map(mcode).joined(separator: "\n") +
@@ -759,14 +764,16 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
 
 
 /// Swift code representation of a record
-public func swiftCode(_ e: GIR.Record) -> String {
-    let parents = [ e.parentType?.protocolName ?? "", e.ctype == gerror ? errorProtocol : "" ].filter { !$0.isEmpty }
-    let p = recordProtocolCode(e, parent: parents.joined(separator: ", "))
-    let s = recordStructCode(e)
-    let c = recordClassCode(e, parent: "")
-    let e = recordProtocolExtensionCode(e)
-    let code = p + s + c + e
-    return code
+public func swiftCode(_ funcs: [GIR.Function]) -> (GIR.Record) -> String {
+    return { (e: GIR.Record) -> String in
+        let parents = [ e.parentType?.protocolName ?? "", e.ctype == gerror ? errorProtocol : "" ].filter { !$0.isEmpty }
+        let p = recordProtocolCode(e, parent: parents.joined(separator: ", "))
+        let s = recordStructCode(e)
+        let c = recordClassCode(e, parent: "")
+        let e = recordProtocolExtensionCode(funcs, e)
+        let code = p + s + c + e
+        return code
+    }
 }
 
 
