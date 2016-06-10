@@ -62,7 +62,7 @@ private let reversecast = castableScalars.reduce(reversePointers) {
 private let swiftReplacementsForC = [ "char" : "CChar", "int" : "CInt",
   "long" : "CLong", "long long" : "CLongLong", "unsigned long long" : "CUnsignedLongLong", "short" : "CShort",
   "double" : "CDouble", "float" : "CFloat", "long double" : "Double",
-  "void" : "Void", "utf8" : "String", "va_list" : "CVaListPointer",
+  "void" : "Void", "utf8" : "String", "filename" : "String", "va_list" : "CVaListPointer",
   "Error" : "ErrorType", "ErrorType" : "ErrorEnum" ]
 private let reservedTypes: Set = ["String", "Array", "Optional", "Set", "Error", "ErrorProtocol"]
 private let typeNames: Set = reservedTypes.union(reversecast.keys)
@@ -378,10 +378,20 @@ typealias TypeCastTuple = (c: String, swift: String, toC: String, toSwift: Strin
 /// return a C+Swift type pair
 func typeCastTuple(_ ctype: String, _ swiftType: String, varName: String = "rv", forceCast: Bool = false) -> TypeCastTuple {
     let u = ctype.unwrappedCTypeWithCount()
-    let nPointers = u.pointerCount + ((swiftType.isPointer || ctype.isPointer) ? 1 : 0)
+    let rawPointers = u.pointerCount + ((swiftType.isPointer || ctype.isPointer) ? 1 : 0)
     let ct = u.gType != "" ? u.gType : swiftType
-    let st = u.swift != "" ? u.swift : ct
-    let cast = "cast(\(varName))"
+    let st: String
+    let cast: String
+    let nPointers: Int
+    if swiftType == "String" && u.pointerCount == 1 {
+        nPointers = u.pointerCount
+        st = swiftType
+        cast = varName == "rv" ? "\(varName).map { String(cString: UnsafePointer($0)) } ?? \"\"" : varName
+    } else {
+        nPointers = rawPointers
+        st = u.swift != "" ? u.swift : ct
+        cast = "cast(\(varName))"
+    }
     let cswift: TypeCastTuple
     switch (ct, st) {
     case ("utf8", _), (_, "String"):

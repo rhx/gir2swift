@@ -519,7 +519,8 @@ public func returnTypeCode(_ tr: (typeName: String, record: GIR.Record, isConstr
         if tr != nil && rv.isInstanceOfHierarchy((tr?.record)!)  {
             returnType = tr!.typeName + "!"
         } else {
-            returnType = typeCastTuple(rv.ctype, rv.type.swift).swift + (rv.isAnyKindOfPointer ? "!" : "")
+            let rt = typeCastTuple(rv.ctype, rv.type.swift).swift
+            returnType = rv.isAnyKindOfPointer && rt != "String" ? "\(rt)!" : rt
         }
         return returnType
     }
