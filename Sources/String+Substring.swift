@@ -41,6 +41,11 @@ extension String {
         let len = s.characters.count
         return String(characters[startIndex..<index(endIndex, offsetBy: -len)])
     }
+
+    /// return the substring after the first occurrence of the given character
+    public func afterFirst(separator s: Character = "_") -> String? {
+        let components = split(separator: s)
+        guard components.count > 1 else { return nil }
+        return components[components.index(after: components.startIndex)..<components.endIndex].joined(separator: String(s))
+    }
 }
-
-

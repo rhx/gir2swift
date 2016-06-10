@@ -483,7 +483,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record) -> (
 public func convenienceConstructorCode(_ typeName: String, indentation: String, convenience: String = "", factory: Bool = false) -> (GIR.Record) -> (GIR.Method) -> String {
     let isConv = !convenience.isEmpty
     let conv =  isConv ? "\(convenience) " : ""
-    return { (record: GIR.Record) -> (GIR.Method)-> String in
+    return { (record: GIR.Record) -> (GIR.Method) -> String in
         let doubleIndent = indentation + indentation
         let call = callCode(doubleIndent)
         let returnDeclaration = returnDeclarationCode((typeName: typeName, record: record, isConstructor: !factory))
@@ -493,10 +493,12 @@ public func convenienceConstructorCode(_ typeName: String, indentation: String, 
             guard !method.varargs else {
                 return "\n\(indentation)// *** \(name)() is not available because it has a varargs (...) parameter!\n\n"
             }
+            let override = record.inheritedMethods.filter { $0.name == name }.first != nil
+            let fname = override ? (method.cname.afterFirst() ?? (record.name + "_" + name)) : name
             let deprecated = method.deprecated != nil ? "@available(*, deprecated) " : ""
             let consPrefix = constructorPrefix(method)
             let prefix = consPrefix == method.args.first?.name.swift ? "" : (consPrefix + " ")
-            let fact = factory ? "static func \(name.swift)(" : "\(conv)init(\(prefix)"
+            let fact = factory ? "static func \(fname.swift)(" : "\(conv)init(\(prefix)"
             let code = swiftCode(method, indentation + "\(deprecated)public \(fact)" +
                 constructorParam(method) + ")\(returnDeclaration(method)) {\n" +
                     doubleIndent + call(method) +
@@ -514,7 +516,7 @@ public func returnTypeCode(_ tr: (typeName: String, record: GIR.Record, isConstr
         let rv = method.returns
         guard !(rv.isVoid || (tr != nil && tr!.isConstructor)) else { return nil }
         let returnType: String
-        if rv.isInstanceOf(tr?.record)  {
+        if tr != nil && rv.isInstanceOfHierarchy((tr?.record)!)  {
             returnType = tr!.typeName + "!"
         } else {
             returnType = typeCastTuple(rv.ctype, rv.type.swift).swift + (rv.isAnyKindOfPointer ? "!" : "")
@@ -540,7 +542,7 @@ public func returnCode(_ indentation: String, _ tr: (typeName: String, record: G
     return { method in
         let rv = method.returns
         guard !rv.isVoid else { return "" }
-        let isInstance = rv.isInstanceOf(tr?.record)
+        let isInstance = tr?.record != nil && rv.isInstanceOfHierarchy((tr?.record)!)
         let cast2swift = typeCastTuple(rv.ctype, rv.type.swift, forceCast: isInstance).toSwift
         guard isInstance else { return indentation + "return \(cast2swift)\n" + indentation }
         let (cons, cast, end) = tr!.isConstructor ? ("self.init", cast2swift, "") : ("return rv.map { \(tr!.typeName)", "cast($0)", " }")
