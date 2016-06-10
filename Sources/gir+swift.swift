@@ -165,7 +165,7 @@ public extension GIR.Method {
 
     /// return whether the method is a constructor of the given record
     public func isConstructorOf(_ record: GIR.Record?) -> Bool {
-        return returns.isInstanceOf(record) && !(args.first?.isInstanceOf(record) ?? false)
+        return record != nil && returns.isInstanceOfHierarchy(record!) && !(args.first?.isInstanceOf(record) ?? false)
     }
 
     /// return whether the method is a factory of the given record
@@ -752,8 +752,6 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
             "self.init(UnsafeMutablePointer<\(ctype)>(opaquePointer))\n" + indentation +
         "}\n\n")) +
         constructors.map(ccode).joined(separator: "\n") + "\n" +
-    "}\n\n" +
-    "public extension \(classType) {\n" + indentation +
         factories.map(fcode).joined(separator: "\n") + "\n" +
     "}\n\n"
 
