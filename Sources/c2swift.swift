@@ -158,18 +158,23 @@ extension String {
         return nx
     }
 
-    /// return a valid Swift type for an underlying C type
-    var swiftType: String {
-        if let s = swiftReplacementsForC[self] { return s }
+    /// Return a string that starts with an alpha or underscore character
+    var swiftIdentifier: String {
         guard let f = utf16.first else { return self }
         guard isalpha(Int32(f)) != 0 || Character(UnicodeScalar(f)) == "_" else { return "_" + self }
         return self
     }
 
+    /// return a valid Swift type for an underlying C type
+    var swiftType: String {
+        if let s = swiftReplacementsForC[self] { return s }
+        return swiftIdentifier
+    }
+
     /// return a valid Swift name by appending '_' to a reserved name
     var swiftName: String {
         guard !reservedNames.contains(self) else { return self + "_" }
-        return self
+        return swiftIdentifier
     }
 
     /// return a swift representation of an identifier string (escaped if necessary)

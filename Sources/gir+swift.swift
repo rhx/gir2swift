@@ -358,7 +358,7 @@ public func swiftCode(_ e: GIR.Enumeration) -> String {
 /// Swift code representation of an enum value
 public func valueCode(_ indentation: String) -> (GIR.Enumeration.Member) -> String {
     return { (m: GIR.Enumeration.Member) -> String in
-        swiftCode(m, indentation + "public static let \(m.name.swift) = \(m.ctype.swift) /* \(m.value) */", indentation: indentation)
+        swiftCode(m, indentation + "public static let \(m.name.swiftName) = \(m.ctype.swift) /* \(m.value) */", indentation: indentation)
     }
 }
 
