@@ -520,7 +520,7 @@ public func returnTypeCode(_ tr: (typeName: String, record: GIR.Record, isConstr
             returnType = tr!.typeName + "!"
         } else {
             let rt = typeCastTuple(rv.ctype, rv.type.swift).swift
-            returnType = rv.isAnyKindOfPointer && rt != "String" ? "\(rt)!" : rt
+            returnType = rv.isAnyKindOfPointer ? "\(rt)!" : rt
         }
         return returnType
     }
