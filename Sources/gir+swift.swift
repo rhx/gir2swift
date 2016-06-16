@@ -394,7 +394,7 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
 
 
 /// Default implementation for functions
-public func functionCode(_ f: GIR.Function, indentation: String = "    ") -> String {
+public func functionCode(_ f: GIR.Function, indentation: String = "") -> String {
     let mcode = methodCode(indentation)
     let code = mcode(f) + "\n\n"
     return code
