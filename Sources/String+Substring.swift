@@ -12,6 +12,8 @@
     import Darwin
 #endif
 
+/// UTF16 for underscore
+private let underscore = "_".utf16.first!
 
 extension String {
     /// return the unprefixed version of the string
@@ -47,5 +49,42 @@ extension String {
         let components = split(separator: s)
         guard components.count > 1 else { return nil }
         return components[components.index(after: components.startIndex)..<components.endIndex].joined(separator: String(s))
+    }
+
+    /// convert the receiver to camel case
+    public var camelCase: String {
+        let u = self.utf16
+        var s = u.startIndex
+        let e = u.endIndex
+        var result = String()
+        var i = s
+        while i < e {
+            var j = u.index(after: i)
+            if u[i] == underscore {
+                if let str = String(u[s..<i]) {
+                    result += str
+                    s = i
+                }
+                i = j
+                guard i < e else { break }
+                j = u.index(after: i)
+                if let u = String(u[i..<j])?.unicodeScalars.first where u.isASCII {
+                    let c = Int32(u.value)
+                    if islower(c) != 0 {
+                        let upper = Character(UnicodeScalar(UInt32(toupper(c))))
+                        result += String(upper)
+                        s = j
+                    } else {
+                        s = i
+                    }
+                } else {
+                    s = i
+                }
+            }
+            i = j
+        }
+        if let str = String(u[s..<e]) { result += str }
+        return result
+
     }
 }

@@ -402,15 +402,16 @@ public func functionCode(_ f: GIR.Function, indentation: String = "") -> String 
 
 
 /// Swift code for methods (with a given indentation)
-public func methodCode(_ indentation: String, record: GIR.Record? = nil) -> (GIR.Method) -> String {
+public func methodCode(_ indentation: String, record: GIR.Record? = nil, convertName: (String) -> String = { $0.camelCase }) -> (GIR.Method) -> String {
     let doubleIndent = indentation + indentation
     let call = callCode(doubleIndent, record)
     let returnDeclaration = returnDeclarationCode()
     let ret = returnCode(indentation)
 
     return { (method: GIR.Method) -> String in
-        let name = method.name.isEmpty ? method.cname : method.name
-        guard !GIR.Blacklist.contains(name) else {
+        let rawName = method.name.isEmpty ? method.cname : method.name
+        let name = convertName(rawName)
+        guard !GIR.Blacklist.contains(rawName) && !GIR.Blacklist.contains(name) else {
             return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
         }
         guard !method.varargs else {
