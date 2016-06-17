@@ -114,10 +114,13 @@ public extension GIR.Argument {
         return na
     }
 
+    /// return the non-prefixed argument name
+    public var argumentName: String { return nonClashingName }
+
     /// return the, potentially prefixed argument name to use in a method declaration
     public var prefixedArgumentName: String {
-        let name = nonClashingName
-        let swname = name.swift
+        let name = argumentName
+        let swname = name.camelCase.swift
         let prefixedname = name == swname ? name : (swname + " " + name)
         return prefixedname
     }
@@ -427,7 +430,7 @@ public func methodCode(_ indentation: String, record: GIR.Record? = nil, convert
             let instance = $0.instance || $0.isInstanceOf(record)
             if instance { hadInstance = true }
             return !instance
-        } .map(argumentCode).joined(separator: ", ")
+        } .map(codeFor).joined(separator: ", ")
 
         let deprecated = method.deprecated != nil ? "@available(*, deprecated) " : ""
         let code = swiftCode(method, indentation + "\(deprecated)public func \(name.swift)(" +
@@ -517,10 +520,10 @@ public func convenienceConstructorCode(_ typeName: String, indentation: String, 
             let fname = override ? (method.cname.afterFirst() ?? (record.name + name.capitalised)) : name
             let deprecated = method.deprecated != nil ? "@available(*, deprecated) " : ""
             let consPrefix = constructorPrefix(method)
-            let prefix = consPrefix == firstArgName?.swift ? "" : (consPrefix + " ")
-            let fact = factory ? "static func \(fname.swift)(" : "\(conv)init(\(prefix)"
+            let prefix = consPrefix == firstArgName?.swift ? nil : consPrefix
+            let fact = factory ? "static func \(fname.swift)(" : "\(conv)init("
             let code = swiftCode(method, indentation + "\(deprecated)public \(fact)" +
-                constructorParam(method) + ")\(returnDeclaration(method)) {\n" +
+                constructorParam(method, prefix) + ")\(returnDeclaration(method)) {\n" +
                     doubleIndent + call(method) +
                     indentation  + ret(method)  +
                 "}\n", indentation: indentation)
@@ -618,8 +621,16 @@ public func callSetter(_ indentation: String, _ record: GIR.Record? = nil) -> (G
 
 
 /// Swift code for the parameters of a constructor
-public func constructorParam(_ method: GIR.Method) -> String {
-    return method.args.lazy.map(argumentCode).joined(separator: ", ")
+public func constructorParam(_ method: GIR.Method, prefix: String?) -> String {
+    let comma = ", "
+    let args = method.args
+    guard let first = args.first else { return "" }
+    guard let p = prefix else { return args.map(codeFor).joined(separator: comma) }
+    let firstParam = codeFor(argument: first, prefix: p)
+    let n = args.count
+    guard n > 1 else { return firstParam }
+    let tail = args[1..<n-1]
+    return firstParam + comma + tail.map(codeFor).joined(separator: comma)
 }
 
 
@@ -658,11 +669,20 @@ public func constructorPrefix(_ method: GIR.Method) -> String {
 }
 
 
-/// Swift code for methods
-public func argumentCode(_ arg: GIR.Argument) -> String {
-    let prefixedname = arg.prefixedArgumentName
-    let type = arg.argumentType
+/// Swift code for auto-prefixed arguments
+public func codeFor(argument a: GIR.Argument) -> String {
+    let prefixedname = a.prefixedArgumentName
+    let type = a.argumentType
     let code = "\(prefixedname): \(type)"
+    return code
+}
+
+
+/// Swift code for methods
+public func codeFor(argument a: GIR.Argument, prefix: String) -> String {
+    let name = a.argumentName
+    let type = a.argumentType
+    let code = "\(prefix) \(name): \(type)"
     return code
 }
 
