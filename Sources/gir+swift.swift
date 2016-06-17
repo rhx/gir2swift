@@ -641,13 +641,14 @@ public func constructorPrefix(_ method: GIR.Method) -> String? {
     guard let from = components.lazy.enumerated().filter({ $0.1 == "from" }).first else {
         let mn = method.name
         let name = mn.isEmpty ? cname : mn
+        guard name != "newv" else { return nil }
         if let prefix = (["new_", "new"].lazy.filter { name.hasPrefix($0) }.first) {
             let chars = name.characters
             let s = chars.index(chars.startIndex, offsetBy: prefix.characters.count)
             let e = chars.endIndex
             return String(chars[s..<e]).swift
         }
-        if let suffix = (["_new"].lazy.filter { name.hasSuffix($0) }.first) {
+        if let suffix = (["_newv", "_new"].lazy.filter { name.hasSuffix($0) }.first) {
             let chars = name.characters
             let s = chars.startIndex
             let e = chars.index(chars.endIndex, offsetBy: -suffix.characters.count)
