@@ -520,10 +520,10 @@ public func convenienceConstructorCode(_ typeName: String, indentation: String, 
             let fname = override ? (method.cname.afterFirst() ?? (record.name + name.capitalised)) : name
             let deprecated = method.deprecated != nil ? "@available(*, deprecated) " : ""
             let consPrefix = constructorPrefix(method)
-            let prefix = consPrefix == firstArgName?.swift ? nil : consPrefix
+            let p: String? = consPrefix == firstArgName?.swift ? nil : consPrefix
             let fact = factory ? "static func \(fname.swift)(" : "\(conv)init("
             let code = swiftCode(method, indentation + "\(deprecated)public \(fact)" +
-                constructorParam(method, prefix) + ")\(returnDeclaration(method)) {\n" +
+                constructorParam(method, prefix: p) + ")\(returnDeclaration(method)) {\n" +
                     doubleIndent + call(method) +
                     indentation  + ret(method)  +
                 "}\n", indentation: indentation)
