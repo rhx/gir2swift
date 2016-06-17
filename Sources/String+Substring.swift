@@ -51,6 +51,17 @@ extension String {
         return components[components.index(after: components.startIndex)..<components.endIndex].joined(separator: String(s))
     }
 
+    /// return the capidalised name of the receiver
+    public var capitalised: String {
+        guard let u = unicodeScalars.first where u.isASCII else { return self }
+        let c = Int32(u.value)
+        guard islower(c) != 0 else { return self }
+        let upper = UInt16(toupper(c))
+        let utf = utf16
+        let tail = utf[utf.index(after: utf.startIndex)..<utf.endIndex]
+        return String([upper] + tail)
+    }
+
     /// convert the receiver to camel case
     public var camelCase: String {
         let u = self.utf16

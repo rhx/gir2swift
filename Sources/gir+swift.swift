@@ -483,7 +483,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record) -> (
 
 
 /// Swift code for convenience constructors
-public func convenienceConstructorCode(_ typeName: String, indentation: String, convenience: String = "", factory: Bool = false) -> (GIR.Record) -> (GIR.Method) -> String {
+public func convenienceConstructorCode(_ typeName: String, indentation: String, convenience: String = "", factory: Bool = false, convertName: (String) -> String = { $0.camelCase }) -> (GIR.Record) -> (GIR.Method) -> String {
     let isConv = !convenience.isEmpty
     let conv =  isConv ? "\(convenience) " : ""
     return { (record: GIR.Record) -> (GIR.Method) -> String in
@@ -492,15 +492,32 @@ public func convenienceConstructorCode(_ typeName: String, indentation: String, 
         let returnDeclaration = returnDeclarationCode((typeName: typeName, record: record, isConstructor: !factory))
         let ret = returnCode(indentation, (typeName: typeName, record: record, isConstructor: !factory, isConvenience: isConv))
         return { (method: GIR.Method) -> String in
-            let name = method.name.isEmpty ? method.cname : method.name
+            let rawName = method.name.isEmpty ? method.cname : method.name
+            let rawUTF = rawName.utf16
+            let firstArgName = method.args.first?.name
+            let nameWithoutPostFix: String
+            if let f = firstArgName where rawUTF.count > f.utf16.count + 1 && rawName.hasSuffix(f) {
+                let truncated = rawUTF[rawUTF.startIndex..<rawUTF.index(rawUTF.endIndex, offsetBy: -f.utf16.count)]
+                if truncated.last == _U {
+                    nameWithoutPostFix = String(rawUTF[rawUTF.startIndex..<rawUTF.index(rawUTF.endIndex, offsetBy: -(f.utf16.count+1))])
+                } else {
+                    nameWithoutPostFix = String(truncated)
+                }
+            } else {
+                nameWithoutPostFix = rawName
+            }
+            let name = convertName(nameWithoutPostFix)
+            guard !GIR.Blacklist.contains(rawName) && !GIR.Blacklist.contains(name) else {
+                return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
+            }
             guard !method.varargs else {
                 return "\n\(indentation)// *** \(name)() is not available because it has a varargs (...) parameter!\n\n"
             }
             let override = record.inheritedMethods.filter { $0.name == name }.first != nil
-            let fname = override ? (method.cname.afterFirst() ?? (record.name + "_" + name)) : name
+            let fname = override ? (method.cname.afterFirst() ?? (record.name + name.capitalised)) : name
             let deprecated = method.deprecated != nil ? "@available(*, deprecated) " : ""
             let consPrefix = constructorPrefix(method)
-            let prefix = consPrefix == method.args.first?.name.swift ? "" : (consPrefix + " ")
+            let prefix = consPrefix == firstArgName?.swift ? "" : (consPrefix + " ")
             let fact = factory ? "static func \(fname.swift)(" : "\(conv)init(\(prefix)"
             let code = swiftCode(method, indentation + "\(deprecated)public \(fact)" +
                 constructorParam(method) + ")\(returnDeclaration(method)) {\n" +
