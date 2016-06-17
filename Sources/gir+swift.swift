@@ -629,43 +629,37 @@ public func constructorParam(_ method: GIR.Method, prefix: String?) -> String {
     let firstParam = codeFor(argument: first, prefix: p)
     let n = args.count
     guard n > 1 else { return firstParam }
-    let tail = args[1..<n-1]
+    let tail = args[1..<n]
     return firstParam + comma + tail.map(codeFor).joined(separator: comma)
 }
 
 
-/// Swift code for constructor prefix extracted from a method name
-public func constructorPrefix(_ method: GIR.Method) -> String {
+/// Swift code for constructor first argument prefix extracted from a method name
+public func constructorPrefix(_ method: GIR.Method) -> String? {
     let cname = method.cname
     let components = cname.split(separator: "_")
     guard let from = components.lazy.enumerated().filter({ $0.1 == "from" }).first else {
         let mn = method.name
         let name = mn.isEmpty ? cname : mn
-        let unPrefixed: String
         if let prefix = (["new_", "new"].lazy.filter { name.hasPrefix($0) }.first) {
             let chars = name.characters
             let s = chars.index(chars.startIndex, offsetBy: prefix.characters.count)
             let e = chars.endIndex
-            unPrefixed = String(chars[s..<e])
-        } else {
-            unPrefixed = name
+            return String(chars[s..<e]).swift
         }
-        let shortened: String
-        if let suffix = (["_new"].lazy.filter { unPrefixed.hasSuffix($0) }.first) {
-            let chars = unPrefixed.characters
+        if let suffix = (["_new"].lazy.filter { name.hasSuffix($0) }.first) {
+            let chars = name.characters
             let s = chars.startIndex
             let e = chars.index(chars.endIndex, offsetBy: -suffix.characters.count)
-            shortened = String(chars[s..<e])
-        } else {
-            shortened = unPrefixed
+            return String(chars[s..<e]).swift
         }
-        return shortened.swift
+        return nil
     }
     let f = components.startIndex + from.offset + 1
     let e = components.endIndex
     let s = f < e ? f : f - 1
     let name = components[s..<e].joined(separator: "_")
-    return name.swift
+    return name.camelCase.swift
 }
 
 
