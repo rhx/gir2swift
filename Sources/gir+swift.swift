@@ -433,7 +433,7 @@ public func methodCode(_ indentation: String, record: GIR.Record? = nil, convert
         } .map(codeFor)
         let funcParam = params.joined(separator: ", ")
         let fname: String
-        if let firstParamName = params.first?.split(separator: " ").first?.capitalised {
+        if let firstParamName = params.first?.split(separator: " ").first?.split(separator: ":").first?.capitalised {
             fname = name.stringByRemoving(suffix: firstParamName) ?? name
         } else {
             fname = name
