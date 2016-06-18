@@ -423,17 +423,23 @@ public func methodCode(_ indentation: String, record: GIR.Record? = nil, convert
             return "\n\(indentation)// *** \(name)() is not available because it has a varargs (...) parameter!\n\n"
         }
         var hadInstance = false
-        let funcParam = method.args.filter {    // not .lazy !!!
+        let params = method.args.filter {    // not .lazy !!!
             guard !hadInstance else {
                 return true
             }
             let instance = $0.instance || $0.isInstanceOf(record)
             if instance { hadInstance = true }
             return !instance
-        } .map(codeFor).joined(separator: ", ")
-
+        } .map(codeFor)
+        let funcParam = params.joined(separator: ", ")
+        let fname: String
+        if let firstParamName = params.first?.split(separator: " ").first?.capitalised {
+            fname = name.stringByRemoving(suffix: firstParamName) ?? name
+        } else {
+            fname = name
+        }
         let deprecated = method.deprecated != nil ? "@available(*, deprecated) " : ""
-        let code = swiftCode(method, indentation + "\(deprecated)public func \(name.swift)(" +
+        let code = swiftCode(method, indentation + "\(deprecated)public func \(fname.swift)(" +
             funcParam + ")\(returnDeclaration(method)) {\n" +
                 doubleIndent + call(method) +
                 indentation  + ret(method)  +
@@ -516,10 +522,16 @@ public func convenienceConstructorCode(_ typeName: String, indentation: String, 
             guard !method.varargs else {
                 return "\n\(indentation)// *** \(name)() is not available because it has a varargs (...) parameter!\n\n"
             }
-            let override = record.inheritedMethods.filter { $0.name == rawName }.first != nil
-            let fname = override ? convertName((method.cname.afterFirst() ?? (record.name + nameWithoutPostFix.capitalised))) : name
             let deprecated = method.deprecated != nil ? "@available(*, deprecated) " : ""
+            let override = record.inheritedMethods.filter { $0.name == rawName }.first != nil
+            let fullname = override ? convertName((method.cname.afterFirst() ?? (record.name + nameWithoutPostFix.capitalised))) : name
             let consPrefix = constructorPrefix(method)
+            let fname: String
+            if let prefix = consPrefix?.capitalised {
+                fname = fullname.stringByRemoving(suffix: prefix) ?? fullname
+            } else {
+                fname = fullname
+            }
             let p: String? = consPrefix == firstArgName?.swift ? nil : consPrefix
             let fact = factory ? "static func \(fname.swift)(" : "\(conv)init("
             let code = swiftCode(method, indentation + "\(deprecated)public \(fact)" +
@@ -636,6 +648,7 @@ public func constructorParam(_ method: GIR.Method, prefix: String?) -> String {
 
 /// Swift code for constructor first argument prefix extracted from a method name
 public func constructorPrefix(_ method: GIR.Method) -> String? {
+    guard !method.args.isEmpty else { return nil }
     let cname = method.cname
     let components = cname.split(separator: "_")
     guard let from = components.lazy.enumerated().filter({ $0.1 == "from" || $0.1 == "for" }).first else {

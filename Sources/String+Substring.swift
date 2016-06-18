@@ -59,7 +59,7 @@ extension String {
         let upper = UInt16(toupper(c))
         let utf = utf16
         let tail = utf[utf.index(after: utf.startIndex)..<utf.endIndex]
-        return String([upper] + tail)
+        return String(Character(UnicodeScalar(upper)))+String(tail)
     }
 
     /// convert the receiver to camel case
