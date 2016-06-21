@@ -651,7 +651,7 @@ public func constructorPrefix(_ method: GIR.Method) -> String? {
     guard !method.args.isEmpty else { return nil }
     let cname = method.cname
     let components = cname.split(separator: "_")
-    guard let from = components.lazy.enumerated().filter({ $0.1 == "from" || $0.1 == "for" }).first else {
+    guard let from = components.lazy.enumerated().filter({ $0.1 == "from" || $0.1 == "for" || $0.1 == "with" }).first else {
         let mn = method.name
         let name = mn.isEmpty ? cname : mn
         guard name != "newv" else { return nil }
