@@ -15,6 +15,9 @@
 /// UTF16 for underscore
 private let underscore = "_".utf16.first!
 
+/// UTF16 for minus
+private let minus = "-".utf16.first!
+
 extension String {
     /// return the unprefixed version of the string
     /// (e.g. type without namespace)
@@ -62,8 +65,8 @@ extension String {
         return String(Character(UnicodeScalar(upper)))+String(tail)
     }
 
-    /// convert the receiver to camel case
-    public var camelCase: String {
+    /// convert a string with separators to camel case
+    func camelise(_ isSeparator: (UInt16) -> Bool) -> String {
         let u = self.utf16
         var s = u.startIndex
         let e = u.endIndex
@@ -71,7 +74,8 @@ extension String {
         var i = s
         while i < e {
             var j = u.index(after: i)
-            if u[i] == underscore {
+            let char = u[i]
+            if isSeparator(char) {
                 if let str = String(u[s..<i]) {
                     result += str
                     s = i
@@ -96,6 +100,13 @@ extension String {
         }
         if let str = String(u[s..<e]) { result += str }
         return result
+    }
 
+    /// convert the receiver to camel case
+    public var camelCase: String { return camelise { $0 == underscore } }
+
+    /// convert a signal name with '-' to camel case
+    public var camelSignal: String {
+        return camelise { $0 == minus || $0 == underscore }.capitalised
     }
 }

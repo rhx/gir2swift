@@ -399,16 +399,17 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
 
 
 /// Default implementation for functions
-public func functionCode(_ f: GIR.Function, indentation: String = "") -> String {
-    let mcode = methodCode(indentation)
+public func functionCode(_ f: GIR.Function, indentation: String = "    ", initialIndentation i: String = "") -> String {
+    let mcode = methodCode(indentation, initialIndentation: i)
     let code = mcode(f) + "\n\n"
     return code
 }
 
 
 /// Swift code for methods (with a given indentation)
-public func methodCode(_ indentation: String, record: GIR.Record? = nil, convertName: (String) -> String = { $0.camelCase }) -> (GIR.Method) -> String {
-    let doubleIndent = indentation + indentation
+public func methodCode(_ indentation: String, initialIndentation: String? = nil, record: GIR.Record? = nil, convertName: (String) -> String = { $0.camelCase }) -> (GIR.Method) -> String {
+    let indent = initialIndentation ?? indentation
+    let doubleIndent = indent + indentation
     let call = callCode(doubleIndent, record)
     let returnDeclaration = returnDeclarationCode()
     let ret = returnCode(indentation)
@@ -417,10 +418,10 @@ public func methodCode(_ indentation: String, record: GIR.Record? = nil, convert
         let rawName = method.name.isEmpty ? method.cname : method.name
         let name = convertName(rawName)
         guard !GIR.Blacklist.contains(rawName) && !GIR.Blacklist.contains(name) else {
-            return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
+            return "\n\(indent)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
         }
         guard !method.varargs else {
-            return "\n\(indentation)// *** \(name)() is not available because it has a varargs (...) parameter!\n\n"
+            return "\n\(indent)// *** \(name)() is not available because it has a varargs (...) parameter!\n\n"
         }
         var hadInstance = false
         let params = method.args.filter {    // not .lazy !!!
@@ -439,11 +440,11 @@ public func methodCode(_ indentation: String, record: GIR.Record? = nil, convert
             fname = name
         }
         let deprecated = method.deprecated != nil ? "@available(*, deprecated) " : ""
-        let code = swiftCode(method, indentation + "\(deprecated)public func \(fname.swift)(" +
+        let code = swiftCode(method, indent + "\(deprecated)public func \(fname.swift)(" +
             funcParam + ")\(returnDeclaration(method)) {\n" +
                 doubleIndent + call(method) +
-                indentation  + ret(method)  +
-        "}\n", indentation: indentation)
+                indent       + ret(method)  + indent +
+        "}\n", indentation: indent)
         return code
     }
 }
@@ -472,7 +473,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record) -> (
         let deprecated = getter.deprecated != nil ? "@available(*, deprecated) " : ""
         let getterCode = swiftCode(getter, doubleIndent + "\(deprecated)get {\n" +
             doubleIndent + indentation + gcall(getter) +
-            indentation  + ret(getter)  +
+            indentation  + ret(getter) + indentation +
             "}\n", indentation: doubleIndent)
         let setterCode: String
         if let setter = pair.setter {
@@ -537,7 +538,7 @@ public func convenienceConstructorCode(_ typeName: String, indentation: String, 
             let code = swiftCode(method, indentation + "\(deprecated)public \(fact)" +
                 constructorParam(method, prefix: p) + ")\(returnDeclaration(method)) {\n" +
                     doubleIndent + call(method) +
-                    indentation  + ret(method)  +
+                    indentation  + ret(method)  + indentation +
                 "}\n", indentation: indentation)
             return code
         }
@@ -577,15 +578,15 @@ public func returnDeclarationCode(_ tr: (typeName: String, record: GIR.Record, i
 public func returnCode(_ indentation: String, _ tr: (typeName: String, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil) -> (GIR.Method) -> String {
     return { method in
         let rv = method.returns
-        guard !rv.isVoid else { return "" }
+        guard !rv.isVoid else { return "\n" }
         let isInstance = tr?.record != nil && rv.isInstanceOfHierarchy((tr?.record)!)
         let cast2swift = typeCastTuple(rv.ctype, rv.type.swift, forceCast: isInstance).toSwift
-        guard isInstance else { return indentation + "return \(cast2swift)\n" + indentation }
+        guard isInstance else { return indentation + "return \(cast2swift)\n" }
         let (cons, cast, end) = tr!.isConstructor ? ("self.init", cast2swift, "") : ("return rv.map { \(tr!.typeName)", "cast($0)", " }")
         if tr!.isConvenience || !tr!.isConstructor {
-            return indentation + "\(cons)(\(cast))\(end)\n" + indentation
+            return indentation + "\(cons)(\(cast))\(end)\n"
         } else {
-            return indentation + "self.ptr = \(cast2swift)\n" + indentation
+            return indentation + "self.ptr = \(cast2swift)\n"
         }
     }
 }
@@ -715,6 +716,16 @@ public func convertSetterArgumentToSwiftFor(_ record: GIR.Record?) -> (GIR.Argum
 }
 
 
+/// Swift code for signal names
+public func signalNameCode(indentation indent: String, convertName: (String) -> String = { $0.camelSignal }) -> (GIR.Signal) -> String {
+    return { signal in
+        let name = signal.name
+        let declaration = indent + "public let \(convertName(name).swift) = \"\(name)\""
+        let code = swiftCode(signal, declaration, indentation: indent)
+        return code
+    }
+}
+
 
 /// Swift struct representation of a record/class as a wrapper of a pointer
 public func recordStructCode(_ e: GIR.Record, indentation: String = "    ") -> String {
@@ -763,6 +774,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let parentType = e.parentType
     let hasParent = parentType != nil
     let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
+    let scode = signalNameCode(indentation: indentation + indentation)
     let ccode = convenienceConstructorCode(classType, indentation: indentation, convenience: "convenience")(e)
     let fcode = convenienceConstructorCode(classType, indentation: indentation, factory: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
@@ -780,9 +792,13 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     } else {
         release = "// no reference counting for \(e.ctype.swift), cannot unref"
     }
-    let p = parent.isEmpty ? (hasParent ? "\(parentType!.name.swift), " : "") : "\(parent), "
+    let parentName = hasParent ? parentType!.name.swift : ""
+    let p = parent.isEmpty ? (hasParent ? "\(parentName), " : "") : "\(parent), "
     let code = "public class \(classType): \(p)\(e.protocolName) {\n" + indentation +
         (hasParent ? "" : ("public let ptr: UnsafeMutablePointer<\(ctype)>\n\n" + indentation)) +
+        "public class Signals\(hasParent ? ": \(parentName).Signals" : "") {\n" +
+            e.signals.map(scode).joined(separator: "\n") + "\n" + indentation +
+        "}\n\n" + indentation +
         "public init(_ op: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
             (hasParent ? "super.init(cast(op))\n" : "self.ptr = op\n") + indentation +
         "}\n\n" + (hasParent ? "" : (indentation +

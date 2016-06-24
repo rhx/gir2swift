@@ -354,6 +354,7 @@ public class GIR {
         public let methods: [Method]        ///< all associated methods
         public let functions: [Function]    ///< all associated functions
         public let constructors: [Method]   ///< list of constructors
+        public let signals: [Signal]        ///< list of signals
         public var parentType: Record? { return nil }   ///< no parent
         public var rootType: Record { return self }     ///< no root class
 
@@ -369,12 +370,13 @@ public class GIR {
         }
 
         /// designated constructor
-        public init(name: String, type: String, ctype: String, cprefix: String, typegetter: String, methods: [Method] = [], functions: [Function] = [], constructors: [Method] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
+        public init(name: String, type: String, ctype: String, cprefix: String, typegetter: String, methods: [Method] = [], functions: [Function] = [], constructors: [Method] = [], signals: [Signal] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
             self.cprefix = cprefix
             self.typegetter = typegetter
             self.methods = methods
             self.functions = functions
             self.constructors = constructors
+            self.signals = signals
             super.init(name: name, type: type, ctype: ctype, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
@@ -389,6 +391,8 @@ public class GIR {
             methods = meths.enumerated().map { Method(node: $0.1, atIndex: $0.0) }
             let cons = children.filter { $0.name == "constructor" }
             constructors = cons.enumerated().map { Method(node: $0.1, atIndex: $0.0) }
+            let sigs = children.filter { $0.name == "signal" }
+            signals = sigs.enumerated().map { Signal(node: $0.1, atIndex: $0.0) }
             super.init(node: node, atIndex: i, typeAttr: "type-name", cTypeAttr: "type")
         }
 
@@ -531,6 +535,9 @@ public class GIR {
 
     /// a callback is the same as a function
     public typealias Callback = Function
+
+    /// a signal is equivalent to a function
+    public typealias Signal = Function
 
     /// data type representing a function/method argument or return type
     public class Argument: CType {
