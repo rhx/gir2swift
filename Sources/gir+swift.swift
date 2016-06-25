@@ -731,7 +731,7 @@ public func convertSetterArgumentToSwiftFor(_ record: GIR.Record?) -> (GIR.Argum
 public func signalNameCode(indentation indent: String, prefixes: (String, String) = ("", ""), convertName: (String) -> String = { $0.camelSignal }) -> (GIR.CType) -> String {
     return { signal in
         let name = signal.name
-        let declaration = indent + "public let \(prefixes.0)\(convertName(name).swift)Signal = \"\(prefixes.1)\(name)\""
+        let declaration = indent + "public static let \(prefixes.0)\(convertName(name).swift)Signal = \"\(prefixes.1)\(name)\""
         let code = swiftCode(signal, declaration, indentation: indent)
         return code
     }
