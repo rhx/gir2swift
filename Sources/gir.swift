@@ -49,6 +49,13 @@ func isFreeFunction(_ function: XMLElement) -> Bool {
     return !isContained
 }
 
+public func ==(lhs: GIR.Thing, rhs: GIR.Thing) -> Bool {
+    return lhs.name == rhs.name
+}
+
+public func <(lhs: GIR.Thing, rhs: GIR.Thing) -> Bool {
+    return lhs.name < rhs.name
+}
 
 public class GIR {
     public let xml: XMLDocument
@@ -173,13 +180,16 @@ public class GIR {
 
 
     /// GIR named thing class
-    public class Thing {
+    public class Thing: Hashable, Comparable {
         public let name: String             ///< type name without namespace/prefix
         public let comment: String          ///< documentation
         public let introspectable: Bool     ///< is this thing introspectable?
         public let deprecated: String?      ///< alternative to use if deprecated
         public let markedAsDeprecated: Bool ///< explicitly marked as deprecated
         public let version: String?         ///< availability in given version
+
+        /// hash value
+        public var hashValue: Int { return name.hashValue }
 
         public init(name: String, comment: String, introspectable: Bool = false, deprecated: String? = nil, markedAsDeprecated: Bool = false, version: String? = nil) {
             self.name = name
@@ -433,6 +443,20 @@ public class GIR {
         public var nonDerivedProperties: [Property] {
             guard let parent = parentType else { return properties }
             return properties.filter { !parent.has(property: $0.name) }
+        }
+
+        /// return all properties, including the ones derived from ancestors
+        public var allProperties: [Property] {
+            guard let parent = parentType else { return properties }
+            let all = properties.asSet.union(parent.allProperties.asSet)
+            return Array(all).sorted()
+        }
+
+        /// return all signals, including the ones derived from ancestors
+        public var allSignals: [Signal] {
+            guard let parent = parentType else { return signals }
+            let all = signals.asSet.union(parent.allSignals.asSet)
+            return Array(all).sorted()
         }
     }
 

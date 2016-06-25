@@ -731,7 +731,7 @@ public func convertSetterArgumentToSwiftFor(_ record: GIR.Record?) -> (GIR.Argum
 public func signalNameCode(indentation indent: String, prefixes: (String, String) = ("", ""), convertName: (String) -> String = { $0.camelSignal }) -> (GIR.CType) -> String {
     return { signal in
         let name = signal.name
-        let declaration = indent + "public static let \(prefixes.0)\(convertName(name).swift)Signal = \"\(prefixes.1)\(name)\""
+        let declaration = indent + "case \(prefixes.0)\(convertName(name).swift) = \"\(prefixes.1)\(name)\""
         let code = swiftCode(signal, declaration, indentation: indent)
         return code
     }
@@ -792,7 +792,10 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
     let allmethods = e.allMethods
     let factories = allmethods.filter { $0.isFactoryOf(e) }
-    let properties = e.nonDerivedProperties
+    let properties = e.allProperties
+    let signals = e.allSignals
+    let noProperties = properties.isEmpty
+    let noSignals = noProperties && signals.isEmpty
     let retain: String
     if let ref = e.ref {
         retain = ref.cname
@@ -829,12 +832,15 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
             "self.init(UnsafeMutablePointer<\(ctype)>(opaquePointer))\n" + indentation +
         "}\n\n")) +
         constructors.map(ccode).joined(separator: "\n") + "\n" +
-        factories.map(fcode).joined(separator: "\n") + "\n" + indentation +
-        "// MARK: signals\n" +
-        e.signals.map(scode).joined(separator: "\n") + "\n" +
+        factories.map(fcode).joined(separator: "\n") + "\n" +
+    "}\n\n" +
+    (noProperties ? "// MARK: - no \(classType) properties\n" : "public enum \(classType)PropertyName: String, PropertyNameProtocol {\n") +
+        properties.map(scode).joined(separator: "\n") + "\n" +
+    (noProperties ? "" : "}\n") +
+    (noSignals ? "// MARK: - no signals\n" : "public enum \(classType)SignalName: String, SignalNameProtocol {\n") +
+        signals.map(scode).joined(separator: "\n") + "\n" +
         properties.map(ncode).joined(separator: "\n") + "\n" +
-    "}\n\n"
-
+    (noSignals ? "" : "}\n\n")
     return code
 }
 
