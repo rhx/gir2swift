@@ -459,21 +459,31 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record) -> (
     return { (pair: GetterSetterPair) -> String in
         let name = pair.name.swiftName
         let getter = pair.getter
+        let gs: GIR.Method
         let type: String
         if let rt = returnTypeCode()(getter) {
+            gs = getter
             type = rt
         } else {
-            guard let args = pair.setter?.args.filter({ !$0.isInstanceOf(record) }),
+            let setter = pair.setter
+            guard let args = setter?.args.filter({ !$0.isInstanceOf(record) }),
                         at = args.first where args.count == 1 else {
                 return indentation + "// var \(name) is unavailable because it does not have a valid getter or setter\n"
             }
             type = at.argumentType
+            gs = setter!
         }
-        let varDecl = indentation + "public var \(name): \(type) {\n"
+        let property: GIR.CType
+        if let prop = record.properties.filter({ $0.name.swiftName == name }).first {
+            property = prop
+        } else {
+            property = gs
+        }
+        let varDecl = swiftCode(property, indentation + "public var \(name): \(type) {\n", indentation: indentation)
         let deprecated = getter.deprecated != nil ? "@available(*, deprecated) " : ""
         let getterCode = swiftCode(getter, doubleIndent + "\(deprecated)get {\n" +
             doubleIndent + indentation + gcall(getter) +
-            indentation  + ret(getter) + indentation +
+            indentation  + ret(getter) + doubleIndent +
             "}\n", indentation: doubleIndent)
         let setterCode: String
         if let setter = pair.setter {
@@ -717,10 +727,10 @@ public func convertSetterArgumentToSwiftFor(_ record: GIR.Record?) -> (GIR.Argum
 
 
 /// Swift code for signal names
-public func signalNameCode(indentation indent: String, convertName: (String) -> String = { $0.camelSignal }) -> (GIR.Signal) -> String {
+public func signalNameCode(indentation indent: String, prefixes: (String, String) = ("", ""), convertName: (String) -> String = { $0.camelSignal }) -> (GIR.CType) -> String {
     return { signal in
         let name = signal.name
-        let declaration = indent + "public let \(convertName(name).swift) = \"\(name)\""
+        let declaration = indent + "public let \(prefixes.0)\(convertName(name).swift) = \"\(prefixes.1)\(name)\""
         let code = swiftCode(signal, declaration, indentation: indent)
         return code
     }
@@ -775,6 +785,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let hasParent = parentType != nil
     let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
     let scode = signalNameCode(indentation: indentation + indentation)
+    let ncode = signalNameCode(indentation: indentation + indentation, prefixes: ("Notify", "notify::"))
     let ccode = convenienceConstructorCode(classType, indentation: indentation, convenience: "convenience")(e)
     let fcode = convenienceConstructorCode(classType, indentation: indentation, factory: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
@@ -797,7 +808,8 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let code = "public class \(classType): \(p)\(e.protocolName) {\n" + indentation +
         (hasParent ? "" : ("public let ptr: UnsafeMutablePointer<\(ctype)>\n\n" + indentation)) +
         "public class Signals\(hasParent ? ": \(parentName).Signals" : "") {\n" +
-            e.signals.map(scode).joined(separator: "\n") + "\n" + indentation +
+            e.signals.map(scode).joined(separator: "\n") + "\n" +
+            e.properties.map(ncode).joined(separator: "\n") + "\n" + indentation +
         "}\n\n" + indentation +
         "public init(_ op: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
             (hasParent ? "super.init(cast(op))\n" : "self.ptr = op\n") + indentation +
