@@ -421,6 +421,19 @@ public class GIR {
 
         /// return the `release` (unref) method for the given record, if any
         public var unref: Method? { return anyMethodMatching { $0.isUnref && $0.args.first!.isInstanceOfHierarchy(self) } }
+
+        /// return whether the record or one of its parents has a given property
+        public func has(property name: String) -> Bool {
+            guard properties.first(where: { $0.name == name }) == nil else { return true }
+            guard let parent = parentType else { return false }
+            return parent.has(property: name)
+        }
+
+        /// return only the properties that are not derived
+        public var nonDerivedProperties: [Property] {
+            guard let parent = parentType else { return properties }
+            return properties.filter { !parent.has(property: $0.name) }
+        }
     }
 
 

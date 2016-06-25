@@ -370,7 +370,8 @@ public func valueCode(_ indentation: String) -> (GIR.Enumeration.Member) -> Stri
 public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: String = "    ") -> String {
     let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
     let p = (parent.isEmpty ? "" : ": \(parent)")
-    let code = "public protocol \(e.protocolName)\(p) {\n" + (e.parentType == nil ?
+    let code = "// MARK: - \(e.name)\n" +
+        "public protocol \(e.protocolName)\(p) {\n" + (e.parentType == nil ?
         (indentation + "var ptr: UnsafeMutablePointer<\(ctype)> { get }\n") : "") +
     "}\n\n"
     return code
@@ -730,7 +731,7 @@ public func convertSetterArgumentToSwiftFor(_ record: GIR.Record?) -> (GIR.Argum
 public func signalNameCode(indentation indent: String, prefixes: (String, String) = ("", ""), convertName: (String) -> String = { $0.camelSignal }) -> (GIR.CType) -> String {
     return { signal in
         let name = signal.name
-        let declaration = indent + "public let \(prefixes.0)\(convertName(name).swift) = \"\(prefixes.1)\(name)\""
+        let declaration = indent + "public let \(prefixes.0)\(convertName(name).swift)Signal = \"\(prefixes.1)\(name)\""
         let code = swiftCode(signal, declaration, indentation: indent)
         return code
     }
@@ -784,13 +785,14 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let parentType = e.parentType
     let hasParent = parentType != nil
     let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
-    let scode = signalNameCode(indentation: indentation + indentation)
-    let ncode = signalNameCode(indentation: indentation + indentation, prefixes: ("Notify", "notify::"))
+    let scode = signalNameCode(indentation: indentation)
+    let ncode = signalNameCode(indentation: indentation, prefixes: ("Notify", "notify::"))
     let ccode = convenienceConstructorCode(classType, indentation: indentation, convenience: "convenience")(e)
     let fcode = convenienceConstructorCode(classType, indentation: indentation, factory: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
     let allmethods = e.allMethods
     let factories = allmethods.filter { $0.isFactoryOf(e) }
+    let properties = e.nonDerivedProperties
     let retain: String
     if let ref = e.ref {
         retain = ref.cname
@@ -807,10 +809,6 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let p = parent.isEmpty ? (hasParent ? "\(parentName), " : "") : "\(parent), "
     let code = "public class \(classType): \(p)\(e.protocolName) {\n" + indentation +
         (hasParent ? "" : ("public let ptr: UnsafeMutablePointer<\(ctype)>\n\n" + indentation)) +
-        "public class Signals\(hasParent ? ": \(parentName).Signals" : "") {\n" +
-            e.signals.map(scode).joined(separator: "\n") + "\n" +
-            e.properties.map(ncode).joined(separator: "\n") + "\n" + indentation +
-        "}\n\n" + indentation +
         "public init(_ op: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
             (hasParent ? "super.init(cast(op))\n" : "self.ptr = op\n") + indentation +
         "}\n\n" + (hasParent ? "" : (indentation +
@@ -831,7 +829,10 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
             "self.init(UnsafeMutablePointer<\(ctype)>(opaquePointer))\n" + indentation +
         "}\n\n")) +
         constructors.map(ccode).joined(separator: "\n") + "\n" +
-        factories.map(fcode).joined(separator: "\n") + "\n" +
+        factories.map(fcode).joined(separator: "\n") + "\n" + indentation +
+        "// MARK: signals\n" +
+        e.signals.map(scode).joined(separator: "\n") + "\n" +
+        properties.map(ncode).joined(separator: "\n") + "\n" +
     "}\n\n"
 
     return code
