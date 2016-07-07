@@ -145,21 +145,17 @@ public class GIR {
                 GIR.KnownFunctions[name] = $0
                 return true
             }
-            //
-            // XXX: work around generic specialisation bug that crashes
-            // XXX: the Swift 3.0preview1 compiler
-            //
-            let notKnownDatatype: (Datatype) -> Bool = { notKnownType($0) }
+
             //
             // get all constants, enumerations, records, classes, and functions
             //
-            constants    = enumerate(xml, path: "/*/*/gir:constant",    inNS: namespaces, quiet: quiet, construct: { Constant(node: $0, atIndex: $1) },    check: notKnownDatatype)
-            enumerations = enumerate(xml, path: "/*/*/gir:enumeration", inNS: namespaces, quiet: quiet, construct: { Enumeration(node: $0, atIndex: $1) }, check: notKnownDatatype)
-            bitfields    = enumerate(xml, path: "/*/*/gir:bitfield",    inNS: namespaces, quiet: quiet, construct: { Bitfield(node: $0, atIndex: $1) },    check: notKnownDatatype)
-            interfaces   = enumerate(xml, path: "/*/*/gir:interface",   inNS: namespaces, quiet: quiet, construct: { Interface(node: $0, atIndex: $1) },   check: notKnownRecord)
-            records      = enumerate(xml, path: "/*/*/gir:record",      inNS: namespaces, quiet: quiet, construct: { Record(node: $0, atIndex: $1) },      check: notKnownRecord)
-            classes      = enumerate(xml, path: "/*/*/gir:class",       inNS: namespaces, quiet: quiet, construct: { Class(node: $0, atIndex: $1) },       check: notKnownRecord)
-            callbacks    = enumerate(xml, path: "/*/*/gir:callback",    inNS: namespaces, quiet: quiet, construct: { Callback(node: $0, atIndex: $1) },    check: notKnownDatatype)
+            constants    = enumerate(xml, path: "/*/*/gir:constant",    inNS: namespaces, quiet: quiet, construct: { Constant(node: $0, atIndex: $1) },    check: notKnownType)
+            enumerations = enumerate(xml, path: "/*/*/gir:enumeration", inNS: namespaces, quiet: quiet, construct: { Enumeration(node: $0, atIndex: $1) }, check: notKnownType)
+            bitfields    = enumerate(xml, path: "/*/*/gir:bitfield",    inNS: namespaces, quiet: quiet, construct: { Bitfield(node: $0, atIndex: $1) },    check: notKnownType)
+            interfaces   = enumerate(xml, path: "/*/*/gir:interface",   inNS: namespaces, quiet: quiet, construct: { Interface(node: $0, atIndex: $1) }, check: notKnownRecord)
+            records      = enumerate(xml, path: "/*/*/gir:record",      inNS: namespaces, quiet: quiet, construct: { Record(node: $0, atIndex: $1) },    check: notKnownRecord)
+            classes      = enumerate(xml, path: "/*/*/gir:class",       inNS: namespaces, quiet: quiet, construct: { Class(node: $0, atIndex: $1) },     check: notKnownRecord)
+            callbacks    = enumerate(xml, path: "/*/*/gir:callback",    inNS: namespaces, quiet: quiet, construct: { Callback(node: $0, atIndex: $1) },    check: notKnownType)
             functions    = enumerate(xml, path: "//gir:function",       inNS: namespaces, quiet: quiet, construct: {
                 isFreeFunction($0) ? Function(node: $0, atIndex: $1) : nil
                 }, check: notKnownFunction)
