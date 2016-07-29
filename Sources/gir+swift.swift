@@ -781,7 +781,10 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ") -> S
 
 /// Swift struct representation of a record/class as a wrapper of a pointer
 public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String = "    ") -> String {
+    let doubleIndentation = indentation + indentation
+    let tripleIndentation = indentation + doubleIndentation
     let classType = e.name.swift
+    let protocolName = e.protocolName
     let parentType = e.parentType
     let hasParent = parentType != nil
     let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
@@ -810,37 +813,81 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     }
     let parentName = hasParent ? parentType!.name.swift : ""
     let p = parent.isEmpty ? (hasParent ? "\(parentName), " : "") : "\(parent), "
-    let code = "public class \(classType): \(p)\(e.protocolName) {\n" + indentation +
+    let code = "public class \(classType): \(p)\(protocolName) {\n" + indentation +
         (hasParent ? "" : ("public let ptr: UnsafeMutablePointer<\(ctype)>\n\n" + indentation)) +
         "public init(_ op: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
             (hasParent ? "super.init(cast(op))\n" : "self.ptr = op\n") + indentation +
         "}\n\n" + (hasParent ? "" : (indentation +
-        "public convenience init<T: \(e.protocolName)>(_ other: T) {\n" + indentation + indentation +
-            "self.init(other.ptr)\n" + indentation + indentation +
+        "public convenience init<T: \(e.protocolName)>(_ other: T) {\n" + doubleIndentation +
+            "self.init(other.ptr)\n" + doubleIndentation +
             "\(retain)(cast(ptr))\n" + indentation +
         "}\n\n" + indentation +
         "deinit {\n" + indentation + indentation +
             "\(release)(cast(ptr))\n" + indentation +
         "}\n\n")) + (hasParent ? "" : (indentation +
-        "public convenience init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + indentation + indentation +
+        "public convenience init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
             "self.init(UnsafeMutablePointer<\(ctype)>(cPointer))\n" + indentation +
         "}\n\n" + indentation +
-//        "public convenience init<T>(cPointer: UnsafePointer<T>) {\n" + indentation + indentation +
-//        "    self.init(UnsafeMutablePointer<\(ctype)>(cPointer))\n" + indentation +
-//        "}\n\n" + indentation +
-        "public convenience init(opaquePointer: OpaquePointer) {\n" + indentation + indentation +
+        "public convenience init(opaquePointer: OpaquePointer) {\n" + doubleIndentation +
             "self.init(UnsafeMutablePointer<\(ctype)>(opaquePointer))\n" + indentation +
         "}\n\n")) +
         constructors.map(ccode).joined(separator: "\n") + "\n" +
         factories.map(fcode).joined(separator: "\n") + "\n" +
     "}\n\n" +
     (noProperties ? "// MARK: - no \(classType) properties\n" : "public enum \(classType)PropertyName: String, PropertyNameProtocol {\n") +
+//        "public typealias Class = \(protocolName)\n") +
         properties.map(scode).joined(separator: "\n") + "\n" +
-    (noProperties ? "" : "}\n") +
+    (noProperties ? "" : ("}\n\nextension \(protocolName) {\n" + indentation +
+        "func bind<Q: PropertyNameProtocol, T: ObjectProtocol>(property source_property: \(classType)PropertyName, to target: T, _ target_property: Q, flags f: BindingFlags = .default_, transformFrom transform_from: ValueTransformer = { $0.transform(destValue: $1) }, transformTo transform_to: ValueTransformer = { $0.transform(destValue: $1) }) -> BindingRef! {\n" + doubleIndentation +
+            "func _bind(_ source: UnsafePointer<gchar>, to t: T, _ target_property: UnsafePointer<gchar>, flags f: BindingFlags = .default_, holder: BindingClosureHolder, transformFrom transform_from: @convention(c) (gpointer, gpointer, gpointer, gpointer) -> gboolean, transformTo transform_to: @convention(c) (gpointer, gpointer, gpointer, gpointer) -> gboolean) -> BindingRef! {\n" + tripleIndentation +
+                "let opaqueHolder = OpaquePointer(bitPattern: Unmanaged.passRetained(holder))\n" + tripleIndentation +
+                "let from = unsafeBitCast(transform_from, to: BindingTransformFunc.self)\n" + tripleIndentation +
+                "let to   = unsafeBitCast(transform_to,   to: BindingTransformFunc.self)\n" + tripleIndentation +
+                "let rv = self.bindPropertyFull(sourceProperty: source, target: t, targetProperty: target_property, flags: f, transformTo: to, transformFrom: from, userData: opaqueHolder) {\n" + tripleIndentation + indentation +
+                    "if let swift = OpaquePointer($0) {\n" + tripleIndentation + doubleIndentation +
+                        "let holder = Unmanaged<BindingClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
+                        "holder.release()\n" + tripleIndentation + indentation +
+                    "}\n" + tripleIndentation +
+                "}\n" + tripleIndentation +
+                "return rv.map { BindingRef($0) }\n" + doubleIndentation +
+            "}\n\n" + doubleIndentation +
+            "let rv = _bind(source_property.name, to: target, target_property.name, flags: f, holder: BindingClosureHolder(transform_from, transform_to), transformFrom: {\n" + tripleIndentation +
+                "let ptr = OpaquePointer($3)\n" + tripleIndentation +
+                "let holder = Unmanaged<BindingClosureHolder>.fromOpaque(ptr).takeUnretainedValue()\n" + tripleIndentation +
+                "return holder.transform_from(ValueRef(cPointer: $1), ValueRef(cPointer: $2)) ? 1 : 0\n" + doubleIndentation +
+        "}) {\n" + tripleIndentation +
+            "let ptr = OpaquePointer($3)\n" + tripleIndentation +
+            "let holder = Unmanaged<BindingClosureHolder>.fromOpaque(ptr).takeUnretainedValue()\n" + tripleIndentation +
+            "return holder.transform_to(ValueRef(cPointer: $1), ValueRef(cPointer: $2)) ? 1 : 0\n" + doubleIndentation +
+        "}\n" + doubleIndentation +
+        "return rv\n" + indentation +
+    "}\n}\n\n")) +
     (noSignals ? "// MARK: - no signals\n" : "public enum \(classType)SignalName: String, SignalNameProtocol {\n") +
+//        "public typealias Class = \(protocolName)\n") +
         signals.map(scode).joined(separator: "\n") + "\n" +
         properties.map(ncode).joined(separator: "\n") + "\n" +
-    (noSignals ? "" : "}\n\n")
+    (noSignals ? "" : ("}\n\nextension \(protocolName) {\n" + indentation +
+        "func connect(signal kind: \(classType)SignalName, flags f: ConnectFlags = ConnectFlags(0), to handler: SignalHandler) -> CUnsignedLong {\n" + doubleIndentation +
+            "func _connect(signal name: UnsafePointer<gchar>, flags: ConnectFlags, data: SignalHandlerClosureHolder, handler: @convention(c) (gpointer, gpointer) -> Void) -> CUnsignedLong {\n" + tripleIndentation +
+                "let opaqueHolder = OpaquePointer(bitPattern: Unmanaged.passRetained(data))\n" + tripleIndentation +
+                "let callback = unsafeBitCast(handler, to: Callback.self)\n" + tripleIndentation +
+                "let rv = signalConnectData(detailedSignal: name, cHandler: callback, data: opaqueHolder, destroyData: {\n" + tripleIndentation + indentation +
+                    "if let swift = OpaquePointer($0) {\n" + tripleIndentation + doubleIndentation +
+                        "let holder = Unmanaged<SignalHandlerClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
+                        "holder.release()\n" + tripleIndentation + indentation +
+                    "}\n" + tripleIndentation + indentation +
+                    "let _ = $1\n" + tripleIndentation +
+                "}, connectFlags: flags)\n" + tripleIndentation +
+                "return rv\n" + doubleIndentation +
+            "}\n" + doubleIndentation +
+            "let rv = _connect(signal: kind.name, flags: f, data: ClosureHolder(handler)) {\n" + tripleIndentation +
+                "let ptr = OpaquePointer($1)\n" + tripleIndentation +
+                "let holder = Unmanaged<SignalHandlerClosureHolder>.fromOpaque(ptr).takeUnretainedValue()\n" + tripleIndentation +
+                "holder.call()\n" + doubleIndentation +
+            "}\n" + doubleIndentation +
+            "return rv\n" + indentation +
+        "}\n" +
+    "}\n\n"))
     return code
 }
 
