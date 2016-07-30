@@ -139,7 +139,7 @@ public extension GIR.Argument {
 
     /// return whether the receiver is an instance of the given record (class)
     public func isInstanceOf(_ record: GIR.Record?) -> Bool {
-        if let r = record where r.name == type.withoutNameSpace {
+        if let r = record, r.name == type.withoutNameSpace {
             return true
         } else {
             return false
@@ -208,7 +208,7 @@ extension GetterSetterPair {
                 i = j
                 guard i < e else { break }
                 j = n.index(after: i)
-                if let u = String(n[i..<j])?.unicodeScalars.first where u.isASCII {
+                if let u = String(n[i..<j])?.unicodeScalars.first, u.isASCII {
                     let c = Int32(u.value)
                     if islower(c) != 0 {
                         let upper = Character(UnicodeScalar(UInt32(toupper(c))))
@@ -246,10 +246,10 @@ public func getterSetterPairs(for allMethods: [GIR.Method]) -> [GetterSetterPair
     while let a = b {
         b = i.next()
         if a.isGetter {
-            guard let s = b where s.isSetterFor(getter: a.name) else { pairs.append(GetterSetterPair(getter: a, setter: nil)) ; continue }
+            guard let s = b, s.isSetterFor(getter: a.name) else { pairs.append(GetterSetterPair(getter: a, setter: nil)) ; continue }
             pairs.append(GetterSetterPair(getter: a, setter: s))
         } else {    // isSetter
-            guard let g = b where g.isGetterFor(setter: a.name) else { continue }
+            guard let g = b, g.isGetterFor(setter: a.name) else { continue }
             pairs.append(GetterSetterPair(getter: g, setter: a))
         }
         b = i.next()
@@ -468,7 +468,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record) -> (
         } else {
             let setter = pair.setter
             guard let args = setter?.args.filter({ !$0.isInstanceOf(record) }),
-                        at = args.first where args.count == 1 else {
+                  let at = args.first, args.count == 1 else {
                 return indentation + "// var \(name) is unavailable because it does not have a valid getter or setter\n"
             }
             type = at.argumentType
@@ -517,7 +517,7 @@ public func convenienceConstructorCode(_ typeName: String, indentation: String, 
             let rawUTF = rawName.utf16
             let firstArgName = method.args.first?.name
             let nameWithoutPostFix: String
-            if let f = firstArgName where rawUTF.count > f.utf16.count + 1 && rawName.hasSuffix(f) {
+            if let f = firstArgName, rawUTF.count > f.utf16.count + 1 && rawName.hasSuffix(f) {
                 let truncated = rawUTF[rawUTF.startIndex..<rawUTF.index(rawUTF.endIndex, offsetBy: -f.utf16.count)]
                 if truncated.last == _U {
                     nameWithoutPostFix = String(rawUTF[rawUTF.startIndex..<rawUTF.index(rawUTF.endIndex, offsetBy: -(f.utf16.count+1))])

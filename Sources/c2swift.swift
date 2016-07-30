@@ -19,7 +19,7 @@
 
             var pi = p.makeIterator()
             var si = s.makeIterator()
-            while let p = pi.next(), c = si.next() {
+            while let p = pi.next(), let c = si.next() {
                 guard p == c else { return false }
             }
             return true
@@ -33,7 +33,7 @@
 
             var si = u.reversed().makeIterator()
             var ci = v.reversed().makeIterator()
-            while let s = si.next(), c = ci.next() {
+            while let s = si.next(), let c = ci.next() {
                 guard s == c else { return false }
             }
             return true
@@ -90,7 +90,7 @@ public func ==(lhs: String.UTF16View, rhs: String.UTF16View) -> Bool {
     guard lhs.count == rhs.count else { return false }
     var li = lhs.makeIterator()
     var ri = rhs.makeIterator()
-    while let l = li.next(), r = ri.next() {
+    while let l = li.next(), let r = ri.next() {
         guard l == r else { return false }
     }
     return true

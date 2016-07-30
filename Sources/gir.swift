@@ -727,7 +727,8 @@ extension GIR {
                 context = context.push(node: $0, ["alias": {
                     context = context.push(node: $0, ["type": {
                         if let type  = $0.node.attribute(named: "name"),
-                           let alias = context.parentNode.node.attribute(named: "name") where !alias.isEmpty && !type.isEmpty {
+                           let alias = context.parentNode.node.attribute(named: "name"),
+                              !alias.isEmpty && !type.isEmpty {
                             context.outputs = ["public typealias \(alias) = \(type)"]
                         } else {
                             context.outputs = ["// error alias \($0.node.attribute(named: "name")) = \(context.parentNode.node.attribute(named: "name"))"]
@@ -737,12 +738,13 @@ extension GIR {
                     return s
                 }, "function": {
                     let s: String
-                    if let name = $0.node.attribute(named: "name") where !name.isEmpty {
+                    if let name = $0.node.attribute(named: "name"), !name.isEmpty {
                         s = "func \(name)("
                     } else { s = "// empty function " }
                     context = context.push(node: $0, ["type": {
                         if let type  = $0.node.attribute(named: "name"),
-                            let alias = context.parentNode.node.attribute(named: "name") where !alias.isEmpty && !type.isEmpty {
+                            let alias = context.parentNode.node.attribute(named: "name"),
+                               !alias.isEmpty && !type.isEmpty {
                             context.outputs = ["public typealias \(alias) = \(type)"]
                         } else {
                             context.outputs = ["// error alias \($0.node.attribute(named: "name")) = \(context.parentNode.node.attribute(named: "name"))"]

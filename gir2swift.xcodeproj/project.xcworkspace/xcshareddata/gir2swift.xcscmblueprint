@@ -7,9 +7,9 @@
     "FAF7591728FEC6EA4F130110608A8C3D19AB4BD1" : 0,
     "1541279FAFAA13E9BCED5D673FCE28B5C1E132AE" : 0
   },
-  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "EAED9D85-199E-4029-B3D1-B94CA4B075B3",
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "D48BA225-2909-4250-9D1D-60DEFD99EB3D",
   "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
-    "FAF7591728FEC6EA4F130110608A8C3D19AB4BD1" : "gir2swift\/Packages\/SwiftLibXML-1.0.4\/",
+    "FAF7591728FEC6EA4F130110608A8C3D19AB4BD1" : "gir2swift\/Packages\/SwiftLibXML-1.1.0\/",
     "1541279FAFAA13E9BCED5D673FCE28B5C1E132AE" : "gir2swift\/"
   },
   "DVTSourceControlWorkspaceBlueprintNameKey" : "gir2swift",

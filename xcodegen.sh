@@ -8,6 +8,7 @@
 gtk=`echo Packages/Gtk-3*/Sources/Gtk-3.0.swift`
 [ -e $gtk ] || ./generate-wrapper.sh
 ./package.sh generate-xcodeproj "$@"
+[ ! -e ${Mod}.xcodeproj/Configs ] ||					   \
 ( cd ${Mod}.xcodeproj/Configs						&& \
   mv Project.xcconfig Project.xcconfig.in				&& \
   sed -e 's/ -I ?[^ ]*//g' < Project.xcconfig.in > Project.xcconfig	&& \
