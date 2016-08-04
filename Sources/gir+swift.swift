@@ -850,8 +850,8 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
                 "let from = unsafeBitCast(transform_from, to: BindingTransformFunc.self)\n" + tripleIndentation +
                 "let to   = unsafeBitCast(transform_to,   to: BindingTransformFunc.self)\n" + tripleIndentation +
                 "let rv = g_object_bind_property_full(cast(ptr), source, cast(t.ptr), target_property, f, to, from, cast(opaqueHolder)) {\n" + tripleIndentation + indentation +
-                    "if let swift = OpaquePointer($0) {\n" + tripleIndentation + doubleIndentation +
-                        "let holder = Unmanaged<SignalHandlerClosureHolder>.fromOpaque(UnsafePointer<Void>(swift))\n" + tripleIndentation + doubleIndentation +
+                    "if let swift = UnsafePointer<Void>($0) {\n" + tripleIndentation + doubleIndentation +
+                        "let holder = Unmanaged<SignalHandlerClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
                         "holder.release()\n" + tripleIndentation + indentation +
                     "}\n" + tripleIndentation +
                 "}\n" + tripleIndentation +
@@ -878,8 +878,8 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
                 "let opaqueHolder = OpaquePointer(Unmanaged.passRetained(data).toOpaque())\n" + tripleIndentation +
                 "let callback = unsafeBitCast(handler, to: Callback.self)\n" + tripleIndentation +
                 "let rv = signalConnectData(detailedSignal: name, cHandler: callback, data: opaqueHolder, destroyData: {\n" + tripleIndentation + indentation +
-                    "if let swift = OpaquePointer($0) {\n" + tripleIndentation + doubleIndentation +
-                        "let holder = Unmanaged<SignalHandlerClosureHolder>.fromOpaque(UnsafePointer<Void>(swift))\n" + tripleIndentation + doubleIndentation +
+                    "if let swift = UnsafePointer<Void>($0) {\n" + tripleIndentation + doubleIndentation +
+                        "let holder = Unmanaged<SignalHandlerClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
                         "holder.release()\n" + tripleIndentation + indentation +
                     "}\n" + tripleIndentation + indentation +
                     "let _ = $1\n" + tripleIndentation +
@@ -887,7 +887,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
                 "return rv\n" + doubleIndentation +
             "}\n" + doubleIndentation +
             "let rv = _connect(signal: kind.name, flags: f, data: ClosureHolder(handler)) {\n" + tripleIndentation +
-                "let ptr = OpaquePointer($1)\n" + tripleIndentation +
+                "let ptr = UnsafePointer<Void>($1)\n" + tripleIndentation +
                 "let holder = Unmanaged<SignalHandlerClosureHolder>.fromOpaque(ptr).takeUnretainedValue()\n" + tripleIndentation +
                 "holder.call()\n" + doubleIndentation +
             "}\n" + doubleIndentation +
