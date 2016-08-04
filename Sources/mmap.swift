@@ -28,7 +28,8 @@ func with_mmap(_ file: String, protection: Int32 = PROT_READ, flags: Int32 = MAP
         perror("Cannot get length of '\(file)'")
         return
     }
-    guard let mem = mmap(nil, len, protection, flags, fn, 0) where mem != UnsafeMutablePointer(bitPattern: -1) else {
+    guard let mem = mmap(nil, len, protection, flags, fn, 0),
+              mem != UnsafeMutablePointer(bitPattern: -1) else {
         perror("Cannot mmap \(len) bytes for '\(file)'")
         return
     }
