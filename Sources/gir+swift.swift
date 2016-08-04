@@ -849,13 +849,13 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
                 "let opaqueHolder = OpaquePointer(Unmanaged.passRetained(holder).toOpaque())\n" + tripleIndentation +
                 "let from = unsafeBitCast(transform_from, to: BindingTransformFunc.self)\n" + tripleIndentation +
                 "let to   = unsafeBitCast(transform_to,   to: BindingTransformFunc.self)\n" + tripleIndentation +
-                "let rv = ObjectRef(constPointer: ptr).bindPropertyFull(sourceProperty: source, target: t, targetProperty: target_property, flags: f, transformTo: to, transformFrom: from, userData: opaqueHolder) {\n" + tripleIndentation + indentation +
+                "let rv = ObjectRef(cast(ptr)).bindPropertyFull(sourceProperty: source, target: t, targetProperty: target_property, flags: f, transformTo: to, transformFrom: from, userData: opaqueHolder) {\n" + tripleIndentation + indentation +
                     "if let swift = UnsafePointer<Void>($0) {\n" + tripleIndentation + doubleIndentation +
                         "let holder = Unmanaged<SignalHandlerClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
                         "holder.release()\n" + tripleIndentation + indentation +
                     "}\n" + tripleIndentation +
                 "}\n" + tripleIndentation +
-                "return rv.map { BindingRef(opaquePointer: $0) }\n" + doubleIndentation +
+                "return rv.map { BindingRef(cast($0)) }\n" + doubleIndentation +
             "}\n\n" + doubleIndentation +
             "let rv = _bind(source_property.name, to: target, target_property.name, flags: f, holder: BindingClosureHolder(transform_from, transform_to), transformFrom: {\n" + tripleIndentation +
                 "let ptr = UnsafePointer<Void>($3)\n" + tripleIndentation +
@@ -877,7 +877,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
             "func _connect(signal name: UnsafePointer<gchar>, flags: ConnectFlags, data: SignalHandlerClosureHolder, handler: @convention(c) (gpointer, gpointer) -> Void) -> CUnsignedLong {\n" + tripleIndentation +
                 "let opaqueHolder = OpaquePointer(Unmanaged.passRetained(data).toOpaque())\n" + tripleIndentation +
                 "let callback = unsafeBitCast(handler, to: Callback.self)\n" + tripleIndentation +
-                "let rv = ObjectRef(constPointer: ptr).signalConnectData(detailedSignal: name, cHandler: callback, data: opaqueHolder, destroyData: {\n" + tripleIndentation + indentation +
+                "let rv = ObjectRef(cast(ptr)).signalConnectData(detailedSignal: name, cHandler: callback, data: opaqueHolder, destroyData: {\n" + tripleIndentation + indentation +
                     "if let swift = UnsafePointer<Void>($0) {\n" + tripleIndentation + doubleIndentation +
                         "let holder = Unmanaged<SignalHandlerClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
                         "holder.release()\n" + tripleIndentation + indentation +
