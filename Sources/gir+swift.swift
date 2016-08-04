@@ -846,24 +846,24 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     (noProperties ? "" : ("}\n\npublic extension \(protocolName) {\n" + indentation +
         "public func bind<Q: PropertyNameProtocol, T: ObjectProtocol>(property source_property: \(classType)PropertyName, to target: T, _ target_property: Q, flags f: BindingFlags = .default_, transformFrom transform_from: ValueTransformer = { $0.transform(destValue: $1) }, transformTo transform_to: ValueTransformer = { $0.transform(destValue: $1) }) -> BindingRef! {\n" + doubleIndentation +
             "func _bind(_ source: UnsafePointer<gchar>, to t: T, _ target_property: UnsafePointer<gchar>, flags f: BindingFlags = .default_, holder: BindingClosureHolder, transformFrom transform_from: @convention(c) (gpointer, gpointer, gpointer, gpointer) -> gboolean, transformTo transform_to: @convention(c) (gpointer, gpointer, gpointer, gpointer) -> gboolean) -> BindingRef! {\n" + tripleIndentation +
-                "let opaqueHolder = OpaquePointer(bitPattern: Unmanaged.passRetained(holder))\n" + tripleIndentation +
+                "let opaqueHolder = OpaquePointer(Unmanaged.passRetained(holder).toOpaque())\n" + tripleIndentation +
                 "let from = unsafeBitCast(transform_from, to: BindingTransformFunc.self)\n" + tripleIndentation +
                 "let to   = unsafeBitCast(transform_to,   to: BindingTransformFunc.self)\n" + tripleIndentation +
                 "let rv = g_object_bind_property_full(cast(ptr), source, cast(t.ptr), target_property, f, to, from, cast(opaqueHolder)) {\n" + tripleIndentation + indentation +
                     "if let swift = OpaquePointer($0) {\n" + tripleIndentation + doubleIndentation +
-                        "let holder = Unmanaged<BindingClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
+                        "let holder = Unmanaged<SignalHandlerClosureHolder>.fromOpaque(UnsafePointer<Void>(swift))\n" + tripleIndentation + doubleIndentation +
                         "holder.release()\n" + tripleIndentation + indentation +
                     "}\n" + tripleIndentation +
                 "}\n" + tripleIndentation +
-                "return rv.map { BindingRef($0) }\n" + doubleIndentation +
+                "return rv.map { BindingRef(opaquePointer: $0) }\n" + doubleIndentation +
             "}\n\n" + doubleIndentation +
             "let rv = _bind(source_property.name, to: target, target_property.name, flags: f, holder: BindingClosureHolder(transform_from, transform_to), transformFrom: {\n" + tripleIndentation +
-                "let ptr = OpaquePointer($3)\n" + tripleIndentation +
-                "let holder = Unmanaged<BindingClosureHolder>.fromOpaque(ptr).takeUnretainedValue()\n" + tripleIndentation +
+                "let ptr = UnsafePointer<Void>($3)\n" + tripleIndentation +
+                "let holder = Unmanaged<BindingClosureHolder>.fromOpaque(ptr)\n" + tripleIndentation +
                 "return holder.transform_from(ValueRef(cPointer: $1), ValueRef(cPointer: $2)) ? 1 : 0\n" + doubleIndentation +
         "}) {\n" + tripleIndentation +
-            "let ptr = OpaquePointer($3)\n" + tripleIndentation +
-            "let holder = Unmanaged<BindingClosureHolder>.fromOpaque(ptr).takeUnretainedValue()\n" + tripleIndentation +
+            "let ptr = UnsafePointer<Void>($3)\n" + tripleIndentation +
+            "let holder = Unmanaged<BindingClosureHolder>.fromOpaque(ptr)\n" + tripleIndentation +
             "return holder.transform_to(ValueRef(cPointer: $1), ValueRef(cPointer: $2)) ? 1 : 0\n" + doubleIndentation +
         "}\n" + doubleIndentation +
         "return rv\n" + indentation +
