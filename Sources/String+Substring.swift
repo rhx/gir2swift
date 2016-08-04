@@ -65,6 +65,17 @@ extension String {
         return String(Character(UnicodeScalar(upper)))+String(tail)
     }
 
+    /// return the de-capidalised (lower-case first character) name of the receiver
+    public var deCapitalised: String {
+        guard let u = unicodeScalars.first, u.isASCII else { return self }
+        let c = Int32(u.value)
+        guard isupper(c) != 0 else { return self }
+        let lower = UInt16(tolower(c))
+        let utf = utf16
+        let tail = utf[utf.index(after: utf.startIndex)..<utf.endIndex]
+        return String(Character(UnicodeScalar(lower)))+String(tail)
+    }
+
     /// convert a string with separators to camel case
     func camelise(_ isSeparator: (UInt16) -> Bool) -> String {
         let u = self.utf16
@@ -107,6 +118,6 @@ extension String {
 
     /// convert a signal name with '-' to camel case
     public var camelSignal: String {
-        return camelise { $0 == minus || $0 == underscore }.capitalised
+        return camelise { $0 == minus || $0 == underscore }.deCapitalised
     }
 }
