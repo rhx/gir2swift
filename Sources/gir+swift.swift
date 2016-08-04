@@ -727,8 +727,14 @@ public func convertSetterArgumentToSwiftFor(_ record: GIR.Record?) -> (GIR.Argum
 }
 
 
-/// Swift code for signal names
-public func signalNameCode(indentation indent: String, prefixes: (String, String) = ("", ""), convertName: (String) -> String = { $0.camelSignal }) -> (GIR.CType) -> String {
+/// Swift code for signal names without prefixes
+public func signalNameCode(indentation indent: String, convertName: (String) -> String = { $0.camelSignal }) -> (GIR.CType) -> String {
+    return signalNameCode(indentation: indent, prefixes: ("", ""), convertName: convertName)
+}
+
+
+/// Swift code for signal names with prefixes
+public func signalNameCode(indentation indent: String, prefixes: (String, String), convertName: (String) -> String = { $0.camelSignalComponent }) -> (GIR.CType) -> String {
     return { signal in
         let name = signal.name
         let declaration = indent + "case \(prefixes.0)\(convertName(name).swift) = \"\(prefixes.1)\(name)\""
@@ -786,7 +792,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let hasParent = parentType != nil
     let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
     let scode = signalNameCode(indentation: indentation)
-    let ncode = signalNameCode(indentation: indentation, prefixes: ("Notify", "notify::"))
+    let ncode = signalNameCode(indentation: indentation, prefixes: ("notify", "notify::"))
     let ccode = convenienceConstructorCode(classType, indentation: indentation, convenience: "convenience")(e)
     let fcode = convenienceConstructorCode(classType, indentation: indentation, factory: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }

@@ -120,4 +120,9 @@ extension String {
     public var camelSignal: String {
         return camelise { $0 == minus || $0 == underscore }.deCapitalised
     }
+
+    /// convert a signal name component with '-' to camel case
+    public var camelSignalComponent: String {
+        return camelise { $0 == minus || $0 == underscore }.capitalised
+    }
 }
