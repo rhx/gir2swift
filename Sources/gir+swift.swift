@@ -849,7 +849,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
                 "let opaqueHolder = OpaquePointer(bitPattern: Unmanaged.passRetained(holder))\n" + tripleIndentation +
                 "let from = unsafeBitCast(transform_from, to: BindingTransformFunc.self)\n" + tripleIndentation +
                 "let to   = unsafeBitCast(transform_to,   to: BindingTransformFunc.self)\n" + tripleIndentation +
-                "let rv = self.bindPropertyFull(sourceProperty: source, target: t, targetProperty: target_property, flags: f, transformTo: to, transformFrom: from, userData: opaqueHolder) {\n" + tripleIndentation + indentation +
+                "let rv = g_object_bind_property_full(cast(ptr), source, cast(t.ptr), target_property, f, to, from, cast(opaqueHolder)) {\n" + tripleIndentation + indentation +
                     "if let swift = OpaquePointer($0) {\n" + tripleIndentation + doubleIndentation +
                         "let holder = Unmanaged<BindingClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
                         "holder.release()\n" + tripleIndentation + indentation +
