@@ -860,11 +860,11 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
             "let rv = _bind(source_property.name, to: target, target_property.name, flags: f, holder: BindingClosureHolder(transform_from, transform_to), transformFrom: {\n" + tripleIndentation +
                 "let ptr = UnsafePointer<Void>($3)\n" + tripleIndentation +
                 "let holder = Unmanaged<BindingClosureHolder>.fromOpaque(ptr)\n" + tripleIndentation +
-                "return holder.transform_from(ValueRef(cPointer: $1), ValueRef(cPointer: $2)) ? 1 : 0\n" + doubleIndentation +
+                "return holder.takeUnretainedValue().transform_from(ValueRef(cPointer: $1), ValueRef(cPointer: $2)) ? 1 : 0\n" + doubleIndentation +
         "}) {\n" + tripleIndentation +
             "let ptr = UnsafePointer<Void>($3)\n" + tripleIndentation +
             "let holder = Unmanaged<BindingClosureHolder>.fromOpaque(ptr)\n" + tripleIndentation +
-            "return holder.transform_to(ValueRef(cPointer: $1), ValueRef(cPointer: $2)) ? 1 : 0\n" + doubleIndentation +
+            "return holder.takeUnretainedValue().transform_to(ValueRef(cPointer: $1), ValueRef(cPointer: $2)) ? 1 : 0\n" + doubleIndentation +
         "}\n" + doubleIndentation +
         "return rv\n" + indentation +
     "}\n}\n\n")) +
