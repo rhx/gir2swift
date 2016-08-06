@@ -849,7 +849,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
                 "let opaqueHolder = OpaquePointer(Unmanaged.passRetained(holder).toOpaque())\n" + tripleIndentation +
                 "let from = unsafeBitCast(transform_from, to: BindingTransformFunc.self)\n" + tripleIndentation +
                 "let to   = unsafeBitCast(transform_to,   to: BindingTransformFunc.self)\n" + tripleIndentation +
-                "let rv = ObjectRef(cast(ptr)).bindPropertyFull(sourceProperty: source, target: t, targetProperty: target_property, flags: f, transformTo: to, transformFrom: from, userData: opaqueHolder) {\n" + tripleIndentation + indentation +
+                "let rv = GObject.ObjectRef(cast(ptr)).bindPropertyFull(sourceProperty: source, target: t, targetProperty: target_property, flags: f, transformTo: to, transformFrom: from, userData: opaqueHolder) {\n" + tripleIndentation + indentation +
                     "if let swift = UnsafePointer<Void>($0) {\n" + tripleIndentation + doubleIndentation +
                         "let holder = Unmanaged<GObject.SignalHandlerClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
                         "holder.release()\n" + tripleIndentation + indentation +
@@ -877,7 +877,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
             "func _connect(signal name: UnsafePointer<gchar>, flags: ConnectFlags, data: GObject.SignalHandlerClosureHolder, handler: @convention(c) (gpointer, gpointer) -> Void) -> CUnsignedLong {\n" + tripleIndentation +
                 "let opaqueHolder = OpaquePointer(Unmanaged.passRetained(data).toOpaque())\n" + tripleIndentation +
                 "let callback = unsafeBitCast(handler, to: GObject.Callback.self)\n" + tripleIndentation +
-                "let rv = ObjectRef(cast(ptr)).signalConnectData(detailedSignal: name, cHandler: callback, data: opaqueHolder, destroyData: {\n" + tripleIndentation + indentation +
+                "let rv = GObject.ObjectRef(cast(ptr)).signalConnectData(detailedSignal: name, cHandler: callback, data: opaqueHolder, destroyData: {\n" + tripleIndentation + indentation +
                     "if let swift = UnsafePointer<Void>($0) {\n" + tripleIndentation + doubleIndentation +
                         "let holder = Unmanaged<GObject.SignalHandlerClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
                         "holder.release()\n" + tripleIndentation + indentation +
