@@ -7,4 +7,5 @@ OTHER_LDFLAGS = -L/usr/local/Cellar/libxml2/2.9.4/lib -lxml2
 OTHER_SWIFT_FLAGS = -DXcode
 COMBINE_HIDPI_IMAGES = YES
 USE_HEADERMAP = NO
+SWIFT_VERSION = 3.0
 HEADER_SEARCH_PATHS = /usr/local/Cellar/libxml2/2.9.4/include/libxml2 
