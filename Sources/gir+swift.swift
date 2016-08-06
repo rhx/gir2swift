@@ -876,7 +876,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "public func connect(signal kind: \(classType)SignalName, flags f: ConnectFlags = ConnectFlags(0), to handler: GObject.SignalHandler) -> CUnsignedLong {\n" + doubleIndentation +
             "func _connect(signal name: UnsafePointer<gchar>, flags: ConnectFlags, data: GObject.SignalHandlerClosureHolder, handler: @convention(c) (gpointer, gpointer) -> Void) -> CUnsignedLong {\n" + tripleIndentation +
                 "let opaqueHolder = OpaquePointer(Unmanaged.passRetained(data).toOpaque())\n" + tripleIndentation +
-                "let callback = unsafeBitCast(handler, to: Callback.self)\n" + tripleIndentation +
+                "let callback = unsafeBitCast(handler, to: GObject.Callback.self)\n" + tripleIndentation +
                 "let rv = ObjectRef(cast(ptr)).signalConnectData(detailedSignal: name, cHandler: callback, data: opaqueHolder, destroyData: {\n" + tripleIndentation + indentation +
                     "if let swift = UnsafePointer<Void>($0) {\n" + tripleIndentation + doubleIndentation +
                         "let holder = Unmanaged<GObject.SignalHandlerClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
