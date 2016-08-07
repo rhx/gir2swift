@@ -333,7 +333,7 @@ public func swiftCode(constant: GIR.Constant) -> String {
 }
 
 /// Magic error type for throwing
-let errorProtocol = "ErrorProtocol"
+let errorProtocol = "Error"
 
 /// error type enum
 let errorType = "ErrorType"
