@@ -777,7 +777,7 @@ extension XMLElement {
     ///
     public func sortedSubAttributesFor(attr: String, splitBy char: Character = ",", orderedBy: (String, String) -> Bool = { $0.characters.count > $1.characters.count || ($0.characters.count == $1.characters.count && $0 < $1)}) -> [String] {
         guard let attrs = ((attribute(named: attr)?.characters)?.split(separator: char))?.map(String.init) else { return [] }
-        return attrs.sorted(isOrderedBefore: orderedBy)
+        return attrs.sorted(by: orderedBy)
     }
 
     ///
