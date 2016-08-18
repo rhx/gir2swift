@@ -18,9 +18,10 @@
 /// with an optional argument
 ///
 func get_opt(_ options: String) -> (Character, String?)? {
-    let ch = getopt(Process.argc, Process.unsafeArgv, options)
+    let ch = getopt(CommandLine.argc, CommandLine.unsafeArgv, options)
     guard ch != -1 else { return nil }
-    let option = Character(UnicodeScalar(UInt32(ch)))
+    guard let u = UnicodeScalar(UInt32(ch)) else { return nil }
+    let option = Character(u)
     let argument: String? = optarg != nil ? String(cString: optarg) : nil
     return (option, argument)
 }

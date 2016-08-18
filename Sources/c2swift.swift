@@ -77,7 +77,7 @@ private let statementKeywords: Set = ["break", "case", "continue", "default", "d
 private let expressionKeywords: Set = ["as", "catch", "dynamicType", "false", "is", "nil", "rethrows", "super", "self", "Self", "throw", "throws", "true", "try", "#column", "#file", "#function", "#line."]
 private let specificKeywords: Set = ["associativity", "convenience", "dynamic", "didSet", "final", "infix", "indirect", "lazy", "left", "mutating", "none", "nonmutating", "optional", "override", "postfix", "precedence", "prefix", "Protocol", "required", "right", "Type", "unowned", "weak", "willSet"]
 
-infix operator ∪ { associativity left precedence 140 }
+infix operator ∪: LogicalDisjunctionPrecedence
 
 func ∪<T>(left: Set<T>, right: Set<T>) -> Set<T> {
     return left.union(right)
@@ -114,7 +114,7 @@ extension String {
             let i = u.index(s, offsetBy: l)
             let j = u.index(i, offsetBy: k)
             if u[i..<j] == utf16View {
-                let str = String(u[s..<i]) + String(u[j..<e])
+                let str = String(describing: u[s..<i]) + String(describing: u[j..<e])
                 return str.remove(subString, utf16View)
             }
         }
@@ -141,7 +141,7 @@ extension String {
     func trimmingCharacters(in: Set<UInt16>) -> String {
         let u = utf16
         let s = u.takeFrom(indexWhere: { !wsnl.contains($0) }).trimWhile { wsnl.contains($0) }
-        return String(s)
+        return String(describing: s)
     }
 
     /// return the string trimmed of white space at either end
@@ -160,8 +160,9 @@ extension String {
 
     /// Return a string that starts with an alpha or underscore character
     var swiftIdentifier: String {
-        guard let f = utf16.first else { return self }
-        guard isalpha(Int32(f)) != 0 || Character(UnicodeScalar(f)) == "_" else { return "_" + self }
+        guard let f = utf16.first,
+              let u = UnicodeScalar(f) else { return self }
+        guard isalpha(Int32(f)) != 0 || Character(u) == "_" else { return "_" + self }
         return self
     }
 

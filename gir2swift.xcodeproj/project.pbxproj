@@ -1,404 +1,401 @@
 // !$*UTF8*$!
 {
-	archiveVersion = 1;
-	classes = {
-	};
-	objectVersion = 46;
-	objects = {
-
-/* Begin PBXBuildFile section */
-		_LinkFileRef_SwiftLibXML_via_gir2swift /* SwiftLibXML.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "_____Product_SwiftLibXML" /* SwiftLibXML.framework */; };
-		"__src_cc_ref_Packages/SwiftLibXML-1.1.0/Sources/EmptySequence.swift" /* EmptySequence.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/SwiftLibXML-1.1.0/Sources/EmptySequence.swift" /* EmptySequence.swift */; };
-		"__src_cc_ref_Packages/SwiftLibXML-1.1.0/Sources/XMLAttribute.swift" /* XMLAttribute.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/SwiftLibXML-1.1.0/Sources/XMLAttribute.swift" /* XMLAttribute.swift */; };
-		"__src_cc_ref_Packages/SwiftLibXML-1.1.0/Sources/XMLDocument.swift" /* XMLDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/SwiftLibXML-1.1.0/Sources/XMLDocument.swift" /* XMLDocument.swift */; };
-		"__src_cc_ref_Packages/SwiftLibXML-1.1.0/Sources/XMLElement.swift" /* XMLElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/SwiftLibXML-1.1.0/Sources/XMLElement.swift" /* XMLElement.swift */; };
-		"__src_cc_ref_Packages/SwiftLibXML-1.1.0/Sources/XMLNameSpace.swift" /* XMLNameSpace.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/SwiftLibXML-1.1.0/Sources/XMLNameSpace.swift" /* XMLNameSpace.swift */; };
-		"__src_cc_ref_Packages/SwiftLibXML-1.1.0/Sources/XMLPath.swift" /* XMLPath.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/SwiftLibXML-1.1.0/Sources/XMLPath.swift" /* XMLPath.swift */; };
-		"__src_cc_ref_Sources/Collection+Utilities.swift" /* Collection+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Sources/Collection+Utilities.swift" /* Collection+Utilities.swift */; };
-		__src_cc_ref_Sources/FileLen.swift /* FileLen.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/FileLen.swift /* FileLen.swift */; };
-		"__src_cc_ref_Sources/Sequence+Utilities.swift" /* Sequence+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Sources/Sequence+Utilities.swift" /* Sequence+Utilities.swift */; };
-		"__src_cc_ref_Sources/String+ContentsOfFile.swift" /* String+ContentsOfFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Sources/String+ContentsOfFile.swift" /* String+ContentsOfFile.swift */; };
-		"__src_cc_ref_Sources/String+Lines.swift" /* String+Lines.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Sources/String+Lines.swift" /* String+Lines.swift */; };
-		"__src_cc_ref_Sources/String+Substring.swift" /* String+Substring.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Sources/String+Substring.swift" /* String+Substring.swift */; };
-		__src_cc_ref_Sources/basename.swift /* basename.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/basename.swift /* basename.swift */; };
-		__src_cc_ref_Sources/c2swift.swift /* c2swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/c2swift.swift /* c2swift.swift */; };
-		__src_cc_ref_Sources/cstring.swift /* cstring.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/cstring.swift /* cstring.swift */; };
-		__src_cc_ref_Sources/getopt.swift /* getopt.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/getopt.swift /* getopt.swift */; };
-		"__src_cc_ref_Sources/gir+swift.swift" /* gir+swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Sources/gir+swift.swift" /* gir+swift.swift */; };
-		__src_cc_ref_Sources/gir.swift /* gir.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/gir.swift /* gir.swift */; };
-		__src_cc_ref_Sources/main.swift /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/main.swift /* main.swift */; };
-		__src_cc_ref_Sources/mmap.swift /* mmap.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/mmap.swift /* mmap.swift */; };
-/* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		F1D12B2F1D56CFE6006E7E11 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = __RootObject_ /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = "______Target_SwiftLibXML";
-			remoteInfo = SwiftLibXML;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXFileReference section */
-		__PBXFileRef_Package.swift /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
-		"__PBXFileRef_Packages/SwiftLibXML-1.1.0/Sources/EmptySequence.swift" /* EmptySequence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptySequence.swift; sourceTree = "<group>"; };
-		"__PBXFileRef_Packages/SwiftLibXML-1.1.0/Sources/XMLAttribute.swift" /* XMLAttribute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XMLAttribute.swift; sourceTree = "<group>"; };
-		"__PBXFileRef_Packages/SwiftLibXML-1.1.0/Sources/XMLDocument.swift" /* XMLDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XMLDocument.swift; sourceTree = "<group>"; };
-		"__PBXFileRef_Packages/SwiftLibXML-1.1.0/Sources/XMLElement.swift" /* XMLElement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XMLElement.swift; sourceTree = "<group>"; };
-		"__PBXFileRef_Packages/SwiftLibXML-1.1.0/Sources/XMLNameSpace.swift" /* XMLNameSpace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XMLNameSpace.swift; sourceTree = "<group>"; };
-		"__PBXFileRef_Packages/SwiftLibXML-1.1.0/Sources/XMLPath.swift" /* XMLPath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XMLPath.swift; sourceTree = "<group>"; };
-		"__PBXFileRef_Sources/Collection+Utilities.swift" /* Collection+Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Collection+Utilities.swift"; sourceTree = "<group>"; };
-		__PBXFileRef_Sources/FileLen.swift /* FileLen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileLen.swift; sourceTree = "<group>"; };
-		"__PBXFileRef_Sources/Sequence+Utilities.swift" /* Sequence+Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sequence+Utilities.swift"; sourceTree = "<group>"; };
-		"__PBXFileRef_Sources/String+ContentsOfFile.swift" /* String+ContentsOfFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+ContentsOfFile.swift"; sourceTree = "<group>"; };
-		"__PBXFileRef_Sources/String+Lines.swift" /* String+Lines.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Lines.swift"; sourceTree = "<group>"; };
-		"__PBXFileRef_Sources/String+Substring.swift" /* String+Substring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Substring.swift"; sourceTree = "<group>"; };
-		__PBXFileRef_Sources/basename.swift /* basename.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = basename.swift; sourceTree = "<group>"; };
-		__PBXFileRef_Sources/c2swift.swift /* c2swift.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = c2swift.swift; sourceTree = "<group>"; };
-		__PBXFileRef_Sources/cstring.swift /* cstring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = cstring.swift; sourceTree = "<group>"; };
-		__PBXFileRef_Sources/getopt.swift /* getopt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = getopt.swift; sourceTree = "<group>"; };
-		"__PBXFileRef_Sources/gir+swift.swift" /* gir+swift.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "gir+swift.swift"; sourceTree = "<group>"; };
-		__PBXFileRef_Sources/gir.swift /* gir.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = gir.swift; sourceTree = "<group>"; };
-		__PBXFileRef_Sources/main.swift /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		__PBXFileRef_Sources/mmap.swift /* mmap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = mmap.swift; sourceTree = "<group>"; };
-		__PBXFileRef_SwiftLibXML_Info.plist /* gir2swift.xcodeproj/SwiftLibXML_Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = gir2swift.xcodeproj/SwiftLibXML_Info.plist; sourceTree = SOURCE_ROOT; };
-		__PBXFileRef_XML /* XML */ = {isa = PBXFileReference; lastKnownFileType = folder; path = XML; sourceTree = "<group>"; };
-		__PBXFileRef_gir2swift.xcodeproj/Configs/Project.xcconfig /* gir2swift.xcodeproj/Configs/Project.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = gir2swift.xcodeproj/Configs/Project.xcconfig; sourceTree = "<group>"; };
-		"_____Product_SwiftLibXML" /* SwiftLibXML.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = SwiftLibXML.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		"_____Product_gir2swift" /* RelativePath(_impl: Basic.(PathImpl in _F37600050464D58680C1E5753557C388)(string: "gir2swift")) */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; name = "RelativePath(_impl: Basic.(PathImpl in _F37600050464D58680C1E5753557C388)(string: \"gir2swift\"))"; path = gir2swift; sourceTree = BUILT_PRODUCTS_DIR; };
-/* End PBXFileReference section */
-
-/* Begin PBXFrameworksBuildPhase section */
-		"___LinkPhase_SwiftLibXML" /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 0;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		"___LinkPhase_gir2swift" /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 0;
-			files = (
-				_LinkFileRef_SwiftLibXML_via_gir2swift /* SwiftLibXML.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
-
-/* Begin PBXGroup section */
-		Dependencies_ /* Dependencies */ = {
-			isa = PBXGroup;
-			children = (
-				"_______Group_SwiftLibXML" /* SwiftLibXML */,
-			);
-			name = Dependencies;
-			sourceTree = "<group>";
-		};
-		"___RootGroup_" = {
-			isa = PBXGroup;
-			children = (
-				__PBXFileRef_Package.swift /* Package.swift */,
-				"_____Configs_" /* Configs */,
-				"_____Sources_" /* Sources */,
-				__PBXFileRef_XML /* XML */,
-				Dependencies_ /* Dependencies */,
-				"____Products_" /* Products */,
-			);
-			sourceTree = "<group>";
-		};
-		"____Products_" /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				"_____Product_SwiftLibXML" /* SwiftLibXML.framework */,
-				"_____Product_gir2swift" /* RelativePath(_impl: Basic.(PathImpl in _F37600050464D58680C1E5753557C388)(string: "gir2swift")) */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-		"_____Configs_" /* Configs */ = {
-			isa = PBXGroup;
-			children = (
-				__PBXFileRef_gir2swift.xcodeproj/Configs/Project.xcconfig /* gir2swift.xcodeproj/Configs/Project.xcconfig */,
-			);
-			name = Configs;
-			sourceTree = "<group>";
-		};
-		"_____Sources_" /* Sources */ = {
-			isa = PBXGroup;
-			children = (
-				"_______Group_gir2swift" /* gir2swift */,
-			);
-			name = Sources;
-			sourceTree = "<group>";
-		};
-		"_______Group_SwiftLibXML" /* SwiftLibXML */ = {
-			isa = PBXGroup;
-			children = (
-				"__PBXFileRef_Packages/SwiftLibXML-1.1.0/Sources/EmptySequence.swift" /* EmptySequence.swift */,
-				"__PBXFileRef_Packages/SwiftLibXML-1.1.0/Sources/XMLAttribute.swift" /* XMLAttribute.swift */,
-				"__PBXFileRef_Packages/SwiftLibXML-1.1.0/Sources/XMLDocument.swift" /* XMLDocument.swift */,
-				"__PBXFileRef_Packages/SwiftLibXML-1.1.0/Sources/XMLElement.swift" /* XMLElement.swift */,
-				"__PBXFileRef_Packages/SwiftLibXML-1.1.0/Sources/XMLNameSpace.swift" /* XMLNameSpace.swift */,
-				"__PBXFileRef_Packages/SwiftLibXML-1.1.0/Sources/XMLPath.swift" /* XMLPath.swift */,
-				__PBXFileRef_SwiftLibXML_Info.plist /* gir2swift.xcodeproj/SwiftLibXML_Info.plist */,
-			);
-			name = SwiftLibXML;
-			path = "Packages/SwiftLibXML-1.1.0/Sources";
-			sourceTree = "<group>";
-		};
-		"_______Group_gir2swift" /* gir2swift */ = {
-			isa = PBXGroup;
-			children = (
-				__PBXFileRef_Sources/basename.swift /* basename.swift */,
-				__PBXFileRef_Sources/c2swift.swift /* c2swift.swift */,
-				"__PBXFileRef_Sources/Collection+Utilities.swift" /* Collection+Utilities.swift */,
-				__PBXFileRef_Sources/cstring.swift /* cstring.swift */,
-				__PBXFileRef_Sources/FileLen.swift /* FileLen.swift */,
-				__PBXFileRef_Sources/getopt.swift /* getopt.swift */,
-				"__PBXFileRef_Sources/gir+swift.swift" /* gir+swift.swift */,
-				__PBXFileRef_Sources/gir.swift /* gir.swift */,
-				__PBXFileRef_Sources/main.swift /* main.swift */,
-				__PBXFileRef_Sources/mmap.swift /* mmap.swift */,
-				"__PBXFileRef_Sources/Sequence+Utilities.swift" /* Sequence+Utilities.swift */,
-				"__PBXFileRef_Sources/String+ContentsOfFile.swift" /* String+ContentsOfFile.swift */,
-				"__PBXFileRef_Sources/String+Lines.swift" /* String+Lines.swift */,
-				"__PBXFileRef_Sources/String+Substring.swift" /* String+Substring.swift */,
-			);
-			name = gir2swift;
-			path = Sources;
-			sourceTree = "<group>";
-		};
-/* End PBXGroup section */
-
-/* Begin PBXNativeTarget section */
-		"______Target_SwiftLibXML" /* SwiftLibXML */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = "_______Confs_SwiftLibXML" /* Build configuration list for PBXNativeTarget "SwiftLibXML" */;
-			buildPhases = (
-				CompilePhase_SwiftLibXML /* Sources */,
-				"___LinkPhase_SwiftLibXML" /* Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = SwiftLibXML;
-			productName = SwiftLibXML;
-			productReference = "_____Product_SwiftLibXML" /* SwiftLibXML.framework */;
-			productType = "com.apple.product-type.framework";
-		};
-		"______Target_gir2swift" /* gir2swift */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = "_______Confs_gir2swift" /* Build configuration list for PBXNativeTarget "gir2swift" */;
-			buildPhases = (
-				CompilePhase_gir2swift /* Sources */,
-				"___LinkPhase_gir2swift" /* Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				__Dependency_SwiftLibXML /* PBXTargetDependency */,
-			);
-			name = gir2swift;
-			productName = gir2swift;
-			productReference = "_____Product_gir2swift" /* RelativePath(_impl: Basic.(PathImpl in _F37600050464D58680C1E5753557C388)(string: "gir2swift")) */;
-			productType = "com.apple.product-type.tool";
-		};
-/* End PBXNativeTarget section */
-
-/* Begin PBXProject section */
-		__RootObject_ /* Project object */ = {
-			isa = PBXProject;
-			attributes = {
-				LastUpgradeCheck = 9999;
-			};
-			buildConfigurationList = "___RootConfs_" /* Build configuration list for PBXProject "gir2swift" */;
-			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
-			hasScannedForEncodings = 0;
-			knownRegions = (
-				en,
-			);
-			mainGroup = "___RootGroup_";
-			productRefGroup = "____Products_" /* Products */;
-			projectDirPath = "";
-			projectRoot = "";
-			targets = (
-				"______Target_SwiftLibXML" /* SwiftLibXML */,
-				"______Target_gir2swift" /* gir2swift */,
-			);
-		};
-/* End PBXProject section */
-
-/* Begin PBXSourcesBuildPhase section */
-		CompilePhase_SwiftLibXML /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 0;
-			files = (
-				"__src_cc_ref_Packages/SwiftLibXML-1.1.0/Sources/EmptySequence.swift" /* EmptySequence.swift in Sources */,
-				"__src_cc_ref_Packages/SwiftLibXML-1.1.0/Sources/XMLAttribute.swift" /* XMLAttribute.swift in Sources */,
-				"__src_cc_ref_Packages/SwiftLibXML-1.1.0/Sources/XMLDocument.swift" /* XMLDocument.swift in Sources */,
-				"__src_cc_ref_Packages/SwiftLibXML-1.1.0/Sources/XMLElement.swift" /* XMLElement.swift in Sources */,
-				"__src_cc_ref_Packages/SwiftLibXML-1.1.0/Sources/XMLNameSpace.swift" /* XMLNameSpace.swift in Sources */,
-				"__src_cc_ref_Packages/SwiftLibXML-1.1.0/Sources/XMLPath.swift" /* XMLPath.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		CompilePhase_gir2swift /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 0;
-			files = (
-				__src_cc_ref_Sources/basename.swift /* basename.swift in Sources */,
-				__src_cc_ref_Sources/c2swift.swift /* c2swift.swift in Sources */,
-				"__src_cc_ref_Sources/Collection+Utilities.swift" /* Collection+Utilities.swift in Sources */,
-				__src_cc_ref_Sources/cstring.swift /* cstring.swift in Sources */,
-				__src_cc_ref_Sources/FileLen.swift /* FileLen.swift in Sources */,
-				__src_cc_ref_Sources/getopt.swift /* getopt.swift in Sources */,
-				"__src_cc_ref_Sources/gir+swift.swift" /* gir+swift.swift in Sources */,
-				__src_cc_ref_Sources/gir.swift /* gir.swift in Sources */,
-				__src_cc_ref_Sources/main.swift /* main.swift in Sources */,
-				__src_cc_ref_Sources/mmap.swift /* mmap.swift in Sources */,
-				"__src_cc_ref_Sources/Sequence+Utilities.swift" /* Sequence+Utilities.swift in Sources */,
-				"__src_cc_ref_Sources/String+ContentsOfFile.swift" /* String+ContentsOfFile.swift in Sources */,
-				"__src_cc_ref_Sources/String+Lines.swift" /* String+Lines.swift in Sources */,
-				"__src_cc_ref_Sources/String+Substring.swift" /* String+Substring.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		__Dependency_SwiftLibXML /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = "______Target_SwiftLibXML" /* SwiftLibXML */;
-			targetProxy = F1D12B2F1D56CFE6006E7E11 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
-/* Begin XCBuildConfiguration section */
-		_ReleaseConf_SwiftLibXML /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ENABLE_TESTABILITY = YES;
-				FRAMEWORK_SEARCH_PATHS = "$(PLATFORM_DIR)/Developer/Library/Frameworks";
-				HEADER_SEARCH_PATHS = (
-					"/Users/rh/Dropbox/Developer/src/swift/gtk/gir2swift/Packages/CLibXML2-1.0.1",
-					"$(inherited)",
-				);
-				INFOPLIST_FILE = gir2swift.xcodeproj/SwiftLibXML_Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
-				OTHER_LDFLAGS = "$(inherited)";
-				OTHER_SWIFT_FLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = SwiftLibXML;
-				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				SWIFT_VERSION = 3.0;
-			};
-			name = Release;
-		};
-		_ReleaseConf_gir2swift /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				FRAMEWORK_SEARCH_PATHS = "$(PLATFORM_DIR)/Developer/Library/Frameworks";
-				HEADER_SEARCH_PATHS = (
-					"/Users/rh/Dropbox/Developer/src/swift/gtk/gir2swift/Packages/CLibXML2-1.0.1",
-					"$(inherited)",
-				);
-				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx @executable_path";
-				OTHER_LDFLAGS = "$(inherited)";
-				OTHER_SWIFT_FLAGS = "$(inherited)";
-				SWIFT_FORCE_DYNAMIC_LINK_STDLIB = YES;
-				SWIFT_FORCE_STATIC_LINK_STDLIB = NO;
-				SWIFT_VERSION = 3.0;
-			};
-			name = Release;
-		};
-		"___DebugConf_SwiftLibXML" /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ENABLE_TESTABILITY = YES;
-				FRAMEWORK_SEARCH_PATHS = "$(PLATFORM_DIR)/Developer/Library/Frameworks";
-				HEADER_SEARCH_PATHS = (
-					"/Users/rh/Dropbox/Developer/src/swift/gtk/gir2swift/Packages/CLibXML2-1.0.1",
-					"$(inherited)",
-				);
-				INFOPLIST_FILE = gir2swift.xcodeproj/SwiftLibXML_Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
-				OTHER_LDFLAGS = "$(inherited)";
-				OTHER_SWIFT_FLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = SwiftLibXML;
-				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 3.0;
-			};
-			name = Debug;
-		};
-		"___DebugConf_gir2swift" /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				FRAMEWORK_SEARCH_PATHS = "$(PLATFORM_DIR)/Developer/Library/Frameworks";
-				HEADER_SEARCH_PATHS = (
-					"/Users/rh/Dropbox/Developer/src/swift/gtk/gir2swift/Packages/CLibXML2-1.0.1",
-					"$(inherited)",
-				);
-				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx @executable_path";
-				OTHER_LDFLAGS = "$(inherited)";
-				OTHER_SWIFT_FLAGS = "$(inherited)";
-				SWIFT_FORCE_DYNAMIC_LINK_STDLIB = YES;
-				SWIFT_FORCE_STATIC_LINK_STDLIB = NO;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 3.0;
-			};
-			name = Debug;
-		};
-		"_____Release_" /* Release */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = __PBXFileRef_gir2swift.xcodeproj/Configs/Project.xcconfig /* gir2swift.xcodeproj/Configs/Project.xcconfig */;
-			buildSettings = {
-			};
-			name = Release;
-		};
-		"_______Debug_" /* Debug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = __PBXFileRef_gir2swift.xcodeproj/Configs/Project.xcconfig /* gir2swift.xcodeproj/Configs/Project.xcconfig */;
-			buildSettings = {
-			};
-			name = Debug;
-		};
-/* End XCBuildConfiguration section */
-
-/* Begin XCConfigurationList section */
-		"___RootConfs_" /* Build configuration list for PBXProject "gir2swift" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				"_______Debug_" /* Debug */,
-				"_____Release_" /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
-		"_______Confs_SwiftLibXML" /* Build configuration list for PBXNativeTarget "SwiftLibXML" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				"___DebugConf_SwiftLibXML" /* Debug */,
-				_ReleaseConf_SwiftLibXML /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
-		"_______Confs_gir2swift" /* Build configuration list for PBXNativeTarget "gir2swift" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				"___DebugConf_gir2swift" /* Debug */,
-				_ReleaseConf_gir2swift /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
-/* End XCConfigurationList section */
-	};
-	rootObject = __RootObject_ /* Project object */;
+    archiveVersion = 1;
+    classes = {};
+    objectVersion = 46;
+    rootObject = __RootObject_;
+    objects = {
+        __RootObject_ = {
+            isa = PBXProject;
+            attributes = {LastUpgradeCheck = 9999;};
+            buildConfigurationList = ___RootConfs_;
+            compatibilityVersion = 'Xcode 3.2';
+            developmentRegion = English;
+            hasScannedForEncodings = 0;
+            knownRegions = (en);
+            mainGroup = ___RootGroup_;
+            productRefGroup = ____Products_;
+            projectDirPath = '';
+            projectRoot = '';
+            targets = (______Target_SwiftLibXML, ______Target_gir2swift);
+        };
+        '__PBXFileRef_Package.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'Package.swift';
+            sourceTree = '<group>';
+        };
+        '__PBXFileRef_XML' = {
+            isa = PBXFileReference;
+            lastKnownFileType = folder;
+            name = 'XML';
+            path = 'XML';
+            sourceTree = '<group>';
+        };
+        ___RootGroup_ = {
+            isa = PBXGroup;
+            children = ('__PBXFileRef_Package.swift', _____Configs_, _____Sources_, '__PBXFileRef_XML', Dependencies_, _______Tests_, ____Products_);
+            sourceTree = '<group>';
+        };
+        _______Group_SwiftLibXML = {
+            isa = PBXGroup;
+            name = 'SwiftLibXML';
+            path = 'Packages/SwiftLibXML-1.2.0/Sources';
+            sourceTree = '<group>';
+            children = ('__PBXFileRef_Packages/SwiftLibXML-1.2.0/Sources/EmptySequence.swift', '__PBXFileRef_Packages/SwiftLibXML-1.2.0/Sources/XMLAttribute.swift', '__PBXFileRef_Packages/SwiftLibXML-1.2.0/Sources/XMLDocument.swift', '__PBXFileRef_Packages/SwiftLibXML-1.2.0/Sources/XMLElement.swift', '__PBXFileRef_Packages/SwiftLibXML-1.2.0/Sources/XMLNameSpace.swift', '__PBXFileRef_Packages/SwiftLibXML-1.2.0/Sources/XMLPath.swift');
+        };
+        '__PBXFileRef_Packages/SwiftLibXML-1.2.0/Sources/EmptySequence.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'EmptySequence.swift';
+            sourceTree = '<group>';
+        };
+        '__PBXFileRef_Packages/SwiftLibXML-1.2.0/Sources/XMLAttribute.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'XMLAttribute.swift';
+            sourceTree = '<group>';
+        };
+        '__PBXFileRef_Packages/SwiftLibXML-1.2.0/Sources/XMLDocument.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'XMLDocument.swift';
+            sourceTree = '<group>';
+        };
+        '__PBXFileRef_Packages/SwiftLibXML-1.2.0/Sources/XMLElement.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'XMLElement.swift';
+            sourceTree = '<group>';
+        };
+        '__PBXFileRef_Packages/SwiftLibXML-1.2.0/Sources/XMLNameSpace.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'XMLNameSpace.swift';
+            sourceTree = '<group>';
+        };
+        '__PBXFileRef_Packages/SwiftLibXML-1.2.0/Sources/XMLPath.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'XMLPath.swift';
+            sourceTree = '<group>';
+        };
+        ______Target_SwiftLibXML = {
+            isa = PBXNativeTarget;
+            buildConfigurationList = _______Confs_SwiftLibXML;
+            buildPhases = (CompilePhase_SwiftLibXML, ___LinkPhase_SwiftLibXML);
+            buildRules = ();
+            dependencies = ();
+            name = 'SwiftLibXML';
+            productName = SwiftLibXML;
+            productReference = _____Product_SwiftLibXML;
+            productType = 'com.apple.product-type.framework';
+        };
+        _____Product_SwiftLibXML = {
+            isa = PBXFileReference;
+            explicitFileType = 'wrapper.framework';
+            path = 'SwiftLibXML.framework';
+            sourceTree = BUILT_PRODUCTS_DIR;
+        };
+        CompilePhase_SwiftLibXML = {
+            isa = PBXSourcesBuildPhase;
+            files = ('__src_cc_ref_Packages/SwiftLibXML-1.2.0/Sources/EmptySequence.swift', '__src_cc_ref_Packages/SwiftLibXML-1.2.0/Sources/XMLAttribute.swift', '__src_cc_ref_Packages/SwiftLibXML-1.2.0/Sources/XMLDocument.swift', '__src_cc_ref_Packages/SwiftLibXML-1.2.0/Sources/XMLElement.swift', '__src_cc_ref_Packages/SwiftLibXML-1.2.0/Sources/XMLNameSpace.swift', '__src_cc_ref_Packages/SwiftLibXML-1.2.0/Sources/XMLPath.swift');
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        '__src_cc_ref_Packages/SwiftLibXML-1.2.0/Sources/EmptySequence.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Packages/SwiftLibXML-1.2.0/Sources/EmptySequence.swift';
+        };
+        '__src_cc_ref_Packages/SwiftLibXML-1.2.0/Sources/XMLAttribute.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Packages/SwiftLibXML-1.2.0/Sources/XMLAttribute.swift';
+        };
+        '__src_cc_ref_Packages/SwiftLibXML-1.2.0/Sources/XMLDocument.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Packages/SwiftLibXML-1.2.0/Sources/XMLDocument.swift';
+        };
+        '__src_cc_ref_Packages/SwiftLibXML-1.2.0/Sources/XMLElement.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Packages/SwiftLibXML-1.2.0/Sources/XMLElement.swift';
+        };
+        '__src_cc_ref_Packages/SwiftLibXML-1.2.0/Sources/XMLNameSpace.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Packages/SwiftLibXML-1.2.0/Sources/XMLNameSpace.swift';
+        };
+        '__src_cc_ref_Packages/SwiftLibXML-1.2.0/Sources/XMLPath.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Packages/SwiftLibXML-1.2.0/Sources/XMLPath.swift';
+        };
+        ___LinkPhase_SwiftLibXML = {
+            isa = PBXFrameworksBuildPhase;
+            files = ();
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        _______Confs_SwiftLibXML = {
+            isa = XCConfigurationList;
+            buildConfigurations = (___DebugConf_SwiftLibXML, _ReleaseConf_SwiftLibXML);
+            defaultConfigurationIsVisible = 0;
+            defaultConfigurationName = Debug;
+        };
+        ___DebugConf_SwiftLibXML = {
+            isa = XCBuildConfiguration;
+            buildSettings = { SWIFT_VERSION = '3.0'; LD_RUNPATH_SEARCH_PATHS = '$(TOOLCHAIN_DIR)/usr/lib/swift/macosx'; PRODUCT_MODULE_NAME = '$(TARGET_NAME:c99extidentifier)'; ENABLE_TESTABILITY = 'YES'; OTHER_SWIFT_FLAGS = '$(inherited)'; INFOPLIST_FILE = 'gir2swift.xcodeproj/SwiftLibXML_Info.plist'; FRAMEWORK_SEARCH_PATHS = '$(PLATFORM_DIR)/Developer/Library/Frameworks'; SWIFT_OPTIMIZATION_LEVEL = '-Onone'; HEADER_SEARCH_PATHS = '/Users/rh/Dropbox/Developer/src/swift/gtk/gir2swift/Packages/CLibXML2-1.0.1 $(inherited)'; PRODUCT_BUNDLE_IDENTIFIER = 'SwiftLibXML'; PRODUCT_NAME = '$(TARGET_NAME:c99extidentifier)'; OTHER_LDFLAGS = '$(inherited)'; };
+            name = Debug;
+        };
+        _ReleaseConf_SwiftLibXML = {
+            isa = XCBuildConfiguration;
+            buildSettings = { SWIFT_VERSION = '3.0'; LD_RUNPATH_SEARCH_PATHS = '$(TOOLCHAIN_DIR)/usr/lib/swift/macosx'; PRODUCT_MODULE_NAME = '$(TARGET_NAME:c99extidentifier)'; ENABLE_TESTABILITY = 'YES'; OTHER_SWIFT_FLAGS = '$(inherited)'; INFOPLIST_FILE = 'gir2swift.xcodeproj/SwiftLibXML_Info.plist'; FRAMEWORK_SEARCH_PATHS = '$(PLATFORM_DIR)/Developer/Library/Frameworks'; HEADER_SEARCH_PATHS = '/Users/rh/Dropbox/Developer/src/swift/gtk/gir2swift/Packages/CLibXML2-1.0.1 $(inherited)'; PRODUCT_BUNDLE_IDENTIFIER = 'SwiftLibXML'; PRODUCT_NAME = '$(TARGET_NAME:c99extidentifier)'; OTHER_LDFLAGS = '$(inherited)'; };
+            name = Release;
+        };
+        __Dependency_SwiftLibXML = {
+            isa = PBXTargetDependency;
+            target = ______Target_SwiftLibXML;
+        };
+        _______Group_gir2swift = {
+            isa = PBXGroup;
+            name = 'gir2swift';
+            path = 'Sources';
+            sourceTree = '<group>';
+            children = ('__PBXFileRef_Sources/basename.swift', '__PBXFileRef_Sources/c2swift.swift', '__PBXFileRef_Sources/Collection+Utilities.swift', '__PBXFileRef_Sources/cstring.swift', '__PBXFileRef_Sources/FileLen.swift', '__PBXFileRef_Sources/getopt.swift', '__PBXFileRef_Sources/gir+swift.swift', '__PBXFileRef_Sources/gir.swift', '__PBXFileRef_Sources/main.swift', '__PBXFileRef_Sources/mmap.swift', '__PBXFileRef_Sources/Sequence+Utilities.swift', '__PBXFileRef_Sources/String+ContentsOfFile.swift', '__PBXFileRef_Sources/String+Lines.swift', '__PBXFileRef_Sources/String+Substring.swift');
+        };
+        '__PBXFileRef_Sources/basename.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'basename.swift';
+            sourceTree = '<group>';
+        };
+        '__PBXFileRef_Sources/c2swift.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'c2swift.swift';
+            sourceTree = '<group>';
+        };
+        '__PBXFileRef_Sources/Collection+Utilities.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'Collection+Utilities.swift';
+            sourceTree = '<group>';
+        };
+        '__PBXFileRef_Sources/cstring.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'cstring.swift';
+            sourceTree = '<group>';
+        };
+        '__PBXFileRef_Sources/FileLen.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'FileLen.swift';
+            sourceTree = '<group>';
+        };
+        '__PBXFileRef_Sources/getopt.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'getopt.swift';
+            sourceTree = '<group>';
+        };
+        '__PBXFileRef_Sources/gir+swift.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'gir+swift.swift';
+            sourceTree = '<group>';
+        };
+        '__PBXFileRef_Sources/gir.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'gir.swift';
+            sourceTree = '<group>';
+        };
+        '__PBXFileRef_Sources/main.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'main.swift';
+            sourceTree = '<group>';
+        };
+        '__PBXFileRef_Sources/mmap.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'mmap.swift';
+            sourceTree = '<group>';
+        };
+        '__PBXFileRef_Sources/Sequence+Utilities.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'Sequence+Utilities.swift';
+            sourceTree = '<group>';
+        };
+        '__PBXFileRef_Sources/String+ContentsOfFile.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'String+ContentsOfFile.swift';
+            sourceTree = '<group>';
+        };
+        '__PBXFileRef_Sources/String+Lines.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'String+Lines.swift';
+            sourceTree = '<group>';
+        };
+        '__PBXFileRef_Sources/String+Substring.swift' = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = 'String+Substring.swift';
+            sourceTree = '<group>';
+        };
+        ______Target_gir2swift = {
+            isa = PBXNativeTarget;
+            buildConfigurationList = _______Confs_gir2swift;
+            buildPhases = (CompilePhase_gir2swift, ___LinkPhase_gir2swift);
+            buildRules = ();
+            dependencies = (__Dependency_SwiftLibXML);
+            name = 'gir2swift';
+            productName = gir2swift;
+            productReference = _____Product_gir2swift;
+            productType = 'com.apple.product-type.tool';
+        };
+        _____Product_gir2swift = {
+            isa = PBXFileReference;
+            explicitFileType = 'compiled.mach-o.executable';
+            path = 'gir2swift';
+            sourceTree = BUILT_PRODUCTS_DIR;
+        };
+        CompilePhase_gir2swift = {
+            isa = PBXSourcesBuildPhase;
+            files = ('__src_cc_ref_Sources/basename.swift', '__src_cc_ref_Sources/c2swift.swift', '__src_cc_ref_Sources/Collection+Utilities.swift', '__src_cc_ref_Sources/cstring.swift', '__src_cc_ref_Sources/FileLen.swift', '__src_cc_ref_Sources/getopt.swift', '__src_cc_ref_Sources/gir+swift.swift', '__src_cc_ref_Sources/gir.swift', '__src_cc_ref_Sources/main.swift', '__src_cc_ref_Sources/mmap.swift', '__src_cc_ref_Sources/Sequence+Utilities.swift', '__src_cc_ref_Sources/String+ContentsOfFile.swift', '__src_cc_ref_Sources/String+Lines.swift', '__src_cc_ref_Sources/String+Substring.swift');
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        '__src_cc_ref_Sources/basename.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Sources/basename.swift';
+        };
+        '__src_cc_ref_Sources/c2swift.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Sources/c2swift.swift';
+        };
+        '__src_cc_ref_Sources/Collection+Utilities.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Sources/Collection+Utilities.swift';
+        };
+        '__src_cc_ref_Sources/cstring.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Sources/cstring.swift';
+        };
+        '__src_cc_ref_Sources/FileLen.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Sources/FileLen.swift';
+        };
+        '__src_cc_ref_Sources/getopt.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Sources/getopt.swift';
+        };
+        '__src_cc_ref_Sources/gir+swift.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Sources/gir+swift.swift';
+        };
+        '__src_cc_ref_Sources/gir.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Sources/gir.swift';
+        };
+        '__src_cc_ref_Sources/main.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Sources/main.swift';
+        };
+        '__src_cc_ref_Sources/mmap.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Sources/mmap.swift';
+        };
+        '__src_cc_ref_Sources/Sequence+Utilities.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Sources/Sequence+Utilities.swift';
+        };
+        '__src_cc_ref_Sources/String+ContentsOfFile.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Sources/String+ContentsOfFile.swift';
+        };
+        '__src_cc_ref_Sources/String+Lines.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Sources/String+Lines.swift';
+        };
+        '__src_cc_ref_Sources/String+Substring.swift' = {
+            isa = PBXBuildFile;
+            fileRef = '__PBXFileRef_Sources/String+Substring.swift';
+        };
+        ___LinkPhase_gir2swift = {
+            isa = PBXFrameworksBuildPhase;
+            files = (_LinkFileRef_SwiftLibXML_via_gir2swift);
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        _LinkFileRef_SwiftLibXML_via_gir2swift = {
+            isa = PBXBuildFile;
+            fileRef = _____Product_SwiftLibXML;
+        };
+        _______Confs_gir2swift = {
+            isa = XCConfigurationList;
+            buildConfigurations = (___DebugConf_gir2swift, _ReleaseConf_gir2swift);
+            defaultConfigurationIsVisible = 0;
+            defaultConfigurationName = Debug;
+        };
+        ___DebugConf_gir2swift = {
+            isa = XCBuildConfiguration;
+            buildSettings = { LD_RUNPATH_SEARCH_PATHS = '$(TOOLCHAIN_DIR)/usr/lib/swift/macosx @executable_path'; FRAMEWORK_SEARCH_PATHS = '$(PLATFORM_DIR)/Developer/Library/Frameworks'; HEADER_SEARCH_PATHS = '/Users/rh/Dropbox/Developer/src/swift/gtk/gir2swift/Packages/CLibXML2-1.0.1 $(inherited)'; OTHER_SWIFT_FLAGS = '$(inherited)'; SWIFT_FORCE_STATIC_LINK_STDLIB = 'NO'; SWIFT_FORCE_DYNAMIC_LINK_STDLIB = 'YES'; SWIFT_OPTIMIZATION_LEVEL = '-Onone'; OTHER_LDFLAGS = '$(inherited)'; SWIFT_VERSION = '3.0'; };
+            name = Debug;
+        };
+        _ReleaseConf_gir2swift = {
+            isa = XCBuildConfiguration;
+            buildSettings = { LD_RUNPATH_SEARCH_PATHS = '$(TOOLCHAIN_DIR)/usr/lib/swift/macosx @executable_path'; FRAMEWORK_SEARCH_PATHS = '$(PLATFORM_DIR)/Developer/Library/Frameworks'; HEADER_SEARCH_PATHS = '/Users/rh/Dropbox/Developer/src/swift/gtk/gir2swift/Packages/CLibXML2-1.0.1 $(inherited)'; OTHER_SWIFT_FLAGS = '$(inherited)'; SWIFT_FORCE_STATIC_LINK_STDLIB = 'NO'; SWIFT_FORCE_DYNAMIC_LINK_STDLIB = 'YES'; OTHER_LDFLAGS = '$(inherited)'; SWIFT_VERSION = '3.0'; };
+            name = Release;
+        };
+        __Dependency_gir2swift = {
+            isa = PBXTargetDependency;
+            target = ______Target_gir2swift;
+        };
+        '__PBXFileRef_gir2swift.xcodeproj/Configs/Project.xcconfig' = {
+            isa = PBXFileReference;
+            lastKnownFileType = text.xcconfig;
+            path = 'gir2swift.xcodeproj/Configs/Project.xcconfig';
+            sourceTree = '<group>';
+        };
+        _____Configs_ = {
+            isa = PBXGroup;
+            children = ('__PBXFileRef_gir2swift.xcodeproj/Configs/Project.xcconfig');
+            name = Configs;
+            sourceTree = '<group>';
+        };
+        _____Sources_ = {
+            isa = PBXGroup;
+            children = (_______Group_SwiftLibXML, _______Group_gir2swift);
+            name = Sources;
+            sourceTree = '<group>';
+        };
+        Dependencies_ = {
+            isa = PBXGroup;
+            children = (_______Group_SwiftLibXML);
+            name = Dependencies;
+            sourceTree = '<group>';
+        };
+        ____Products_ = {
+            isa = PBXGroup;
+            children = (_____Product_SwiftLibXML, _____Product_gir2swift);
+            name = Products;
+            sourceTree = '<group>';
+        };
+        _______Debug_ = {
+            isa = XCBuildConfiguration;
+            baseConfigurationReference = '__PBXFileRef_gir2swift.xcodeproj/Configs/Project.xcconfig';
+            buildSettings = {};
+            name = Debug;
+        };
+        _____Release_ = {
+            isa = XCBuildConfiguration;
+            baseConfigurationReference = '__PBXFileRef_gir2swift.xcodeproj/Configs/Project.xcconfig';
+            buildSettings = {};
+            name = Release;
+        };
+        ___RootConfs_ = {
+            isa = XCConfigurationList;
+            buildConfigurations = (_______Debug_, _____Release_);
+            defaultConfigurationIsVisible = 0;
+            defaultConfigurationName = Debug;
+        };
+    };
 }

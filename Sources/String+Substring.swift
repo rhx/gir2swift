@@ -59,10 +59,11 @@ extension String {
         guard let u = unicodeScalars.first, u.isASCII else { return self }
         let c = Int32(u.value)
         guard islower(c) != 0 else { return self }
-        let upper = UInt16(toupper(c))
         let utf = utf16
-        let tail = utf[utf.index(after: utf.startIndex)..<utf.endIndex]
-        return String(Character(UnicodeScalar(upper)))+String(tail)
+        let t = utf[utf.index(after: utf.startIndex)..<utf.endIndex]
+        guard let upper = UnicodeScalar(UInt16(toupper(c))),
+              let tail = String(t) else { return self }
+        return String(Character(upper))+tail
     }
 
     /// return the de-capidalised (lower-case first character) name of the receiver
@@ -70,10 +71,11 @@ extension String {
         guard let u = unicodeScalars.first, u.isASCII else { return self }
         let c = Int32(u.value)
         guard isupper(c) != 0 else { return self }
-        let lower = UInt16(tolower(c))
         let utf = utf16
-        let tail = utf[utf.index(after: utf.startIndex)..<utf.endIndex]
-        return String(Character(UnicodeScalar(lower)))+String(tail)
+        let t = utf[utf.index(after: utf.startIndex)..<utf.endIndex]
+        guard let lower = UnicodeScalar(UInt16(tolower(c))),
+              let tail = String(t) else { return self }
+        return String(Character(lower))+tail
     }
 
     /// convert a string with separators to camel case
@@ -96,9 +98,8 @@ extension String {
                 j = u.index(after: i)
                 if let u = String(u[i..<j])?.unicodeScalars.first, u.isASCII {
                     let c = Int32(u.value)
-                    if islower(c) != 0 {
-                        let upper = Character(UnicodeScalar(UInt32(toupper(c))))
-                        result += String(upper)
+                    if let upper = UnicodeScalar(UInt16(toupper(c))), islower(c) != 0 {
+                        result += String(Character(upper))
                         s = j
                     } else {
                         s = i

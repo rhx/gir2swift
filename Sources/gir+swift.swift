@@ -190,7 +190,7 @@ private let _U = "_".utf16.first!
 extension GetterSetterPair {
     /// name of the underlying property for a getter / setter pair
     var name: String {
-        let n = getter.name.utf16 ?? setter!.name.utf16
+        let n = getter.name.utf16 
         let o = n.first == iU ? 0 : 4;  // no offset for "is_..."
 
         // convert the remainder to camel case
@@ -210,9 +210,8 @@ extension GetterSetterPair {
                 j = n.index(after: i)
                 if let u = String(n[i..<j])?.unicodeScalars.first, u.isASCII {
                     let c = Int32(u.value)
-                    if islower(c) != 0 {
-                        let upper = Character(UnicodeScalar(UInt32(toupper(c))))
-                        name += String(upper)
+                    if let upper = UnicodeScalar(UInt16(toupper(c))), islower(c) != 0 {
+                        name += String(Character(upper))
                         s = j
                     } else {
                         s = i
@@ -237,7 +236,7 @@ public func getterSetterPairs(for allMethods: [GIR.Method]) -> [GetterSetterPair
         let p = v.first == iU ? 0 : 4;
         let a = u[u.index(u.startIndex, offsetBy: o)..<u.endIndex]
         let b = v[v.index(v.startIndex, offsetBy: p)..<v.endIndex]
-        return String(a) <= String(b)
+        return String(describing: a) <= String(describing: b)
     }
     var pairs = Array<GetterSetterPair>()
     pairs.reserveCapacity(gettersAndSetters.count)
@@ -408,7 +407,7 @@ public func functionCode(_ f: GIR.Function, indentation: String = "    ", initia
 
 
 /// Swift code for methods (with a given indentation)
-public func methodCode(_ indentation: String, initialIndentation: String? = nil, record: GIR.Record? = nil, convertName: (String) -> String = { $0.camelCase }) -> (GIR.Method) -> String {
+public func methodCode(_ indentation: String, initialIndentation: String? = nil, record: GIR.Record? = nil, convertName: @escaping (String) -> String = { $0.camelCase }) -> (GIR.Method) -> String {
     let indent = initialIndentation ?? indentation
     let doubleIndent = indent + indentation
     let call = callCode(doubleIndent, record)
@@ -504,7 +503,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record) -> (
 
 
 /// Swift code for convenience constructors
-public func convenienceConstructorCode(_ typeName: String, indentation: String, convenience: String = "", factory: Bool = false, convertName: (String) -> String = { $0.camelCase }) -> (GIR.Record) -> (GIR.Method) -> String {
+public func convenienceConstructorCode(_ typeName: String, indentation: String, convenience: String = "", factory: Bool = false, convertName: @escaping (String) -> String = { $0.camelCase }) -> (GIR.Record) -> (GIR.Method) -> String {
     let isConv = !convenience.isEmpty
     let conv =  isConv ? "\(convenience) " : ""
     return { (record: GIR.Record) -> (GIR.Method) -> String in
@@ -520,9 +519,9 @@ public func convenienceConstructorCode(_ typeName: String, indentation: String, 
             if let f = firstArgName, rawUTF.count > f.utf16.count + 1 && rawName.hasSuffix(f) {
                 let truncated = rawUTF[rawUTF.startIndex..<rawUTF.index(rawUTF.endIndex, offsetBy: -f.utf16.count)]
                 if truncated.last == _U {
-                    nameWithoutPostFix = String(rawUTF[rawUTF.startIndex..<rawUTF.index(rawUTF.endIndex, offsetBy: -(f.utf16.count+1))])
+                    nameWithoutPostFix = String(describing: rawUTF[rawUTF.startIndex..<rawUTF.index(rawUTF.endIndex, offsetBy: -(f.utf16.count+1))])
                 } else {
-                    nameWithoutPostFix = String(truncated)
+                    nameWithoutPostFix = String(describing: truncated)
                 }
             } else {
                 nameWithoutPostFix = rawName
@@ -728,13 +727,13 @@ public func convertSetterArgumentToSwiftFor(_ record: GIR.Record?) -> (GIR.Argum
 
 
 /// Swift code for signal names without prefixes
-public func signalNameCode(indentation indent: String, convertName: (String) -> String = { $0.camelSignal }) -> (GIR.CType) -> String {
+public func signalNameCode(indentation indent: String, convertName: @escaping (String) -> String = { $0.camelSignal }) -> (GIR.CType) -> String {
     return signalNameCode(indentation: indent, prefixes: ("", ""), convertName: convertName)
 }
 
 
 /// Swift code for signal names with prefixes
-public func signalNameCode(indentation indent: String, prefixes: (String, String), convertName: (String) -> String = { $0.camelSignalComponent }) -> (GIR.CType) -> String {
+public func signalNameCode(indentation indent: String, prefixes: (String, String), convertName: @escaping (String) -> String = { $0.camelSignalComponent }) -> (GIR.CType) -> String {
     return { signal in
         let name = signal.name
         let declaration = indent + "case \(prefixes.0)\(convertName(name).swift) = \"\(prefixes.1)\(name)\""

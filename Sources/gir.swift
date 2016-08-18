@@ -22,7 +22,7 @@ extension String {
     }
 }
 
-func enumerate<T where T: GIR.Thing>(_ xml: XMLDocument, path: String, inNS namespaces: AnySequence<XMLNameSpace>, quiet: Bool, construct: (XMLElement, Int) -> T?, defaultPrefix prefix: String = "gir", check: (T) -> Bool = { _ in true }) -> [T] {
+func enumerate<T>(_ xml: XMLDocument, path: String, inNS namespaces: AnySequence<XMLNameSpace>, quiet: Bool, construct: (XMLElement, Int) -> T?, defaultPrefix prefix: String = "gir", check: (T) -> Bool = { _ in true }) -> [T] where T: GIR.Thing {
     if let entries = xml.xpath(path, namespaces: namespaces, defaultPrefix: prefix) {
         let things = entries.lazy.enumerated().map { construct($0.1, $0.0) }.filter {
             guard let node = $0 else { return false }
@@ -105,7 +105,8 @@ public class GIR {
             identifierPrefixes = ns.sortedSubAttributesFor(attr: "identifier-prefixes")
             symbolPrefixes     = ns.sortedSubAttributesFor(attr: "symbol-prefixes")
         }
-        withUnsafeMutablePointers(&GIR.KnownTypes, &GIR.KnownRecords) { (knownTypes: UnsafeMutablePointer<[ String : Datatype ]>, knownRecords: UnsafeMutablePointer<[ String : Record]>) -> Void in
+        withUnsafeMutablePointer(to: &GIR.KnownTypes) { (knownTypes: UnsafeMutablePointer<[ String : Datatype ]>) -> Void in
+          withUnsafeMutablePointer(to: &GIR.KnownRecords) { (knownRecords: UnsafeMutablePointer<[ String : Record]>) -> Void in
             let prefixed: (String) -> String = { $0.prefixed(with: self.prefix) }
             
             func setKnown<T>(_ d: UnsafeMutablePointer<[ String : T]>) -> (String, T) -> Bool {
@@ -132,7 +133,7 @@ public class GIR {
                 }
             }
             // closure for recording known types
-            func notKnownType<T where T: Datatype>(_ e: T) -> Bool {
+            func notKnownType<T>(_ e: T) -> Bool where T: Datatype {
                 return setKnownType(e.name, e)
             }
             let notKnownRecord: (Record) -> Bool     = {
@@ -160,6 +161,7 @@ public class GIR {
                 isFreeFunction($0) ? Function(node: $0, atIndex: $1) : nil
                 }, check: notKnownFunction)
         }
+      }
     }
 
     /// convenience constructor to read a gir file
@@ -552,7 +554,7 @@ public class GIR {
             let u = getter.utf16
             let s = u.index(after: u.startIndex)
             let e = u.endIndex
-            let setter = "s" + String(u[s..<e])
+            let setter = "s" + String(describing: u[s..<e])
             return name == setter
         }
 
@@ -562,7 +564,7 @@ public class GIR {
             let u = setter.utf16
             let s = u.index(after: u.startIndex)
             let e = u.endIndex
-            let getter = "g" + String(u[s..<e])
+            let getter = "g" + String(describing: u[s..<e])
             return name == getter
         }
     }
@@ -660,7 +662,7 @@ class ConversionContext {
 }
 
 private func indent(level: Int, _ s: String = "") -> String {
-    return String(repeating: Character(" "), count: level * 4) + s
+    return String(repeating: " ", count: level * 4) + s
 }
 
 extension GIR {

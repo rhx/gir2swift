@@ -9,7 +9,7 @@ extension Collection {
     /// Returns the suffix from where the `found` function/closure first returns true
     ///
     /// - Complexity: O(`self.count`).
-    public func takeFrom(indexWhere found: @noescape (Iterator.Element) -> Bool) -> SubSequence {
+    public func takeFrom(indexWhere found: (Iterator.Element) -> Bool) -> SubSequence {
         var i = startIndex
         while i != endIndex {
             if found(self[i]) { break }
@@ -24,7 +24,7 @@ extension BidirectionalCollection {
     /// Trims the suffix where the `found` function/closure keeps returning true
     ///
     /// - Complexity: O(`self.count`).
-    public func trimWhile(_ found: @noescape(Iterator.Element) -> Bool) -> SubSequence {
+    public func trimWhile(_ found: (Iterator.Element) -> Bool) -> SubSequence {
         var i = endIndex
         if i != startIndex {
             repeat {

@@ -5,6 +5,7 @@
 //  Created by Rene Hexel on 2/08/2014.
 //  Copyright (c) 2014, 2015 Rene Hexel. All rights reserved.
 //
+private let nilCharPtr: UnsafeMutablePointer<CChar>? = nil
 
 /**
  * Convert a swift string (or UnsafePointer<Char>) into
@@ -13,7 +14,7 @@
  * C APIs fail to declare them `const'
  */
 func cstring(_ arg: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar> {
-    return UnsafeMutablePointer<CChar>(arg)
+    return UnsafeMutablePointer<CChar>(mutating: arg)
 }
 
 
@@ -26,5 +27,5 @@ func cstring(_ arg: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar> {
    }
  */
 func argv(_ arguments: [String]) -> [UnsafeMutablePointer<CChar>?] {
-    return arguments.map { let s = cstring($0); return s } + [UnsafeMutablePointer<CChar>(nil)]
+    return arguments.map { let s = cstring($0); return s } + [nilCharPtr]
 }

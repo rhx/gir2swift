@@ -14,8 +14,8 @@
 /// verbose output
 var verbose = false
 
-@noreturn func usage() {
-    fputs("Usage: \(Process.arguments[0]) [-v]{-p file.gir}[file.gir ...]\n", stderr)
+func usage() -> Never  {
+    fputs("Usage: \(CommandLine.arguments[0]) [-v]{-p file.gir}[file.gir ...]\n", stderr)
     exit(EXIT_FAILURE)
 }
 
@@ -101,6 +101,6 @@ while let (opt, param) = get_opt("p:v") {
     }
 }
 
-for argument in Process.arguments[Int(optind)..<Process.arguments.count] {
+for argument in CommandLine.arguments[Int(optind)..<CommandLine.arguments.count] {
     process_gir(file: argument)
 }

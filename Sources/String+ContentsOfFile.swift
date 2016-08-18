@@ -35,7 +35,7 @@ extension String {
             perror("Error reading '\(file)'")
             return nil
         }
-        let cs = UnsafeMutablePointer<CChar>(mem)
+        let cs = mem.assumingMemoryBound(to: CChar.self)
         cs[len] = 0
         self = String(cString: UnsafePointer(cs))
     }
