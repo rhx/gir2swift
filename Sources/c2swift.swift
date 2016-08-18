@@ -327,7 +327,12 @@ extension String {
             let (pointer, cc) = isCConst ? ("UnsafePointer", constCount+1) : ("UnsafeMutablePointer", constCount)
             let t = base.unwrappedCTypeWithCount(pointerCount+1, cc)
             let wrappedOrig = pointer + "<\(t.gType)>"
-            let wrappedSwift = pointer + "<\(t.swift)>"
+            let wrappedSwift: String
+            if t.swift == "Void" {
+                wrappedSwift = pointer == "UnsafePointer" ? "UnsafeRawPointer" : "UnsafeMutableRawPointer"
+            } else {
+                wrappedSwift = pointer + "<\(t.swift)>"
+            }
             return (gType: wrappedOrig, swift: wrappedSwift, pointerCount: t.pointerCount, constCount: t.constCount, innerType: t.innerType)
         }
         let t = trimmed.typeWithoutLeadingOrTrailingConstOrVolatile
