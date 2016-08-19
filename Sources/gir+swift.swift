@@ -24,7 +24,7 @@ public extension GIR {
         "}\n\n" +
 
         "private func cast<S, T>(_ param: UnsafePointer<S>?) -> UnsafePointer<T>! {\n" +
-        "    return UnsafePointer<T>(param)\n" +
+        "    return param?.withMemoryRebound(to: T.self, capacity: 1) { UnsafePointer<T>($0) }\n" +
         "}\n\n" +
 
         "private func cast<T>(_ param: OpaquePointer?) -> UnsafeMutablePointer<T>! {\n" +
@@ -835,7 +835,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
             "\(release)(cast(ptr))\n" + indentation +
         "}\n\n")) + (hasParent ? "" : (indentation +
         "public convenience init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
-            "self.init(UnsafeMutablePointer<\(ctype)>(cPointer))\n" + indentation +
+            "self.init(cPointer.withMemoryRebound(to: \(ctype).self, capacity: 1) { $0 })\n" + indentation +
         "}\n\n" + indentation +
         "public convenience init(opaquePointer: OpaquePointer) {\n" + doubleIndentation +
             "self.init(UnsafeMutablePointer<\(ctype)>(opaquePointer))\n" + indentation +
