@@ -16,11 +16,11 @@ public extension GIR {
     /// code boiler plate
     var boilerPlate: String {
         return "private func cast<S, T>(_ param: UnsafeMutablePointer<S>?) -> UnsafeMutablePointer<T>! {\n" +
-        "    return UnsafeMutablePointer<T>(param)\n" +
+        "    return param?.withMemoryRebound(to: T.self, capacity: 1) { $0 }\n" +
         "}\n\n" +
 
         "private func cast<S, T>(_ param: UnsafeMutablePointer<S>?) -> UnsafePointer<T>! {\n" +
-        "    return UnsafePointer<T>(param)\n" +
+        "    return param?.withMemoryRebound(to: T.self, capacity: 1) { UnsafePointer<T>($0) }\n" +
         "}\n\n" +
 
         "private func cast<S, T>(_ param: UnsafePointer<S>?) -> UnsafePointer<T>! {\n" +
@@ -36,7 +36,7 @@ public extension GIR {
         "}\n\n" +
 
         "private func cast<S, T>(_ param: UnsafePointer<S>?) -> UnsafeMutablePointer<T>! {\n" +
-        "    return UnsafeMutablePointer<T>(param)\n" +
+        "    return param?.withMemoryRebound(to: T.self, capacity: 1) { $0 }\n" +
         "}\n\n" +
 
         "private func cast<T>(_ param: UnsafePointer<T>?) -> OpaquePointer! {\n" +
@@ -45,6 +45,10 @@ public extension GIR {
 
         "private func cast<T>(_ param: UnsafeMutablePointer<T>?) -> OpaquePointer! {\n" +
         "    return OpaquePointer(param)\n" +
+        "}\n\n" +
+
+        "private func cast<T>(_ param: UnsafeRawPointer?) -> UnsafePointer<T>! {\n" +
+        "    return param?.assumingMemoryBound(to: T.self)\n" +
         "}\n\n" +
 
         "private extension gboolean {\n" +
@@ -63,7 +67,7 @@ public extension GIR {
 
         "private func asStringArray<T>(_ param: UnsafePointer<UnsafePointer<CChar>?>, release: ((UnsafePointer<T>?) -> Void)) -> [String] {\n" +
         "    let rv = asStringArray(param)\n" +
-        "    release(UnsafePointer<T>(param))\n" +
+        "    param.withMemoryRebound(to: T.self, capacity: rv.count) { release(UnsafePointer<T>($0)) }\n" +
         "    return rv\n" +
         "}\n\n"
     }
@@ -768,10 +772,10 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ") -> S
             "ptr = other.ptr\n" + indentation +
         "}\n\n" + indentation +
         "public init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + indentation + indentation +
-            "ptr = UnsafeMutablePointer<\(rtype)>(cPointer)\n" + indentation +
+            "ptr = cPointer.withMemoryRebound(to: \(rtype).self, capacity: 1) { $0 }\n" + indentation +
         "}\n\n" + indentation +
         "public init<T>(constPointer: UnsafePointer<T>) {\n" + indentation + indentation +
-            "ptr = UnsafeMutablePointer<\(rtype)>(constPointer)\n" + indentation +
+            "ptr = constPointer.withMemoryRebound(to: \(rtype).self, capacity: 1) { $0 }\n" + indentation +
         "}\n\n" + indentation +
         "public init(opaquePointer: OpaquePointer) {\n" + indentation + indentation +
             "ptr = UnsafeMutablePointer<\(rtype)>(opaquePointer)\n" + indentation +

@@ -10,7 +10,7 @@ extension Sequence {
     /// or `nil` if the comparisun functoin always returns `false`.
     ///
     /// - Complexity: O(`self.count`).
-    public func findFirstWhere(_ found: @noescape(Iterator.Element) -> Bool) -> Iterator.Element? {
+    public func findFirstWhere(_ found: (Iterator.Element) -> Bool) -> Iterator.Element? {
         for element in self { if found(element) { return element } }
         return nil
     }
