@@ -790,9 +790,9 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ") -> S
             "ptr = constPointer.withMemoryRebound(to: \(rtype).self, capacity: 1) { $0 }\n" + indentation +
         "}\n\n" + indentation +
         "public init(raw: UnsafeRawPointer) {\n" + indentation + indentation +
-            "ptr = raw.assumingMemoryBound(to: \(rtype).self)\n" + indentation +
+            "ptr = UnsafeMutableRawPointer(mutating: raw).assumingMemoryBound(to: \(rtype).self)\n" + indentation +
         "}\n\n" + indentation +
-        "public init(raw: UnsafeMutbleRawPointer) {\n" + indentation + indentation +
+        "public init(raw: UnsafeMutableRawPointer) {\n" + indentation + indentation +
             "ptr = raw.assumingMemoryBound(to: \(rtype).self)\n" + indentation +
         "}\n\n" + indentation +
         "public init(opaquePointer: OpaquePointer) {\n" + indentation + indentation +
@@ -856,7 +856,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
             "self.init(cPointer.withMemoryRebound(to: \(ctype).self, capacity: 1) { $0 })\n" + indentation +
         "}\n\n" + indentation +
         "public convenience init(raw: UnsafeRawPointer) {\n" + doubleIndentation +
-            "self.init(raw.assumingMemoryBound(to: \(ctype).self))\n" + indentation +
+            "self.init(UnsafeMutableRawPointer(mutating: raw).assumingMemoryBound(to: \(ctype).self))\n" + indentation +
         "}\n\n" + indentation +
         "public convenience init(raw: UnsafeMutableRawPointer) {\n" + doubleIndentation +
             "self.init(raw.assumingMemoryBound(to: \(ctype).self))\n" + indentation +
