@@ -35,9 +35,9 @@ public extension GIR {
         "    return UnsafePointer<T>(param)\n" +
         "}\n\n" +
 
-        "private func cast<S, T>(_ param: UnsafePointer<S>?) -> UnsafeMutablePointer<T>! {\n" +
-        "    return param?.withMemoryRebound(to: T.self, capacity: 1) { $0 }\n" +
-        "}\n\n" +
+//        "private func cast<S, T>(_ param: UnsafePointer<S>?) -> UnsafeMutablePointer<T>! {\n" +
+//        "    return param?.withMemoryRebound(to: T.self, capacity: 1) { $0 }\n" +
+//        "}\n\n" +
 
         "private func cast<T>(_ param: UnsafePointer<T>?) -> OpaquePointer! {\n" +
         "    return OpaquePointer(param)\n" +
@@ -47,30 +47,30 @@ public extension GIR {
         "    return OpaquePointer(param)\n" +
         "}\n\n" +
 
-        "private func cast<T>(_ param: UnsafePointer<T>?) -> UnsafeRawPointer! {\n" +
-        "    return UnsafeRawPointer(param)\n" +
-        "}\n\n" +
+//        "private func cast<T>(_ param: UnsafePointer<T>?) -> UnsafeRawPointer! {\n" +
+//        "    return UnsafeRawPointer(param)\n" +
+//        "}\n\n" +
+//
+//        "private func cast<T>(_ param: UnsafeMutablePointer<T>?) -> UnsafeRawPointer! {\n" +
+//        "    return UnsafeRawPointer(param)\n" +
+//        "}\n\n" +
+//
+//        "private func cast<T>(_ param: UnsafePointer<T>?) -> UnsafeMutableRawPointer! {\n" +
+//        "    return UnsafeMutableRawPointer(mutating: UnsafeRawPointer(param))\n" +
+//        "}\n\n" +
+//
+//        "private func cast<T>(_ param: UnsafeMutablePointer<T>?) -> UnsafeMutableRawPointer! {\n" +
+//        "    return UnsafeMutableRawPointer(param)\n" +
+//        "}\n\n" +
+//
+//        "private func cast<T>(_ param: UnsafeRawPointer?) -> UnsafePointer<T>! {\n" +
+//        "    return param?.assumingMemoryBound(to: T.self)\n" +
+//        "}\n\n" +
+//
+//        "private func cast<T>(_ param: UnsafeMutableRawPointer?) -> UnsafePointer<T>! {\n" +
+//        "    return UnsafeRawPointer(param)?.assumingMemoryBound(to: T.self)\n" +
+//        "}\n\n" +
 
-        "private func cast<T>(_ param: UnsafeMutablePointer<T>?) -> UnsafeRawPointer! {\n" +
-        "    return UnsafeRawPointer(param)\n" +
-        "}\n\n" +
-
-        "private func cast<T>(_ param: UnsafePointer<T>?) -> UnsafeMutableRawPointer! {\n" +
-        "    return UnsafeMutableRawPointer(mutating: UnsafeRawPointer(param))\n" +
-        "}\n\n" +
-
-        "private func cast<T>(_ param: UnsafeMutablePointer<T>?) -> UnsafeMutableRawPointer! {\n" +
-        "    return UnsafeMutableRawPointer(param)\n" +
-        "}\n\n" +
-
-        "private func cast<T>(_ param: UnsafeRawPointer?) -> UnsafePointer<T>! {\n" +
-        "    return param?.assumingMemoryBound(to: T.self)\n" +
-        "}\n\n" +
-
-        "private func cast<T>(_ param: UnsafeMutableRawPointer?) -> UnsafePointer<T>! {\n" +
-        "    return UnsafeRawPointer(param)?.assumingMemoryBound(to: T.self)\n" +
-        "}\n\n" +
-            
         "private func cast<T>(_ param: UnsafeRawPointer?) -> UnsafeMutablePointer<T>! {\n" +
         "    return UnsafeMutableRawPointer(mutating: param)?.assumingMemoryBound(to: T.self)\n" +
         "}\n\n" +
@@ -78,7 +78,9 @@ public extension GIR {
         "private func cast<T>(_ param: UnsafeMutableRawPointer?) -> UnsafeMutablePointer<T>! {\n" +
         "    return param?.assumingMemoryBound(to: T.self)\n" +
         "}\n\n" +
-            
+
+        "private func cast<T>(_ param: T) -> T { return param }\n\n" +
+
         "private extension gboolean {\n" +
         "    private init(_ b: Bool) { self = b ? gboolean(1) : gboolean(0) }\n" +
         "}\n\n" +
