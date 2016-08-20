@@ -39,6 +39,10 @@ public extension GIR {
         "    return UnsafeMutableRawPointer(param)\n" +
         "}\n\n" +
 
+        "private func cast(_ param: UnsafeRawPointer?) -> UnsafeMutableRawPointer! {\n" +
+        "    return UnsafeMutableRawPointer(mutating: param)\n" +
+        "}\n\n" +
+
 //        "private func cast<S, T>(_ param: UnsafePointer<S>?) -> UnsafeMutablePointer<T>! {\n" +
 //        "    return param?.withMemoryRebound(to: T.self, capacity: 1) { $0 }\n" +
 //        "}\n\n" +
