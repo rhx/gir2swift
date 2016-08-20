@@ -20,7 +20,7 @@
             var i = e
             while i != s {
                 let j = u.index(before: i)
-                if u[j] == slash { return String(u[i..<e]) }
+                if u[j] == slash { return String(describing: u[i..<e]) }
                 i = j
             }
             return self
