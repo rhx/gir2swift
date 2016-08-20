@@ -800,7 +800,8 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ") -> S
     "}\n\n" +
     "public extension \(structType) {\n" + indentation +
         "public init(_ p: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
-            "ptr = UnsafeMutablePointer<\(rtype)>(p)\n" + indentation +
+            "ptr = p" +
+            (ctype == rtype ? "\n" : ".withMemoryRebound(to: \(rtype).self, capacity: 1) { $0 }\n") + indentation +
         "}\n\n" + indentation +
         "public init<T: \(protocolName)>(_ other: T) {\n" + indentation + indentation +
             "ptr = other.ptr\n" + indentation +
