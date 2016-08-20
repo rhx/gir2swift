@@ -52,11 +52,11 @@ public extension GIR {
         "}\n\n" +
 
         "private func cast<T>(_ param: UnsafeMutableRawPointer?) -> UnsafePointer<T>! {\n" +
-        "    return param?.assumingMemoryBound(to: T.self)\n" +
+        "    return UnsafeRawPointer(param)?.assumingMemoryBound(to: T.self)\n" +
         "}\n\n" +
             
         "private func cast<T>(_ param: UnsafeRawPointer?) -> UnsafeMutablePointer<T>! {\n" +
-        "    return param?.assumingMemoryBound(to: T.self)\n" +
+        "    return UnsafeMutableRawPointer(mutating: param)?.assumingMemoryBound(to: T.self)\n" +
         "}\n\n" +
 
         "private func cast<T>(_ param: UnsafeMutableRawPointer?) -> UnsafeMutablePointer<T>! {\n" +
