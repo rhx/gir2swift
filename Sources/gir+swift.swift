@@ -47,6 +47,22 @@ public extension GIR {
         "    return OpaquePointer(param)\n" +
         "}\n\n" +
 
+        "private func cast<T>(_ param: UnsafePointer<T>?) -> UnsafeRawPointer! {\n" +
+        "    return UnsafeRawPointer(param)\n" +
+        "}\n\n" +
+
+        "private func cast<T>(_ param: UnsafeMutablePointer<T>?) -> UnsafeRawPointer! {\n" +
+        "    return UnsafeRawPointer(param)\n" +
+        "}\n\n" +
+
+        "private func cast<T>(_ param: UnsafePointer<T>?) -> UnsafeMutableRawPointer! {\n" +
+        "    return UnsafeMutableRawPointer(mutating: UnsafeRawPointer(param))\n" +
+        "}\n\n" +
+
+        "private func cast<T>(_ param: UnsafeMutablePointer<T>?) -> UnsafeMutableRawPointer! {\n" +
+        "    return UnsafeMutableRawPointer(param)\n" +
+        "}\n\n" +
+
         "private func cast<T>(_ param: UnsafeRawPointer?) -> UnsafePointer<T>! {\n" +
         "    return param?.assumingMemoryBound(to: T.self)\n" +
         "}\n\n" +
