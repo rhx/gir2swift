@@ -863,7 +863,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     }
     let parentName = hasParent ? parentType!.name.swift : ""
     let p = parent.isEmpty ? (hasParent ? "\(parentName), " : "") : "\(parent), "
-    let code = "public class \(classType): \(p)\(protocolName) {\n" + indentation +
+    let code = "open class \(classType): \(p)\(protocolName) {\n" + indentation +
         (hasParent ? "" : ("public let ptr: UnsafeMutablePointer<\(ctype)>\n\n" + indentation)) +
         "public init(_ op: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
             (hasParent ? "super.init(cast(op))\n" : "self.ptr = op\n") + indentation +
