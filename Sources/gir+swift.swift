@@ -51,6 +51,18 @@ public extension GIR {
         "    return param?.assumingMemoryBound(to: T.self)\n" +
         "}\n\n" +
 
+        "private func cast<T>(_ param: UnsafeMutableRawPointer?) -> UnsafePointer<T>! {\n" +
+        "    return param?.assumingMemoryBound(to: T.self)\n" +
+        "}\n\n" +
+            
+        "private func cast<T>(_ param: UnsafeRawPointer?) -> UnsafeMutablePointer<T>! {\n" +
+        "    return param?.assumingMemoryBound(to: T.self)\n" +
+        "}\n\n" +
+
+        "private func cast<T>(_ param: UnsafeMutableRawPointer?) -> UnsafeMutablePointer<T>! {\n" +
+        "    return param?.assumingMemoryBound(to: T.self)\n" +
+        "}\n\n" +
+            
         "private extension gboolean {\n" +
         "    private init(_ b: Bool) { self = b ? gboolean(1) : gboolean(0) }\n" +
         "}\n\n" +
@@ -777,6 +789,12 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ") -> S
         "public init<T>(constPointer: UnsafePointer<T>) {\n" + indentation + indentation +
             "ptr = constPointer.withMemoryRebound(to: \(rtype).self, capacity: 1) { $0 }\n" + indentation +
         "}\n\n" + indentation +
+        "public init(raw: UnsafeRawPointer) {\n" + indentation + indentation +
+            "ptr = raw.assumingMemoryBound(to: \(rtype).self)\n" + indentation +
+        "}\n\n" + indentation +
+        "public init(raw: UnsafeMutbleRawPointer) {\n" + indentation + indentation +
+            "ptr = raw.assumingMemoryBound(to: \(rtype).self)\n" + indentation +
+        "}\n\n" + indentation +
         "public init(opaquePointer: OpaquePointer) {\n" + indentation + indentation +
             "ptr = UnsafeMutablePointer<\(rtype)>(opaquePointer)\n" + indentation +
         "}\n\n" + indentation +
@@ -836,6 +854,12 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "}\n\n")) + (hasParent ? "" : (indentation +
         "public convenience init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
             "self.init(cPointer.withMemoryRebound(to: \(ctype).self, capacity: 1) { $0 })\n" + indentation +
+        "}\n\n" + indentation +
+        "public convenience init(raw: UnsafeRawPointer) {\n" + doubleIndentation +
+            "self.init(raw.assumingMemoryBound(to: \(ctype).self))\n" + indentation +
+        "}\n\n" + indentation +
+        "public convenience init(raw: UnsafeMutableRawPointer) {\n" + doubleIndentation +
+            "self.init(raw.assumingMemoryBound(to: \(ctype).self))\n" + indentation +
         "}\n\n" + indentation +
         "public convenience init(opaquePointer: OpaquePointer) {\n" + doubleIndentation +
             "self.init(UnsafeMutablePointer<\(ctype)>(opaquePointer))\n" + indentation +

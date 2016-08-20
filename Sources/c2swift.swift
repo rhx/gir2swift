@@ -48,7 +48,7 @@ private let castableScalars = [  "gint" : "CInt",    "glong" : "CLong",   "guint
     "gint8"  : "Int8",  "guint8"  : "UInt8",  "gint16" : "Int16", "guint16" : "UInt16",
     "gint32" : "Int32", "guint32" : "UInt32", "gint64" : "Int64", "guint64" : "UInt64",
     "gulong" : "CUnsignedLong",  "gsize"   : "Int",  "gboolean" : "Bool", "goffset" : "Int"]
-private let castablePointers = [ "gpointer" : "OpaquePointer" ]
+private let castablePointers = [ "gpointer" : "UnsafeMutableRawPointer" ]
 private let reversePointers = castablePointers.reduce(Dictionary<String,String>()) {
     var dict = $0
     dict[$1.1] = $1.0
