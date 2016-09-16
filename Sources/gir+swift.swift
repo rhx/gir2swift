@@ -175,7 +175,7 @@ public extension GIR.Argument {
         let swift = (array ? t.swiftType : t.swift).typeEscaped
         let isPtr  = ct.isPointer
         let record = knownRecord
-        let code = "\(array ? "inout [" : "")\(isFunction ? "@escaping " : "")\(isPtr ? (record.map { $0.protocolName } ?? ct.swiftRepresentationOfCType) : swift)\(array ? "]" : "")"
+        let code = "\(array ? "inout [" : "")\(isPtr ? (record.map { $0.protocolName } ?? ct.swiftRepresentationOfCType) : (isFunction ? "@escaping \(swift)" : swift))\(array ? "]" : "")"
         return code
     }
 
