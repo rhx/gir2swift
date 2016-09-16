@@ -247,14 +247,14 @@ public class GIR {
         public let ctype: String            ///< underlying C type
         public let containedTypes: [CType]  ///< list of contained types
         public let nullable: Bool           ///< is this an optional?
-        public let callbackScope: String?   ///< callback scope (nil if not a callback)
+        public let scope: String?           ///< reference scope
 
         /// designated initialiser
-        public init(name: String, type: String, ctype: String, comment: String, introspectable: Bool = false, deprecated: String? = nil, isNullable: Bool = false, contains: [CType] = [], callbackScope scope: String? = nil) {
+        public init(name: String, type: String, ctype: String, comment: String, introspectable: Bool = false, deprecated: String? = nil, isNullable: Bool = false, contains: [CType] = [], scope: String? = nil) {
             self.ctype = ctype
             self.nullable = isNullable
             self.containedTypes = contains
-            self.callbackScope = scope
+            self.scope = scope
             super.init(name: name, type: type, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
@@ -262,7 +262,7 @@ public class GIR {
         public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", cTypeAttr: String? = nil, nullableAttr: String = "nullable", scopeAttr: String = "scope") {
             containedTypes = node.children.filter { $0.name == "type" }.map { CType(node: $0, atIndex: i, cTypeAttr: "type") }
             nullable = node.attribute(named: nullableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
-            callbackScope = node.attribute(named: scopeAttr)
+            scope = node.attribute(named: scopeAttr)
             if let cta = cTypeAttr {
                 ctype = node.attribute(named: cta) ?? "Void /* unknown \(i) */"
             } else {
@@ -286,7 +286,7 @@ public class GIR {
             let type: String
             let ctype: String
             nullable = node.attribute(named: nullableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
-            callbackScope = node.attribute(named: scopeAttr)
+            scope = node.attribute(named: scopeAttr)
             if let array = node.children.filter({ $0.name == "array" }).first {
                 containedTypes = array.children.filter { $0.name == "type" }.map { CType(node: $0, atIndex: i, cTypeAttr: "type") }
                 ctype = array.attribute(named: "type") ?? "Void /* unknown ctype \(i) */"
@@ -307,9 +307,6 @@ public class GIR {
 
         /// return whether the type is an array
         public var isArray: Bool { return !containedTypes.isEmpty }
-
-        /// return whether the type is a function pointer (callback)
-        public var isFunction: Bool { return callbackScope != nil }
     }
 
     /// a type alias is just a type with an underlying C type
