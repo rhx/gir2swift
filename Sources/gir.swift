@@ -247,19 +247,22 @@ public class GIR {
         public let ctype: String            ///< underlying C type
         public let containedTypes: [CType]  ///< list of contained types
         public let nullable: Bool           ///< is this an optional?
+        public let callbackScope: String?   ///< callback scope (nil if not a callback)
 
         /// designated initialiser
-        public init(name: String, type: String, ctype: String, comment: String, introspectable: Bool = false, deprecated: String? = nil, isNullable: Bool = false, contains: [CType] = []) {
+        public init(name: String, type: String, ctype: String, comment: String, introspectable: Bool = false, deprecated: String? = nil, isNullable: Bool = false, contains: [CType] = [], callbackScope scope: String? = nil) {
             self.ctype = ctype
             self.nullable = isNullable
             self.containedTypes = contains
+            self.callbackScope = scope
             super.init(name: name, type: type, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
         /// factory method to construct an alias from XML
-        public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", cTypeAttr: String? = nil, nullableAttr: String = "nullable") {
+        public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", cTypeAttr: String? = nil, nullableAttr: String = "nullable", scopeAttr: String = "scope") {
             containedTypes = node.children.filter { $0.name == "type" }.map { CType(node: $0, atIndex: i, cTypeAttr: "type") }
             nullable = node.attribute(named: nullableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
+            callbackScope = node.attribute(named: scopeAttr)
             if let cta = cTypeAttr {
                 ctype = node.attribute(named: cta) ?? "Void /* unknown \(i) */"
             } else {
@@ -279,10 +282,11 @@ public class GIR {
         }
 
         /// factory method to construct an alias from XML with types taken from children
-        public init(fromChildrenOf node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", nullableAttr: String = "nullable") {
+        public init(fromChildrenOf node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", nullableAttr: String = "nullable", scopeAttr: String = "scope") {
             let type: String
             let ctype: String
             nullable = node.attribute(named: nullableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
+            callbackScope = node.attribute(named: scopeAttr)
             if let array = node.children.filter({ $0.name == "array" }).first {
                 containedTypes = array.children.filter { $0.name == "type" }.map { CType(node: $0, atIndex: i, cTypeAttr: "type") }
                 ctype = array.attribute(named: "type") ?? "Void /* unknown ctype \(i) */"
@@ -303,6 +307,9 @@ public class GIR {
 
         /// return whether the type is an array
         public var isArray: Bool { return !containedTypes.isEmpty }
+
+        /// return whether the type is a function pointer (callback)
+        public var isFunction: Bool { return callbackScope != nil }
     }
 
     /// a type alias is just a type with an underlying C type
