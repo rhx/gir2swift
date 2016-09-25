@@ -60,9 +60,16 @@ private let reversecast = castableScalars.reduce(reversePointers) {
     return dict
 }
 private let swiftReplacementsForC = [ "char" : "CChar", "int" : "CInt",
-  "long" : "CLong", "long long" : "CLongLong", "unsigned long long" : "CUnsignedLongLong", "short" : "CShort",
-  "double" : "CDouble", "float" : "CFloat", "long double" : "Double",
+  "unsigned int" : "CUnsignedInt", "unsigned" : "CUnsignedInt",
+  "long" : "CLong", "unsigned long" : "CUnsignedLong",
+  "long long" : "CLongLong", "unsigned long long" : "CUnsignedLongLong",
+  "short" : "CShort", "unsigned short" : "CUnsignedShort",
+  "double" : "CDouble", "float" : "CFloat", "long double" : "Float80",
   "void" : "Void", "utf8" : "String", "filename" : "String", "va_list" : "CVaListPointer",
+  "int8_t" : "Int8", "uint8_t" : "UInt8",
+  "int16_t" : "Int16", "uint16_t" : "UInt16",
+  "int32_t" : "Int32", "uint32_t" : "UInt32",
+  "int64_t" : "Int64", "uint64_t" : "UInt64",
   "Error" : "ErrorType", "ErrorType" : "ErrorEnum" ]
 private let reservedTypes: Set = ["String", "Array", "Optional", "Set", "Error", "ErrorProtocol"]
 private let typeNames: Set = reservedTypes.union(reversecast.keys)
