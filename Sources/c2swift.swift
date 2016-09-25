@@ -59,7 +59,7 @@ private let reversecast = castableScalars.reduce(reversePointers) {
     dict[$1.1] = $1.0
     return dict
 }
-private let swiftReplacementsForC = [ "char" : "CChar", "unsigned char", "CUnsignedChar",
+private let swiftReplacementsForC = [ "char" : "CChar", "unsigned char" : "CUnsignedChar",
   "int" : "CInt", "unsigned int" : "CUnsignedInt", "unsigned" : "CUnsignedInt",
   "long" : "CLong", "unsigned long" : "CUnsignedLong",
   "long long" : "CLongLong", "unsigned long long" : "CUnsignedLongLong",
