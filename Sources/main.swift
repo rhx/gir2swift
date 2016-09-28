@@ -60,86 +60,86 @@ func process_gir(file: String, to outputDirectory: String? = nil) {
         let boilerplate = gir.boilerPlate
         let preamble = gir.preamble
         let prefix = boilerplate + preamble
-        let group = DispatchGroup()
+        let queues = DispatchGroup()
         let background = DispatchQueue.global()
-        let main = DispatchQueue.main
-        background.async(group: group) {
+        let outq = DispatchQueue(label: "com.github.rhx.gir2swift.outputqueue")
+        background.async(group: queues) {
             let aliases = gir.aliases.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
             if let dir = outputDirectory {
                 let f = "\(dir)/\(node)-aliases.swift"
                 do { try aliases.writeTo(file: f) }
-                catch { main.async { fputs("\(error)\n", stderr) } }
-            } else { let output = prefix + aliases ; main.async { print(output) } }
+                catch { outq.async(group: queues) { fputs("\(error)\n", stderr) } }
+            } else { let output = prefix + aliases ; outq.async(group: queues) { print(output) } }
         }
-        background.async(group: group) {
+        background.async(group: queues) {
             let callbacks = gir.callbacks.filter{!blacklist.contains($0.name)}.map(swiftCallbackAliasCode).joined(separator: "\n\n")
             if let dir = outputDirectory {
                 let f = "\(dir)/\(node)-callbacks.swift"
                 do { try callbacks.writeTo(file: f) }
-                catch { main.async { fputs("\(error)\n", stderr) } }
-            } else { let output = prefix + callbacks ; main.async { print(output) } }
+                catch { outq.async(group: queues) { fputs("\(error)\n", stderr) } }
+            } else { let output = prefix + callbacks ; outq.async(group: queues) { print(output) } }
         }
-        background.async(group: group) {
+        background.async(group: queues) {
             let constants = gir.constants.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
             if let dir = outputDirectory {
                 let f = "\(dir)/\(node)-constants.swift"
                 do { try constants.writeTo(file: f) }
-                catch { main.async { fputs("\(error)\n", stderr) } }
-            } else { let output = prefix + constants ; main.async { print(output) } }
+                catch { outq.async(group: queues) { fputs("\(error)\n", stderr) } }
+            } else { let output = prefix + constants ; outq.async(group: queues) { print(output) } }
         }
-        background.async(group: group) {
+        background.async(group: queues) {
             let enumerations = gir.enumerations.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
             if let dir = outputDirectory {
                 let f = "\(dir)/\(node)-enumerations.swift"
                 do { try enumerations.writeTo(file: f) }
-                catch { main.async { fputs("\(error)\n", stderr) } }
-            } else { let output = prefix + enumerations ; main.async { print(output) } }
+                catch { outq.async(group: queues) { fputs("\(error)\n", stderr) } }
+            } else { let output = prefix + enumerations ; outq.async(group: queues) { print(output) } }
         }
-        background.async(group: group) {
+        background.async(group: queues) {
             let bitfields = gir.bitfields.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
             if let dir = outputDirectory {
                 let f = "\(dir)/\(node)-bitfields.swift"
                 do { try bitfields.writeTo(file: f) }
-                catch { main.async { fputs("\(error)\n", stderr) } }
-            } else { let output = prefix + bitfields ; main.async { print(output) } }
+                catch { outq.async(group: queues) { fputs("\(error)\n", stderr) } }
+            } else { let output = prefix + bitfields ; outq.async(group: queues) { print(output) } }
         }
-        background.async(group: group) {
+        background.async(group: queues) {
             let interfaces = gir.interfaces.filter {!blacklist.contains($0.name)}.map(swiftCode(gir.functions)).joined(separator: "\n\n")
             if let dir = outputDirectory {
                 let f = "\(dir)/\(node)-interfaces.swift"
                 do { try interfaces.writeTo(file: f) }
-                catch { main.async { fputs("\(error)\n", stderr) } }
-            } else { let output = prefix + interfaces ; main.async { print(output) } }
+                catch { outq.async(group: queues) { fputs("\(error)\n", stderr) } }
+            } else { let output = prefix + interfaces ; outq.async(group: queues) { print(output) } }
         }
-        background.async(group: group) {
+        background.async(group: queues) {
             let records = gir.records.filter {!blacklist.contains($0.name)}.map(swiftCode(gir.functions))
             if let dir = outputDirectory {
                 for record in records {
                     let f = "\(dir)/\(node)-\(record.swiftName).swift"
                     do { try record.writeTo(file: f) }
-                    catch { main.async { fputs("\(error)\n", stderr) } }
+                    catch { outq.async(group: queues) { fputs("\(error)\n", stderr) } }
                 }
-            } else { let output = prefix + records.joined(separator: "\n\n") ; main.async { print(output) } }
+            } else { let output = prefix + records.joined(separator: "\n\n") ; outq.async(group: queues) { print(output) } }
         }
-        background.async(group: group) {
+        background.async(group: queues) {
             let classes = gir.classes.filter{!blacklist.contains($0.name)}.map(swiftCode(gir.functions))
             if let dir = outputDirectory {
                 for c in classes {
                     let f = "\(dir)/\(node)-\(c.swiftName).swift"
                     do { try c.writeTo(file: f) }
-                    catch { main.async { fputs("\(error)\n", stderr) } }
+                    catch { outq.async(group: queues) { fputs("\(error)\n", stderr) } }
                 }
-            } else { let output = prefix + classes.joined(separator: "\n\n") ; main.async { print(output) } }
+            } else { let output = prefix + classes.joined(separator: "\n\n") ; outq.async(group: queues) { print(output) } }
         }
-        background.async(group: group) {
+        background.async(group: queues) {
             let functions = gir.functions.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
             if let dir = outputDirectory {
                 let f = "\(dir)/\(node)-functions.swift"
                 do { try functions.writeTo(file: f) }
-                catch { main.async { fputs("\(error)\n", stderr) } }
-            } else { let output = prefix + functions ; main.async { print(output) } }
+                catch { outq.async(group: queues) { fputs("\(error)\n", stderr) } }
+            } else { let output = prefix + functions ; outq.async(group: queues) { print(output) } }
         }
-        group.wait()
+        queues.wait()
         if verbose {
             fputs("** Verbatim: \(GIR.VerbatimConstants.count)\n\(GIR.VerbatimConstants.joined(separator: "\n"))\n\n", stderr)
             fputs("** Blacklisted: \(blacklist.count)\n\(blacklist.joined(separator: "\n\n"))\n\n", stderr)
