@@ -109,39 +109,53 @@ func process_gir(file: String, to outputDirectory: String? = nil) {
             } else { outq.async(group: queues) { print(output) } }
         }
         background.async(group: queues) {
-            let interfaces = gir.interfaces.filter {!blacklist.contains($0.name)}.map(swiftCode(gir.functions)).joined(separator: "\n\n")
-            let output = prefix + interfaces
+            let convert = swiftCode(gir.functions)
+            let interfaces = gir.interfaces.filter {!blacklist.contains($0.name)}
             if let dir = outputDirectory {
-                let f = "\(dir)/\(node)-interfaces.swift"
-                do { try output.writeTo(file: f) }
-                catch { outq.async(group: queues) { fputs("\(error)\n", stderr) } }
-            } else { outq.async(group: queues) { print(output) } }
-        }
-        background.async(group: queues) {
-            let records = gir.records.filter {!blacklist.contains($0.name)}.map(swiftCode(gir.functions))
-            if let dir = outputDirectory {
-                for record in records {
-                    let output = prefix + record
-                    let f = "\(dir)/\(node)-\(record.swiftName).swift"
+                for interface in interfaces {
+                    let interfaceCode = convert(interface)
+                    let output = prefix + interfaceCode
+                    let f = "\(dir)/\(node)-\(interface.className)"
                     do { try output.writeTo(file: f) }
                     catch { outq.async(group: queues) { fputs("\(error)\n", stderr) } }
                 }
             } else {
-                let output = prefix + records.joined(separator: "\n\n")
+                let interfacesCode = interfaces.map(convert).joined(separator: "\n\n")
+                let output = prefix + interfacesCode
                 outq.async(group: queues) { print(output) }
             }
         }
         background.async(group: queues) {
-            let classes = gir.classes.filter{!blacklist.contains($0.name)}.map(swiftCode(gir.functions))
+            let convert = swiftCode(gir.functions)
+            let records = gir.records.filter {!blacklist.contains($0.name)}
             if let dir = outputDirectory {
-                for c in classes {
-                    let output = prefix + c
-                    let f = "\(dir)/\(node)-\(c.swiftName).swift"
+                for record in records {
+                    let recordCode = convert(record)
+                    let output = prefix + recordCode
+                    let f = "\(dir)/\(node)-\(record.className).swift"
                     do { try output.writeTo(file: f) }
                     catch { outq.async(group: queues) { fputs("\(error)\n", stderr) } }
                 }
             } else {
-                let output = prefix + classes.joined(separator: "\n\n")
+                let recordsCode = records.map(convert).joined(separator: "\n\n")
+                let output = prefix + recordsCode
+                outq.async(group: queues) { print(output) }
+            }
+        }
+        background.async(group: queues) {
+            let convert = swiftCode(gir.functions)
+            let classes = gir.classes.filter{!blacklist.contains($0.name)}
+            if let dir = outputDirectory {
+                for c in classes {
+                    let classCode = convert(c)
+                    let output = prefix + classCode
+                    let f = "\(dir)/\(node)-\(c.className).swift"
+                    do { try output.writeTo(file: f) }
+                    catch { outq.async(group: queues) { fputs("\(error)\n", stderr) } }
+                }
+            } else {
+                let classesCode = classes.map(convert).joined(separator: "\n\n")
+                let output = prefix + classesCode
                 outq.async(group: queues) { print(output) }
             }
         }
