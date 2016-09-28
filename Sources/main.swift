@@ -10,6 +10,7 @@
 #else
     import Darwin
 #endif
+import Dispatch
 
 /// verbose output
 var verbose = false
@@ -41,7 +42,7 @@ func preload_gir(file: String) {
 
 
 /// process a GIR file
-func process_gir(file: String) {
+func process_gir(file: String, to outputDirectory: String? = nil) {
     let base = file.baseName
     let node = base.stringByRemoving(suffix: ".gir") ?? base
     let wlfile = node + ".whitelist"
@@ -56,17 +57,89 @@ func process_gir(file: String) {
     load_gir(file) { gir in
         processSpecialCases(gir, forFile: node)
         let blacklist = GIR.Blacklist
-        print(gir.boilerPlate)
-        print(gir.preamble)
-        print(gir.aliases.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n"))
-        print(gir.callbacks.filter{!blacklist.contains($0.name)}.map(swiftCallbackAliasCode).joined(separator: "\n\n"))
-        print(gir.constants.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n"))
-        print(gir.enumerations.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n"))
-        print(gir.bitfields.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n"))
-        print(gir.interfaces.filter {!blacklist.contains($0.name)}.map(swiftCode(gir.functions)).joined(separator: "\n\n"))
-        print(gir.records.filter {!blacklist.contains($0.name)}.map(swiftCode(gir.functions)).joined(separator: "\n\n"))
-        print(gir.classes.filter{!blacklist.contains($0.name)}.map(swiftCode(gir.functions)).joined(separator: "\n\n"))
-        print(gir.functions.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n"))
+        let boilerplate = gir.boilerPlate
+        let preamble = gir.preamble
+        let prefix = boilerplate + preamble
+        let group = DispatchGroup()
+        let background = DispatchQueue.global()
+        let main = DispatchQueue.main
+        background.async(group: group) {
+            let aliases = gir.aliases.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
+            if let dir = outputDirectory {
+                let f = "\(dir)/\(node)-aliases.swift"
+                do { try aliases.writeTo(file: f) }
+                catch { main.async { fputs("\(error)\n", stderr) } }
+            } else { let output = prefix + aliases ; main.async { print(output) } }
+        }
+        background.async(group: group) {
+            let callbacks = gir.callbacks.filter{!blacklist.contains($0.name)}.map(swiftCallbackAliasCode).joined(separator: "\n\n")
+            if let dir = outputDirectory {
+                let f = "\(dir)/\(node)-callbacks.swift"
+                do { try callbacks.writeTo(file: f) }
+                catch { main.async { fputs("\(error)\n", stderr) } }
+            } else { let output = prefix + callbacks ; main.async { print(output) } }
+        }
+        background.async(group: group) {
+            let constants = gir.constants.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
+            if let dir = outputDirectory {
+                let f = "\(dir)/\(node)-constants.swift"
+                do { try constants.writeTo(file: f) }
+                catch { main.async { fputs("\(error)\n", stderr) } }
+            } else { let output = prefix + constants ; main.async { print(output) } }
+        }
+        background.async(group: group) {
+            let enumerations = gir.enumerations.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
+            if let dir = outputDirectory {
+                let f = "\(dir)/\(node)-enumerations.swift"
+                do { try enumerations.writeTo(file: f) }
+                catch { main.async { fputs("\(error)\n", stderr) } }
+            } else { let output = prefix + enumerations ; main.async { print(output) } }
+        }
+        background.async(group: group) {
+            let bitfields = gir.bitfields.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
+            if let dir = outputDirectory {
+                let f = "\(dir)/\(node)-bitfields.swift"
+                do { try bitfields.writeTo(file: f) }
+                catch { main.async { fputs("\(error)\n", stderr) } }
+            } else { let output = prefix + bitfields ; main.async { print(output) } }
+        }
+        background.async(group: group) {
+            let interfaces = gir.interfaces.filter {!blacklist.contains($0.name)}.map(swiftCode(gir.functions)).joined(separator: "\n\n")
+            if let dir = outputDirectory {
+                let f = "\(dir)/\(node)-interfaces.swift"
+                do { try interfaces.writeTo(file: f) }
+                catch { main.async { fputs("\(error)\n", stderr) } }
+            } else { let output = prefix + interfaces ; main.async { print(output) } }
+        }
+        background.async(group: group) {
+            let records = gir.records.filter {!blacklist.contains($0.name)}.map(swiftCode(gir.functions))
+            if let dir = outputDirectory {
+                for record in records {
+                    let f = "\(dir)/\(node)-\(record.swiftName).swift"
+                    do { try record.writeTo(file: f) }
+                    catch { main.async { fputs("\(error)\n", stderr) } }
+                }
+            } else { let output = prefix + records.joined(separator: "\n\n") ; main.async { print(output) } }
+        }
+        background.async(group: group) {
+            let classes = gir.classes.filter{!blacklist.contains($0.name)}.map(swiftCode(gir.functions))
+            if let dir = outputDirectory {
+                for c in classes {
+                    let f = "\(dir)/\(node)-\(c.swiftName).swift"
+                    do { try c.writeTo(file: f) }
+                    catch { main.async { fputs("\(error)\n", stderr) } }
+                }
+            } else { let output = prefix + classes.joined(separator: "\n\n") ; main.async { print(output) } }
+        }
+        background.async(group: group) {
+            let functions = gir.functions.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
+            if let dir = outputDirectory {
+                let f = "\(dir)/\(node)-functions.swift"
+                do { try functions.writeTo(file: f) }
+                catch { main.async { fputs("\(error)\n", stderr) } }
+            } else { let output = prefix + functions ; main.async { print(output) } }
+        }
+        group.wait()
         if verbose {
             fputs("** Verbatim: \(GIR.VerbatimConstants.count)\n\(GIR.VerbatimConstants.joined(separator: "\n"))\n\n", stderr)
             fputs("** Blacklisted: \(blacklist.count)\n\(blacklist.joined(separator: "\n\n"))\n\n", stderr)

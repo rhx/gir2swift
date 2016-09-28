@@ -10,11 +10,12 @@
 #else
     import Darwin
 #endif
-
+import Foundation
 
 extension String {
     var contents: String? { return String(contentsOfFile: self) }
 
+    /// Read a string from a file
     init?(contentsOfFile file: String, quiet: Bool = false) {
         let fn = open(file, O_RDONLY)
         guard fn >= 0 else {
@@ -38,5 +39,11 @@ extension String {
         let cs = mem.assumingMemoryBound(to: CChar.self)
         cs[len] = 0
         self = String(cString: UnsafePointer(cs))
+    }
+
+    /// Write a string to a file as UTF-8
+    func writeTo(file: String, atomically useAuxFile: Bool = true) throws {
+        let ns = self as NSString
+        try ns.write(toFile: file, atomically: useAuxFile, encoding: Encoding.utf8.rawValue)
     }
 }
