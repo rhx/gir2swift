@@ -43,7 +43,7 @@ extension String {
 
     /// Write a string to a file as UTF-8
     func writeTo(file: String, atomically useAuxFile: Bool = true) throws {
-        let ns = self as NSString
+        let ns = NSString(string: self)
         try ns.write(toFile: file, atomically: useAuxFile, encoding: Encoding.utf8.rawValue)
     }
 }
