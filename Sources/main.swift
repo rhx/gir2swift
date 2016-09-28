@@ -117,7 +117,7 @@ func process_gir(file: String, to outputDirectory: String? = nil) {
                 for interface in interfaces {
                     let interfaceCode = convert(interface)
                     let output = prefix + interfaceCode
-                    let f = "\(dir)/\(node)-\(interface.className)"
+                    let f = "\(dir)/\(node)-\(interface.className).swift"
                     do { try output.writeTo(file: f) }
                     catch { outq.async(group: queues) { fputs("\(error)\n", stderr) } }
                 }
