@@ -42,7 +42,7 @@ func preload_gir(file: String) {
 
 
 /// process a GIR file
-func process_gir(file: String, to outputDirectory: String? = nil) {
+func process_gir(file: String, to outputDirectory: String? = nil, split singleFilePerClass: Bool = false) {
     let base = file.baseName
     let node = base.stringByRemoving(suffix: ".gir") ?? base
     let wlfile = node + ".whitelist"
@@ -112,49 +112,91 @@ func process_gir(file: String, to outputDirectory: String? = nil) {
         }
         background.async(group: queues) {
             let convert = swiftCode(gir.functions)
-            let interfaces = gir.interfaces.filter {!blacklist.contains($0.name)}
+            let types = gir.interfaces.filter {!blacklist.contains($0.name)}
             if let dir = outputDirectory {
-                for interface in interfaces {
-                    let interfaceCode = convert(interface)
-                    let output = prefix + interfaceCode
-                    let f = "\(dir)/\(node)-\(interface.className).swift"
+                var output = prefix
+                var first: Character? = nil
+                var firstName = ""
+                for type in types {
+                    let name = type.className
+                    let code = convert(type)
+                    output += code + "\n\n"
+                    guard let firstChar = name.characters.first else { continue }
+                    guard singleFilePerClass || ( first != nil && first != firstChar ) else {
+                        if first == nil {
+                            first = firstChar
+                            firstName = name + "-"
+                        }
+                        continue
+                    }
+                    let f = "\(dir)/\(node)-\(firstName)\(name).swift"
                     do { try output.writeTo(file: f) }
                     catch { outq.async(group: queues) { fputs("\(error)\n", stderr) } }
+                    output = prefix
+                    first = nil
                 }
             } else {
-                let interfacesCode = interfaces.map(convert).joined(separator: "\n\n")
+                let interfacesCode = types.map(convert).joined(separator: "\n\n")
                 outq.async(group: queues) { print(interfacesCode) }
             }
         }
         background.async(group: queues) {
             let convert = swiftCode(gir.functions)
-            let records = gir.records.filter {!blacklist.contains($0.name)}
+            let types = gir.records.filter {!blacklist.contains($0.name)}
             if let dir = outputDirectory {
-                for record in records {
-                    let recordCode = convert(record)
-                    let output = prefix + recordCode
-                    let f = "\(dir)/\(node)-\(record.className).swift"
+                var output = prefix
+                var first: Character? = nil
+                var firstName = ""
+                for type in types {
+                    let name = type.className
+                    let code = convert(type)
+                    output += code + "\n\n"
+                    guard let firstChar = name.characters.first else { continue }
+                    guard singleFilePerClass || ( first != nil && first != firstChar ) else {
+                        if first == nil {
+                            first = firstChar
+                            firstName = name + "-"
+                        }
+                        continue
+                    }
+                    let f = "\(dir)/\(node)-\(firstName)\(name).swift"
                     do { try output.writeTo(file: f) }
                     catch { outq.async(group: queues) { fputs("\(error)\n", stderr) } }
+                    output = prefix
+                    first = nil
                 }
             } else {
-                let recordsCode = records.map(convert).joined(separator: "\n\n")
+                let recordsCode = types.map(convert).joined(separator: "\n\n")
                 outq.async(group: queues) { print(recordsCode) }
             }
         }
         background.async(group: queues) {
             let convert = swiftCode(gir.functions)
-            let classes = gir.classes.filter{!blacklist.contains($0.name)}
+            let types = gir.classes.filter{!blacklist.contains($0.name)}
             if let dir = outputDirectory {
-                for c in classes {
-                    let classCode = convert(c)
-                    let output = prefix + classCode
-                    let f = "\(dir)/\(node)-\(c.className).swift"
+                var output = prefix
+                var first: Character? = nil
+                var firstName = ""
+                for type in types {
+                    let name = type.className
+                    let code = convert(type)
+                    output += code + "\n\n"
+                    guard let firstChar = name.characters.first else { continue }
+                    guard singleFilePerClass || ( first != nil && first != firstChar ) else {
+                        if first == nil {
+                            first = firstChar
+                            firstName = name + "-"
+                        }
+                        continue
+                    }
+                    let f = "\(dir)/\(node)-\(firstName)\(name).swift"
                     do { try output.writeTo(file: f) }
                     catch { outq.async(group: queues) { fputs("\(error)\n", stderr) } }
+                    output = prefix
+                    first = nil
                 }
             } else {
-                let classesCode = classes.map(convert).joined(separator: "\n\n")
+                let classesCode = types.map(convert).joined(separator: "\n\n")
                 outq.async(group: queues) { print(classesCode) }
             }
         }
@@ -191,7 +233,8 @@ func processSpecialCases(_ gir: GIR, forFile node: String) {
 // get options
 //
 var outputDirectory: String?
-while let (opt, param) = get_opt("o:p:v") {
+var singleFilePerClass = false
+while let (opt, param) = get_opt("o:p:sv") {
     switch opt {
         case "o":
             outputDirectory = param
@@ -199,6 +242,8 @@ while let (opt, param) = get_opt("o:p:v") {
         case "p":
             guard let file = param else { usage() }
             preload_gir(file: param!)
+        case "s":
+            singleFilePerClass = true
         case "v":
             verbose = true
         default:
@@ -207,5 +252,5 @@ while let (opt, param) = get_opt("o:p:v") {
 }
 
 for argument in CommandLine.arguments[Int(optind)..<CommandLine.arguments.count] {
-    process_gir(file: argument, to: outputDirectory)
+    process_gir(file: argument, to: outputDirectory, split: singleFilePerClass)
 }
