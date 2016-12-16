@@ -814,7 +814,7 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ") -> S
             "ptr = cPointer.withMemoryRebound(to: \(rtype).self, capacity: 1) { $0 }\n" + indentation +
         "}\n\n" + indentation +
         "public init<T>(constPointer: UnsafePointer<T>) {\n" + indentation + indentation +
-            "ptr = constPointer.withMemoryRebound(to: \(rtype).self, capacity: 1) { $0 }\n" + indentation +
+            "ptr = constPointer.withMemoryRebound(to: \(rtype).self, capacity: 1) { UnsafeMutablePointer(mutating: $0) }\n" + indentation +
         "}\n\n" + indentation +
         "public init(raw: UnsafeRawPointer) {\n" + indentation + indentation +
             "ptr = UnsafeMutableRawPointer(mutating: raw).assumingMemoryBound(to: \(rtype).self)\n" + indentation +
