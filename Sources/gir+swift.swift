@@ -898,12 +898,12 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
 //        "public typealias Class = \(protocolName)\n") +
         properties.map(scode).joined(separator: "\n") + "\n" +
     (noProperties ? "" : ("}\n\npublic extension \(protocolName) {\n" + indentation +
-        "@discardableResult public func bind<Q: PropertyNameProtocol, T: ObjectProtocol>(property source_property: \(classType)PropertyName, to target: T, _ target_property: Q, flags f: BindingFlags = .default_, transformFrom transform_from: @escaping GObject.ValueTransformer = { $0.transform(destValue: $1) }, transformTo transform_to: @escaping GObject.ValueTransformer = { $0.transform(destValue: $1) }) -> BindingRef! {\n" + doubleIndentation +
+        "@discardableResult public func bind<Q: PropertyNameProtocol, T: ObjectProtocol>(property source_property: \(classType)PropertyName, to target: T, _ target_property: Q, flags f: BindingFlags = .default_, transformFrom transform_from: @escapingGLibObject.ValueTransformer = { $0.transform(destValue: $1) }, transformTo transform_to: @escapingGLibObject.ValueTransformer = { $0.transform(destValue: $1) }) -> BindingRef! {\n" + doubleIndentation +
             "func _bind(_ source: UnsafePointer<gchar>, to t: T, _ target_property: UnsafePointer<gchar>, flags f: BindingFlags = .default_, holder: BindingClosureHolder, transformFrom transform_from: @convention(c) @escaping (gpointer, gpointer, gpointer, gpointer) -> gboolean, transformTo transform_to: @convention(c) @escaping (gpointer, gpointer, gpointer, gpointer) -> gboolean) -> BindingRef! {\n" + tripleIndentation +
                 "let holder = UnsafeMutableRawPointer(Unmanaged.passRetained(holder).toOpaque())\n" + tripleIndentation +
                 "let from = unsafeBitCast(transform_from, to: BindingTransformFunc.self)\n" + tripleIndentation +
                 "let to   = unsafeBitCast(transform_to,   to: BindingTransformFunc.self)\n" + tripleIndentation +
-                "let rv = GObject.ObjectRef(cast(ptr)).bindPropertyFull(sourceProperty: source, target: t, targetProperty: target_property, flags: f, transformTo: to, transformFrom: from, userData: holder) {\n" + tripleIndentation + indentation +
+                "let rv =GLibObject.ObjectRef(cast(ptr)).bindPropertyFull(sourceProperty: source, target: t, targetProperty: target_property, flags: f, transformTo: to, transformFrom: from, userData: holder) {\n" + tripleIndentation + indentation +
                     "if let swift = UnsafeRawPointer($0) {\n" + tripleIndentation + doubleIndentation +
                         "let holder = Unmanaged<GObject.SignalHandlerClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
                         "holder.release()\n" + tripleIndentation + indentation +
@@ -914,11 +914,11 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
             "let rv = _bind(source_property.name, to: target, target_property.name, flags: f, holder: BindingClosureHolder(transform_from, transform_to), transformFrom: {\n" + tripleIndentation +
                 "let ptr = UnsafeRawPointer($3)\n" + tripleIndentation +
                 "let holder = Unmanaged<BindingClosureHolder>.fromOpaque(ptr).takeUnretainedValue()\n" + tripleIndentation +
-                "return holder.transform_from(GObject.ValueRef(raw: $1), GObject.ValueRef(raw: $2)) ? 1 : 0\n" + doubleIndentation +
+                "return holder.transform_from(GObject.ValueRef(raw: $1),GLibObject.ValueRef(raw: $2)) ? 1 : 0\n" + doubleIndentation +
         "}) {\n" + tripleIndentation +
             "let ptr = UnsafeRawPointer($3)\n" + tripleIndentation +
             "let holder = Unmanaged<BindingClosureHolder>.fromOpaque(ptr).takeUnretainedValue()\n" + tripleIndentation +
-            "return holder.transform_to(GObject.ValueRef(raw: $1), GObject.ValueRef(raw: $2)) ? 1 : 0\n" + doubleIndentation +
+            "return holder.transform_to(GObject.ValueRef(raw: $1),GLibObject.ValueRef(raw: $2)) ? 1 : 0\n" + doubleIndentation +
         "}\n" + doubleIndentation +
         "return rv\n" + indentation +
     "}\n}\n\n")) +
@@ -927,11 +927,11 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         signals.map(scode).joined(separator: "\n") + "\n" +
         properties.map(ncode).joined(separator: "\n") + "\n" +
     (noSignals ? "" : ("}\n\nextension \(protocolName) {\n" + indentation +
-        "@discardableResult public func connect(signal kind: \(classType)SignalName, flags f: ConnectFlags = ConnectFlags(0), to handler: @escaping GObject.SignalHandler) -> CUnsignedLong {\n" + doubleIndentation +
-            "func _connect(signal name: UnsafePointer<gchar>, flags: ConnectFlags, data: GObject.SignalHandlerClosureHolder, handler: @convention(c) @escaping (gpointer, gpointer) -> Void) -> CUnsignedLong {\n" + tripleIndentation +
+        "@discardableResult public func connect(signal kind: \(classType)SignalName, flags f: ConnectFlags = ConnectFlags(0), to handler: @escapingGLibObject.SignalHandler) -> CUnsignedLong {\n" + doubleIndentation +
+            "func _connect(signal name: UnsafePointer<gchar>, flags: ConnectFlags, data:GLibObject.SignalHandlerClosureHolder, handler: @convention(c) @escaping (gpointer, gpointer) -> Void) -> CUnsignedLong {\n" + tripleIndentation +
                 "let holder = UnsafeMutableRawPointer(Unmanaged.passRetained(data).toOpaque())\n" + tripleIndentation +
-                "let callback = unsafeBitCast(handler, to: GObject.Callback.self)\n" + tripleIndentation +
-                "let rv = GObject.ObjectRef(cast(ptr)).signalConnectData(detailedSignal: name, cHandler: callback, data: holder, destroyData: {\n" + tripleIndentation + indentation +
+                "let callback = unsafeBitCast(handler, to:GLibObject.Callback.self)\n" + tripleIndentation +
+                "let rv =GLibObject.ObjectRef(cast(ptr)).signalConnectData(detailedSignal: name, cHandler: callback, data: holder, destroyData: {\n" + tripleIndentation + indentation +
                     "if let swift = UnsafeRawPointer($0) {\n" + tripleIndentation + doubleIndentation +
                         "let holder = Unmanaged<GObject.SignalHandlerClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
                         "holder.release()\n" + tripleIndentation + indentation +
