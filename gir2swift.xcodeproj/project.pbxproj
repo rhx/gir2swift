@@ -31,7 +31,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		F1A720BA1E9AE40A00A91753 /* PBXContainerItemProxy */ = {
+		F1A720C21E9B1CB500A91753 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = OBJ_1 /* Project object */;
 			proxyType = 1;
@@ -270,7 +270,7 @@
 		OBJ_69 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = OBJ_36 /* SwiftLibXML */;
-			targetProxy = F1A720BA1E9AE40A00A91753 /* PBXContainerItemProxy */;
+			targetProxy = F1A720C21E9B1CB500A91753 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
