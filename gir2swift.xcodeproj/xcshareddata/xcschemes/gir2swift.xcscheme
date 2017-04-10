@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "______Target_SwiftLibXML"
+               BlueprintIdentifier = "OBJ_36"
                BuildableName = "SwiftLibXML.framework"
                BlueprintName = "SwiftLibXML"
                ReferencedContainer = "container:gir2swift.xcodeproj">
@@ -28,7 +28,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "______Target_gir2swift"
+               BlueprintIdentifier = "OBJ_48"
                BuildableName = "gir2swift"
                BlueprintName = "gir2swift"
                ReferencedContainer = "container:gir2swift.xcodeproj">
@@ -59,7 +59,7 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "______Target_SwiftLibXML"
+            BlueprintIdentifier = "OBJ_36"
             BuildableName = "SwiftLibXML.framework"
             BlueprintName = "SwiftLibXML"
             ReferencedContainer = "container:gir2swift.xcodeproj">

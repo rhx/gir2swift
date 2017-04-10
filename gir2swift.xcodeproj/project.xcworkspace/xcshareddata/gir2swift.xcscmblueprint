@@ -7,9 +7,9 @@
     "FAF7591728FEC6EA4F130110608A8C3D19AB4BD1" : 9223372036854775807,
     "1541279FAFAA13E9BCED5D673FCE28B5C1E132AE" : 9223372036854775807
   },
-  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "F4CE40CE-D12F-474F-9E39-6E7607E920D5",
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "4C91690B-D1B8-42C1-BB2C-978A89FF55EA",
   "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
-    "FAF7591728FEC6EA4F130110608A8C3D19AB4BD1" : "gir2swift\/Packages\/SwiftLibXML-1.2.0\/",
+    "FAF7591728FEC6EA4F130110608A8C3D19AB4BD1" : "gir2swift\/.build\/checkouts\/SwiftLibXML.git--6205363180821884359\/",
     "1541279FAFAA13E9BCED5D673FCE28B5C1E132AE" : "gir2swift\/"
   },
   "DVTSourceControlWorkspaceBlueprintNameKey" : "gir2swift",
@@ -22,7 +22,7 @@
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "1541279FAFAA13E9BCED5D673FCE28B5C1E132AE"
     },
     {
-      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/rhx\/SwiftLibXML.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "\/Users\/rh\/Dropbox\/Developer\/src\/swift\/gtk\/gir2swift\/.build\/repositories\/SwiftLibXML.git--6205363180821884359",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "FAF7591728FEC6EA4F130110608A8C3D19AB4BD1"
     }

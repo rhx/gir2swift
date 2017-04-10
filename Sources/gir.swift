@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 25/03/2016.
-//  Copyright © 2016 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017 Rene Hexel. All rights reserved.
 //
 #if os(Linux)
     import Glibc
@@ -737,7 +737,7 @@ extension GIR {
                               !alias.isEmpty && !type.isEmpty {
                             context.outputs = ["public typealias \(alias) = \(type)"]
                         } else {
-                            context.outputs = ["// error alias \($0.node.attribute(named: "name")) = \(context.parentNode.node.attribute(named: "name"))"]
+                            context.outputs = ["// error alias \(String(describing: $0.node.attribute(named: "name"))) = \(String(describing: context.parentNode.node.attribute(named: "name")))"]
                         }
                         return ""
                         }])
@@ -753,7 +753,7 @@ extension GIR {
                                !alias.isEmpty && !type.isEmpty {
                             context.outputs = ["public typealias \(alias) = \(type)"]
                         } else {
-                            context.outputs = ["// error alias \($0.node.attribute(named: "name")) = \(context.parentNode.node.attribute(named: "name"))"]
+                            context.outputs = ["// error alias \(String(describing: $0.node.attribute(named: "name"))) = \(String(describing: context.parentNode.node.attribute(named: "name")))"]
                         }
                         return ""
                         }])

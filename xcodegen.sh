@@ -20,5 +20,5 @@ gtk=`echo Packages/Gtk-3*/Sources/Gtk-3.0.swift`
 ( cd ${Mod}.xcodeproj							&& \
   mv project.pbxproj project.pbxproj.in					&& \
   sed < project.pbxproj.in > project.pbxproj				   \
-    -e "s/\(HEADER_SEARCH_PATHS[^A-Za-z][^']*'[^']*\)'/\\1 \\\$(inherited)'/"
+    -e "s|\(HEADER_SEARCH_PATHS = .\)$|\\1 \"`echo $CCFLAGS | sed -e 's/-Xcc  *-I */ /g' -e 's/^ *//' -e 's/ *$//'`\",|"
 )
