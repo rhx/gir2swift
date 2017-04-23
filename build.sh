@@ -6,4 +6,4 @@
 . ./config.sh
 xmlpkg=`echo Packages/SwiftLibXML-1.*/Package.swift`
 [ -e $xmlpkg ] || ./generate-wrapper.sh
-exec swift build $CCFLAGS $LINKFLAGS "$@"
+exec swift build -c release $CCFLAGS $LINKFLAGS "$@"
