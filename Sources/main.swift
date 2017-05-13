@@ -58,12 +58,12 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
         processSpecialCases(gir, forFile: node)
         let blacklist = GIR.Blacklist
         let boilerplate = gir.boilerPlate
-        let preamble = gir.preamble
-        let prefix = modulePrefix + boilerplate
+        let prefix = gir.preamble
+        let modulePrefix = modulePrefix + boilerplate
         let queues = DispatchGroup()
         let background = DispatchQueue.global()
         let outq = DispatchQueue(label: "com.github.rhx.gir2swift.outputqueue")
-        if outputDirectory == nil { print(prefix + preamble) }
+        if outputDirectory == nil { print(modulePrefix + prefix) }
 
         func write(_ string: String, to fileName: String) {
             do {
@@ -77,8 +77,8 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
         }
         func write<T: GIR.Record>(_ types: [T], using convert: (GIR.Record) -> String) {
             if let dir = outputDirectory {
-                writebg(prefix, to: "\(dir)/\(node).swift")
-                var output = preamble
+                writebg(modulePrefix, to: "\(dir)/\(node).swift")
+                var output = prefix
                 var first: Character? = nil
                 var firstName = ""
                 for type in types {
@@ -95,7 +95,7 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
                     }
                     let f = "\(dir)/\(node)-\(firstName)\(name).swift"
                     writebg(output, to: f)
-                    output = preamble
+                    output = prefix
                     first = nil
                 }
             } else {
