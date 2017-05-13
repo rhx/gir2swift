@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 2/04/2016.
-//  Copyright © 2016 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017 Rene Hexel. All rights reserved.
 //
 #if os(Linux)
     import Glibc
@@ -15,85 +15,85 @@
 public extension GIR {
     /// code boiler plate
     var boilerPlate: String {
-        return "private func cast<S, T>(_ param: UnsafeMutablePointer<S>?) -> UnsafeMutablePointer<T>! {\n" +
+        return "func cast<S, T>(_ param: UnsafeMutablePointer<S>?) -> UnsafeMutablePointer<T>! {\n" +
         "    return param?.withMemoryRebound(to: T.self, capacity: 1) { $0 }\n" +
         "}\n\n" +
 
-        "private func cast<S, T>(_ param: UnsafeMutablePointer<S>?) -> UnsafePointer<T>! {\n" +
+        "func cast<S, T>(_ param: UnsafeMutablePointer<S>?) -> UnsafePointer<T>! {\n" +
         "    return param?.withMemoryRebound(to: T.self, capacity: 1) { UnsafePointer<T>($0) }\n" +
         "}\n\n" +
 
-        "private func cast<S, T>(_ param: UnsafePointer<S>?) -> UnsafePointer<T>! {\n" +
+        "func cast<S, T>(_ param: UnsafePointer<S>?) -> UnsafePointer<T>! {\n" +
         "    return param?.withMemoryRebound(to: T.self, capacity: 1) { UnsafePointer<T>($0) }\n" +
         "}\n\n" +
 
-        "private func cast<T>(_ param: OpaquePointer?) -> UnsafeMutablePointer<T>! {\n" +
+        "func cast<T>(_ param: OpaquePointer?) -> UnsafeMutablePointer<T>! {\n" +
         "    return UnsafeMutablePointer<T>(param)\n" +
         "}\n\n" +
 
-        "private func cast<T>(_ param: OpaquePointer?) -> UnsafePointer<T>! {\n" +
+        "func cast<T>(_ param: OpaquePointer?) -> UnsafePointer<T>! {\n" +
         "    return UnsafePointer<T>(param)\n" +
         "}\n\n" +
 
-        "private func cast(_ param: OpaquePointer?) -> UnsafeMutableRawPointer! {\n" +
+        "func cast(_ param: OpaquePointer?) -> UnsafeMutableRawPointer! {\n" +
         "    return UnsafeMutableRawPointer(param)\n" +
         "}\n\n" +
 
-        "private func cast(_ param: UnsafeRawPointer?) -> UnsafeMutableRawPointer! {\n" +
+        "func cast(_ param: UnsafeRawPointer?) -> UnsafeMutableRawPointer! {\n" +
         "    return UnsafeMutableRawPointer(mutating: param)\n" +
         "}\n\n" +
 
-//        "private func cast<S, T>(_ param: UnsafePointer<S>?) -> UnsafeMutablePointer<T>! {\n" +
+//        "func cast<S, T>(_ param: UnsafePointer<S>?) -> UnsafeMutablePointer<T>! {\n" +
 //        "    return param?.withMemoryRebound(to: T.self, capacity: 1) { $0 }\n" +
 //        "}\n\n" +
 
-        "private func cast<T>(_ param: UnsafePointer<T>?) -> OpaquePointer! {\n" +
+        "func cast<T>(_ param: UnsafePointer<T>?) -> OpaquePointer! {\n" +
         "    return OpaquePointer(param)\n" +
         "}\n\n" +
 
-        "private func cast<T>(_ param: UnsafeMutablePointer<T>?) -> OpaquePointer! {\n" +
+        "func cast<T>(_ param: UnsafeMutablePointer<T>?) -> OpaquePointer! {\n" +
         "    return OpaquePointer(param)\n" +
         "}\n\n" +
 
-//        "private func cast<T>(_ param: UnsafePointer<T>?) -> UnsafeRawPointer! {\n" +
+//        "func cast<T>(_ param: UnsafePointer<T>?) -> UnsafeRawPointer! {\n" +
 //        "    return UnsafeRawPointer(param)\n" +
 //        "}\n\n" +
 //
-//        "private func cast<T>(_ param: UnsafeMutablePointer<T>?) -> UnsafeRawPointer! {\n" +
+//        "func cast<T>(_ param: UnsafeMutablePointer<T>?) -> UnsafeRawPointer! {\n" +
 //        "    return UnsafeRawPointer(param)\n" +
 //        "}\n\n" +
 //
-//        "private func cast<T>(_ param: UnsafePointer<T>?) -> UnsafeMutableRawPointer! {\n" +
+//        "func cast<T>(_ param: UnsafePointer<T>?) -> UnsafeMutableRawPointer! {\n" +
 //        "    return UnsafeMutableRawPointer(mutating: UnsafeRawPointer(param))\n" +
 //        "}\n\n" +
 //
-//        "private func cast<T>(_ param: UnsafeMutablePointer<T>?) -> UnsafeMutableRawPointer! {\n" +
+//        "func cast<T>(_ param: UnsafeMutablePointer<T>?) -> UnsafeMutableRawPointer! {\n" +
 //        "    return UnsafeMutableRawPointer(param)\n" +
 //        "}\n\n" +
 //
-//        "private func cast<T>(_ param: UnsafeRawPointer?) -> UnsafePointer<T>! {\n" +
+//        "func cast<T>(_ param: UnsafeRawPointer?) -> UnsafePointer<T>! {\n" +
 //        "    return param?.assumingMemoryBound(to: T.self)\n" +
 //        "}\n\n" +
 //
-//        "private func cast<T>(_ param: UnsafeMutableRawPointer?) -> UnsafePointer<T>! {\n" +
+//        "func cast<T>(_ param: UnsafeMutableRawPointer?) -> UnsafePointer<T>! {\n" +
 //        "    return UnsafeRawPointer(param)?.assumingMemoryBound(to: T.self)\n" +
 //        "}\n\n" +
 
-        "private func cast<T>(_ param: UnsafeRawPointer?) -> UnsafeMutablePointer<T>! {\n" +
+        "func cast<T>(_ param: UnsafeRawPointer?) -> UnsafeMutablePointer<T>! {\n" +
         "    return UnsafeMutableRawPointer(mutating: param)?.assumingMemoryBound(to: T.self)\n" +
         "}\n\n" +
 
-        "private func cast<T>(_ param: UnsafeMutableRawPointer?) -> UnsafeMutablePointer<T>! {\n" +
+        "func cast<T>(_ param: UnsafeMutableRawPointer?) -> UnsafeMutablePointer<T>! {\n" +
         "    return param?.assumingMemoryBound(to: T.self)\n" +
         "}\n\n" +
 
-        "private func cast<T>(_ param: T) -> T { return param }\n\n" +
+        "func cast<T>(_ param: T) -> T { return param }\n\n" +
 
-        "private extension gboolean {\n" +
+        "extension gboolean {\n" +
         "    private init(_ b: Bool) { self = b ? gboolean(1) : gboolean(0) }\n" +
         "}\n\n" +
 
-        "private func asStringArray(_ param: UnsafePointer<UnsafePointer<CChar>?>) -> [String] {\n" +
+        "func asStringArray(_ param: UnsafePointer<UnsafePointer<CChar>?>) -> [String] {\n" +
         "    var ptr = param\n" +
         "    var rv = [String]()\n" +
         "    while ptr.pointee != nil {\n" +
@@ -103,7 +103,7 @@ public extension GIR {
         "    return rv\n" +
         "}\n\n" +
 
-        "private func asStringArray<T>(_ param: UnsafePointer<UnsafePointer<CChar>?>, release: ((UnsafePointer<T>?) -> Void)) -> [String] {\n" +
+        "func asStringArray<T>(_ param: UnsafePointer<UnsafePointer<CChar>?>, release: ((UnsafePointer<T>?) -> Void)) -> [String] {\n" +
         "    let rv = asStringArray(param)\n" +
         "    param.withMemoryRebound(to: T.self, capacity: rv.count) { release(UnsafePointer<T>($0)) }\n" +
         "    return rv\n" +
