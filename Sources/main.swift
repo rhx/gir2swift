@@ -81,10 +81,11 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
                 var output = prefix
                 var first: Character? = nil
                 var firstName = ""
+                var name = ""
                 for type in types {
-                    let name = type.className
                     let code = convert(type)
                     output += code + "\n\n"
+                    name = type.className
                     guard let firstChar = name.characters.first else { continue }
                     guard singleFilePerClass || ( first != nil && first != firstChar ) else {
                         if first == nil {
@@ -97,6 +98,10 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
                     writebg(output, to: f)
                     output = prefix
                     first = nil
+                }
+                if first != nil {
+                    let f = "\(dir)/\(node)-\(firstName)\(name).swift"
+                    writebg(output, to: f)
                 }
             } else {
                 let code = types.map(convert).joined(separator: "\n\n")
