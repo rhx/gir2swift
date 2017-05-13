@@ -194,7 +194,7 @@ func processSpecialCases(_ gir: GIR, forFile node: String) {
 var moduleBoilerPlate: String = ""
 var outputDirectory: String?
 var singleFilePerClass = false
-while let (opt, param) = get_opt("o:p:sv") {
+while let (opt, param) = get_opt("m:o:p:sv") {
     switch opt {
         case "m":
             guard let bpfile = param,
