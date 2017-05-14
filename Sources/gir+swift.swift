@@ -878,7 +878,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "}\n\n") + (hasParent ? "" : (indentation +
         "deinit {\n" + indentation + indentation +
             "\(release)(cast(ptr))\n" + indentation +
-        "}\n\n")) + (hasParent ? "" : (indentation +
+        "}\n\n")) + (indentation +
         "public convenience init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
             "self.init(cPointer.withMemoryRebound(to: \(ctype).self, capacity: 1) { $0 })\n" + indentation +
         "}\n\n" + indentation +
@@ -890,7 +890,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "}\n\n" + indentation +
         "public convenience init(opaquePointer: OpaquePointer) {\n" + doubleIndentation +
             "self.init(UnsafeMutablePointer<\(ctype)>(opaquePointer))\n" + indentation +
-        "}\n\n")) +
+        "}\n\n") +
         constructors.map(ccode).joined(separator: "\n") + "\n" +
         factories.map(fcode).joined(separator: "\n") + "\n" +
     "}\n\n" +
