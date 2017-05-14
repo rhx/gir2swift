@@ -871,11 +871,11 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         (hasParent ? "" : ("public let ptr: UnsafeMutablePointer<\(ctype)>\n\n" + indentation)) +
         "public init(_ op: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
             (hasParent ? "super.init(cast(op))\n" : "self.ptr = op\n") + indentation +
-        "}\n\n" + (hasParent ? "" : (indentation +
+        "}\n\n" + (indentation +
         "public convenience init<T: \(e.protocolName)>(_ other: T) {\n" + doubleIndentation +
-            "self.init(other.ptr)\n" + doubleIndentation +
+            "self.init(cast(other.ptr))\n" + doubleIndentation +
             "\(retain)(cast(ptr))\n" + indentation +
-        "}\n\n" + indentation +
+        "}\n\n") + (hasParent ? "" : (indentation +
         "deinit {\n" + indentation + indentation +
             "\(release)(cast(ptr))\n" + indentation +
         "}\n\n")) + (hasParent ? "" : (indentation +
