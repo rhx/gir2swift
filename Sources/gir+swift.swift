@@ -867,7 +867,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     }
     let parentName = hasParent ? parentType!.name.swift : ""
     let p = parent.isEmpty ? (hasParent ? "\(parentName), " : "") : "\(parent), "
-    let code = "open class \(classType): \(p)\(protocolName) {\n" + indentation +
+    let code1 = "open class \(classType): \(p)\(protocolName) {\n" + indentation +
         (hasParent ? "" : ("public let ptr: UnsafeMutablePointer<\(ctype)>\n\n" + indentation)) +
         "public init(_ op: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
             (hasParent ? "super.init(cast(op))\n" : "self.ptr = op\n") + indentation +
@@ -921,8 +921,8 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
             "return holder.transform_to(GLibObject.ValueRef(raw: $1), GLibObject.ValueRef(raw: $2)) ? 1 : 0\n" + doubleIndentation +
         "}\n" + doubleIndentation +
         "return rv\n" + indentation +
-    "}\n}\n\n")) +
-    (noSignals ? "// MARK: - no signals\n" : "public enum \(classType)SignalName: String, SignalNameProtocol {\n") +
+    "}\n}\n\n"))
+    let code = code1 + (noSignals ? "// MARK: - no signals\n" : "public enum \(classType)SignalName: String, SignalNameProtocol {\n") +
 //        "public typealias Class = \(protocolName)\n") +
         signals.map(scode).joined(separator: "\n") + "\n" +
         properties.map(ncode).joined(separator: "\n") + "\n" +
