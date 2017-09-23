@@ -209,8 +209,8 @@ while let (opt, param) = get_opt("m:o:p:sv") {
             outputDirectory = param
             guard outputDirectory != nil else { usage() }
         case "p":
-            guard let file = param else { usage() }
-            preload_gir(file: param!)
+            guard let f = param else { usage() }
+            preload_gir(file: f)
         case "s":
             singleFilePerClass = true
         case "v":
