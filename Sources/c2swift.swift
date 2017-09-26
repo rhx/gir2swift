@@ -106,40 +106,24 @@ extension String.UTF16View: Equatable {}
 
 
 extension String {
-    /// remove all occurrences of the given substring
+    /// recursively remove all occurrences of the given substring
+    /// Note: this does not recursively remove substrings that span
+    /// substrings partitioned by a previous removal.  E.g.,
+    /// "TesTestt".remove("Test") will return "Test" rather than an empty string!
     func remove(_ subString: String) -> String {
-        return remove(subString, subString.utf16)
-    }
-    private func remove(_ subString: String, _ utf16View: String.UTF16View) -> String {
-        let k = Int(utf16View.distance(from: utf16View.startIndex, to: utf16View.endIndex))
-        let u = utf16
-        let n = u.count
-        guard n >= k else { return self }
-        let s = u.startIndex
-        let e = u.endIndex
-        for l in 0..<(n-k) {
-            let i = u.index(s, offsetBy: l)
-            let j = u.index(i, offsetBy: k)
-            if u[i..<j] == utf16View {
-                let str = String(describing: u[s..<i]) + String(describing: u[j..<e])
-                return str.remove(subString, utf16View)
-            }
-        }
-        return self
+        return String(self[startIndex..<endIndex].remove(subString))
     }
 
     /// return whether the receiver contains the given substring
     func contains(_ subString: String) -> Bool {
-        let utf16View = subString.utf16
-        let k = Int(utf16View.distance(from: utf16View.startIndex, to: utf16View.endIndex))
-        let u = utf16
-        let n = u.count
+        let k = distance(from: subString.startIndex, to: subString.endIndex)
+        let n = count
         guard n >= k else { return false }
-        let s = u.startIndex
+        let s = startIndex
         for l in 0..<(n-k) {
-            let i = u.index(s, offsetBy: l)
-            let j = u.index(i, offsetBy: k)
-            if u[i..<j] == utf16View { return true }
+            let i = index(s, offsetBy: l)
+            let j = index(i, offsetBy: k)
+            if self[i..<j] == subString { return true }
         }
         return false
     }
@@ -370,6 +354,31 @@ extension String {
     /// return the string (value) cast to Swift
     func cast_as_c(_ cType: String) -> String {
         return cast_from_swift(self, forCType: cType)
+    }
+}
+
+extension Substring {
+    /// recursively remove all occurrences of the given substring
+    /// Note: this does not recursively remove substrings that span
+    /// substrings partitioned by a previous removal.  E.g.,
+    /// "TesTestt".remove("Test") will return "Test" rather than an empty string!
+    func remove(_ subString: String) -> Substring {
+        let k = distance(from: subString.startIndex, to: subString.endIndex)
+        let n = count
+        guard n >= k else { return self }
+        let s = startIndex
+        let e = endIndex
+        for l in 0..<(n-k) {
+            let i = index(s, offsetBy: l)
+            let j = index(i, offsetBy: k)
+            if self[i..<j] == subString {
+                let left = self[s..<i].remove(subString)
+                let right = self[j..<e].remove(subString)
+                let str = left + right
+                return str
+            }
+        }
+        return self
     }
 }
 
