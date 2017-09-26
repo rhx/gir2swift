@@ -120,7 +120,7 @@ extension String {
         let n = count
         guard n >= k else { return false }
         let s = startIndex
-        for l in 0..<(n-k) {
+        for l in 0...(n-k) {
             let i = index(s, offsetBy: l)
             let j = index(i, offsetBy: k)
             if self[i..<j] == subString { return true }
@@ -368,7 +368,7 @@ extension Substring {
         guard n >= k else { return self }
         let s = startIndex
         let e = endIndex
-        for l in 0..<(n-k) {
+        for l in 0...(n-k) {
             let i = index(s, offsetBy: l)
             let j = index(i, offsetBy: k)
             if self[i..<j] == subString {
