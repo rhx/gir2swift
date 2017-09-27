@@ -20,7 +20,13 @@
             var i = e
             while i != s {
                 let j = u.index(before: i)
-                if u[j] == slash { return String(describing: u[i..<e]) }
+                if u[j] == slash {
+                    #if swift(>=4.0)
+                        return String(Substring(u[i..<e]))
+                    #else
+                        return String(describing: u[i..<e])
+                    #endif
+                }
                 i = j
             }
             return self

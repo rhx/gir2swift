@@ -278,7 +278,11 @@ public func getterSetterPairs(for allMethods: [GIR.Method]) -> [GetterSetterPair
         let p = v.first == iU ? 0 : 4;
         let a = u[u.index(u.startIndex, offsetBy: o)..<u.endIndex]
         let b = v[v.index(v.startIndex, offsetBy: p)..<v.endIndex]
-        return String(describing: a) <= String(describing: b)
+        #if swift(>=4.0)
+            return String(Substring(a)) <= String(Substring(b))
+        #else
+            return String(describing: a) <= String(describing: b)
+        #endif
     }
     var pairs = Array<GetterSetterPair>()
     pairs.reserveCapacity(gettersAndSetters.count)
@@ -561,9 +565,18 @@ public func convenienceConstructorCode(_ typeName: String, indentation: String, 
             if let f = firstArgName, rawUTF.count > f.utf16.count + 1 && rawName.hasSuffix(f) {
                 let truncated = rawUTF[rawUTF.startIndex..<rawUTF.index(rawUTF.endIndex, offsetBy: -f.utf16.count)]
                 if truncated.last == _U {
-                    nameWithoutPostFix = String(describing: rawUTF[rawUTF.startIndex..<rawUTF.index(rawUTF.endIndex, offsetBy: -(f.utf16.count+1))])
+                    let noUnderscore = rawUTF[rawUTF.startIndex..<rawUTF.index(rawUTF.endIndex, offsetBy: -(f.utf16.count+1))]
+                    #if swift(>=4.0)
+                        nameWithoutPostFix = String(Substring(noUnderscore))
+                    #else
+                        nameWithoutPostFix = String(describing: noUnderscore)
+                    #endif
                 } else {
-                    nameWithoutPostFix = String(describing: truncated)
+                    #if swift(>=4.0)
+                        nameWithoutPostFix = String(Substring(truncated))
+                    #else
+                        nameWithoutPostFix = String(describing: truncated)
+                    #endif
                 }
             } else {
                 nameWithoutPostFix = rawName

@@ -558,7 +558,12 @@ public class GIR {
             let u = getter.utf16
             let s = u.index(after: u.startIndex)
             let e = u.endIndex
-            let setter = "s" + String(describing: u[s..<e])
+            let v = u[s..<e]
+            #if swift(>=4.0)
+                let setter = "s" + String(Substring(v))
+            #else
+                let setter = "s" + String(describing: v)
+            #endif
             return name == setter
         }
 
@@ -568,7 +573,12 @@ public class GIR {
             let u = setter.utf16
             let s = u.index(after: u.startIndex)
             let e = u.endIndex
-            let getter = "g" + String(describing: u[s..<e])
+            let v = u[s..<e]
+            #if swift(>=4.0)
+                let getter = "g" + String(Substring(v))
+            #else
+                let getter = "g" + String(describing: v)
+            #endif
             return name == getter
         }
     }

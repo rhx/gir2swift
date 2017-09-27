@@ -128,7 +128,14 @@ extension String {
         }
         return false
     }
-#else
+
+    /// trim the characters in the given set of UTF16 values at either end of the string
+    func trimmingCharacters(in: Set<UInt16>) -> String {
+        let u = utf16
+        let s = u.takeFrom(indexWhere: { !wsnl.contains($0) }).trimWhile { wsnl.contains($0) }
+        return String(Substring(s))
+    }
+#else // Swift 3:
     func remove(_ subString: String) -> String {
         return remove(subString, subString.utf16)
     }
@@ -165,7 +172,6 @@ extension String {
         }
         return false
     }
-#endif
 
     /// trim the characters in the given set of UTF16 values at either end of the string
     func trimmingCharacters(in: Set<UInt16>) -> String {
@@ -173,6 +179,7 @@ extension String {
         let s = u.takeFrom(indexWhere: { !wsnl.contains($0) }).trimWhile { wsnl.contains($0) }
         return String(describing: s)
     }
+#endif
 
     /// return the string trimmed of white space at either end
     var trimmed: String { return trimmingCharacters(in: wsnl) }
