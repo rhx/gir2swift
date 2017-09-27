@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 29/04/2016.
-//  Copyright © 2016 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017 Rene Hexel. All rights reserved.
 //
 #if os(Linux)
     import Glibc
@@ -110,6 +110,7 @@ extension String {
     /// Note: this does not recursively remove substrings that span
     /// substrings partitioned by a previous removal.  E.g.,
     /// "TesTestt".remove("Test") will return "Test" rather than an empty string!
+#if swift(>=4.0)
     func remove(_ subString: String) -> String {
         return String(self[startIndex..<endIndex].remove(subString))
     }
@@ -127,6 +128,44 @@ extension String {
         }
         return false
     }
+#else
+    func remove(_ subString: String) -> String {
+        return remove(subString, subString.utf16)
+    }
+    private func remove(_ subString: String, _ utf16View: String.UTF16View) -> String {
+        let k = Int(utf16View.distance(from: utf16View.startIndex, to: utf16View.endIndex))
+        let u = utf16
+        let n = u.count
+        guard n >= k else { return self }
+        let s = u.startIndex
+        let e = u.endIndex
+        for l in 0..<(n-k) {
+            let i = u.index(s, offsetBy: l)
+            let j = u.index(i, offsetBy: k)
+            if u[i..<j] == utf16View {
+                let str = String(describing: u[s..<i]) + String(describing: u[j..<e])
+                return str.remove(subString, utf16View)
+            }
+        }
+        return self
+    }
+
+    /// return whether the receiver contains the given substring
+    func contains(_ subString: String) -> Bool {
+        let utf16View = subString.utf16
+        let k = Int(utf16View.distance(from: utf16View.startIndex, to: utf16View.endIndex))
+        let u = utf16
+        let n = u.count
+        guard n >= k else { return false }
+        let s = u.startIndex
+        for l in 0..<(n-k) {
+            let i = u.index(s, offsetBy: l)
+            let j = u.index(i, offsetBy: k)
+            if u[i..<j] == utf16View { return true }
+        }
+        return false
+    }
+#endif
 
     /// trim the characters in the given set of UTF16 values at either end of the string
     func trimmingCharacters(in: Set<UInt16>) -> String {
@@ -357,6 +396,7 @@ extension String {
     }
 }
 
+#if swift(>=4.0)
 extension Substring {
     /// recursively remove all occurrences of the given substring
     /// Note: this does not recursively remove substrings that span
@@ -371,8 +411,8 @@ extension Substring {
         for l in 0...(n-k) {
             let i = index(s, offsetBy: l)
             let j = index(i, offsetBy: k)
-            if self[i..<j] == subString {
-                let left = self[s..<i].remove(subString)
+            guard self[i..<j] != subString else {
+                let left = self[s..<i]
                 let right = self[j..<e].remove(subString)
                 let str = left + right
                 return str
@@ -381,6 +421,7 @@ extension Substring {
         return self
     }
 }
+#endif
 
 /// convert the given C type to a Swift type
 func toSwift(_ ctype: String) -> String {
