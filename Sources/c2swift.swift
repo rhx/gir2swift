@@ -117,7 +117,7 @@ extension String {
 
     /// return whether the receiver contains the given substring
     func contains(_ subString: String) -> Bool {
-        let k = distance(from: subString.startIndex, to: subString.endIndex)
+        let k = subString.distance(from: subString.startIndex, to: subString.endIndex)
         let n = count
         guard n >= k else { return false }
         let s = startIndex
@@ -410,7 +410,7 @@ extension Substring {
     /// substrings partitioned by a previous removal.  E.g.,
     /// "TesTestt".remove("Test") will return "Test" rather than an empty string!
     func remove(_ subString: String) -> Substring {
-        let k = distance(from: subString.startIndex, to: subString.endIndex)
+        let k = subString.distance(from: subString.startIndex, to: subString.endIndex)
         let n = count
         guard n >= k else { return self }
         let s = startIndex
