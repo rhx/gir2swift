@@ -954,7 +954,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
             "let rv = _connect(signal: kind.name, flags: f, data: ClosureHolder(handler)) {\n" + tripleIndentation +
                 "let ptr = UnsafeRawPointer($1)\n" + tripleIndentation +
                 "let holder = Unmanaged<GLibObject.SignalHandlerClosureHolder>.fromOpaque(ptr).takeUnretainedValue()\n" + tripleIndentation +
-                "holder.call()\n" + doubleIndentation +
+                "holder.call(())\n" + doubleIndentation +
             "}\n" + doubleIndentation +
             "return rv\n" + indentation +
         "}\n" +
