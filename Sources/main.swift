@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 22/03/2016.
-//  Copyright © 2016, 2017 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018 Rene Hexel. All rights reserved.
 //
 #if os(Linux)
     import Glibc
@@ -86,7 +86,7 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
                     let code = convert(type)
                     output += code + "\n\n"
                     name = type.className
-                    guard let firstChar = name.characters.first else { continue }
+                    guard let firstChar = name.first else { continue }
                     guard singleFilePerClass || ( first != nil && first != firstChar ) else {
                         if first == nil {
                             first = firstChar

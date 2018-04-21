@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 25/04/2016.
-//  Copyright © 2016 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018 Rene Hexel. All rights reserved.
 //
 //
 #if os(Linux)
@@ -34,8 +34,8 @@ extension String {
 
     /// return the string resulting from removing the given suffix
     public func stringByRemoving(suffix s: String) -> String? {
-        let len = s.characters.count
-        return hasSuffix(s) ? String(characters[startIndex..<index(endIndex, offsetBy: -len)]) : nil
+        let len = s.count
+        return hasSuffix(s) ? String(self[startIndex..<index(endIndex, offsetBy: -len)]) : nil
     }
 
     /// return the string resulting from removing the same number of
@@ -43,8 +43,8 @@ extension String {
     /// receiver is not long enough to have the corresponding number of
     /// characters removed
     public func stringByRemovingAnEquivalentNumberOfCharactersAs(suffix s: String) -> String {
-        let len = s.characters.count
-        return String(characters[startIndex..<index(endIndex, offsetBy: -len)])
+        let len = s.count
+        return String(self[startIndex..<index(endIndex, offsetBy: -len)])
     }
 
     /// return the substring after the first occurrence of the given character

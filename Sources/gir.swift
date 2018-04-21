@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 25/03/2016.
-//  Copyright © 2016, 2017 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018 Rene Hexel. All rights reserved.
 //
 #if os(Linux)
     import Glibc
@@ -14,11 +14,10 @@ import SwiftLibXML
 
 extension String {
     var withoutNameSpace: String {
-        let chars = characters
-        guard let dot = chars.enumerated().filter({ $0.1 == "." }).last else {
+        guard let dot = self.enumerated().filter({ $0.1 == "." }).last else {
             return self
         }
-        return String(chars[chars.index(startIndex, offsetBy: dot.offset+1)..<chars.endIndex])
+        return String(self[index(startIndex, offsetBy: dot.offset+1)..<endIndex])
     }
 }
 
@@ -791,8 +790,8 @@ extension XMLElement {
     /// return an attribute as a list of sub-attributeds split by a given character
     /// and ordered with the longest attribute name first
     ///
-    public func sortedSubAttributesFor(attr: String, splitBy char: Character = ",", orderedBy: (String, String) -> Bool = { $0.characters.count > $1.characters.count || ($0.characters.count == $1.characters.count && $0 < $1)}) -> [String] {
-        guard let attrs = ((attribute(named: attr)?.characters)?.split(separator: char))?.map(String.init) else { return [] }
+    public func sortedSubAttributesFor(attr: String, splitBy char: Character = ",", orderedBy: (String, String) -> Bool = { $0.count > $1.count || ($0.count == $1.count && $0 < $1)}) -> [String] {
+        guard let attrs = (attribute(named: attr)?.split(separator: char))?.map({ String($0) }) else { return [] }
         return attrs.sorted(by: orderedBy)
     }
 

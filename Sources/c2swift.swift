@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 29/04/2016.
-//  Copyright © 2016, 2017 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018 Rene Hexel. All rights reserved.
 //
 #if os(Linux)
     import Glibc
@@ -283,44 +283,40 @@ extension String {
     public func without(prefix: String) -> String {
         let ns = trimmed
         guard ns.hasPrefix(prefix) else { return ns }
-        let len = prefix.characters.count
-        let cs = ns.characters
-        let s = cs.index(cs.startIndex, offsetBy: len)
-        let e = cs.endIndex
-        return String(ns.characters[s..<e]).without(prefix: prefix)
+        let len = prefix.count
+        let s = ns.index(ns.startIndex, offsetBy: len)
+        let e = ns.endIndex
+        return String(ns[s..<e]).without(prefix: prefix)
     }
 
     /// return C type without any of the given prefixes
     public func without(prefixes: [String]) -> String {
         let ns = trimmed
         guard let prefix = prefixes.lazy.filter({ ns.hasPrefix($0) }).first else { return ns }
-        let len = prefix.characters.count
-        let cs = ns.characters
-        let s = cs.index(cs.startIndex, offsetBy: len)
-        let e = cs.endIndex
-        return String(ns.characters[s..<e]).without(prefixes: prefixes)
+        let len = prefix.count
+        let s = ns.index(ns.startIndex, offsetBy: len)
+        let e = ns.endIndex
+        return String(ns[s..<e]).without(prefixes: prefixes)
     }
 
     /// return C type without the given suffix
     public func without(suffix: String) -> String {
         let ns = trimmed
         guard ns.hasSuffix(suffix) else { return ns }
-        let len = suffix.characters.count
-        let cs = ns.characters
-        let s = cs.startIndex
-        let e = cs.index(s, offsetBy: cs.count - len)
-        return String(ns.characters[s..<e]).without(suffix: suffix)
+        let len = suffix.count
+        let s = ns.startIndex
+        let e = ns.index(s, offsetBy: ns.count - len)
+        return String(ns[s..<e]).without(suffix: suffix)
     }
 
     /// return C type without any of the given suffixes
     public func without(suffixes: [String]) -> String {
         let ns = trimmed
         guard let suffix = suffixes.lazy.filter({ ns.hasSuffix($0) }).first else { return ns }
-        let len = suffix.characters.count
-        let cs = ns.characters
-        let s = cs.startIndex
-        let e = cs.index(s, offsetBy: cs.count - len)
-        return String(ns.characters[s..<e]).without(suffixes: suffixes)
+        let len = suffix.count
+        let s = ns.startIndex
+        let e = ns.index(s, offsetBy: ns.count - len)
+        return String(ns[s..<e]).without(suffixes: suffixes)
     }
 
     /// return whether the untrimmed string is a C pointer
@@ -352,10 +348,9 @@ extension String {
     public var underlyingTypeForCPointer: String? {
         guard isCPointer else { return nil }
         let ns = typeWithoutTrailingConstOrVolatile
-        let cs = ns.characters
-        let s = cs.startIndex
-        let e = cs.index(before: cs.endIndex)
-        return String(cs[s..<e])
+        let s = ns.startIndex
+        let e = ns.index(before: ns.endIndex)
+        return String(ns[s..<e])
     }
 
     /// return the C type unwrapped and converted to Swift

@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 2/04/2016.
-//  Copyright © 2016, 2017 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018 Rene Hexel. All rights reserved.
 //
 #if os(Linux)
     import Glibc
@@ -330,7 +330,7 @@ public func commentCode(_ thing: GIR.Thing, indentation: String = "") -> String 
     let comment = thing.comment
     guard !comment.isEmpty else { return comment }
     let prefix = indentation + "/// "
-    return comment.characters.reduce(prefix) {
+    return comment.reduce(prefix) {
         $0 + ($1 == "\n" ? "\n" + prefix : String($1))
     }
 }
@@ -339,7 +339,7 @@ public func commentCode(_ thing: GIR.Thing, indentation: String = "") -> String 
 public func deprecatedCode(_ thing: GIR.Thing, indentation: String) -> String? {
     return thing.deprecated.map { (s: String) -> String in
         let prefix = indentation + "/// "
-        return s.isEmpty ? "" : s.characters.reduce(prefix) {
+        return s.isEmpty ? "" : s.reduce(prefix) {
             $0 + ($1 == "\n" ? "\n" + prefix : String($1))
         }
     }
@@ -722,16 +722,14 @@ public func constructorPrefix(_ method: GIR.Method) -> String? {
         let name = mn.isEmpty ? cname : mn
         guard name != "newv" else { return nil }
         if let prefix = (["new_", "new"].lazy.filter { name.hasPrefix($0) }.first) {
-            let chars = name.characters
-            let s = chars.index(chars.startIndex, offsetBy: prefix.characters.count)
-            let e = chars.endIndex
-            return String(chars[s..<e]).swift
+            let s = name.index(name.startIndex, offsetBy: prefix.count)
+            let e = name.endIndex
+            return String(name[s..<e]).swift
         }
         if let suffix = (["_newv", "_new"].lazy.filter { name.hasSuffix($0) }.first) {
-            let chars = name.characters
-            let s = chars.startIndex
-            let e = chars.index(chars.endIndex, offsetBy: -suffix.characters.count)
-            return String(chars[s..<e]).swift
+            let s = name.startIndex
+            let e = name.index(name.endIndex, offsetBy: -suffix.count)
+            return String(name[s..<e]).swift
         }
         return nil
     }
