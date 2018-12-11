@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 22/03/2016.
-//  Copyright © 2016 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2018 Rene Hexel. All rights reserved.
 //
 #if os(Linux)
     import Glibc
@@ -38,7 +38,7 @@ extension String {
         }
         let cs = mem.assumingMemoryBound(to: CChar.self)
         cs[len] = 0
-        self = String(cString: UnsafePointer(cs))
+        self = String(cString: UnsafePointer<CChar>(cs))
     }
 
     /// Write a string to a file as UTF-8
