@@ -630,11 +630,11 @@ public class GIR {
 /// some utility methods for things
 public extension GIR.Thing {
     /// type name without 'Private' suffix (nil if public)
-    public var priv: String? {
+    var priv: String? {
         return name.stringByRemoving(suffix: "Private")
     }
     /// Type name without 'Class', 'Iface', etc. suffix
-    public var node: String {
+    var node: String {
         let nodeName: String
         let privateSuffix: String
         if let p = priv {

@@ -115,7 +115,7 @@ public extension GIR {
 /// Swift extentsion for things
 public extension GIR.Thing {
     /// return a name with reserved Ref or Protocol suffixes escaped
-    public var escapedName: String {
+    var escapedName: String {
         let na = name.typeEscaped
         return na
     }
@@ -125,27 +125,27 @@ public extension GIR.Thing {
 /// Swift extension for arguments
 public extension GIR.Argument {
     //// return the known type of the argument (nil if not known)
-    public var knownType: GIR.Datatype? { return GIR.KnownTypes[type.isEmpty ? ctype : type] }
+    var knownType: GIR.Datatype? { return GIR.KnownTypes[type.isEmpty ? ctype : type] }
 
     //// return the known class/record of the argument (nil if not known)
-    public var knownRecord: GIR.Record? { return GIR.KnownRecords[type.isEmpty ? ctype : type] }
+    var knownRecord: GIR.Record? { return GIR.KnownRecords[type.isEmpty ? ctype : type] }
 
     /// indicates whether the receiver is a known type
-    public var isKnownType: Bool { return knownType != nil }
+    var isKnownType: Bool { return knownType != nil }
 
     /// indicates whether the receiver is a known class or record
-    public var isKnownRecord: Bool { return knownRecord != nil }
+    var isKnownRecord: Bool { return knownRecord != nil }
 
     /// indicates whether the receiver is any known kind of pointer
-    public var isAnyKindOfPointer: Bool {
+    var isAnyKindOfPointer: Bool {
         return ctype.isGPointer || ctype.isPointer || ctype.isCastablePointer || type.isSwiftPointer || type.hasSuffix("Func")
     }
 
     /// indicates whether the receiver is an array of scalar values
-    public var isScalarArray: Bool { return isArray && !isAnyKindOfPointer }
+    var isScalarArray: Bool { return isArray && !isAnyKindOfPointer }
 
     /// return a non-clashing argument name
-    public var nonClashingName: String {
+    var nonClashingName: String {
         let sw = name.swift
         let nt = sw + (sw.isKnownType ? "_" : "")
         let ct = ctype.innerCType.swiftType // swift name for C type
@@ -157,10 +157,10 @@ public extension GIR.Argument {
     }
 
     /// return the non-prefixed argument name
-    public var argumentName: String { return nonClashingName }
+    var argumentName: String { return nonClashingName }
 
     /// return the, potentially prefixed argument name to use in a method declaration
-    public var prefixedArgumentName: String {
+    var prefixedArgumentName: String {
         let name = argumentName
         let swname = name.camelCase.swift
         let prefixedname = name == swname ? name : (swname + " " + name)
@@ -168,7 +168,7 @@ public extension GIR.Argument {
     }
 
     /// return the swift (known) type of the receiver
-    public var argumentType: String {
+    var argumentType: String {
         let ct = ctype
         let t = type.isEmpty ? ct : type
         let array = isScalarArray
@@ -180,7 +180,7 @@ public extension GIR.Argument {
     }
 
     /// return whether the receiver is an instance of the given record (class)
-    public func isInstanceOf(_ record: GIR.Record?) -> Bool {
+    func isInstanceOf(_ record: GIR.Record?) -> Bool {
         if let r = record, r.name == type.withoutNameSpace {
             return true
         } else {
@@ -189,7 +189,7 @@ public extension GIR.Argument {
     }
 
     /// return whether the receiver is an instance of the given record (class) or any of its ancestors
-    public func isInstanceOfHierarchy(_ record: GIR.Record) -> Bool {
+    func isInstanceOfHierarchy(_ record: GIR.Record) -> Bool {
         if isInstanceOf(record) { return true }
         guard let parent = record.parentType else { return false }
         return isInstanceOfHierarchy(parent)
@@ -199,22 +199,22 @@ public extension GIR.Argument {
 
 /// Swift extension for methods
 public extension GIR.Method {
-    public var isDesignatedConstructor: Bool {
+    var isDesignatedConstructor: Bool {
         return name == "new"
     }
 
     /// is this a bare factory method that is not the default constructor
-    public var isBareFactory: Bool {
+    var isBareFactory: Bool {
         return args.isEmpty && !isDesignatedConstructor
     }
 
     /// return whether the method is a constructor of the given record
-    public func isConstructorOf(_ record: GIR.Record?) -> Bool {
+    func isConstructorOf(_ record: GIR.Record?) -> Bool {
         return record != nil && returns.isInstanceOfHierarchy(record!) && !(args.first?.isInstanceOf(record) ?? false)
     }
 
     /// return whether the method is a factory of the given record
-    public func isFactoryOf(_ record: GIR.Record?) -> Bool {
+    func isFactoryOf(_ record: GIR.Record?) -> Bool {
         return !isDesignatedConstructor && isConstructorOf(record)
     }
 }
@@ -305,16 +305,16 @@ public func getterSetterPairs(for allMethods: [GIR.Method]) -> [GetterSetterPair
 /// Swift extension for records
 public extension GIR.Record {
     /// swift node name for this record
-    public var swift: String { return name.swift }
+    var swift: String { return name.swift }
 
     /// swift protocol name for this record
-    public var protocolName: String { return swift + "Protocol" }
+    var protocolName: String { return swift + "Protocol" }
 
     /// swift struct name for this record
-    public var structName: String { return swift + "Ref" }
+    var structName: String { return swift + "Ref" }
 
     /// swift class name for this record
-    public var className: String { return swift }
+    var className: String { return swift }
 }
 
 
@@ -425,7 +425,7 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
 
 /// Default implementation for record methods as protocol extension
 public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: GIR.Record, indentation: String = "    ") -> String {
-    let mcode = methodCode(indentation, record: e)
+    let mcode = methodCode(indentation, record: e, publicDesignation: "")
     let vcode = computedPropertyCode(indentation, record: e)
     let allMethods = e.methods + (e.functions + globalFunctions).filter {
         let fun = $0
@@ -453,7 +453,7 @@ public func functionCode(_ f: GIR.Function, indentation: String = "    ", initia
 
 
 /// Swift code for methods (with a given indentation)
-public func methodCode(_ indentation: String, initialIndentation: String? = nil, record: GIR.Record? = nil, convertName: @escaping (String) -> String = { $0.camelCase }) -> (GIR.Method) -> String {
+public func methodCode(_ indentation: String, initialIndentation: String? = nil, record: GIR.Record? = nil, publicDesignation: String = "public ", convertName: @escaping (String) -> String = { $0.camelCase }) -> (GIR.Method) -> String {
     let indent = initialIndentation ?? indentation
     let doubleIndent = indent + indentation
     let call = callCode(doubleIndent, record)
@@ -486,7 +486,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
             fname = name
         }
         let deprecated = method.deprecated != nil ? "@available(*, deprecated) " : ""
-        let code = swiftCode(method, indent + "\(deprecated)public func \(fname.swift)(" +
+        let code = swiftCode(method, indent + "\(deprecated)\(publicDesignation) func \(fname.swift)(" +
             funcParam + ")\(returnDeclaration(method)) {\n" +
                 doubleIndent + call(method) +
                 indent       + ret(method)  + indent +
@@ -814,26 +814,26 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ") -> S
         "public let ptr: UnsafeMutablePointer<\(rtype)>\n" +
     "}\n\n" +
     "public extension \(structType) {\n" + indentation +
-        "public init(_ p: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
+        "init(_ p: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
             "ptr = p" +
             (ctype == rtype ? "\n" : ".withMemoryRebound(to: \(rtype).self, capacity: 1) { $0 }\n") + indentation +
         "}\n\n" + indentation +
-        "public init<T: \(protocolName)>(_ other: T) {\n" + indentation + indentation +
+        "init<T: \(protocolName)>(_ other: T) {\n" + indentation + indentation +
             "ptr = other.ptr\n" + indentation +
         "}\n\n" + indentation +
-        "public init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + indentation + indentation +
+        "init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + indentation + indentation +
             "ptr = cPointer.withMemoryRebound(to: \(rtype).self, capacity: 1) { $0 }\n" + indentation +
         "}\n\n" + indentation +
-        "public init<T>(constPointer: UnsafePointer<T>) {\n" + indentation + indentation +
+        "init<T>(constPointer: UnsafePointer<T>) {\n" + indentation + indentation +
             "ptr = constPointer.withMemoryRebound(to: \(rtype).self, capacity: 1) { UnsafeMutablePointer(mutating: $0) }\n" + indentation +
         "}\n\n" + indentation +
-        "public init(raw: UnsafeRawPointer) {\n" + indentation + indentation +
+        "init(raw: UnsafeRawPointer) {\n" + indentation + indentation +
             "ptr = UnsafeMutableRawPointer(mutating: raw).assumingMemoryBound(to: \(rtype).self)\n" + indentation +
         "}\n\n" + indentation +
-        "public init(raw: UnsafeMutableRawPointer) {\n" + indentation + indentation +
+        "init(raw: UnsafeMutableRawPointer) {\n" + indentation + indentation +
             "ptr = raw.assumingMemoryBound(to: \(rtype).self)\n" + indentation +
         "}\n\n" + indentation +
-        "public init(opaquePointer: OpaquePointer) {\n" + indentation + indentation +
+        "init(opaquePointer: OpaquePointer) {\n" + indentation + indentation +
             "ptr = UnsafeMutablePointer<\(rtype)>(opaquePointer)\n" + indentation +
         "}\n\n" + indentation +
         constructors.map(ccode).joined(separator: "\n") +
@@ -909,7 +909,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
 //        "public typealias Class = \(protocolName)\n") +
         properties.map(scode).joined(separator: "\n") + "\n" +
     (noProperties ? "" : ("}\n\npublic extension \(protocolName) {\n" + indentation +
-        "@discardableResult public func bind<Q: PropertyNameProtocol, T: ObjectProtocol>(property source_property: \(classType)PropertyName, to target: T, _ target_property: Q, flags f: BindingFlags = .default_, transformFrom transform_from: @escaping GLibObject.ValueTransformer = { $0.transform(destValue: $1) }, transformTo transform_to: @escaping GLibObject.ValueTransformer = { $0.transform(destValue: $1) }) -> BindingRef! {\n" + doubleIndentation +
+        "@discardableResult func bind<Q: PropertyNameProtocol, T: ObjectProtocol>(property source_property: \(classType)PropertyName, to target: T, _ target_property: Q, flags f: BindingFlags = .default_, transformFrom transform_from: @escaping GLibObject.ValueTransformer = { $0.transform(destValue: $1) }, transformTo transform_to: @escaping GLibObject.ValueTransformer = { $0.transform(destValue: $1) }) -> BindingRef! {\n" + doubleIndentation +
             "func _bind(_ source: UnsafePointer<gchar>, to t: T, _ target_property: UnsafePointer<gchar>, flags f: BindingFlags = .default_, holder: BindingClosureHolder, transformFrom transform_from: @convention(c) @escaping (gpointer, gpointer, gpointer, gpointer) -> gboolean, transformTo transform_to: @convention(c) @escaping (gpointer, gpointer, gpointer, gpointer) -> gboolean) -> BindingRef! {\n" + tripleIndentation +
                 "let holder = UnsafeMutableRawPointer(Unmanaged.passRetained(holder).toOpaque())\n" + tripleIndentation +
                 "let from = unsafeBitCast(transform_from, to: BindingTransformFunc.self)\n" + tripleIndentation +
@@ -937,8 +937,8 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
 //        "public typealias Class = \(protocolName)\n") +
         signals.map(scode).joined(separator: "\n") + "\n" +
         properties.map(ncode).joined(separator: "\n") + "\n" +
-    (noSignals ? "" : ("}\n\nextension \(protocolName) {\n" + indentation +
-        "@discardableResult public func connect(signal kind: \(classType)SignalName, flags f: ConnectFlags = ConnectFlags(0), to handler: @escaping GLibObject.SignalHandler) -> CUnsignedLong {\n" + doubleIndentation +
+    (noSignals ? "" : ("}\n\npublic extension \(protocolName) {\n" + indentation +
+        "@discardableResult func connect(signal kind: \(classType)SignalName, flags f: ConnectFlags = ConnectFlags(0), to handler: @escaping GLibObject.SignalHandler) -> CUnsignedLong {\n" + doubleIndentation +
             "func _connect(signal name: UnsafePointer<gchar>, flags: ConnectFlags, data: GLibObject.SignalHandlerClosureHolder, handler: @convention(c) @escaping (gpointer, gpointer) -> Void) -> CUnsignedLong {\n" + tripleIndentation +
                 "let holder = UnsafeMutableRawPointer(Unmanaged.passRetained(data).toOpaque())\n" + tripleIndentation +
                 "let callback = unsafeBitCast(handler, to: GLibObject.Callback.self)\n" + tripleIndentation +
