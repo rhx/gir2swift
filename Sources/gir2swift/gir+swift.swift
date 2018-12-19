@@ -486,7 +486,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
             fname = name
         }
         let deprecated = method.deprecated != nil ? "@available(*, deprecated) " : ""
-        let code = swiftCode(method, indent + "\(deprecated)\(publicDesignation) func \(fname.swift)(" +
+        let code = swiftCode(method, indent + "\(deprecated)\(publicDesignation)func \(fname.swift)(" +
             funcParam + ")\(returnDeclaration(method)) {\n" +
                 doubleIndent + call(method) +
                 indent       + ret(method)  + indent +
@@ -600,7 +600,7 @@ public func convenienceConstructorCode(_ typeName: String, indentation: String, 
             }
             let p: String? = consPrefix == firstArgName?.swift ? nil : consPrefix
             let fact = factory ? "static func \(fname.swift)(" : "\(conv)init("
-            let code = swiftCode(method, indentation + "\(deprecated)\(publicDesignation) \(fact)" +
+            let code = swiftCode(method, indentation + "\(deprecated)\(publicDesignation)\(fact)" +
                 constructorParam(method, prefix: p) + ")\(returnDeclaration(method)) {\n" +
                     doubleIndent + call(method) +
                     indentation  + ret(method)  + indentation +
