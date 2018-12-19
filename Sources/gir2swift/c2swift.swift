@@ -456,7 +456,7 @@ func typeCastTuple(_ ctype: String, _ swiftType: String, varName: String = "rv",
     if swiftType == "String" && u.pointerCount == 1 {
         nPointers = u.pointerCount
         st = swiftType
-        cast = varName == "rv" ? "\(varName).map { String(cString: UnsafePointer<\(ct.innerGType)>($0)) }" : varName
+        cast = varName == "rv" ? "\(varName).map { String(cString: UnsafePointer<\(ct.unwrappedCType)>($0)) }" : varName
     } else {
         nPointers = rawPointers
         st = u.swift != "" ? u.swift : ct
