@@ -406,7 +406,7 @@ public func swiftCode(_ e: GIR.Enumeration) -> String {
 /// Swift code representation of an enum value
 public func valueCode(_ indentation: String) -> (GIR.Enumeration.Member) -> String {
     return { (m: GIR.Enumeration.Member) -> String in
-        swiftCode(m, indentation + "public static let \(m.name.swiftName) = \(m.ctype.swift) /* \(m.value) */", indentation: indentation)
+        swiftCode(m, indentation + "static let \(m.name.swiftName) = \(m.ctype.swift) /* \(m.value) */", indentation: indentation)
     }
 }
 
@@ -549,7 +549,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record) -> (
 
 
 /// Swift code for convenience constructors
-public func convenienceConstructorCode(_ typeName: String, indentation: String, convenience: String = "", factory: Bool = false, convertName: @escaping (String) -> String = { $0.camelCase }) -> (GIR.Record) -> (GIR.Method) -> String {
+public func convenienceConstructorCode(_ typeName: String, indentation: String, convenience: String = "", publicDesignation: String = "public ", factory: Bool = false, convertName: @escaping (String) -> String = { $0.camelCase }) -> (GIR.Record) -> (GIR.Method) -> String {
     let isConv = !convenience.isEmpty
     let conv =  isConv ? "\(convenience) " : ""
     return { (record: GIR.Record) -> (GIR.Method) -> String in
@@ -600,7 +600,7 @@ public func convenienceConstructorCode(_ typeName: String, indentation: String, 
             }
             let p: String? = consPrefix == firstArgName?.swift ? nil : consPrefix
             let fact = factory ? "static func \(fname.swift)(" : "\(conv)init("
-            let code = swiftCode(method, indentation + "\(deprecated)public \(fact)" +
+            let code = swiftCode(method, indentation + "\(deprecated)\(publicDesignation) \(fact)" +
                 constructorParam(method, prefix: p) + ")\(returnDeclaration(method)) {\n" +
                     doubleIndent + call(method) +
                     indentation  + ret(method)  + indentation +
@@ -806,8 +806,8 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ") -> S
     let r = root ?? p
     let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
     let rtype = r.ctype.isEmpty ? r.type.swift : r.ctype.swift
-    let ccode = convenienceConstructorCode(structType, indentation: indentation)(e)
-    let fcode = convenienceConstructorCode(structType, indentation: indentation, factory: true)(e)
+    let ccode = convenienceConstructorCode(structType, indentation: indentation, publicDesignation: "")(e)
+    let fcode = convenienceConstructorCode(structType, indentation: indentation, publicDesignation: "", factory: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
     let factories = (e.constructors + e.methods + e.functions).filter { $0.isFactoryOf(e) }
     let code = "public struct \(structType): \(protocolName) {\n" + indentation +
