@@ -426,7 +426,7 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
 /// Default implementation for record methods as protocol extension
 public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: GIR.Record, indentation: String = "    ") -> String {
     let mcode = methodCode(indentation, record: e, publicDesignation: "")
-    let vcode = computedPropertyCode(indentation, record: e)
+    let vcode = computedPropertyCode(indentation, record: e, publicDesignation: "")
     let allMethods = e.methods + (e.functions + globalFunctions).filter {
         let fun = $0
         return fun.args.lazy.filter({ (arg: GIR.Argument) -> Bool in
@@ -497,7 +497,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
 
 
 /// Swift code for computed properties
-public func computedPropertyCode(_ indentation: String, record: GIR.Record) -> (GetterSetterPair) -> String {
+public func computedPropertyCode(_ indentation: String, record: GIR.Record, publicDesignation: String = "public ") -> (GetterSetterPair) -> String {
     let doubleIndent = indentation + indentation
     let gcall = callCode(doubleIndent, record)
     let scall = callSetter(doubleIndent, record)
@@ -525,7 +525,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record) -> (
         } else {
             property = gs
         }
-        let varDecl = swiftCode(property, indentation + "public var \(name): \(type) {\n", indentation: indentation)
+        let varDecl = swiftCode(property, indentation + "\(publicDesignation)var \(name): \(type) {\n", indentation: indentation)
         let deprecated = getter.deprecated != nil ? "@available(*, deprecated) " : ""
         let getterCode = swiftCode(getter, doubleIndent + "\(deprecated)get {\n" +
             doubleIndent + indentation + gcall(getter) +
