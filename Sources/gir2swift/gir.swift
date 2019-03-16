@@ -185,8 +185,15 @@ public class GIR {
         public let markedAsDeprecated: Bool ///< explicitly marked as deprecated
         public let version: String?         ///< availability in given version
 
+        #if swift(>=4.2)
+        /// Hashable conformance
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(name)
+        }
+        #else
         /// hash value
         public var hashValue: Int { return name.hashValue }
+        #endif
 
         public init(name: String, comment: String, introspectable: Bool = false, deprecated: String? = nil, markedAsDeprecated: Bool = false, version: String? = nil) {
             self.name = name
