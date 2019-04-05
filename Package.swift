@@ -7,7 +7,7 @@ let pkgName = "gir2swift"
 
 let package = Package(
     name: pkgName,
-    dependencies: [ .package(url: "https://github.com/rhx/SwiftLibXML.git", from: "2.0.0"), ],
+    dependencies: [ .package(url: "https://github.com/rhx/SwiftLibXML.git", .branch("master")) ],
     targets: [
         .target(name: pkgName, dependencies: ["SwiftLibXML"]),
         .testTarget(name: "\(pkgName)Tests", dependencies: [.byNameItem(name: pkgName)]),
