@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 2/04/2016.
-//  Copyright © 2016, 2017, 2018 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018, 2019 Rene Hexel. All rights reserved.
 //
 #if os(Linux)
     import Glibc
@@ -534,7 +534,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, publ
         let setterCode: String
         if let setter = pair.setter {
             let deprecated = setter.deprecated != nil ? "@available(*, deprecated) " : ""
-            setterCode = swiftCode(setter, doubleIndent + "\(deprecated)set {\n" +
+            setterCode = swiftCode(setter, doubleIndent + "\(deprecated)nonmutating set {\n" +
                 doubleIndent + indentation + scall(setter) +
                 doubleIndent + "}\n", indentation: doubleIndent)
         } else {
