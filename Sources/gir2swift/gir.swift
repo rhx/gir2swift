@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 25/03/2016.
-//  Copyright © 2016, 2017, 2018 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018, 2019 Rene Hexel. All rights reserved.
 //
 #if os(Linux)
     import Glibc
@@ -185,15 +185,9 @@ public class GIR {
         public let markedAsDeprecated: Bool ///< explicitly marked as deprecated
         public let version: String?         ///< availability in given version
 
-        #if swift(>=4.2)
-        /// Hashable conformance
         public func hash(into hasher: inout Hasher) {
             hasher.combine(name)
         }
-        #else
-        /// hash value
-        public var hashValue: Int { return name.hashValue }
-        #endif
 
         public init(name: String, comment: String, introspectable: Bool = false, deprecated: String? = nil, markedAsDeprecated: Bool = false, version: String? = nil) {
             self.name = name
