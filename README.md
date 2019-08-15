@@ -14,7 +14,7 @@ To build, you need at least Swift 4.2 (Swift 5.x should work fine), download fro
 on macOS, or on Linux you should get something like:
 
 	$ swift --version
-	Swift version 5.0.1 (swift-5.0.1-RELEASE)
+	Swift version 5.0.2 (swift-5.0.2-RELEASE)
 	Target: x86_64-unknown-linux-gnu
 
 ### LibXML 2.9.4 or higher
