@@ -391,12 +391,13 @@ public func valueCode(_ indentation: String) -> (GIR.Enumeration.Member) -> Stri
 
 /// Swift protocol representation of a record/class as a wrapper of a pointer
 public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: String = "    ", ptr: String = "ptr") -> String {
-    let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
     let p = (parent.isEmpty ? "" : ": \(parent)")
+    let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
     let code = "// MARK: - \(e.name) \(e.kind)\n" +
-        "public protocol \(e.protocolName)\(p) {\n" + (e.parentType == nil ?
-        (indentation + "var \(ptr): UnsafeMutablePointer<\(ctype)> { get }\n") : "") +
-    "}\n\n"
+        "public protocol \(e.protocolName)\(p) {\n" + indentation +
+            "var ptr: UnsafeMutableRawPointer { get }\n" + indentation +
+            "var \(ptr): UnsafeMutablePointer<\(ctype)> { get }\n" +
+        "}\n\n"
     return code
 }
 
@@ -414,8 +415,9 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
     let gsPairs = getterSetterPairs(for: allMethods)
     let methods = allMethods.filter { method in
         !method.name.hasPrefix("is_") || !gsPairs.contains { $0.getter === method } }
+    let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
     let code = "public extension \(e.protocolName) {\n" + indentation +
-        "var ptr: UnsafeRawPointer { return UnsafeRawPointer(\(ptrName)) }\n\n" +
+        "var \(ptrName): UnsafeMutablePointer<\(ctype)> { return ptr.assumingMemoryBound(to: \(ctype).self) }\n\n" +
         methods.map(mcode).joined(separator: "\n") +
         gsPairs.map(vcode).joined(separator: "\n") +
     "}\n\n"
@@ -779,41 +781,40 @@ public func signalNameCode(indentation indent: String, prefixes: (String, String
 public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr: String = "ptr") -> String {
     let structType = "\(e.name)Ref"
     let protocolName = e.protocolName
-    let parent = e.parentType
-    let root = parent?.rootType
-    let p = parent ?? e
-    let r = root ?? p
+//    let parent = e.parentType
+//    let root = parent?.rootType
+//    let p = parent ?? e
+//    let r = root ?? p
     let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
-    let rtype = r.ctype.isEmpty ? r.type.swift : r.ctype.swift
+//    let rtype = r.ctype.isEmpty ? r.type.swift : r.ctype.swift
     let ccode = convenienceConstructorCode(structType, indentation: indentation, publicDesignation: "")(e)
     let fcode = convenienceConstructorCode(structType, indentation: indentation, publicDesignation: "", factory: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
     let factories = (e.constructors + e.methods + e.functions).filter { $0.isFactoryOf(e) }
     let code = "public struct \(structType): \(protocolName) {\n" + indentation +
-        "public let \(ptr): UnsafeMutablePointer<\(rtype)>\n" +
+        "public let ptr: UnsafeMutableRawPointer\n" +
     "}\n\n" +
     "public extension \(structType) {\n" + indentation +
         "init(_ p: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
-            "\(ptr) = p" +
-            (ctype == rtype ? "\n" : ".withMemoryRebound(to: \(rtype).self, capacity: 1) { $0 }\n") + indentation +
+            "ptr = UnsafeMutableRawPointer(p)" + indentation +
         "}\n\n" + indentation +
         "init<T: \(protocolName)>(_ other: T) {\n" + indentation + indentation +
-            "\(ptr) = other.\(ptr)\n" + indentation +
+            "ptr = other.ptr\n" + indentation +
         "}\n\n" + indentation +
         "init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + indentation + indentation +
-            "\(ptr) = cPointer.withMemoryRebound(to: \(rtype).self, capacity: 1) { $0 }\n" + indentation +
+            "ptr = UnsafeMutableRawPointer(cPointer)\n" + indentation +
         "}\n\n" + indentation +
         "init<T>(constPointer: UnsafePointer<T>) {\n" + indentation + indentation +
-            "\(ptr) = constPointer.withMemoryRebound(to: \(rtype).self, capacity: 1) { UnsafeMutablePointer(mutating: $0) }\n" + indentation +
+            "ptr = UnsafeMutableRawPointer(mutating: UnsafeRawPointer(constPointer))\n" + indentation +
         "}\n\n" + indentation +
         "init(raw: UnsafeRawPointer) {\n" + indentation + indentation +
-            "\(ptr) = UnsafeMutableRawPointer(mutating: raw).assumingMemoryBound(to: \(rtype).self)\n" + indentation +
+            "ptr = UnsafeMutableRawPointer(mutating: raw)\n" + indentation +
         "}\n\n" + indentation +
         "init(raw: UnsafeMutableRawPointer) {\n" + indentation + indentation +
-            "\(ptr) = raw.assumingMemoryBound(to: \(rtype).self)\n" + indentation +
+            "ptr = raw\n" + indentation +
         "}\n\n" + indentation +
         "init(opaquePointer: OpaquePointer) {\n" + indentation + indentation +
-            "\(ptr) = UnsafeMutablePointer<\(rtype)>(opaquePointer)\n" + indentation +
+            "ptr = UnsafeMutableRawPointer(opaquePointer)\n" + indentation +
         "}\n\n" + indentation +
         constructors.map(ccode).joined(separator: "\n") +
         factories.map(fcode).joined(separator: "\n") +
@@ -858,9 +859,9 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let parentName = hasParent ? parentType!.name.swift : ""
     let p = parent.isEmpty ? (hasParent ? "\(parentName), " : "") : "\(parent), "
     let code1 = "open class \(classType): \(p)\(protocolName) {\n" + indentation +
-        (hasParent ? "" : ("public let \(ptr): UnsafeMutablePointer<\(ctype)>\n\n" + indentation)) +
+        (hasParent ? "" : ("public let ptr: UnsafeMutableRawPointer\n\n" + indentation)) +
         "public init(_ op: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
-            (hasParent ? "super.init(cast(op))\n" : "self.\(ptr) = op\n") + indentation +
+            (hasParent ? "super.init(cast(op))\n" : "ptr = UnsafeMutableRawPointer(op)\n") + indentation +
         "}\n\n" + (indentation +
         "public convenience init<T: \(e.protocolName)>(_ other: T) {\n" + doubleIndentation +
             "self.init(cast(other.\(ptr)))\n" + doubleIndentation +
