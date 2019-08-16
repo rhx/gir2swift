@@ -75,7 +75,7 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
         func writebg(_ string: String, to fileName: String) {
             background.async(group: queues) { write(string, to: fileName) }
         }
-        func write<T: GIR.Record>(_ types: [T], using convert: (GIR.Record) -> String) {
+        func write<T: GIR.Record>(_ types: [T], using ptrconvert: (String) -> (GIR.Record) -> String) {
             if let dir = outputDirectory {
                 writebg(modulePrefix, to: "\(dir)/\(node).swift")
                 var output = prefix
@@ -83,6 +83,7 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
                 var firstName = ""
                 var name = ""
                 for type in types {
+                    let convert = ptrconvert("\(type.cprefix)_ptr")
                     let code = convert(type)
                     output += code + "\n\n"
                     name = type.className
@@ -104,7 +105,10 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
                     writebg(output, to: f)
                 }
             } else {
-                let code = types.map(convert).joined(separator: "\n\n")
+                let code = types.map { type in
+                    let convert = ptrconvert("\(type.cprefix)_ptr")
+                    return convert(type)
+                }.joined(separator: "\n\n")
                 outq.async(group: queues) { print(code) }
             }
         }

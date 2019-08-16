@@ -178,6 +178,7 @@ public class GIR {
 
     /// GIR named thing class
     public class Thing: Hashable, Comparable {
+        public var kind: String { return "Thing" }
         public let name: String             ///< type name without namespace/prefix
         public let comment: String          ///< documentation
         public let introspectable: Bool     ///< is this thing introspectable?
@@ -213,6 +214,7 @@ public class GIR {
 
     /// GIR type class
     public class Datatype: Thing {
+        public override var kind: String { return "Datatype" }
         public let type: String         ///< C typedef name
 
         public init(name: String, type: String, comment: String, introspectable: Bool = false, deprecated: String? = nil) {
@@ -244,6 +246,7 @@ public class GIR {
 
     /// a type with an underlying C type entry
     public class CType: Datatype {
+        public override var kind: String { return "CType" }
         public let ctype: String            ///< underlying C type
         public let containedTypes: [CType]  ///< list of contained types
         public let nullable: Bool           ///< is this an optional?
@@ -310,11 +313,14 @@ public class GIR {
     }
 
     /// a type alias is just a type with an underlying C type
-    public class Alias: CType {}
+    public class Alias: CType {
+        public override var kind: String { return "Alias" }
+    }
 
 
     /// an entry for a constant
     public class Constant: CType {
+        public override var kind: String { return "Constant" }
         public let value: Int           ///< raw value
 
         public init(name: String, type: String, ctype: String, value: Int, comment: String, introspectable: Bool = false, deprecated: String? = nil) {
@@ -336,6 +342,7 @@ public class GIR {
 
     /// an enumeration entry
     public class Enumeration: Datatype {
+        public override var kind: String { return "Enumeration" }
         /// an enumeration value is a constant
         public typealias Member = Constant
 
@@ -356,11 +363,14 @@ public class GIR {
     }
 
     /// a bitfield is an enumeration
-    public typealias Bitfield = Enumeration
+    public class Bitfield: Enumeration {
+        public override var kind: String { return "Bitfield" }
+    }
 
 
     /// a data type record to create a protocol/struct/class for
     public class Record: CType {
+        public override var kind: String { return "Record" }
         public let cprefix: String          ///< C language symbol prefix
         public let typegetter: String       ///< C type getter function
         public let methods: [Method]        ///< all associated methods
@@ -465,6 +475,7 @@ public class GIR {
 
     /// a class data type record
     public class Class: Record {
+        public override var kind: String { return "Class" }
         public let parent: String           ///< parent class name
 
         /// return the parent type of the given class
@@ -491,12 +502,15 @@ public class GIR {
         }
     }
 
-    /// an inteface is similar to a class
-    public typealias Interface = Class
-
+    /// an inteface is similar to a class,
+    /// but can be part of a more complex type graph
+    public class Interface: Class {
+        public override var kind: String { return "Interface" }
+    }
 
     /// data type representing a function/method
     public class Method: Argument {     // superclass type is return type
+        public override var kind: String { return "Method" }
         public let cname: String        ///< original C function name
         public let returns: Argument    ///< C language type name
         public let args: [Argument]     ///< all associated methods
@@ -584,19 +598,28 @@ public class GIR {
     }
 
     /// a function is the same as a method
-    public typealias Function = Method
+    public class Function: Method {
+        public override var kind: String { return "Function" }
+    }
 
     /// a callback is the same as a function
-    public typealias Callback = Function
+    public class Callback: Function {
+        public override var kind: String { return "Callback" }
+    }
 
     /// a signal is equivalent to a function
-    public typealias Signal = Function
+    public class Signal: Function {
+        public override var kind: String { return "Signal" }
+    }
 
     /// a property is a C type
-    public typealias Property = CType
+    public class Property: CType {
+        public override var kind: String { return "Property" }
+    }
 
     /// data type representing a function/method argument or return type
     public class Argument: CType {
+        public override var kind: String { return "Argument" }
         public let instance: Bool       ///< is this an instance parameter?
         public let _varargs: Bool       ///< is this a varargs (...) parameter?
 
