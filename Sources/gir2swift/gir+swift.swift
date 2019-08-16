@@ -85,6 +85,7 @@ public extension GIR {
                    param.withMemoryRebound(to: T.self, capacity: rv.count) { release(UnsafePointer<T>($0)) }
                    return rv
                }
+
                """
     }
 }
