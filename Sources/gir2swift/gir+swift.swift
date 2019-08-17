@@ -283,7 +283,7 @@ public extension GIR.Record {
     var swift: String { return name.swift }
 
     /// swift protocol name for this record
-    var protocolName: String { return swift + "Protocol" }
+    var protocolName: String { return swift.protocolName }
 
     /// swift struct name for this record
     var structName: String { return swift + "Ref" }
@@ -297,6 +297,9 @@ public extension GIR.Record {
 extension String {
     /// indicates whether the receiver is a known type
     public var isKnownType: Bool { return GIR.KnownTypes[self] != nil }
+
+    /// swift protocol name for a given string
+    var protocolName: String { return self + "Protocol" }
 }
 
 
@@ -938,7 +941,8 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
 public func swiftCode(_ funcs: [GIR.Function]) -> (String) -> (GIR.Record) -> String {
     return { ptrName in
         { (e: GIR.Record) -> String in
-            let parents = [ e.parentType?.protocolName ?? "", e.ctype == gerror ? errorProtocol : "" ].filter { !$0.isEmpty }
+            let parents = [ e.parentType?.protocolName ?? "", e.ctype == gerror ? errorProtocol : "" ].filter { !$0.isEmpty } +
+                e.implements.filter { !(e.parentType?.implements.contains($0) ?? false) }.map { $0.protocolName }
             let p = recordProtocolCode(e, parent: parents.joined(separator: ", "), ptr: ptrName)
             let s = recordStructCode(e, ptr: ptrName)
             let c = recordClassCode(e, parent: "", ptr: ptrName)

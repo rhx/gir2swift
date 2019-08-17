@@ -380,6 +380,7 @@ public class GIR {
         public let signals: [Signal]        ///< list of signals
         public var parentType: Record? { return nil }   ///< no parent
         public var rootType: Record { return self }     ///< no root class
+        public var implements: [String]     ///< names of implemented interfaces
 
         /// return all functions, methods, and constructors
         public var allMethods: [Method] {
@@ -393,7 +394,7 @@ public class GIR {
         }
 
         /// designated constructor
-        public init(name: String, type: String, ctype: String, cprefix: String, typegetter: String, methods: [Method] = [], functions: [Function] = [], constructors: [Method] = [], properties: [Property] = [], signals: [Signal] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
+        public init(name: String, type: String, ctype: String, cprefix: String, typegetter: String, methods: [Method] = [], functions: [Function] = [], constructors: [Method] = [], properties: [Property] = [], signals: [Signal] = [], interfaces: [String] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
             self.cprefix = cprefix
             self.typegetter = typegetter
             self.methods = methods
@@ -401,6 +402,7 @@ public class GIR {
             self.constructors = constructors
             self.properties = properties
             self.signals = signals
+            self.implements = interfaces
             super.init(name: name, type: type, ctype: ctype, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
@@ -419,6 +421,8 @@ public class GIR {
             properties = props.enumerated().map { Property(node: $0.1, atIndex: $0.0) }
             let sigs = children.filter { $0.name == "signal" }
             signals = sigs.enumerated().map { Signal(node: $0.1, atIndex: $0.0) }
+            let interfaces = children.filter { $0.name == "implements" }
+            implements = interfaces.enumerated().map { $0.1.attribute(named: "name") }.filter { $0 != nil }.map { $0! }
             super.init(node: node, atIndex: i, typeAttr: "type-name", cTypeAttr: "type")
         }
 
