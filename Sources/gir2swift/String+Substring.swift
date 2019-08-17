@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 25/04/2016.
-//  Copyright © 2016, 2017, 2018 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018, 2019 Rene Hexel. All rights reserved.
 //
 //
 #if os(Linux)
@@ -12,11 +12,11 @@
     import Darwin
 #endif
 
-/// UTF16 for underscore
-private let underscore = "_".utf16.first!
+/// UTF8 representation of an underscore
+private let underscore = "_".utf8.first!
 
-/// UTF16 for minus
-private let minus = "-".utf16.first!
+/// UTF8 representation of a minus sign
+private let minus = "-".utf8.first!
 
 extension String {
     /// return the unprefixed version of the string
@@ -59,7 +59,7 @@ extension String {
         guard let u = unicodeScalars.first, u.isASCII else { return self }
         let c = Int32(u.value)
         guard islower(c) != 0 else { return self }
-        let utf = utf16
+        let utf = utf8
         let t = utf[utf.index(after: utf.startIndex)..<utf.endIndex]
         guard let upper = UnicodeScalar(UInt16(toupper(c))),
               let tail = String(t) else { return self }
@@ -71,16 +71,16 @@ extension String {
         guard let u = unicodeScalars.first, u.isASCII else { return self }
         let c = Int32(u.value)
         guard isupper(c) != 0 else { return self }
-        let utf = utf16
+        let utf = utf8
         let t = utf[utf.index(after: utf.startIndex)..<utf.endIndex]
-        guard let lower = UnicodeScalar(UInt16(tolower(c))),
-              let tail = String(t) else { return self }
+        guard let tail = String(t) else { return self }
+        let lower = UnicodeScalar(UInt8(tolower(c)))
         return String(Character(lower))+tail
     }
 
     /// convert a string with separators to camel case
-    func camelise(_ isSeparator: (UInt16) -> Bool) -> String {
-        let u = self.utf16
+    func camelise(_ isSeparator: (String.UTF8View.Element) -> Bool) -> String {
+        let u = utf8
         var s = u.startIndex
         let e = u.endIndex
         var result = String()
@@ -98,7 +98,8 @@ extension String {
                 j = u.index(after: i)
                 if let u = String(u[i..<j])?.unicodeScalars.first, u.isASCII {
                     let c = Int32(u.value)
-                    if let upper = UnicodeScalar(UInt16(toupper(c))), islower(c) != 0 {
+                    if islower(c) != 0 {
+                        let upper = UnicodeScalar(UInt8(toupper(c)))
                         result += String(Character(upper))
                         s = j
                     } else {

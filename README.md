@@ -72,10 +72,9 @@ If you get an error such as
 	$ ./build.sh 
 	error: unable to invoke subcommand: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-package (No such file or directory)
 	
-this probably means that your Swift toolchain is too old.  Make sure the latest toolchain (Swift 5.0.1 at the time of this writing) is the one that is found when you run the Swift compiler (see above).
+this probably means that your Swift toolchain is too old.  Make sure the latest toolchain is the one that is found when you run the Swift compiler (see above).
 
   If you get an older version, make sure that the right version of the swift compiler is found first in your `PATH`.  On macOS, use xcode-select to select and install the latest version, e.g.:
 
 	sudo xcode-select -s /Applications/Xcode.app
 	xcode-select --install
-
