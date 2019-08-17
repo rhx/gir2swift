@@ -573,11 +573,7 @@ public class GIR {
             let s = u.index(after: u.startIndex)
             let e = u.endIndex
             let v = u[s..<e]
-            #if swift(>=4.0)
-                let setter = "s" + String(Substring(v))
-            #else
-                let setter = "s" + String(describing: v)
-            #endif
+            let setter = "s" + String(Substring(v))
             return name == setter
         }
 
@@ -588,11 +584,7 @@ public class GIR {
             let s = u.index(after: u.startIndex)
             let e = u.endIndex
             let v = u[s..<e]
-            #if swift(>=4.0)
-                let getter = "g" + String(Substring(v))
-            #else
-                let getter = "g" + String(describing: v)
-            #endif
+            let getter = "g" + String(Substring(v))
             return name == getter
         }
     }

@@ -3,7 +3,7 @@
 //  posix
 //
 //  Created by Rene Hexel on 3/08/2014.
-//  Copyright (c) 2014, 2016 Rene Hexel. All rights reserved.
+//  Copyright (c) 2014, 2016, 2019 Rene Hexel. All rights reserved.
 //
 #if os(Linux)
     import Glibc
@@ -21,11 +21,7 @@
             while i != s {
                 let j = u.index(before: i)
                 if u[j] == slash {
-                    #if swift(>=4.0)
-                        return String(Substring(u[i..<e]))
-                    #else
-                        return String(describing: u[i..<e])
-                    #endif
+                    return String(Substring(u[i..<e]))
                 }
                 i = j
             }
