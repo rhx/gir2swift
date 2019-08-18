@@ -393,9 +393,17 @@ public func valueCode(_ indentation: String) -> (GIR.Enumeration.Member) -> Stri
 public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: String = "    ", ptr: String = "ptr") -> String {
     let p = (parent.isEmpty ? "" : ": \(parent)")
     let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
-    let code = "// MARK: - \(e.name) \(e.kind)\n" +
+    let documentation = commentCode(e)
+    let code = "// MARK: - \(e.name) \(e.kind)\n\n" +
+        "/// The `\(e.protocolName)` protocol exposes the methods and properties of an underlying `\(ctype)` instance.\n" +
+        "/// The default implementation of these can be found in the protocol extension below.\n" +
+        "/// For a concrete class that implements these methods and properties, see `\(e.className)`.\n" +
+        "/// Alternatively, use `\(e.structName)` as a lighweight, `unowned` reference if you already have an instance you just want to use.\n///\n" +
+            documentation + "\n" +
         "public protocol \(e.protocolName)\(p) {\n" + indentation +
-            "var ptr: UnsafeMutableRawPointer { get }\n" + indentation +
+            "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
+            "var ptr: UnsafeMutableRawPointer { get }\n\n" + indentation +
+            "/// Typed pointer to the underlying `\(ctype)` instance.\n" + indentation +
             "var \(ptr): UnsafeMutablePointer<\(ctype)> { get }\n" +
         "}\n\n"
     return code
@@ -417,6 +425,7 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
         !method.name.hasPrefix("is_") || !gsPairs.contains { $0.getter === method } }
     let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
     let code = "public extension \(e.protocolName) {\n" + indentation +
+        "/// Return the stored, untyped pointer as a typed pointer to the`\(ctype)` instance.\n" + indentation +
         "var \(ptrName): UnsafeMutablePointer<\(ctype)> { return ptr.assumingMemoryBound(to: \(ctype).self) }\n\n" +
         methods.map(mcode).joined(separator: "\n") +
         gsPairs.map(vcode).joined(separator: "\n") +
@@ -783,28 +792,47 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
     let fcode = convenienceConstructorCode(structType, indentation: indentation, publicDesignation: "", factory: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
     let factories = (e.constructors + e.methods + e.functions).filter { $0.isFactoryOf(e) }
-    let code = "public struct \(structType): \(protocolName) {\n" + indentation +
+    let documentation = commentCode(e)
+    let code = "/// The `\(structType)` type acts as a lightweight Swift reference to an underlying `\(ctype)` instance.\n" +
+    "/// It exposes methods that can operate on this data type through `\(protocolName)` conformance.\n" +
+    "/// Use `\(structType)` only as an `unowned` reference to an existing `\(ctype)` instance.\n///\n" +
+        documentation + "\n" +
+    "public struct \(structType): \(protocolName) {\n" + indentation +
+        "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
+        "/// For type-safe access, use the generated, typed pointer `\(ptr)` property instead.\n" + indentation +
         "public let ptr: UnsafeMutableRawPointer\n" +
     "}\n\n" +
     "public extension \(structType) {\n" + indentation +
+        "/// Designated initialiser from the underlying `C` data type\n" + indentation +
         "init(_ p: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
             "ptr = UnsafeMutableRawPointer(p)" + indentation +
         "}\n\n" + indentation +
+        "/// Reference intialiser for a related type that implements `\(protocolName)`\n" + indentation +
         "init<T: \(protocolName)>(_ other: T) {\n" + indentation + indentation +
             "ptr = other.ptr\n" + indentation +
         "}\n\n" + indentation +
+        "/// Unsafe typed initialiser.\n" + indentation +
+        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
         "init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + indentation + indentation +
             "ptr = UnsafeMutableRawPointer(cPointer)\n" + indentation +
         "}\n\n" + indentation +
+        "/// Unsafe typed initialiser.\n" + indentation +
+        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
         "init<T>(constPointer: UnsafePointer<T>) {\n" + indentation + indentation +
             "ptr = UnsafeMutableRawPointer(mutating: UnsafeRawPointer(constPointer))\n" + indentation +
         "}\n\n" + indentation +
+        "/// Unsafe untyped initialiser.\n" + indentation +
+        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
         "init(raw: UnsafeRawPointer) {\n" + indentation + indentation +
             "ptr = UnsafeMutableRawPointer(mutating: raw)\n" + indentation +
         "}\n\n" + indentation +
+        "/// Unsafe untyped initialiser.\n" + indentation +
+        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
         "init(raw: UnsafeMutableRawPointer) {\n" + indentation + indentation +
             "ptr = raw\n" + indentation +
         "}\n\n" + indentation +
+        "/// Unsafe untyped initialiser.\n" + indentation +
+        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
         "init(opaquePointer: OpaquePointer) {\n" + indentation + indentation +
             "ptr = UnsafeMutableRawPointer(opaquePointer)\n" + indentation +
         "}\n\n" + indentation +
@@ -850,27 +878,49 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     }
     let parentName = hasParent ? parentType!.name.swift : ""
     let p = parent.isEmpty ? (hasParent ? "\(parentName), " : "") : "\(parent), "
-    let code1 = "open class \(classType): \(p)\(protocolName) {\n" + indentation +
-        (hasParent ? "" : ("public let ptr: UnsafeMutableRawPointer\n\n" + indentation)) +
+    let documentation = commentCode(e)
+    let code1 = "/// The `\(classType)` type acts as a\(e.ref == nil ? "n" : " reference-counted") owner of an underlying `\(ctype)` instance.\n" +
+    "/// It provides the methods that can operate on this data type through `\(protocolName)` conformance.\n" +
+    "/// Use `\(classType)` as a strong reference or owner of a `\(ctype)` instance.\n///\n" +
+        documentation + "\n" +
+    "open class \(classType): \(p)\(protocolName) {\n" + indentation +
+        (hasParent ? "" : (
+            "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
+            "/// For type-safe access, use the generated, typed pointer `\(ptr)` property instead.\n" + indentation +
+            "public let ptr: UnsafeMutableRawPointer\n\n" + indentation)
+        ) +
+        "/// Designated initialiser from the underlying `C` data type.\n" + indentation +
+        "/// Ownership is transferred to the `\(classType)` instance.\n" + indentation +
         "public init(_ op: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
             (hasParent ? "super.init(cast(op))\n" : "ptr = UnsafeMutableRawPointer(op)\n") + indentation +
         "}\n\n" + (indentation +
+        "/// Reference convenience intialiser for a related type that implements `\(protocolName)`\n" + indentation +
+        "/// \(e.ref == nil ? "`\(e.ctype.swift)` does not allow reference counting." : "Will retain `\(e.ctype.swift)`.")\n" + indentation +
         "public convenience init<T: \(e.protocolName)>(_ other: T) {\n" + doubleIndentation +
             "self.init(cast(other.\(ptr)))\n" + doubleIndentation +
             "\(retain)(cast(\(ptr)))\n" + indentation +
         "}\n\n") + (hasParent ? "" : (indentation +
+        "/// \(e.unref == nil ? "Do-nothing destructor for`\(e.ctype.swift)`." : "Releases the underlying `\(e.ctype.swift)` instance using `\(e.unref?.cname ?? "unref")`.")\n" + indentation +
         "deinit {\n" + indentation + indentation +
             "\(release)(cast(\(ptr)))\n" + indentation +
         "}\n\n")) + (indentation +
+        "/// Unsafe typed initialiser.\n" + indentation +
+        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
         "public convenience init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
             "self.init(cPointer.withMemoryRebound(to: \(ctype).self, capacity: 1) { $0 })\n" + indentation +
         "}\n\n" + indentation +
+        "/// Unsafe untyped initialiser.\n" + indentation +
+        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
         "public convenience init(raw: UnsafeRawPointer) {\n" + doubleIndentation +
             "self.init(UnsafeMutableRawPointer(mutating: raw).assumingMemoryBound(to: \(ctype).self))\n" + indentation +
         "}\n\n" + indentation +
+        "/// Unsafe untyped initialiser.\n" + indentation +
+        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
         "public convenience init(raw: UnsafeMutableRawPointer) {\n" + doubleIndentation +
             "self.init(raw.assumingMemoryBound(to: \(ctype).self))\n" + indentation +
         "}\n\n" + indentation +
+        "/// Unsafe untyped initialiser.\n" + indentation +
+        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
         "public convenience init(opaquePointer: OpaquePointer) {\n" + doubleIndentation +
             "self.init(UnsafeMutablePointer<\(ctype)>(opaquePointer))\n" + indentation +
         "}\n\n") +
@@ -881,6 +931,14 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
 //        "public typealias Class = \(protocolName)\n") +
         properties.map(scode).joined(separator: "\n") + "\n" +
     (noProperties ? "" : ("}\n\npublic extension \(protocolName) {\n" + indentation +
+        "/// Bind a `\(classType)PropertyName` source property to a given target object.\n" + indentation +
+        "/// - Parameter source_property: the source property to bind\n" + indentation +
+        "/// - Parameter target: the target object to bind to\n" + indentation +
+        "/// - Parameter target_property: the target property to bind to\n" + indentation +
+        "/// - Parameter flags: the flags to pass to the `Binding`\n" + indentation +
+        "/// - Parameter transform_from: `ValueTransformer` to use for forward transformation\n" + indentation +
+        "/// - Parameter transform_to: `ValueTransformer` to use for backwards transformation\n" + indentation +
+        "/// - Returns: binding reference or `nil` in case of an error\n" + indentation +
         "@discardableResult func bind<Q: PropertyNameProtocol, T: ObjectProtocol>(property source_property: \(classType)PropertyName, to target: T, _ target_property: Q, flags f: BindingFlags = .default_, transformFrom transform_from: @escaping GLibObject.ValueTransformer = { $0.transform(destValue: $1) }, transformTo transform_to: @escaping GLibObject.ValueTransformer = { $0.transform(destValue: $1) }) -> BindingRef! {\n" + doubleIndentation +
             "func _bind(_ source: UnsafePointer<gchar>, to t: T, _ target_property: UnsafePointer<gchar>, flags f: BindingFlags = .default_, holder: BindingClosureHolder, transformFrom transform_from: @convention(c) @escaping (gpointer, gpointer, gpointer, gpointer) -> gboolean, transformTo transform_to: @convention(c) @escaping (gpointer, gpointer, gpointer, gpointer) -> gboolean) -> BindingRef! {\n" + tripleIndentation +
                 "let holder = UnsafeMutableRawPointer(Unmanaged.passRetained(holder).toOpaque())\n" + tripleIndentation +
@@ -910,6 +968,11 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         signals.map(scode).joined(separator: "\n") + "\n" +
         properties.map(ncode).joined(separator: "\n") + "\n" +
     (noSignals ? "" : ("}\n\npublic extension \(protocolName) {\n" + indentation +
+        "/// Connect a `\(classType)SignalName` signal to a given signal handler.\n" + indentation +
+        "/// - Parameter signal: the signal to connect\n" + indentation +
+        "/// - Parameter flags: signal connection flags\n" + indentation +
+        "/// - Parameter handler: signal handler to use\n" + indentation +
+        "/// - Returns: positive handler ID, or a value less than or equal to `0` in case of an error\n" + indentation +
         "@discardableResult func connect(signal kind: \(classType)SignalName, flags f: ConnectFlags = ConnectFlags(0), to handler: @escaping GLibObject.SignalHandler) -> CUnsignedLong {\n" + doubleIndentation +
             "func _connect(signal name: UnsafePointer<gchar>, flags: ConnectFlags, data: GLibObject.SignalHandlerClosureHolder, handler: @convention(c) @escaping (gpointer, gpointer) -> Void) -> CUnsignedLong {\n" + tripleIndentation +
                 "let holder = UnsafeMutableRawPointer(Unmanaged.passRetained(data).toOpaque())\n" + tripleIndentation +
