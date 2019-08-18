@@ -5,12 +5,7 @@
 //  Created by Rene Hexel on 2/04/2016.
 //  Copyright © 2016, 2017, 2018, 2019 Rene Hexel. All rights reserved.
 //
-#if os(Linux)
-    import Glibc
-#else
-    import Darwin
-#endif
-
+import Foundation
 
 public extension GIR {
     /// code boiler plate
@@ -303,14 +298,30 @@ extension String {
 }
 
 
-/// Swift representation of comments
+/// SwiftDoc representation of comments
 public func commentCode(_ thing: GIR.Thing, indentation: String = "") -> String {
     let comment = thing.comment
+        .replacingOccurrences(of: "%NULL", with: "`nil`")
+        .replacingOccurrences(of: "%TRUE", with: "`true`")
+        .replacingOccurrences(of: "%FALSE", with: "`false`")
     guard !comment.isEmpty else { return comment }
-    let prefix = indentation + "/// "
-    return comment.reduce(prefix) {
-        $0 + ($1 == "\n" ? "\n" + prefix : String($1))
+    let linePrefix = indentation + "/// "
+    var quote = false
+    let documentation = comment.reduce(linePrefix) {
+        guard $1 != "@" && $1 != "#" && $1 != "%" else {
+            quote = true
+            return $0 + "`"
+        }
+        let prefix: String
+        if quote && !($1 == "_" || $1.isLetter || $1.isNumber) {
+            quote = false
+            prefix = "`"
+        } else {
+            prefix = ""
+        }
+        return $0 + prefix + ($1 == "\n" ? "\n" + linePrefix : String($1))
     }
+    return quote ? documentation + "`" : documentation
 }
 
 /// Swift representation of deprecation
@@ -425,7 +436,7 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
         !method.name.hasPrefix("is_") || !gsPairs.contains { $0.getter === method } }
     let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
     let code = "public extension \(e.protocolName) {\n" + indentation +
-        "/// Return the stored, untyped pointer as a typed pointer to the`\(ctype)` instance.\n" + indentation +
+        "/// Return the stored, untyped pointer as a typed pointer to the `\(ctype)` instance.\n" + indentation +
         "var \(ptrName): UnsafeMutablePointer<\(ctype)> { return ptr.assumingMemoryBound(to: \(ctype).self) }\n\n" +
         methods.map(mcode).joined(separator: "\n") +
         gsPairs.map(vcode).joined(separator: "\n") +
