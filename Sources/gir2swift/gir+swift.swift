@@ -308,6 +308,7 @@ public func commentCode(_ thing: GIR.Thing, indentation: String = "") -> String 
         .replacingOccurrences(of: "|[ <!-- language=\"CSS\" -->", with: "(CSS Example):\n```C")
         .replacingOccurrences(of: "|[<!-- language=\"C\" -->", with: "(C Language Example):\n```C")
         .replacingOccurrences(of: "|[<!-- language=\"C\" --", with: "(C Language Example):\n```C")
+        .replacingOccurrences(of: "|[", with: "```")
         .replacingOccurrences(of: "]|", with: "```\n")
     guard !comment.isEmpty else { return comment }
     let linePrefix = indentation + "/// "
