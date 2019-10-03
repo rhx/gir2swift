@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 22/03/2016.
-//  Copyright © 2016, 2018 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2018, 2019 Rene Hexel. All rights reserved.
 //
 #if os(Linux)
     import Glibc
@@ -13,6 +13,7 @@
 import Foundation
 
 extension String {
+    /// Returns the content of the file designated by the receiver
     var contents: String? { return String(contentsOfFile: self) }
 
     /// Read a string from a file
