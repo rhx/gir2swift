@@ -15,6 +15,7 @@ import Dispatch
 /// verbose output
 var verbose = false
 
+/// Print command line usage and exit
 func usage() -> Never  {
     fputs("Usage: \(CommandLine.arguments[0]) [-v][-s][-m module_boilerplate.swift]{-p file.gir}[file.gir ...]\n", stderr)
     exit(EXIT_FAILURE)
@@ -201,7 +202,9 @@ func processSpecialCases(_ gir: GIR, forFile node: String) {
 // get options
 //
 var moduleBoilerPlate: String = ""
+/// Directory to output files to
 var outputDirectory: String?
+/// `true` to create a single file per type
 var singleFilePerClass = false
 while let (opt, param) = get_opt("m:o:p:sv") {
     switch opt {
