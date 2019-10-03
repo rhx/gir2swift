@@ -9,12 +9,12 @@
     import Glibc
 
     /// just a slash
-    private let slash = "/".utf16.first!
+    private let slash = "/".utf8.first!
 
     /// return the base name of a string
     extension String {
         var baseName: String {
-            let u = utf16
+            let u = utf8
             let s = u.startIndex
             let e = u.endIndex
             var i = e
