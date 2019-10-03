@@ -573,7 +573,7 @@ public class GIR {
         /// indicate whether this is a setter method for the given getter
         public func isSetterFor(getter: String) -> Bool {
             guard args.count == 2 else { return false }
-            let u = getter.utf16
+            let u = getter.utf8
             let s = u.index(after: u.startIndex)
             let e = u.endIndex
             let v = u[s..<e]
@@ -584,7 +584,7 @@ public class GIR {
         /// indicate whether this is a getter method for the given setter
         public func isGetterFor(setter: String) -> Bool {
             guard args.count == 1 else { return false }
-            let u = setter.utf16
+            let u = setter.utf8
             let s = u.index(after: u.startIndex)
             let e = u.endIndex
             let v = u[s..<e]

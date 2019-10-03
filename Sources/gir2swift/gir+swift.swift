@@ -199,14 +199,15 @@ public struct GetterSetterPair {
     let setter: GIR.Method?
 }
 
-/// constant for "i" and "_" as a code unit
-private let iU = "i".utf16.first
-private let _U = "_".utf16.first!
+/// constant for "i" as a code unit
+private let iU = "i".utf8.first
+/// constant for "_" as a code unit
+private let _U = "_".utf8.first!
 
 extension GetterSetterPair {
     /// name of the underlying property for a getter / setter pair
     var name: String {
-        let n = getter.name.utf16 
+        let n = getter.name.utf8 
         let o = n.first == iU ? 0 : 4;  // no offset for "is_..."
 
         // convert the remainder to camel case
@@ -246,8 +247,8 @@ extension GetterSetterPair {
 /// return setter/getter pairs from a list of methods
 public func getterSetterPairs(for allMethods: [GIR.Method]) -> [GetterSetterPair] {
     let gettersAndSetters = allMethods.filter{ $0.isGetter || $0.isSetter }.sorted {
-        let u = $0.name.utf16
-        let v = $1.name.utf16
+        let u = $0.name.utf8
+        let v = $1.name.utf8
         let o = u.first == iU ? 0 : 4;  // no offset for "is_..."
         let p = v.first == iU ? 0 : 4;
         let a = u[u.index(u.startIndex, offsetBy: o)..<u.endIndex]
@@ -566,13 +567,13 @@ public func convenienceConstructorCode(_ typeName: String, indentation: String, 
         let ret = returnCode(indentation, (typeName: typeName, record: record, isConstructor: !factory, isConvenience: isConv))
         return { (method: GIR.Method) -> String in
             let rawName = method.name.isEmpty ? method.cname : method.name
-            let rawUTF = rawName.utf16
+            let rawUTF = rawName.utf8
             let firstArgName = method.args.first?.name
             let nameWithoutPostFix: String
-            if let f = firstArgName, rawUTF.count > f.utf16.count + 1 && rawName.hasSuffix(f) {
-                let truncated = rawUTF[rawUTF.startIndex..<rawUTF.index(rawUTF.endIndex, offsetBy: -f.utf16.count)]
+            if let f = firstArgName, rawUTF.count > f.utf8.count + 1 && rawName.hasSuffix(f) {
+                let truncated = rawUTF[rawUTF.startIndex..<rawUTF.index(rawUTF.endIndex, offsetBy: -f.utf8.count)]
                 if truncated.last == _U {
-                    let noUnderscore = rawUTF[rawUTF.startIndex..<rawUTF.index(rawUTF.endIndex, offsetBy: -(f.utf16.count+1))]
+                    let noUnderscore = rawUTF[rawUTF.startIndex..<rawUTF.index(rawUTF.endIndex, offsetBy: -(f.utf8.count+1))]
                     nameWithoutPostFix = String(Substring(noUnderscore))
                 } else {
                     nameWithoutPostFix = String(Substring(truncated))

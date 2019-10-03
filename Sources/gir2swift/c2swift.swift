@@ -13,8 +13,8 @@
     extension String {
         /// return whether the receiver has the given prefix
         func hasPrefix(_ prefix: String) -> Bool {
-            let p = prefix.utf16
-            let s = utf16
+            let p = prefix.utf8
+            let s = utf8
             guard s.count >= p.count else { return false }
 
             var pi = p.makeIterator()
@@ -27,8 +27,8 @@
 
         /// return whether the receiver has the given suffix
         func hasSuffix(_ suffix: String) -> Bool {
-            let u = suffix.utf16
-            let v = utf16
+            let u = suffix.utf8
+            let v = utf8
             guard v.count >= u.count else { return false }
 
             var si = u.reversed().makeIterator()
@@ -44,21 +44,26 @@
 #endif
 
 
+/// Scalar C types that have an equivalent in Swift
 private let castableScalars = [  "gint" : "CInt",    "glong" : "CLong",   "guint" : "CUnsignedInt", "char" : "CChar",
     "gint8"  : "Int8",  "guint8"  : "UInt8",  "gint16" : "Int16", "guint16" : "UInt16",
     "gint32" : "Int32", "guint32" : "UInt32", "gint64" : "Int64", "guint64" : "UInt64",
     "gulong" : "CUnsignedLong",  "gsize"   : "Int",  "gboolean" : "Bool", "goffset" : "Int"]
+/// C pointer types that have an equivalent in Swift
 private let castablePointers = [ "gpointer" : "UnsafeMutableRawPointer" ]
+/// Swift pointer types that have an equivalent in C
 private let reversePointers = castablePointers.reduce(Dictionary<String,String>()) {
     var dict = $0
     dict[$1.1] = $1.0
     return dict
 }
+/// Scalar Swift types that have an equivalent in C
 private let reversecast = castableScalars.reduce(reversePointers) {
     var dict = $0
     dict[$1.1] = $1.0
     return dict
 }
+/// Swift type equivalents for C types
 private let swiftReplacementsForC = [ "char" : "CChar", "unsigned char" : "CUnsignedChar",
   "int" : "CInt", "unsigned int" : "CUnsignedInt", "unsigned" : "CUnsignedInt",
   "long" : "CLong", "unsigned long" : "CUnsignedLong",
@@ -71,38 +76,56 @@ private let swiftReplacementsForC = [ "char" : "CChar", "unsigned char" : "CUnsi
   "int32_t" : "Int32", "uint32_t" : "UInt32",
   "int64_t" : "Int64", "uint64_t" : "UInt64",
   "Error" : "ErrorType", "ErrorType" : "ErrorEnum" ]
+/// Types that already exist in Swift and therefore need to be treated specially
 private let reservedTypes: Set = ["String", "Array", "Optional", "Set", "Error", "ErrorProtocol"]
+/// Known Swift type names
 private let typeNames: Set = reservedTypes.union(reversecast.keys)
+/// UnicodeScalars representing whitespaces and newlines
 private let wsnlScalars: Set<UnicodeScalar> = [ " ", "\t", "\n"]
-private let wsnl = wsnlScalars.map { UInt16($0.value) }.asSet
+/// Set of whitespace and newline ASCII/UTF8 codes
+private let wsnl = wsnlScalars.map { UInt8($0.value) }.asSet
 
+/// Swift keyword for `true` Boolean values
 private let trueS  = "true"
+/// Swift keyword for `false` Boolean values
 private let falseS = "false"
+/// Swift keyword for `nil` values
 private let nilS   = "nil"
+/// Keywords reserved for declarations in Swift
 private let declarationKeywords: Set = ["associatedtype", "class", "deinit", "enum", "extension", "func", "import", "init", "inout", "internal", "let", "operator", "private", "protocol", "public", "static", "struct", "subscript", "typealias", "var"];
+/// Keywords reserved for statements in Swift
 private let statementKeywords: Set = ["break", "case", "continue", "default", "defer", "do", "else", "fallthrough", "for", "guard", "if", "in", "repeat", "return", "switch", "where", "while"]
+/// Keywords reserved for expressions in Swift
 private let expressionKeywords: Set = ["as", "catch", "dynamicType", "false", "is", "nil", "rethrows", "super", "self", "Self", "throw", "throws", "true", "try", "#column", "#file", "#function", "#line."]
+/// Keywords with specific meanings in Swift
 private let specificKeywords: Set = ["associativity", "convenience", "dynamic", "didSet", "final", "infix", "indirect", "lazy", "left", "mutating", "none", "nonmutating", "optional", "override", "postfix", "precedence", "prefix", "Protocol", "required", "right", "Type", "unowned", "weak", "willSet"]
 
 infix operator ∪: LogicalDisjunctionPrecedence
 
+/// Set union operator
+/// - Parameters:
+///   - left: lefthand side set to form a union from
+///   - right: righthand side set to form a union from
 func ∪<T>(left: Set<T>, right: Set<T>) -> Set<T> {
     return left.union(right)
 }
+/// List of all Swiftwords in Swift
 let swiftKeywords = declarationKeywords ∪ statementKeywords ∪ expressionKeywords ∪ specificKeywords
+/// List of all reserved names in Swift
 let reservedNames = typeNames ∪ swiftKeywords
 
-/// compare two UTF16Views for equality
-public func ==(lhs: String.UTF16View, rhs: String.UTF16View) -> Bool {
-    guard lhs.count == rhs.count else { return false }
-    var li = lhs.makeIterator()
-    var ri = rhs.makeIterator()
-    while let l = li.next(), let r = ri.next() {
-        guard l == r else { return false }
+extension String.UTF8View: Equatable {
+    /// compare two UTF8Views for equality
+    public static func ==(lhs: String.UTF8View, rhs: String.UTF8View) -> Bool {
+        guard lhs.count == rhs.count else { return false }
+        var li = lhs.makeIterator()
+        var ri = rhs.makeIterator()
+        while let l = li.next(), let r = ri.next() {
+            guard l == r else { return false }
+        }
+        return true
     }
-    return true
 }
-extension String.UTF16View: Equatable {}
 
 
 extension String {
@@ -128,9 +151,9 @@ extension String {
         return false
     }
 
-    /// trim the characters in the given set of UTF16 values at either end of the string
-    func trimmingCharacters(in: Set<UInt16>) -> String {
-        let u = utf16
+    /// trim the characters in the given set of UTF8 values at either end of the string
+    func trimmingCharacters(in: Set<UInt8>) -> String {
+        let u = utf8
         let s = u.takeFrom(indexWhere: { !wsnl.contains($0) }).trimWhile { wsnl.contains($0) }
         return String(Substring(s))
     }
@@ -151,8 +174,8 @@ extension String {
 
     /// Return a string that starts with an alpha or underscore character
     var swiftIdentifier: String {
-        guard let f = utf16.first,
-              let u = UnicodeScalar(f) else { return self }
+        guard let f = utf8.first else { return self }
+        let u = UnicodeScalar(f)
         guard isalpha(Int32(f)) != 0 || Character(u) == "_" else { return "_" + self }
         return self
     }
