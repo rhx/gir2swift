@@ -93,6 +93,20 @@ final class gir2swiftTests: XCTestCase {
         XCTAssertEqual(output, expected)
     }
 
+    func testGtkDoc2SwiftDocStructEndOfSentence() throws {
+        let input = "Test for #Struct. Example"
+        let expected = "Test for `Struct`. Example"
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+
+    func testGtkDoc2SwiftDocStructEndOfFile() throws {
+        let input = "Test for #Struct."
+        let expected = "Test for `Struct`."
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+
     func testGtkDoc2SwiftDocTripleQuoted() throws {
         let input = "Test |[block]| example"
         let expected = "Test \n```\nblock\n```\n example"
@@ -156,6 +170,8 @@ final class gir2swiftTests: XCTestCase {
         ("testGtkDoc2SwiftDocObjectSignal", testGtkDoc2SwiftDocObjectSignal),
         ("testGtkDoc2SwiftDocObjectProperty", testGtkDoc2SwiftDocObjectProperty),
         ("testGtkDoc2SwiftDocStructField", testGtkDoc2SwiftDocStructField),
+        ("testGtkDoc2SwiftDocStructEndOfSentence", testGtkDoc2SwiftDocStructEndOfSentence),
+        ("testGtkDoc2SwiftDocStructEndOfFile", testGtkDoc2SwiftDocStructEndOfFile),
         ("testGtkDoc2SwiftDocTripleQuoted", testGtkDoc2SwiftDocTripleQuoted),
         ("testGtkDoc2SwiftDocTripleQuotedLinePrefix", testGtkDoc2SwiftDocTripleQuotedLinePrefix),
         ("testGtkDoc2SwiftDocTripleQuotedNewline", testGtkDoc2SwiftDocTripleQuotedNewline),
