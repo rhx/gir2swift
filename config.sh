@@ -3,7 +3,7 @@
 Mod=gir2swift
 XML_VER=2.2
 MAJOR_VER=2.0
-JAZZY_VER=5.2.0
+JAZZY_VER=6.0.0
 export PATH="${BUILD_DIR}/gir2swift/.build/release:${BUILD_DIR}/gir2swift/.build/debug:${PATH}:/usr/local/opt/ruby/bin:`echo /usr/local/lib/ruby/gems/*/bin | tr ' ' '\n' | tail -n1`:${PATH}:`echo /var/lib/gems/*/gems/jazzy-*/bin/ | tr ' ' '\n' | tail -n1`:/usr/local/bin"
 if [ -e /usr/lib/libxml${XML_VER}.dylib ]; then
 	TOOLCHAIN=`xcode-select -p`/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
