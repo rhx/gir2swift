@@ -50,10 +50,24 @@ final class gir2swiftTests: XCTestCase {
         let output = gtkDoc2SwiftDoc(input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
-    
+
     func testGtkDoc2SwiftDocObjectSignal() throws {
-        let input = "Test Object::SIGNAL example"
+        let input = "Test #Object::SIGNAL example"
         let expected = "Test `Object::SIGNAL` example"
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+
+    func testGtkDoc2SwiftDocObjectProperty() throws {
+        let input = "Test #Object:property example"
+        let expected = "Test `Object:property` example"
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+    
+    func testGtkDoc2SwiftDocStructField() throws {
+        let input = "Test #Struct.field example"
+        let expected = "Test `Struct.field` example"
         let output = gtkDoc2SwiftDoc(input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
@@ -67,5 +81,7 @@ final class gir2swiftTests: XCTestCase {
         ("testGtkDoc2SwiftDocConst", testGtkDoc2SwiftDocConst),
         ("testGtkDoc2SwiftDocSignal", testGtkDoc2SwiftDocSignal),
         ("testGtkDoc2SwiftDocObjectSignal", testGtkDoc2SwiftDocObjectSignal),
+        ("testGtkDoc2SwiftDocObjectProperty", testGtkDoc2SwiftDocObjectProperty),
+        ("testGtkDoc2SwiftDocStructField", testGtkDoc2SwiftDocStructField),
     ]
 }
