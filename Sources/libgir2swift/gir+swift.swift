@@ -302,33 +302,8 @@ extension String {
 /// SwiftDoc representation of comments
 public func commentCode(_ thing: GIR.Thing, indentation: String = "") -> String {
     let comment = thing.comment
-        .replacingOccurrences(of: "%NULL", with: "`nil`")
-        .replacingOccurrences(of: "%TRUE", with: "`true`")
-        .replacingOccurrences(of: "%FALSE", with: "`false`")
-        .replacingOccurrences(of: "|[<!-- language=\"plain\" -->", with: "```")
-        .replacingOccurrences(of: "|[ <!-- language=\"CSS\" -->", with: "(CSS Example):\n```C")
-        .replacingOccurrences(of: "|[<!-- language=\"C\" -->", with: "(C Language Example):\n```C")
-        .replacingOccurrences(of: "|[<!-- language=\"C\" --", with: "(C Language Example):\n```C")
-        .replacingOccurrences(of: "|[", with: "```")
-        .replacingOccurrences(of: "]|", with: "```\n")
-    guard !comment.isEmpty else { return comment }
-    let linePrefix = indentation + "/// "
-    var quote = false
-    let documentation = comment.reduce(linePrefix) {
-        guard $1 != "@" && $1 != "#" && $1 != "%" else {
-            quote = true
-            return $0 + "`"
-        }
-        let prefix: String
-        if quote && !($1 == "_" || $1.isLetter || $1.isNumber) {
-            quote = false
-            prefix = "`"
-        } else {
-            prefix = ""
-        }
-        return $0 + prefix + ($1 == "\n" ? "\n" + linePrefix : String($1))
-    }
-    return quote ? documentation + "`" : documentation
+    let documentation = gtkDoc2SwiftDoc(comment)
+    return documentation
 }
 
 /// Swift representation of deprecation
