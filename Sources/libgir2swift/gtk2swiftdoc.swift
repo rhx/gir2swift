@@ -45,7 +45,9 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
     func prev() { j = i ; i = p }
     func next() { p = i ; i = j ; j = i < e ? gtkDoc.index(after: i) : e }
     func flush() {
-        output.append(contentsOf: gtkDoc[idStart...i])
+        if idStart <= i {
+            output.append(contentsOf: gtkDoc[idStart...i])
+        }
         idStart = j
         next()
     }
