@@ -12,7 +12,7 @@
 #endif
 
 
-extension String {
+public extension String {
     /// Split a string into substrings separated by the given character
     func split(separator s: Character = "\n") -> [String] {
         let u = String(s).utf8.first!

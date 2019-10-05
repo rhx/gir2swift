@@ -22,7 +22,7 @@
 ///   - protection: memory protection flags to use
 ///   - flags: memory mapping flags to use
 ///   - process: callback for processing the content of the file while memory mapped
-func with_mmap(_ file: String, protection: Int32 = PROT_READ, flags: Int32 = MAP_PRIVATE, process: (UnsafeMutableRawPointer, Int) -> Void) {
+public func with_mmap(_ file: String, protection: Int32 = PROT_READ, flags: Int32 = MAP_PRIVATE, process: (UnsafeMutableRawPointer, Int) -> Void) {
     let fn = open(file, O_RDONLY)
     guard fn >= 0 else {
         perror("Cannot open '\(file)'")
@@ -52,7 +52,7 @@ func with_mmap(_ file: String, protection: Int32 = PROT_READ, flags: Int32 = MAP
 ///   - p: memory protection flags to use
 ///   - f: memory mapping flags to use
 ///   - process: callback for processing the content of the file while memory mapped and bound to `Element`
-func with_mmap<Element>(_ file: String, protection p: Int32 = PROT_READ, flags f: Int32 = MAP_PRIVATE, process: (UnsafeBufferPointer<Element>) -> Void) {
+public func with_mmap<Element>(_ file: String, protection p: Int32 = PROT_READ, flags f: Int32 = MAP_PRIVATE, process: (UnsafeBufferPointer<Element>) -> Void) {
     with_mmap(file, protection: p, flags: f) { (mem: UnsafeMutableRawPointer, len: Int) -> Void in
         process(UnsafeBufferPointer<Element>(start: mem.assumingMemoryBound(to: Element.self), count: len))
     }

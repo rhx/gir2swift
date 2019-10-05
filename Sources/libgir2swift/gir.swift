@@ -12,7 +12,7 @@
 #endif
 import SwiftLibXML
 
-extension String {
+public extension String {
     /// Remove the name space and return the base name of the receiver
     /// representing a fully qualified Swift type
     var withoutNameSpace: String {
@@ -113,19 +113,19 @@ public class GIR {
     public var callbacks: [Callback] = []
 
     /// names of black-listed identifiers
-    static var Blacklist: Set<String> = []
+    public static var Blacklist: Set<String> = []
 
     /// names of constants to be taken verbatim
-    static var VerbatimConstants: Set<String> = []
+    public static var VerbatimConstants: Set<String> = []
 
     /// context of known types
-    static var KnownTypes:   [ String : Datatype ] = [:]
+    public static var KnownTypes:   [ String : Datatype ] = [:]
     /// context of known records
-    static var KnownRecords: [ String : Record ] = [:]
+    public static var KnownRecords: [ String : Record ] = [:]
     /// context of known functions
-    static var KnownFunctions: [ String : Function ] = [:]
+    public static var KnownFunctions: [ String : Function ] = [:]
     /// Type of `GError`
-    static var GErrorType = "GErrorType"
+    public static var GErrorType = "GErrorType"
 
     /// designated constructor
     public init(xmlDocument: XMLDocument, quiet: Bool = false) {

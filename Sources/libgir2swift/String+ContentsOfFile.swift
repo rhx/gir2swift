@@ -12,7 +12,7 @@
 #endif
 import Foundation
 
-extension String {
+public extension String {
     /// Returns the content of the file designated by the receiver
     var contents: String? { return String(contentsOfFile: self) }
 

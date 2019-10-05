@@ -1,47 +1,71 @@
 import XCTest
-import class Foundation.Bundle
+@testable import libgir2swift
 
 final class gir2swiftTests: XCTestCase {
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct
-        // results.
-
-        // Some of the APIs that we use below are available in macOS 10.13 and above.
-        guard #available(macOS 10.13, *) else {
-            return
-        }
-
-        let fooBinary = productsDirectory.appendingPathComponent("gir2swift")
-
-        let process = Process()
-        process.executableURL = fooBinary
-
-        let pipe = Pipe()
-        process.standardOutput = pipe
-
-        try process.run()
-        process.waitUntilExit()
-
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        let output = String(data: data, encoding: .utf8)
-
-        XCTAssertEqual(output, "Hello, world!\n")
+    func testGtkDoc2SwiftDoc() throws {
+        let input = "Test"
+        let expected = "/// Test"
+        let output = gtkDoc2SwiftDoc(input)
+        XCTAssertEqual(output, expected)
     }
 
-    /// Returns path to the built products directory.
-    var productsDirectory: URL {
-      #if os(macOS)
-        for bundle in Bundle.allBundles where bundle.bundlePath.hasSuffix(".xctest") {
-            return bundle.bundleURL.deletingLastPathComponent()
-        }
-        fatalError("couldn't find the products directory")
-      #else
-        return Bundle.main.bundleURL
-      #endif
+    func testGtkDoc2SwiftDocNewline() throws {
+        let input = "1\n2\n"
+        let expected = "/// 1\n/// 2\n"
+        let output = gtkDoc2SwiftDoc(input)
+        XCTAssertEqual(output, expected)
     }
 
+    func testGtkDoc2SwiftDocFunction() throws {
+        let input = "Test function() example"
+        let expected = "Test `function()` example"
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+
+    func testGtkDoc2SwiftDocFunctionParameters() throws {
+        let input = "Test function(int x,\n    char *j) example"
+        let expected = "Test `function(int x,     char *j)` example"
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+    
+    func testGtkDoc2SwiftDocParam() throws {
+        let input = "Test @param example"
+        let expected = "Test `param` example"
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+
+    func testGtkDoc2SwiftDocConst() throws {
+        let input = "Test %CONSTANT example"
+        let expected = "Test `CONSTANT` example"
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+
+    func testGtkDoc2SwiftDocSignal() throws {
+        let input = "Test ::SIGNAL example"
+        let expected = "Test `SIGNAL` example"
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+    
+    func testGtkDoc2SwiftDocObjectSignal() throws {
+        let input = "Test Object::SIGNAL example"
+        let expected = "Test `Object::SIGNAL` example"
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+    
     static var allTests = [
-        ("testExample", testExample),
+        ("testGtkDoc2SwiftDoc", testGtkDoc2SwiftDoc),
+        ("testGtkDoc2SwiftDocNewline", testGtkDoc2SwiftDocNewline),
+        ("testGtkDoc2SwiftDocFunction", testGtkDoc2SwiftDocFunction),
+        ("testGtkDoc2SwiftDocFunctionParameters", testGtkDoc2SwiftDocFunctionParameters),
+        ("testGtkDoc2SwiftDocParam", testGtkDoc2SwiftDocParam),
+        ("testGtkDoc2SwiftDocConst", testGtkDoc2SwiftDocConst),
+        ("testGtkDoc2SwiftDocSignal", testGtkDoc2SwiftDocSignal),
+        ("testGtkDoc2SwiftDocObjectSignal", testGtkDoc2SwiftDocObjectSignal),
     ]
 }

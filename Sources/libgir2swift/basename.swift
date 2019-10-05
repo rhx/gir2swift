@@ -12,7 +12,7 @@
     private let slash = "/".utf8.first!
 
     /// return the base name of a string
-    extension String {
+    public extension String {
         var baseName: String {
             let u = utf8
             let s = u.startIndex
@@ -33,7 +33,7 @@
 
 
     /// return the base name of a string
-    extension String {
+    public extension String {
         var baseName: String {
             return String(cString: basename(cstring(self)))
         }

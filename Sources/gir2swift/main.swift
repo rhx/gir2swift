@@ -11,6 +11,7 @@
     import Darwin
 #endif
 import Dispatch
+import libgir2swift
 
 /// verbose output
 var verbose = false
