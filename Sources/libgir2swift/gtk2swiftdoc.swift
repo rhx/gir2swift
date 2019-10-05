@@ -67,21 +67,21 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
                     flush()
                     p = i
                     output += "`nil`"
-                    i = gtkDoc.index(j, offsetBy: 4)
+                    i = gtkDoc.index(i, offsetBy: 4)
                     idStart = i
                     continue
                 } else if sub.hasPrefix("TRUE") {
                     flush()
                     p = i
                     output += "`true`"
-                    i = gtkDoc.index(j, offsetBy: 4)
+                    i = gtkDoc.index(i, offsetBy: 4)
                     idStart = i
                     continue
                 } else if sub.hasPrefix("FALSE") {
                     flush()
                     p = i
                     output += "`false`"
-                    i = gtkDoc.index(j, offsetBy: 4)
+                    i = gtkDoc.index(i, offsetBy: 4)
                     idStart = i
                     continue
                 }
