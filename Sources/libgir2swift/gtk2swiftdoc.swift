@@ -145,7 +145,8 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
             guard !c.isWhitespace else { break }
             guard c == "<" && j < e && gtkDoc[j] == "!" else {
                 output.append("```")
-                if !gtkDoc[idStart].isNewline { output.append("\n\(linePrefix)") }
+                output.append("\n\(linePrefix)")
+                if idStart < e && gtkDoc[idStart].isNewline { idStart = gtkDoc.index(after: idStart) }
                 state = .quotedLanguage
                 continue
             }

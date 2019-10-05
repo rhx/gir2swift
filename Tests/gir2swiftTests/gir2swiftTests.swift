@@ -93,6 +93,13 @@ final class gir2swiftTests: XCTestCase {
         XCTAssertEqual(output, expected)
     }
 
+    func testGtkDoc2SwiftDocTripleQuotedNewlineLinePrefix() throws {
+        let input = "Test \n|[\nblock\n]|\n example"
+        let expected = "/// Test \n/// ```\n/// block\n/// ```\n///  example"
+        let output = gtkDoc2SwiftDoc(input)
+        XCTAssertEqual(output, expected)
+    }
+
     func testGtkDoc2SwiftDocTripleQuotedLanguage() throws {
         let input = "Test \n|[<!-- language=\"C\" -->\nblock\n]|\n example"
         let expected = "Test \n(C Language Example):\n```C\nblock\n```\n example"
@@ -121,6 +128,7 @@ final class gir2swiftTests: XCTestCase {
         ("testGtkDoc2SwiftDocTripleQuoted", testGtkDoc2SwiftDocTripleQuoted),
         ("testGtkDoc2SwiftDocTripleQuotedLinePrefix", testGtkDoc2SwiftDocTripleQuotedLinePrefix),
         ("testGtkDoc2SwiftDocTripleQuotedNewline", testGtkDoc2SwiftDocTripleQuotedNewline),
+        ("testGtkDoc2SwiftDocTripleQuotedNewlineLinePrefix", testGtkDoc2SwiftDocTripleQuotedNewlineLinePrefix),
         ("testGtkDoc2SwiftDocTripleQuotedLanguage", testGtkDoc2SwiftDocTripleQuotedLanguage),
         ("testGtkDoc2SwiftDocTripleQuotedLanguageWhitespace", testGtkDoc2SwiftDocTripleQuotedLanguageWhitespace),
     ]
