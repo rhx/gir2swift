@@ -140,6 +140,7 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
             flush()
             output.append("`")
             state = .passThrough
+            continue
         case .quotedLanguagePreamble:
             guard !c.isWhitespace else { break }
             guard c == "<" && j < e && gtkDoc[j] == "!" else {
