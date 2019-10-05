@@ -79,6 +79,13 @@ final class gir2swiftTests: XCTestCase {
         XCTAssertEqual(output, expected)
     }
 
+    func testGtkDoc2SwiftDocTripleQuotedLinePrefix() throws {
+        let input = "Test |[block]| example"
+        let expected = "/// Test \n/// ```\n/// block\n/// ```\n///  example"
+        let output = gtkDoc2SwiftDoc(input)
+        XCTAssertEqual(output, expected)
+    }
+
     func testGtkDoc2SwiftDocTripleQuotedNewline() throws {
         let input = "Test \n|[\nblock\n]|\n example"
         let expected = "Test \n```\nblock\n```\n example"
@@ -112,6 +119,7 @@ final class gir2swiftTests: XCTestCase {
         ("testGtkDoc2SwiftDocObjectProperty", testGtkDoc2SwiftDocObjectProperty),
         ("testGtkDoc2SwiftDocStructField", testGtkDoc2SwiftDocStructField),
         ("testGtkDoc2SwiftDocTripleQuoted", testGtkDoc2SwiftDocTripleQuoted),
+        ("testGtkDoc2SwiftDocTripleQuotedLinePrefix", testGtkDoc2SwiftDocTripleQuotedLinePrefix),
         ("testGtkDoc2SwiftDocTripleQuotedNewline", testGtkDoc2SwiftDocTripleQuotedNewline),
         ("testGtkDoc2SwiftDocTripleQuotedLanguage", testGtkDoc2SwiftDocTripleQuotedLanguage),
         ("testGtkDoc2SwiftDocTripleQuotedLanguageWhitespace", testGtkDoc2SwiftDocTripleQuotedLanguageWhitespace),

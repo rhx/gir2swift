@@ -60,7 +60,8 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
             let nl = c.isNewline
             guard !nl && !c.isWhitespace else {
                 wasNewLine = nl
-                flush() ; continue
+                flush()
+                continue
             }
             switch c {
             case "%":
@@ -113,7 +114,7 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
             case "|":
                 guard j < e && gtkDoc[j] == "[" else { break }
                 output.append(contentsOf: gtkDoc[idStart..<i])
-                if !gtkDoc[p].isNewline { output.append("\n") }
+                if !gtkDoc[p].isNewline { output.append("\n\(linePrefix)") }
                 j = gtkDoc.index(after: j)
                 idStart = j
                 state = .quotedLanguagePreamble
@@ -143,7 +144,7 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
             guard !c.isWhitespace else { break }
             guard c == "<" && j < e && gtkDoc[j] == "!" else {
                 output.append("```")
-                if !gtkDoc[idStart].isNewline { output.append("\n") }
+                if !gtkDoc[idStart].isNewline { output.append("\n\(linePrefix)") }
                 state = .quotedLanguage
                 continue
             }
@@ -155,7 +156,7 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
                 language = ""
                 state = .quotedLanguage
                 next()
-                if i >= e || !gtkDoc[i].isNewline { output.append("\n") }
+                if i >= e || !gtkDoc[i].isNewline { output.append("\n\(linePrefix)") }
                 continue
             }
             guard c == "=" && j < e && gtkDoc[j] == "\"" else { break }
@@ -167,19 +168,24 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
             guard c == "\"" else { break }
             language = gtkDoc[idStart..<i]
             if !language.isEmpty {
-                output.append("(\(language) Language Example):\n")
+                output.append("(\(language) Language Example):\n\(linePrefix)")
             }
             idStart = j
             state = .checkForLanguage
         case .quotedLanguage:
+            guard !c.isNewline else {
+                wasNewLine = true
+                flush()
+                continue
+            }
             guard c == "]" && j < e && gtkDoc[j] == "|" else { break }
             let previous = gtkDoc[p]
             output.append(contentsOf: gtkDoc[idStart..<i])
-            if !previous.isNewline { output.append("\n") }
+            if !previous.isNewline { output.append("\n\(linePrefix)") }
             output.append("```")
             i = gtkDoc.index(after: j)
             idStart = i
-            if i >= e || !gtkDoc[i].isNewline { output.append("\n") }
+            if i >= e || !gtkDoc[i].isNewline { output.append("\n\(linePrefix)") }
             j = i >= e ? i : gtkDoc.index(after: i)
             state = .passThrough
             continue
