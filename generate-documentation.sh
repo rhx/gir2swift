@@ -11,6 +11,9 @@ if [ -z "$@" ]; then
 fi
 rm -rf .docs.old
 mv docs .docs.old 2>/dev/null
-sourcekitten doc --spm-module $Mod -- $CCFLAGS $LINKFLAGS > .build/$Mod-doc.json
+sourcekitten doc --spm-module $Mod -- $CCFLAGS $LINKFLAGS |		\
+	sed -e 's/^}\]/},/' > .build/$Mod-doc.json
+sourcekitten doc --spm-module lib$Mod -- $CCFLAGS $LINKFLAGS |		\
+	sed -e 's/^\[//' >> .build/$Mod-doc.json
 jazzy --sourcekitten-sourcefile .build/$Mod-doc.json --clean		\
       --module-version $JAZZY_VER --module $Mod $JAZZY_ARGS "$@"

@@ -4,7 +4,7 @@ import XCTest
 final class gir2swiftTests: XCTestCase {
     func testGtkDoc2SwiftDoc() throws {
         let input = "Test"
-        let expected = "/// Test"
+        let expected = "/// \(input)"
         let output = gtkDoc2SwiftDoc(input)
         XCTAssertEqual(output, expected)
     }
@@ -64,7 +64,7 @@ final class gir2swiftTests: XCTestCase {
         let output = gtkDoc2SwiftDoc(input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
-    
+
     func testGtkDoc2SwiftDocStructField() throws {
         let input = "Test #Struct.field example"
         let expected = "Test `Struct.field` example"
