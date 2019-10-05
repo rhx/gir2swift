@@ -301,8 +301,9 @@ extension String {
 
 /// SwiftDoc representation of comments
 public func commentCode(_ thing: GIR.Thing, indentation: String = "") -> String {
+    let prefix = indentation + "/// "
     let comment = thing.comment
-    let documentation = gtkDoc2SwiftDoc(comment)
+    let documentation = gtkDoc2SwiftDoc(comment, linePrefix: prefix)
     return documentation
 }
 
