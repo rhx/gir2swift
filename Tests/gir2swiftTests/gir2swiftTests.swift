@@ -71,7 +71,35 @@ final class gir2swiftTests: XCTestCase {
         let output = gtkDoc2SwiftDoc(input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
-    
+
+    func testGtkDoc2SwiftDocTripleQuoted() throws {
+        let input = "Test |[block]| example"
+        let expected = "Test \n```\nblock\n```\n example"
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+
+    func testGtkDoc2SwiftDocTripleQuotedNewline() throws {
+        let input = "Test \n|[\nblock\n]|\n example"
+        let expected = "Test \n```\nblock\n```\n example"
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+
+    func testGtkDoc2SwiftDocTripleQuotedLanguage() throws {
+        let input = "Test \n|[<!-- language=\"C\" -->\nblock\n]|\n example"
+        let expected = "Test \n(C Language Example):\n```C\nblock\n```\n example"
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+
+    func testGtkDoc2SwiftDocTripleQuotedLanguageWhitespace() throws {
+        let input = "Test \n|[  <!-- language=\"CSS\" -->\nblock\n]|\n example"
+        let expected = "Test \n(CSS Language Example):\n```CSS\nblock\n```\n example"
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+
     static var allTests = [
         ("testGtkDoc2SwiftDoc", testGtkDoc2SwiftDoc),
         ("testGtkDoc2SwiftDocNewline", testGtkDoc2SwiftDocNewline),
@@ -83,5 +111,9 @@ final class gir2swiftTests: XCTestCase {
         ("testGtkDoc2SwiftDocObjectSignal", testGtkDoc2SwiftDocObjectSignal),
         ("testGtkDoc2SwiftDocObjectProperty", testGtkDoc2SwiftDocObjectProperty),
         ("testGtkDoc2SwiftDocStructField", testGtkDoc2SwiftDocStructField),
+        ("testGtkDoc2SwiftDocTripleQuoted", testGtkDoc2SwiftDocTripleQuoted),
+        ("testGtkDoc2SwiftDocTripleQuotedNewline", testGtkDoc2SwiftDocTripleQuotedNewline),
+        ("testGtkDoc2SwiftDocTripleQuotedLanguage", testGtkDoc2SwiftDocTripleQuotedLanguage),
+        ("testGtkDoc2SwiftDocTripleQuotedLanguageWhitespace", testGtkDoc2SwiftDocTripleQuotedLanguageWhitespace),
     ]
 }

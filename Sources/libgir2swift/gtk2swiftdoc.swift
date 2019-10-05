@@ -7,10 +7,20 @@
 
 /// State for parsing `gtk-doc` style strings
 fileprivate enum State: Equatable {
+    /// pass characters through as they are
     case passThrough
+    /// inside an identifier escaped with a backtick
     case backtickedIdentifier
+    /// inside a list of function arguments
     case functionArguments
-    indirect case nestedQuote(closing: String, enclosing: State)
+    /// at the beginning of a language block to be quoted
+    case quotedLanguagePreamble
+    /// inside a `<!-- language="X" -->` comment
+    case checkForLanguage
+    /// get the language name out of a `<!-- language="X" -->` comment
+    case getLanguage
+    /// inside a quoted language block
+    case quotedLanguage
 }
 
 /// Convert the given String to SwiftDoc
@@ -19,6 +29,7 @@ fileprivate enum State: Equatable {
 /// - Returns: String in SwiftDoc format
 public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> String {
     var output = ""
+    var language: Substring = "" // language name for a ``` quoted language block
     var state = State.passThrough
     let s = gtkDoc.startIndex
     let e = gtkDoc.endIndex
@@ -90,13 +101,20 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
                 flush()
                 continue
             case ":":
-                guard j < e && gtkDoc[j] == ":" else { fallthrough }
+                guard j < e && gtkDoc[j] == ":" else { break }
                 output.append(contentsOf: gtkDoc[idStart..<i])
                 output.append("`")
                 i = gtkDoc.index(after: j)
                 idStart = i
                 state = .backtickedIdentifier
                 continue
+            case "|":
+                guard j < e && gtkDoc[j] == "[" else { break }
+                output.append(contentsOf: gtkDoc[idStart..<i])
+                if !gtkDoc[p].isNewline { output.append("\n") }
+                j = gtkDoc.index(after: j)
+                idStart = j
+                state = .quotedLanguagePreamble
             default:
                 break
             }
@@ -119,9 +137,50 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
             flush()
             output.append("`")
             state = .passThrough
-        //        case .nestedQuote(closing: let cl, enclosing: let state)
-        default:
-            print("State \(state) for '\(gtkDoc[idStart...i])")
+        case .quotedLanguagePreamble:
+            guard !c.isWhitespace else { break }
+            guard c == "<" && j < e && gtkDoc[j] == "!" else {
+                output.append("```")
+                if !gtkDoc[idStart].isNewline { output.append("\n") }
+                state = .quotedLanguage
+                continue
+            }
+            state = .checkForLanguage
+        case .checkForLanguage:
+            guard c != ">" else {
+                output.append("```\(language)")
+                idStart = j
+                language = ""
+                state = .quotedLanguage
+                next()
+                if i >= e || !gtkDoc[i].isNewline { output.append("\n") }
+                continue
+            }
+            guard c == "=" && j < e && gtkDoc[j] == "\"" else { break }
+            idStart = gtkDoc.index(after: j)
+            i = j
+            j = idStart
+            state = .getLanguage
+        case .getLanguage:
+            guard c == "\"" else { break }
+            language = gtkDoc[idStart..<i]
+            if !language.isEmpty {
+                output.append("(\(language) Language Example):\n")
+            }
+            idStart = j
+            state = .checkForLanguage
+        case .quotedLanguage:
+            guard c == "]" && j < e && gtkDoc[j] == "|" else { break }
+            let previous = gtkDoc[p]
+            output.append(contentsOf: gtkDoc[idStart..<i])
+            if !previous.isNewline { output.append("\n") }
+            output.append("```")
+            i = gtkDoc.index(after: j)
+            idStart = i
+            if i >= e || !gtkDoc[i].isNewline { output.append("\n") }
+            j = i >= e ? i : gtkDoc.index(after: i)
+            state = .passThrough
+            continue
         }
         next()
     }
