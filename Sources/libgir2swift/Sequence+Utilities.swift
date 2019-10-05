@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 26/03/2016.
-//  Copyright © 2016 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2019 Rene Hexel. All rights reserved.
 //
 extension Sequence {
     /// Returns the first element where the comparison function returns `true`

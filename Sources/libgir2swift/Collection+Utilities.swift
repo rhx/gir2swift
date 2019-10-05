@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 17/05/2016.
-//  Copyright © 2016 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2019 Rene Hexel. All rights reserved.
 //
 extension Collection {
     /// Returns the suffix from where the `found` function/closure first returns true
