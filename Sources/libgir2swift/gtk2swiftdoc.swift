@@ -66,26 +66,25 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
             switch c {
             case "%":
                 let sub = gtkDoc[j..<e]
-                if sub.hasPrefix("NULL") {
-                    flush()
+                var offset = 0
+                var constant = ""
+                for (original, replacement) in [
+                    ("NULL", "`nil`"),
+                    ("TRUE", "`true`"),
+                    ("FALSE", "`false`")
+                ] {
+                    if sub.hasPrefix(original) {
+                        offset = original.count
+                        constant = replacement
+                    }
+                }
+                guard offset == 0 else {
+                    output.append(contentsOf: gtkDoc[idStart..<i])
                     p = i
-                    output += "`nil`"
-                    i = gtkDoc.index(i, offsetBy: 4)
+                    output += constant
+                    i = gtkDoc.index(j, offsetBy: offset)
                     idStart = i
-                    continue
-                } else if sub.hasPrefix("TRUE") {
-                    flush()
-                    p = i
-                    output += "`true`"
-                    i = gtkDoc.index(i, offsetBy: 4)
-                    idStart = i
-                    continue
-                } else if sub.hasPrefix("FALSE") {
-                    flush()
-                    p = i
-                    output += "`false`"
-                    i = gtkDoc.index(i, offsetBy: 4)
-                    idStart = i
+                    j = i != e ? gtkDoc.index(after: i) : e
                     continue
                 }
                 fallthrough

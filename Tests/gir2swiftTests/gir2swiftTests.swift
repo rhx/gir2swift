@@ -44,6 +44,27 @@ final class gir2swiftTests: XCTestCase {
         XCTAssertEqual(output, expected)
     }
 
+    func testGtkDoc2SwiftDocNullConstant() throws {
+        let input = "Test %NULL example"
+        let expected = "Test `nil` example"
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+
+    func testGtkDoc2SwiftDocTrueConstant() throws {
+        let input = "Test %TRUE example"
+        let expected = "Test `true` example"
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+
+    func testGtkDoc2SwiftDocFalseConstant() throws {
+        let input = "Test %FALSE example"
+        let expected = "Test `false` example"
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+
     func testGtkDoc2SwiftDocSignal() throws {
         let input = "Test ::SIGNAL example"
         let expected = "Test `SIGNAL` example"
@@ -128,6 +149,9 @@ final class gir2swiftTests: XCTestCase {
         ("testGtkDoc2SwiftDocFunctionParameters", testGtkDoc2SwiftDocFunctionParameters),
         ("testGtkDoc2SwiftDocParam", testGtkDoc2SwiftDocParam),
         ("testGtkDoc2SwiftDocConst", testGtkDoc2SwiftDocConst),
+        ("testGtkDoc2SwiftDocNullConstant", testGtkDoc2SwiftDocNullConstant),
+        ("testGtkDoc2SwiftDocTrueConstant", testGtkDoc2SwiftDocTrueConstant),
+        ("testGtkDoc2SwiftDocFalseConstant", testGtkDoc2SwiftDocFalseConstant),
         ("testGtkDoc2SwiftDocSignal", testGtkDoc2SwiftDocSignal),
         ("testGtkDoc2SwiftDocObjectSignal", testGtkDoc2SwiftDocObjectSignal),
         ("testGtkDoc2SwiftDocObjectProperty", testGtkDoc2SwiftDocObjectProperty),
