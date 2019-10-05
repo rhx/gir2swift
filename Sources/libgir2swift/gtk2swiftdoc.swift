@@ -22,7 +22,8 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
     var state = State.passThrough
     let s = gtkDoc.startIndex
     let e = gtkDoc.endIndex
-    output.reserveCapacity(gtkDoc.count)
+    let n = gtkDoc.count
+    output.reserveCapacity(n+n/4)
     var i = s
     guard i < e else { return output }
     var j = gtkDoc.index(after: i)
