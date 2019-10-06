@@ -107,6 +107,27 @@ final class gir2swiftTests: XCTestCase {
         XCTAssertEqual(output, expected)
     }
 
+    func testGtkDoc2SwiftDocMarkdownHash() throws {
+        let input = "# Hash example"
+        let expected = input
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+
+    func testGtkDoc2SwiftDocMarkdownHashHash() throws {
+        let input = "## HashHash example"
+        let expected = input
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+
+    func testGtkDoc2SwiftDocMarkdownHashHashHash() throws {
+        let input = "### HashHashHash example"
+        let expected = input
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+
     func testGtkDoc2SwiftDocTripleQuoted() throws {
         let input = "Test |[block]| example"
         let expected = "Test \n```\nblock\n```\n example"
@@ -172,6 +193,9 @@ final class gir2swiftTests: XCTestCase {
         ("testGtkDoc2SwiftDocStructField", testGtkDoc2SwiftDocStructField),
         ("testGtkDoc2SwiftDocStructEndOfSentence", testGtkDoc2SwiftDocStructEndOfSentence),
         ("testGtkDoc2SwiftDocStructEndOfFile", testGtkDoc2SwiftDocStructEndOfFile),
+        ("testGtkDoc2SwiftDocMarkdownHash", testGtkDoc2SwiftDocMarkdownHash),
+        ("testGtkDoc2SwiftDocMarkdownHashHash", testGtkDoc2SwiftDocMarkdownHashHash),
+        ("testGtkDoc2SwiftDocMarkdownHashHashHash", testGtkDoc2SwiftDocMarkdownHashHashHash),
         ("testGtkDoc2SwiftDocTripleQuoted", testGtkDoc2SwiftDocTripleQuoted),
         ("testGtkDoc2SwiftDocTripleQuotedLinePrefix", testGtkDoc2SwiftDocTripleQuotedLinePrefix),
         ("testGtkDoc2SwiftDocTripleQuotedNewline", testGtkDoc2SwiftDocTripleQuotedNewline),

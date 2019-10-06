@@ -89,6 +89,10 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
                 }
                 fallthrough
             case "@", "#":
+                guard j != e else { flush() ; continue }
+                let next = gtkDoc[j]
+                guard next == "_" || next.isLetter || next.isNumber ||
+                    (c == "%" && next != "." && !next.isWhitespace && !next.isNewline) else { break }
                 output.append(contentsOf: gtkDoc[idStart..<i])
                 output.append("`")
                 idStart = j
