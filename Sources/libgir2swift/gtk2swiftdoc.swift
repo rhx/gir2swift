@@ -21,6 +21,8 @@ fileprivate enum State: Equatable {
     case getLanguage
     /// inside a quoted language block
     case quotedLanguage
+    /// inside a named anchor
+    case anchor
 }
 
 /// Convert the given String to SwiftDoc
@@ -109,9 +111,10 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
             case ":":
                 guard j < e && gtkDoc[j] == ":" else { break }
                 output.append(contentsOf: gtkDoc[idStart..<i])
-                output.append("`")
                 i = gtkDoc.index(after: j)
                 idStart = i
+                guard i < e else { break }
+                output.append("`")
                 state = .backtickedIdentifier
                 continue
             case "|":
@@ -121,6 +124,14 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
                 j = gtkDoc.index(after: j)
                 idStart = j
                 state = .quotedLanguagePreamble
+            case "{":
+                guard j < e && gtkDoc[j] == "#" else { break }
+                output.append(contentsOf: gtkDoc[idStart..<i])
+                i = gtkDoc.index(after: j)
+                idStart = i
+                guard i < e else { break }
+                output.append("<a name=\"")
+                state = .anchor
             default:
                 break
             }
@@ -198,6 +209,24 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
             j = i >= e ? i : gtkDoc.index(after: i)
             state = .passThrough
             continue
+        case .anchor:
+            if c == "\"" {
+                output.append(contentsOf: gtkDoc[idStart..<i])
+                output.append("\\")
+                idStart = i
+            }
+            guard c != "}" && !c.isNewline else {
+                output.append(contentsOf: gtkDoc[idStart..<i])
+                output.append("\"></a>")
+                if c == "}" {
+                    idStart = j
+                    next()
+                } else {
+                    idStart = i
+                }
+                state = .passThrough
+                continue
+            }
         }
         next()
     }

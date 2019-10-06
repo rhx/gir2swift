@@ -128,6 +128,20 @@ final class gir2swiftTests: XCTestCase {
         XCTAssertEqual(output, expected)
     }
 
+    func testGtkDoc2SwiftDocMarkdownAnchor() throws {
+        let input = "Anchor {#anchor-test} test"
+        let expected = "Anchor <a name=\"anchor-test\"></a> test"
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+
+    func testGtkDoc2SwiftDocMarkdownHREF() throws {
+        let input = "Anchor [anchor test][anchor-test] test"
+        let expected = "Anchor [anchor test](#anchor-test) test"
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+
     func testGtkDoc2SwiftDocTripleQuoted() throws {
         let input = "Test |[block]| example"
         let expected = "Test \n```\nblock\n```\n example"
@@ -196,6 +210,8 @@ final class gir2swiftTests: XCTestCase {
         ("testGtkDoc2SwiftDocMarkdownHash", testGtkDoc2SwiftDocMarkdownHash),
         ("testGtkDoc2SwiftDocMarkdownHashHash", testGtkDoc2SwiftDocMarkdownHashHash),
         ("testGtkDoc2SwiftDocMarkdownHashHashHash", testGtkDoc2SwiftDocMarkdownHashHashHash),
+        ("testGtkDoc2SwiftDocMarkdownAnchor", testGtkDoc2SwiftDocMarkdownAnchor),
+        ("testGtkDoc2SwiftDocMarkdownHREF", testGtkDoc2SwiftDocMarkdownHREF),
         ("testGtkDoc2SwiftDocTripleQuoted", testGtkDoc2SwiftDocTripleQuoted),
         ("testGtkDoc2SwiftDocTripleQuotedLinePrefix", testGtkDoc2SwiftDocTripleQuotedLinePrefix),
         ("testGtkDoc2SwiftDocTripleQuotedNewline", testGtkDoc2SwiftDocTripleQuotedNewline),
