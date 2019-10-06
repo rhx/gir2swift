@@ -23,6 +23,8 @@ fileprivate enum State: Equatable {
     case quotedLanguage
     /// inside a named anchor
     case anchor
+    /// inside a local hyperref
+    case href
 }
 
 /// Convert the given String to SwiftDoc
@@ -109,7 +111,7 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
                 flush()
                 continue
             case ":":
-                guard j < e && gtkDoc[j] == ":" else { break }
+                guard j < e && gtkDoc[j] == ":" else { flush() ; continue }
                 output.append(contentsOf: gtkDoc[idStart..<i])
                 i = gtkDoc.index(after: j)
                 idStart = i
@@ -118,20 +120,27 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
                 state = .backtickedIdentifier
                 continue
             case "|":
-                guard j < e && gtkDoc[j] == "[" else { break }
+                guard j < e && gtkDoc[j] == "[" else { flush() ; continue }
                 output.append(contentsOf: gtkDoc[idStart..<i])
                 if !gtkDoc[p].isNewline { output.append("\n\(linePrefix)") }
                 j = gtkDoc.index(after: j)
                 idStart = j
                 state = .quotedLanguagePreamble
             case "{":
-                guard j < e && gtkDoc[j] == "#" else { break }
+                guard j < e && gtkDoc[j] == "#" else { flush() ; continue }
                 output.append(contentsOf: gtkDoc[idStart..<i])
                 i = gtkDoc.index(after: j)
                 idStart = i
                 guard i < e else { break }
                 output.append("<a name=\"")
                 state = .anchor
+            case "[":
+                guard gtkDoc[p] == "]" && j < e &&
+                    (gtkDoc[j] == "_" || gtkDoc[j] == "-" || gtkDoc[j].isLetter || gtkDoc[j].isNumber) else { flush() ; continue }
+                output.append(contentsOf: gtkDoc[idStart..<i])
+                idStart = j
+                output.append("(#")
+                state = .href
             default:
                 break
             }
@@ -219,6 +228,19 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
                 output.append(contentsOf: gtkDoc[idStart..<i])
                 output.append("\"></a>")
                 if c == "}" {
+                    idStart = j
+                    next()
+                } else {
+                    idStart = i
+                }
+                state = .passThrough
+                continue
+            }
+        case .href:
+            guard c != "]" && !c.isNewline else {
+                output.append(contentsOf: gtkDoc[idStart..<i])
+                output.append(")")
+                if c == "]" {
                     idStart = j
                     next()
                 } else {
