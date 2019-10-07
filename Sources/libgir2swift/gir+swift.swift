@@ -408,12 +408,14 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
 public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: GIR.Record, indentation: String = "    ", ptr ptrName: String = "ptr") -> String {
     let mcode = methodCode(indentation, record: e, publicDesignation: "", ptr: ptrName)
     let vcode = computedPropertyCode(indentation, record: e, publicDesignation: "", ptr: ptrName)
-    let allMethods = e.methods + (e.functions + globalFunctions).filter {
+    let allFunctions = e.functions + globalFunctions
+    let instanceMethods: [GIR.Method] = allFunctions.filter {
         let fun = $0
         return fun.args.lazy.filter({ (arg: GIR.Argument) -> Bool in
             arg.isInstanceOf(e)
         }).first != nil
     }
+    let allMethods: [GIR.Method] = e.methods + instanceMethods
     let gsPairs = getterSetterPairs(for: allMethods)
     let methods = allMethods.filter { method in
         !method.name.hasPrefix("is_") || !gsPairs.contains { $0.getter === method } }
@@ -785,7 +787,8 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
     let ccode = convenienceConstructorCode(structType, indentation: indentation, publicDesignation: "")(e)
     let fcode = convenienceConstructorCode(structType, indentation: indentation, publicDesignation: "", factory: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
-    let factories = (e.constructors + e.methods + e.functions).filter { $0.isFactoryOf(e) }
+    let allFunctions: [GIR.Method] = e.methods + e.functions
+    let factories: [GIR.Method] = (e.constructors + allFunctions).filter { $0.isFactoryOf(e) }
     let documentation = commentCode(e)
     let code = "/// The `\(structType)` type acts as a lightweight Swift reference to an underlying `\(ctype)` instance.\n" +
     "/// It exposes methods that can operate on this data type through `\(protocolName)` conformance.\n" +
@@ -917,11 +920,11 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
         "public convenience init(opaquePointer: OpaquePointer) {\n" + doubleIndentation +
             "self.init(UnsafeMutablePointer<\(ctype)>(opaquePointer))\n" + indentation +
-        "}\n\n") +
-        constructors.map(ccode).joined(separator: "\n") + "\n" +
+        "}\n\n")
+    let code2 = constructors.map(ccode).joined(separator: "\n") + "\n" +
         factories.map(fcode).joined(separator: "\n") + "\n" +
-    "}\n\n" +
-    (noProperties ? "// MARK: - no \(classType) properties\n" : "public enum \(classType)PropertyName: String, PropertyNameProtocol {\n") +
+    "}\n\n"
+    let code3 = String(noProperties ? "// MARK: - no \(classType) properties\n" : "public enum \(classType)PropertyName: String, PropertyNameProtocol {\n") +
 //        "public typealias Class = \(protocolName)\n") +
         properties.map(scode).joined(separator: "\n") + "\n" +
     (noProperties ? "" : ("}\n\npublic extension \(protocolName) {\n" + indentation +
@@ -957,7 +960,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "}\n" + doubleIndentation +
         "return rv\n" + indentation +
     "}\n}\n\n"))
-    let code = code1 + (noSignals ? "// MARK: - no signals\n" : "public enum \(classType)SignalName: String, SignalNameProtocol {\n") +
+    let code = code1 + code2 + code3 + (noSignals ? "// MARK: - no signals\n" : "public enum \(classType)SignalName: String, SignalNameProtocol {\n") +
 //        "public typealias Class = \(protocolName)\n") +
         signals.map(scode).joined(separator: "\n") + "\n" +
         properties.map(ncode).joined(separator: "\n") + "\n" +
