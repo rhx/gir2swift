@@ -18,7 +18,7 @@ var verbose = false
 
 /// Print command line usage and exit
 func usage() -> Never  {
-    fputs("Usage: \(CommandLine.arguments[0]) [-v][-s][-m module_boilerplate.swift]{-p file.gir}[file.gir ...]\n", stderr)
+    fputs("Usage: \(CommandLine.arguments[0]) [-v][-s][-m module_boilerplate.swift][-o output_directory]{-p file.gir}[file.gir ...]\n", stderr)
     exit(EXIT_FAILURE)
 }
 

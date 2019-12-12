@@ -1,6 +1,93 @@
 # gir2swift
 A simple GIR parser in Swift for creating Swift types for a .gir file
 
+## Getting Started
+To start a project that uses Swift wrappers around low-level libraries that utilise gobject-introspection, you need to create some scripts that use `gir2swift` to convert the information within gobject-introspection XML (`.gir`) files into Swift.  Here is a brief overview of the basic steps:
+
+1. Install the prerequisites on your system (see [Prerequisites](#Prerequisites) below)
+2. Compile `gir2swift` (see [Building](#Building) below)
+3. Create a [Swift Package Manager](https://swift.org/package-manager/) module that contains a system target for your underlying low-level library and a library target for the Swift Wrapper library that you want to build
+4. Create the necessary Module files (see [Module Files](#Module-Files) below)
+5. Create a script that runs `gir2swift` (see [Usage](#Usage) below) and then builds your project using `swift build`
+6. If the build phase fails (more likely than not), add code that patches the generated Swift source files (e.g. using `awk` or `sed`) to correct the errors the compiler complains about
+
+
+## Usage
+
+### Synopsis
+
+    gir2swift [-v][-s][-m module_boilerplate.swift]{-p file.gir}[file.gir ...]
+
+### Description
+`gir2swift` takes the information from a gobject-introspection XML (`file.gir`) file and creates corresponding Swift wrappers.  When reading the `.gir` file, `gir2swift` also reads a number of [Module Files](#Module-Files) that you create with additional information.
+
+The following options are available:
+
+> `-m Module.swift` Add `Module.swift` as the main (hand-crafted) Swift file for your library target.
+
+> `-o directory` Specify the output directory to put the generated files into.
+
+> `-p pre.gir` Add `pre.gir` as a pre-requisite `.gir` file to ensure the types in `file.gir` are known
+
+> `-s` Create a single `.swift` file per class
+
+> `-v` Produce verbose output.
+
+### Examples
+The following command generates a Swift Wrapper in `Sources/GIO` from the information in `/usr/share/gir-1.0/Gio-2.0.gir`, copying the content from `Gio-2.0.module` and taking into account information in `GLib-2.0.gir` and `GObject-2.0.gir`:
+
+```
+	gir2swift -o Sources/GIO -m Gio-2.0.module -p /usr/share/gir-1.0/GLib-2.0.gir -p /usr/share/gir-1.0/GObject-2.0.gir /usr/share/gir-1.0/Gio-2.0.gir
+```
+
+The `Gio-2.0.module` file would need to contain the code that you would want to manually add to your Swift module, for example:
+
+```Swift
+import CGLib
+import GLib
+import GLibObject
+
+public struct GDatagramBased {}
+public struct GUnixConnectionPrivate {}
+public struct GUnixCredentialsMessagePrivate {}
+public struct GUnixFDListPrivate {}
+public struct GUnixFDMessagePrivate {}
+public struct GUnixInputStreamPrivate {}
+public struct GUnixOutputStreamPrivate {}
+public struct GUnixSocketAddressPrivate {}
+
+func g_io_module_load(_ module: UnsafeMutablePointer<GIOModule>) {
+    fatalError("private g_io_module_load called")
+}
+
+func g_io_module_unload(_ module: UnsafeMutablePointer<GIOModule>) {
+    fatalError("private g_io_module_unload called")
+}
+```
+
+Also you would need a corresponding preamble file `Gio-2.0.preamble` that imports the necessary low-level libraries, e.g.:
+```Swift
+import CGLib
+import GLib
+import GLibObject
+```
+
+## Module Files
+
+In addition to reading a given `Module.gir` file, `gir2swift` also reads a number of module files from the current working directory that contain additional information.  These module files need to have the same name as the `.gir` file, but have a different file extension:
+
+### `Module.preamble`
+This file contains the Swift code that you need to as the preamble for every generated `.swift` file (e.g. the `import` statements for all the modules you want to import).
+
+### `Module.blacklist`
+This file contains the symbols (separated by newline) that you want to suppress in your output.  Here you should include all the symbols in the `.gir` file that the Swift compiler cannot import from the relevant C language headers.
+
+### `Module.whitelist`
+This file contains the symbols (separated by newline) that would otherwise be suppressed (e.g. because `gir2swift` thinks they are duplicates), but you would like to include in the `gir2swift` output.
+
+### `Module.verbatim`
+Normally, `gir2swift` tries to translate constants from C to Swift, as per the definitions in the `.gir` files.  Names of constants listed (and separated by newline) in this file will not be translated.
+
 ## Prerequisites
 
 ### Swift
