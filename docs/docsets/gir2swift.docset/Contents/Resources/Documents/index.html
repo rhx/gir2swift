@@ -277,6 +277,88 @@
             <h1 id='gir2swift' class='heading'>gir2swift</h1>
 
 <p>A simple GIR parser in Swift for creating Swift types for a .gir file</p>
+<h2 id='getting-started' class='heading'>Getting Started</h2>
+
+<p>To start a project that uses Swift wrappers around low-level libraries that utilise gobject-introspection, you need to create some scripts that use <code>gir2swift</code> to convert the information within gobject-introspection XML (<code>.gir</code>) files into Swift.  Here is a brief overview of the basic steps:</p>
+
+<ol>
+<li>Install the prerequisites on your system (see <a href="#Prerequisites">Prerequisites</a> below)</li>
+<li>Compile <code>gir2swift</code> (see <a href="#Building">Building</a> below)</li>
+<li>Create a <a href="https://swift.org/package-manager/">Swift Package Manager</a> module that contains a system target for your underlying low-level library and a library target for the Swift Wrapper library that you want to build</li>
+<li>Create the necessary Module files (see <a href="#Module-Files">Module Files</a> below)</li>
+<li>Create a script that runs <code>gir2swift</code> (see <a href="#Usage">Usage</a> below) and then builds your project using <code>swift build</code></li>
+<li>If the build phase fails (more likely than not), add code that patches the generated Swift source files (e.g. using <code>awk</code> or <code>sed</code>) to correct the errors the compiler complains about</li>
+</ol>
+<h2 id='usage' class='heading'>Usage</h2>
+<h3 id='synopsis' class='heading'>Synopsis</h3>
+<pre class="highlight plaintext"><code>gir2swift [-v][-s][-m module_boilerplate.swift]{-p file.gir}[file.gir ...]
+</code></pre>
+<h3 id='description' class='heading'>Description</h3>
+
+<p><code>gir2swift</code> takes the information from a gobject-introspection XML (<code>file.gir</code>) file and creates corresponding Swift wrappers.  When reading the <code>.gir</code> file, <code>gir2swift</code> also reads a number of <a href="#Module-Files">Module Files</a> that you create with additional information.</p>
+
+<p>The following options are available:</p>
+
+<blockquote>
+<p><code>-m Module.swift</code> Add <code>Module.swift</code> as the main (hand-crafted) Swift file for your library target.</p>
+
+<p><code>-o directory</code> Specify the output directory to put the generated files into.</p>
+
+<p><code>-p pre.gir</code> Add <code>pre.gir</code> as a pre-requisite <code>.gir</code> file to ensure the types in <code>file.gir</code> are known</p>
+
+<p><code>-s</code> Create a single <code>.swift</code> file per class</p>
+
+<p><code>-v</code> Produce verbose output.</p>
+</blockquote>
+<h3 id='examples' class='heading'>Examples</h3>
+
+<p>The following command generates a Swift Wrapper in <code>Sources/GIO</code> from the information in <code>/usr/share/gir-1.0/Gio-2.0.gir</code>, copying the content from <code>Gio-2.0.module</code> and taking into account information in <code>GLib-2.0.gir</code> and <code>GObject-2.0.gir</code>:</p>
+<pre class="highlight plaintext"><code>    gir2swift -o Sources/GIO -m Gio-2.0.module -p /usr/share/gir-1.0/GLib-2.0.gir -p /usr/share/gir-1.0/GObject-2.0.gir /usr/share/gir-1.0/Gio-2.0.gir
+</code></pre>
+
+<p>The <code>Gio-2.0.module</code> file would need to contain the code that you would want to manually add to your Swift module, for example:</p>
+<pre class="highlight plaintext"><code>import CGLib
+import GLib
+import GLibObject
+
+public struct GDatagramBased {}
+public struct GUnixConnectionPrivate {}
+public struct GUnixCredentialsMessagePrivate {}
+public struct GUnixFDListPrivate {}
+public struct GUnixFDMessagePrivate {}
+public struct GUnixInputStreamPrivate {}
+public struct GUnixOutputStreamPrivate {}
+public struct GUnixSocketAddressPrivate {}
+
+func g_io_module_load(_ module: UnsafeMutablePointer&lt;GIOModule&gt;) {
+    fatalError("private g_io_module_load called")
+}
+
+func g_io_module_unload(_ module: UnsafeMutablePointer&lt;GIOModule&gt;) {
+    fatalError("private g_io_module_unload called")
+}
+</code></pre>
+
+<p>Also you would need a corresponding preamble file <code>Gio-2.0.preamble</code> that imports the necessary low-level libraries, e.g.:</p>
+<pre class="highlight plaintext"><code>import CGLib
+import GLib
+import GLibObject
+</code></pre>
+<h2 id='module-files' class='heading'>Module Files</h2>
+
+<p>In addition to reading a given <code>Module.gir</code> file, <code>gir2swift</code> also reads a number of module files from the current working directory that contain additional information.  These module files need to have the same name as the <code>.gir</code> file, but have a different file extension:</p>
+<h3 id='code-module-preamble-code' class='heading'><code>Module.preamble</code></h3>
+
+<p>This file contains the Swift code that you need to as the preamble for every generated <code>.swift</code> file (e.g. the <code>import</code> statements for all the modules you want to import).</p>
+<h3 id='code-module-blacklist-code' class='heading'><code>Module.blacklist</code></h3>
+
+<p>This file contains the symbols (separated by newline) that you want to suppress in your output.  Here you should include all the symbols in the <code>.gir</code> file that the Swift compiler cannot import from the relevant C language headers.</p>
+<h3 id='code-module-whitelist-code' class='heading'><code>Module.whitelist</code></h3>
+
+<p>This file contains the symbols (separated by newline) that would otherwise be suppressed (e.g. because <code>gir2swift</code> thinks they are duplicates), but you would like to include in the <code>gir2swift</code> output.</p>
+<h3 id='code-module-verbatim-code' class='heading'><code>Module.verbatim</code></h3>
+
+<p>Normally, <code>gir2swift</code> tries to translate constants from C to Swift, as per the definitions in the <code>.gir</code> files.  Names of constants listed (and separated by newline) in this file will not be translated.</p>
 <h2 id='prerequisites' class='heading'>Prerequisites</h2>
 <h3 id='swift' class='heading'>Swift</h3>
 
@@ -351,7 +433,7 @@ xcode-select --install
       </article>
     </div>
     <section class="footer">
-      <p>&copy; 2019 <a class="link" href="https://www.ict.griffith.edu.au/~rhexel/" target="_blank" rel="external">Ren&eacute;&nbsp;Hexel</a>. All rights reserved. (Last updated: 2019-10-05)</p>
+      <p>&copy; 2019 <a class="link" href="https://www.ict.griffith.edu.au/~rhexel/" target="_blank" rel="external">Ren&eacute;&nbsp;Hexel</a>. All rights reserved. (Last updated: 2019-12-12)</p>
       <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external">jazzy ♪♫ v0.11.2</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external">Realm</a> project.</p>
     </section>
   </body>
