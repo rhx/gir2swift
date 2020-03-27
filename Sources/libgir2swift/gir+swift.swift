@@ -846,6 +846,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let doubleIndentation = indentation + indentation
     let tripleIndentation = indentation + doubleIndentation
     let classType = e.name.swift
+    let instance = classType.deCapitalised
     let protocolName = e.protocolName
     let parentType = e.parentType
     let hasParent = parentType != nil
@@ -887,40 +888,78 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
             "public let ptr: UnsafeMutableRawPointer\n\n" + indentation)
         ) +
         "/// Designated initialiser from the underlying `C` data type.\n" + indentation +
-        "/// Ownership is transferred to the `\(classType)` instance.\n" + indentation +
+        "/// This creates an instance without performing an unbalanced retain\n" + indentation +
+        "/// i.e., ownership is transferred to the `\(classType)` instance.\n" + indentation +
+        "/// - Parameter op: pointer to the underlying object\n" + indentation +
         "public init(_ op: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
             (hasParent ? "super.init(cast(op))\n" : "ptr = UnsafeMutableRawPointer(op)\n") + indentation +
         "}\n\n" + (indentation +
-        "/// Reference convenience intialiser for a related type that implements `\(protocolName)`\n" + indentation +
-        "/// \(e.ref == nil ? "`\(e.ctype.swift)` does not allow reference counting." : "Will retain `\(e.ctype.swift)`.")\n" + indentation +
-        "public convenience init<T: \(e.protocolName)>(_ other: T) {\n" + doubleIndentation +
-            "self.init(cast(other.\(ptr)))\n" + doubleIndentation +
+        "/// Designated initialiser from the underlying `C` data type.\n" + indentation +
+        "/// \(e.ref == nil ? "`\(e.ctype.swift)` does not allow reference counting, so despite the name no actual retaining will occur." : "Will retain `\(e.ctype.swift)`.")\n" + indentation +
+        "/// i.e., ownership is transferred to the `\(classType)` instance.\n" + indentation +
+        "/// - Parameter op: pointer to the underlying object\n") + (indentation +
+        "public init(retaining op: UnsafeMutablePointer<\(ctype)>) {\n" + doubleIndentation +
+            (hasParent ? "super.init(retaining: cast(op))\n" : "ptr = UnsafeMutableRawPointer(op)\n") + doubleIndentation +
             "\(retain)(cast(\(ptr)))\n" + indentation +
+        "}\n\n") + (indentation +
+        "/// Reference intialiser for a related type that implements `\(protocolName)`\n" + indentation +
+        "/// \(e.ref == nil ? "`\(e.ctype.swift)` does not allow reference counting." : "Will retain `\(e.ctype.swift)`.")\n" + indentation +
+        "/// - Parameter other: an instance of a related type that implements `\(protocolName)`\n" + indentation +
+        "public init<T: \(e.protocolName)>(\(hasParent ? instance : "_") other: T) {\n" + doubleIndentation +
+            (hasParent ? "super.init(retaining: cast(other.\(ptr)))\n" :
+            "ptr = UnsafeMutableRawPointer(other.\(ptr))\n" + doubleIndentation +
+            "\(retain)(cast(\(ptr)))\n") + indentation +
         "}\n\n") + (hasParent ? "" : (indentation +
         "/// \(e.unref == nil ? "Do-nothing destructor for`\(e.ctype.swift)`." : "Releases the underlying `\(e.ctype.swift)` instance using `\(e.unref?.cname ?? "unref")`.")\n" + indentation +
         "deinit {\n" + indentation + indentation +
             "\(release)(cast(\(ptr)))\n" + indentation +
-        "}\n\n")) + (indentation +
+        "}\n\n") + ((indentation +
         "/// Unsafe typed initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "public convenience init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
-            "self.init(cPointer.withMemoryRebound(to: \(ctype).self, capacity: 1) { $0 })\n" + indentation +
-        "}\n\n" + indentation +
+        "/// - Parameter cPointer: pointer to the underlying object\n" + indentation +
+        "public init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
+            "ptr = UnsafeMutableRawPointer(cPointer)\n" + indentation +
+        "}\n\n") + (indentation +
+        "/// Unsafe typed, retaining initialiser.\n" + indentation +
+        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
+        "/// - Parameter cPointer: pointer to the underlying object\n" + indentation +
+        "public init<T>(retainingCPointer cPointer: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
+            "ptr = UnsafeMutableRawPointer(cPointer)\n" + doubleIndentation +
+            "\(retain)(cast(\(ptr)))\n" + indentation +
+        "}\n\n") + (indentation +
         "/// Unsafe untyped initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "public convenience init(raw: UnsafeRawPointer) {\n" + doubleIndentation +
-            "self.init(UnsafeMutableRawPointer(mutating: raw).assumingMemoryBound(to: \(ctype).self))\n" + indentation +
-        "}\n\n" + indentation +
+        "public init(raw: UnsafeRawPointer) {\n" + doubleIndentation +
+            "ptr = UnsafeMutableRawPointer(mutating: raw)\n" + indentation +
+        "}\n\n") + (indentation +
+        "/// Unsafe untyped, retaining initialiser.\n" + indentation +
+        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
+        "public init(retainingRaw raw: UnsafeRawPointer) {\n" + doubleIndentation +
+            "ptr = UnsafeMutableRawPointer(mutating: raw)\n" + doubleIndentation +
+            "\(retain)(cast(\(ptr)))\n" + indentation +
+        "}\n\n") + (indentation +
         "/// Unsafe untyped initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "public convenience init(raw: UnsafeMutableRawPointer) {\n" + doubleIndentation +
-            "self.init(raw.assumingMemoryBound(to: \(ctype).self))\n" + indentation +
-        "}\n\n" + indentation +
+        "public init(raw: UnsafeMutableRawPointer) {\n" + doubleIndentation +
+            "\(ptr) = raw\n" + indentation +
+        "}\n\n") + (indentation +
+        "/// Unsafe untyped, retaining initialiser.\n" + indentation +
+        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
+        "public init(retainingRaw raw: UnsafeMutableRawPointer) {\n" + doubleIndentation +
+            "\(ptr) = raw\n" + doubleIndentation +
+            "\(retain)(cast(\(ptr)))\n" + indentation +
+        "}\n\n") + (indentation +
         "/// Unsafe untyped initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "public convenience init(opaquePointer: OpaquePointer) {\n" + doubleIndentation +
-            "self.init(UnsafeMutablePointer<\(ctype)>(opaquePointer))\n" + indentation +
-        "}\n\n")
+        "public init(opaquePointer: OpaquePointer) {\n" + doubleIndentation +
+            "ptr = UnsafeMutableRawPointer(opaquePointer)\n" + indentation +
+        "}\n\n") + (indentation +
+        "/// Unsafe untyped, retaining initialiser.\n" + indentation +
+        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
+        "public init(retainingOpaquePointer opaquePointer: OpaquePointer) {\n" + doubleIndentation +
+            "ptr = UnsafeMutableRawPointer(opaquePointer)\n" + doubleIndentation +
+            "\(retain)(cast(\(ptr)))\n" + indentation +
+        "}\n\n")))
     let code2 = constructors.map(ccode).joined(separator: "\n") + "\n" +
         factories.map(fcode).joined(separator: "\n") + "\n" +
     "}\n\n"
