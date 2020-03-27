@@ -941,12 +941,12 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "/// Unsafe untyped initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
         "public init(raw: UnsafeMutableRawPointer) {\n" + doubleIndentation +
-            "\(ptr) = raw\n" + indentation +
+            "ptr = raw\n" + indentation +
         "}\n\n") + (indentation +
         "/// Unsafe untyped, retaining initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
         "public init(retainingRaw raw: UnsafeMutableRawPointer) {\n" + doubleIndentation +
-            "\(ptr) = raw\n" + doubleIndentation +
+            "ptr = raw\n" + doubleIndentation +
             "\(retain)(cast(\(ptr)))\n" + indentation +
         "}\n\n") + (indentation +
         "/// Unsafe untyped initialiser.\n" + indentation +
