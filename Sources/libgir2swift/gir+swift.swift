@@ -891,7 +891,6 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "/// This creates an instance without performing an unbalanced retain\n" + indentation +
         "/// i.e., ownership is transferred to the `\(classType)` instance.\n" + indentation +
         "/// - Parameter op: pointer to the underlying object\n" + indentation +
-        (hasParent ? "override " : "") +
         "public init(_ op: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
             (hasParent ? "super.init(cast(op))\n" : "ptr = UnsafeMutableRawPointer(op)\n") + indentation +
         "}\n\n" + (indentation +
@@ -899,7 +898,6 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "/// \(e.ref == nil ? "`\(e.ctype.swift)` does not allow reference counting, so despite the name no actual retaining will occur." : "Will retain `\(e.ctype.swift)`.")\n" + indentation +
         "/// i.e., ownership is transferred to the `\(classType)` instance.\n" + indentation +
         "/// - Parameter op: pointer to the underlying object\n") + (indentation +
-        (hasParent ? "override " : "") +
         "public init(retaining op: UnsafeMutablePointer<\(ctype)>) {\n" + doubleIndentation +
             (hasParent ?
                 "super.init(retaining: cast(op))\n" :
