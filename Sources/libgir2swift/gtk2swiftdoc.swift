@@ -55,7 +55,7 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
     var p = s // previous index
     var idStart = s
     var wasNewLine = true
-    var wasNonID = true
+//    var wasNonID = true
     func prev() { j = i ; i = p }
     func next() { p = i ; i = j ; j = i < e ? gtkDoc.index(after: i) : e }
     func flush() {
