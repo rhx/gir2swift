@@ -535,7 +535,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, publ
 
 
 /// Swift code for convenience constructors
-public func convenienceConstructorCode(_ typeName: String, indentation: String, convenience: String = "", publicDesignation: String = "public ", factory: Bool = false, hasParent: Bool = false, convertName: @escaping (String) -> String = { $0.camelCase }) -> (GIR.Record) -> (GIR.Method) -> String {
+public func convenienceConstructorCode(_ typeName: String, indentation: String, convenience: String = "", override ovr: String = "", publicDesignation: String = "public ", factory: Bool = false, hasParent: Bool = false, convertName: @escaping (String) -> String = { $0.camelCase }) -> (GIR.Record) -> (GIR.Method) -> String {
     let isConv = !convenience.isEmpty
     let conv =  isConv ? "\(convenience) " : ""
     return { (record: GIR.Record) -> (GIR.Method) -> String in
@@ -578,7 +578,7 @@ public func convenienceConstructorCode(_ typeName: String, indentation: String, 
                 fname = fullname
             }
             let p: String? = consPrefix == firstArgName?.swift ? nil : consPrefix
-            let fact = factory ? "static func \(fname.swift)(" : "\(isOverride ? "override " : conv)init("
+            let fact = factory ? "static func \(fname.swift)(" : "\(isOverride ? ovr : conv)init("
             let code = swiftCode(method, indentation + "\(deprecated)\(publicDesignation)\(fact)" +
                 constructorParam(method, prefix: p) + ")\(returnDeclaration(method)) {\n" +
                     doubleIndent + call(method) +
@@ -859,7 +859,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
     let scode = signalNameCode(indentation: indentation)
     let ncode = signalNameCode(indentation: indentation, prefixes: ("notify", "notify::"))
-    let ccode = convenienceConstructorCode(classType, indentation: indentation, hasParent: hasParent)(e)
+    let ccode = convenienceConstructorCode(classType, indentation: indentation, override: "override ", hasParent: hasParent)(e)
     let fcode = convenienceConstructorCode(classType, indentation: indentation, factory: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
     let allmethods = e.allMethods
