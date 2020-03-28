@@ -535,14 +535,14 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, publ
 
 
 /// Swift code for convenience constructors
-public func convenienceConstructorCode(_ typeName: String, indentation: String, convenience: String = "", publicDesignation: String = "public ", factory: Bool = false, convertName: @escaping (String) -> String = { $0.camelCase }) -> (GIR.Record) -> (GIR.Method) -> String {
+public func convenienceConstructorCode(_ typeName: String, indentation: String, convenience: String = "", publicDesignation: String = "public ", factory: Bool = false, hasParent: Bool = false, convertName: @escaping (String) -> String = { $0.camelCase }) -> (GIR.Record) -> (GIR.Method) -> String {
     let isConv = !convenience.isEmpty
     let conv =  isConv ? "\(convenience) " : ""
     return { (record: GIR.Record) -> (GIR.Method) -> String in
         let doubleIndent = indentation + indentation
         let call = callCode(doubleIndent)
         let returnDeclaration = returnDeclarationCode((typeName: typeName, record: record, isConstructor: !factory))
-        let ret = returnCode(indentation, (typeName: typeName, record: record, isConstructor: !factory, isConvenience: isConv))
+        let ret = returnCode(indentation, (typeName: typeName, record: record, isConstructor: !factory, isConvenience: isConv), hasParent: hasParent)
         return { (method: GIR.Method) -> String in
             let rawName = method.name.isEmpty ? method.cname : method.name
             let rawUTF = rawName.utf8
@@ -618,15 +618,20 @@ public func returnDeclarationCode(_ tr: (typeName: String, record: GIR.Record, i
 
 
 /// Return code for functions/methods/convenience constructors
-public func returnCode(_ indentation: String, _ tr: (typeName: String, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil, ptr: String = "ptr") -> (GIR.Method) -> String {
+public func returnCode(_ indentation: String, _ tr: (typeName: String, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil, ptr: String = "ptr", hasParent: Bool = false) -> (GIR.Method) -> String {
     return { method in
         let rv = method.returns
         guard !rv.isVoid else { return "\n" }
         let isInstance = tr?.record != nil && rv.isInstanceOfHierarchy((tr?.record)!)
         let cast2swift = typeCastTuple(rv.ctype, rv.type.swift, forceCast: isInstance).toSwift
-        guard isInstance else { return indentation + "return \(cast2swift)\n" }
-        let (cons, cast, end) = tr!.isConstructor ? ("self.init", cast2swift, "") : ("return rv.map { \(tr!.typeName)", "cast($0)", " }")
-        if tr!.isConvenience || !tr!.isConstructor {
+        guard isInstance, let tr = tr else { return indentation + "return \(cast2swift)\n" }
+        let (cons, cast, end) = tr.isConstructor ?
+            (tr.isConvenience ? ("self.init", cast2swift, "") : (hasParent ?
+                ("super.init", cast2swift, "") : ("\(ptr) = UnsafeMutableRawPointer", cast2swift, ""))) :
+            ("return rv.map { \(tr.typeName)", "cast($0)", " }")
+        if tr.isConvenience || !tr.isConstructor {
+            return indentation + "\(cons)(\(cast))\(end)\n"
+        } else if tr.isConstructor {
             return indentation + "\(cons)(\(cast))\(end)\n"
         } else {
             return indentation + "self.init(\(cast2swift))\n"
@@ -853,7 +858,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
     let scode = signalNameCode(indentation: indentation)
     let ncode = signalNameCode(indentation: indentation, prefixes: ("notify", "notify::"))
-    let ccode = convenienceConstructorCode(classType, indentation: indentation, convenience: "convenience")(e)
+    let ccode = convenienceConstructorCode(classType, indentation: indentation, hasParent: hasParent)(e)
     let fcode = convenienceConstructorCode(classType, indentation: indentation, factory: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
     let allmethods = e.allMethods
