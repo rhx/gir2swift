@@ -894,6 +894,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "public init(_ op: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
             (hasParent ? "super.init(cast(op))\n" : "ptr = UnsafeMutableRawPointer(op)\n") + indentation +
         "}\n\n" + (indentation +
+
         "/// Designated initialiser from the underlying `C` data type.\n" + indentation +
         "/// \(e.ref == nil ? "`\(e.ctype.swift)` does not allow reference counting, so despite the name no actual retaining will occur." : "Will retain `\(e.ctype.swift)`.")\n" + indentation +
         "/// i.e., ownership is transferred to the `\(classType)` instance.\n" + indentation +
@@ -904,6 +905,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
                 "ptr = UnsafeMutableRawPointer(op)\n" + doubleIndentation +
                 "\(retain)(cast(\(ptr)))\n") + indentation +
         "}\n\n") + (indentation +
+
         "/// Reference intialiser for a related type that implements `\(protocolName)`\n" + indentation +
         "/// \(e.ref == nil ? "`\(e.ctype.swift)` does not allow reference counting." : "Will retain `\(e.ctype.swift)`.")\n" + indentation +
         "/// - Parameter other: an instance of a related type that implements `\(protocolName)`\n" + indentation +
@@ -912,56 +914,82 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
             "ptr = UnsafeMutableRawPointer(other.\(ptr))\n" + doubleIndentation +
             "\(retain)(cast(\(ptr)))\n") + indentation +
         "}\n\n") + (hasParent ? "" : (indentation +
+
         "/// \(e.unref == nil ? "Do-nothing destructor for`\(e.ctype.swift)`." : "Releases the underlying `\(e.ctype.swift)` instance using `\(e.unref?.cname ?? "unref")`.")\n" + indentation +
         "deinit {\n" + indentation + indentation +
             "\(release)(cast(\(ptr)))\n" + indentation +
-        "}\n\n") + ((indentation +
+        "}\n\n")) + ((indentation +
+
         "/// Unsafe typed initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
         "/// - Parameter cPointer: pointer to the underlying object\n" + indentation +
-        "public init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
-            "ptr = UnsafeMutableRawPointer(cPointer)\n" + indentation +
+        (hasParent ? "override " : "") +
+        "public init<T>(cPointer p: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
+            (hasParent ? "super.init(cPointer: p)\n" : "ptr = UnsafeMutableRawPointer(p)\n") + indentation +
         "}\n\n") + (indentation +
+
         "/// Unsafe typed, retaining initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
         "/// - Parameter cPointer: pointer to the underlying object\n" + indentation +
+        (hasParent ? "override " : "") +
         "public init<T>(retainingCPointer cPointer: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
+            (hasParent ? "super.init(retainingCPointer: cPointer)\n" :
             "ptr = UnsafeMutableRawPointer(cPointer)\n" + doubleIndentation +
-            "\(retain)(cast(\(ptr)))\n" + indentation +
+            "\(retain)(cast(\(ptr)))\n") + indentation +
         "}\n\n") + (indentation +
+
         "/// Unsafe untyped initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "public init(raw: UnsafeRawPointer) {\n" + doubleIndentation +
-            "ptr = UnsafeMutableRawPointer(mutating: raw)\n" + indentation +
+        "/// - Parameter p: raw pointer to the underlying object\n" + indentation +
+        (hasParent ? "override " : "") +
+        "public init(raw p: UnsafeRawPointer) {\n" + doubleIndentation +
+            (hasParent ? "super.init(raw: p)\n" : "ptr = UnsafeMutableRawPointer(mutating: p)\n") + indentation +
         "}\n\n") + (indentation +
+
         "/// Unsafe untyped, retaining initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
+        (hasParent ? "override " : "") +
         "public init(retainingRaw raw: UnsafeRawPointer) {\n" + doubleIndentation +
+            (hasParent ? "super.init(retainingRaw: raw)\n" :
             "ptr = UnsafeMutableRawPointer(mutating: raw)\n" + doubleIndentation +
-            "\(retain)(cast(\(ptr)))\n" + indentation +
+            "\(retain)(cast(\(ptr)))\n") + indentation +
         "}\n\n") + (indentation +
+
         "/// Unsafe untyped initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "public init(raw: UnsafeMutableRawPointer) {\n" + doubleIndentation +
-            "ptr = raw\n" + indentation +
+        "/// - Parameter p: mutable raw pointer to the underlying object\n" + indentation +
+        (hasParent ? "override " : "") +
+        "public init(raw p: UnsafeMutableRawPointer) {\n" + doubleIndentation +
+            (hasParent ? "super.init(raw: p)\n" : "ptr = p\n") + indentation +
         "}\n\n") + (indentation +
+
         "/// Unsafe untyped, retaining initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
+        "/// - Parameter raw: mutable raw pointer to the underlying object\n" + indentation +
+        (hasParent ? "override " : "") +
         "public init(retainingRaw raw: UnsafeMutableRawPointer) {\n" + doubleIndentation +
+            (hasParent ? "super.init(retainingRaw: raw)\n" :
             "ptr = raw\n" + doubleIndentation +
-            "\(retain)(cast(\(ptr)))\n" + indentation +
+            "\(retain)(cast(\(ptr)))\n") + indentation +
         "}\n\n") + (indentation +
+
         "/// Unsafe untyped initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "public init(opaquePointer: OpaquePointer) {\n" + doubleIndentation +
-            "ptr = UnsafeMutableRawPointer(opaquePointer)\n" + indentation +
+        "/// - Parameter p: opaque pointer to the underlying object\n" + indentation +
+        (hasParent ? "override " : "") +
+        "public init(opaquePointer p: OpaquePointer) {\n" + doubleIndentation +
+            (hasParent ? "super.init(opaquePointer: p)\n" : "ptr = UnsafeMutableRawPointer(p)\n") + indentation +
         "}\n\n") + (indentation +
+
         "/// Unsafe untyped, retaining initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "public init(retainingOpaquePointer opaquePointer: OpaquePointer) {\n" + doubleIndentation +
-            "ptr = UnsafeMutableRawPointer(opaquePointer)\n" + doubleIndentation +
-            "\(retain)(cast(\(ptr)))\n" + indentation +
-        "}\n\n")))
+        "/// - Parameter p: opaque pointer to the underlying object\n" + indentation +
+        (hasParent ? "override " : "") +
+        "public init(retainingOpaquePointer p: OpaquePointer) {\n" + doubleIndentation +
+            (hasParent ? "super.init(retainingOpaquePointer: p)\n" :
+            "ptr = UnsafeMutableRawPointer(p)\n" + doubleIndentation +
+            "\(retain)(cast(\(ptr)))\n") + indentation +
+        "}\n\n"))
     let code2 = constructors.map(ccode).joined(separator: "\n") + "\n" +
         factories.map(fcode).joined(separator: "\n") + "\n" +
     "}\n\n"
