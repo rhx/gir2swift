@@ -118,6 +118,9 @@ public class GIR {
     /// names of constants to be taken verbatim
     public static var VerbatimConstants: Set<String> = []
 
+    /// names of override initialisers
+    public static var overrides: Set<String> = []
+    
     /// context of known types
     public static var KnownTypes:   [ String : Datatype ] = [:]
     /// context of known records

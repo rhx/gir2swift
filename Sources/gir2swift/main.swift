@@ -196,6 +196,8 @@ func processSpecialCases(_ gir: GIR, forFile node: String) {
     GIR.Blacklist = blacklist.contents?.lines.asSet ?? []
     let verbatimConstants = node + ".verbatim"
     GIR.VerbatimConstants = verbatimConstants.contents?.lines.asSet ?? []
+    let overrideFile = node + ".override"
+    GIR.overrides = overrideFile.contents?.lines.asSet ?? []
 }
 
 
