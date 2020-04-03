@@ -1038,17 +1038,17 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     "/// Get the value of a \(classType) property\n" + indentation +
     "/// - Parameter property: the property to get the value for\n" + indentation +
     "/// - Returns: the value of the named property\n" + indentation +
-    "func get(property: \(classType)PropertyName) -> Value {\n" + doubleIndentation +
-        "let v = Value()\n" + doubleIndentation +
-        "g_object_get_property(object_ptr, property.rawValue, v.value_ptr)\n" + doubleIndentation +
+    "func get(property: \(classType)PropertyName) -> GLibObject.Value {\n" + doubleIndentation +
+        "let v = GLibObject.Value()\n" + doubleIndentation +
+        "g_object_get_property(ptr.assumingMemoryBound(to: GObject.self), property.rawValue, v.value_ptr)\n" + doubleIndentation +
         "return v\n" + indentation +
     "}\n\n" + indentation +
     "/// Set the value of a \(classType) property.\n" + indentation +
     "/// *Note* that this will only have an effect on properties that are writable and not construct-only!\n" + indentation +
     "/// - Parameter property: the property to get the value for\n" + indentation +
     "/// - Returns: the value of the named property\n" + indentation +
-    "func set(property: \(classType)PropertyName, value v: Value) {\n" + doubleIndentation +
-        "g_object_set_property(object_ptr, property.rawValue, v.value_ptr)\n" + indentation +
+    "func set(property: \(classType)PropertyName, value v: GLibObject.Value) {\n" + doubleIndentation +
+        "g_object_set_property(ptr.assumingMemoryBound(to: GObject.self), property.rawValue, v.value_ptr)\n" + indentation +
     "}\n}\n\n"))
     let code = code1 + code2 + code3 + (noSignals ? "// MARK: - no signals\n" : "public enum \(classType)SignalName: String, SignalNameProtocol {\n") +
 //        "public typealias Class = \(protocolName)\n") +
