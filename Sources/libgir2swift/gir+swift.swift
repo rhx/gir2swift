@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 2/04/2016.
-//  Copyright © 2016, 2017, 2018, 2019 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018, 2019, 2020 Rene Hexel. All rights reserved.
 //
 import Foundation
 
@@ -98,41 +98,6 @@ public extension GIR.Thing {
 
 /// Swift extension for arguments
 public extension GIR.Argument {
-    //// return the known type of the argument (nil if not known)
-    var knownType: GIR.Datatype? { return GIR.KnownTypes[type.isEmpty ? ctype : type] }
-
-    //// return the known class/record of the argument (nil if not known)
-    var knownRecord: GIR.Record? { return GIR.KnownRecords[type.isEmpty ? ctype : type] }
-
-    /// indicates whether the receiver is a known type
-    var isKnownType: Bool { return knownType != nil }
-
-    /// indicates whether the receiver is a known class or record
-    var isKnownRecord: Bool { return knownRecord != nil }
-
-    /// indicates whether the receiver is any known kind of pointer
-    var isAnyKindOfPointer: Bool {
-        return ctype.isGPointer || ctype.isPointer || ctype.isCastablePointer || type.isSwiftPointer || type.hasSuffix("Func")
-    }
-
-    /// indicates whether the receiver is an array of scalar values
-    var isScalarArray: Bool { return isArray && !isAnyKindOfPointer }
-
-    /// return a non-clashing argument name
-    var nonClashingName: String {
-        let sw = name.swift
-        let nt = sw + (sw.isKnownType ? "_" : "")
-        let ct = ctype.innerCType.swiftType // swift name for C type
-        let st = ctype.innerCType.swift     // corresponding Swift type
-        let nc = nt == ct ? nt + "_" : nt
-        let ns = nc == st ? nc + "_" : nc
-        let na = ns == type.swift  ? ns + "_" : ns
-        return na
-    }
-
-    /// return the non-prefixed argument name
-    var argumentName: String { return nonClashingName }
-
     /// return the, potentially prefixed argument name to use in a method declaration
     var prefixedArgumentName: String {
         let name = argumentName
@@ -151,22 +116,6 @@ public extension GIR.Argument {
         let record = knownRecord
         let code = "\(array ? "inout [" : "")\(isPtr ? (record.map { $0.protocolName } ?? ct.swiftRepresentationOfCType) : swift)\(array ? "]" : "")"
         return code
-    }
-
-    /// return whether the receiver is an instance of the given record (class)
-    func isInstanceOf(_ record: GIR.Record?) -> Bool {
-        if let r = record, r.name == type.withoutNameSpace {
-            return true
-        } else {
-            return false
-        }
-    }
-
-    /// return whether the receiver is an instance of the given record (class) or any of its ancestors
-    func isInstanceOfHierarchy(_ record: GIR.Record) -> Bool {
-        if isInstanceOf(record) { return true }
-        guard let parent = record.parentType else { return false }
-        return isInstanceOfHierarchy(parent)
     }
 }
 
@@ -408,6 +357,7 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
 public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: GIR.Record, indentation: String = "    ", ptr ptrName: String = "ptr") -> String {
     let mcode = methodCode(indentation, record: e, publicDesignation: "", ptr: ptrName)
     let vcode = computedPropertyCode(indentation, record: e, publicDesignation: "", ptr: ptrName)
+    let fcode = fieldCode(indentation, record: e, publicDesignation: "", ptr: ptrName)
     let allFunctions = e.functions + globalFunctions
     let instanceMethods: [GIR.Method] = allFunctions.filter {
         let fun = $0
@@ -425,6 +375,7 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
         "var \(ptrName): UnsafeMutablePointer<\(ctype)> { return ptr.assumingMemoryBound(to: \(ctype).self) }\n\n" +
         methods.map(mcode).joined(separator: "\n") +
         gsPairs.map(vcode).joined(separator: "\n") +
+        e.fields.map(fcode).joined(separator: "\n") +
     "}\n\n"
     return code
 }
@@ -532,6 +483,41 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, publ
 }
 
 
+/// Swift code for field properties
+public func fieldCode(_ indentation: String, record: GIR.Record, publicDesignation: String = "public ", ptr ptrName: String = "ptr") -> (GIR.Field) -> String {
+    let doubleIndent = indentation + indentation
+    let scall = instanceSetter(doubleIndent, record, ptr: ptrName)
+    let ret = instanceReturnCode(doubleIndent, ptr: ptrName)
+    return { (field: GIR.Field) -> String in
+        let name = field.name.swiftName
+        guard !field.isPrivate else { return indentation + "// var \(name) is unavailable because it is private\n" }
+        guard field.isReadable || field.isWritable else { return indentation + "// var \(name) is unavailable because it is neigher readable nor writable\n" }
+        let type = typeCastTuple(field.ctype, field.type.swift).swift
+        let varDecl = swiftCode(field, indentation + "\(publicDesignation)var \(name): \(type) {\n", indentation: indentation)
+        let deprecated = field.deprecated != nil ? "@available(*, deprecated) " : ""
+        let getterCode: String
+        if field.isReadable {
+            getterCode = swiftCode(field, doubleIndent + "\(deprecated)get {\n" +
+            doubleIndent + indentation + "let rv = " +
+            indentation  + ret(field) + doubleIndent +
+            "}\n", indentation: doubleIndent)
+        } else {
+            getterCode = ""
+        }
+        let setterCode: String
+        if field.isWritable {
+            setterCode = swiftCode(field, doubleIndent + "\(deprecated) set {\n" +
+                doubleIndent + indentation + scall(field) +
+                doubleIndent + "}\n", indentation: doubleIndent)
+        } else {
+            setterCode = ""
+        }
+        let varEnd = indentation + "}\n"
+        return varDecl + getterCode + setterCode + varEnd
+    }
+}
+
+
 
 
 /// Swift code for convenience constructors
@@ -620,8 +606,18 @@ public func returnDeclarationCode(_ tr: (typeName: String, record: GIR.Record, i
 
 /// Return code for functions/methods/convenience constructors
 public func returnCode(_ indentation: String, _ tr: (typeName: String, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil, ptr: String = "ptr", hasParent: Bool = false) -> (GIR.Method) -> String {
-    return { method in
-        let rv = method.returns
+    returnCode(indentation, tr, ptr: ptr, hasParent: hasParent) { $0.returns }
+}
+
+/// Return code for instances (e.g. fields)
+public func instanceReturnCode(_ indentation: String, _ tr: (typeName: String, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil, ptr: String = "ptr", hasParent: Bool = false) -> (GIR.CType) -> String {
+    returnCode(indentation, tr, ptr: ptr, hasParent: hasParent) { $0 }
+}
+
+/// Generic return code for methods/types
+public func returnCode<T>(_ indentation: String, _ tr: (typeName: String, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil, ptr: String = "ptr", hasParent: Bool = false, extract: @escaping (T) -> GIR.CType) -> (T) -> String {
+    return { (param: T) -> String in
+        let rv = extract(param)
         guard !rv.isVoid else { return "\n" }
         let isInstance = tr?.record != nil && rv.isInstanceOfHierarchy((tr?.record)!)
         let cast2swift = typeCastTuple(rv.ctype, rv.type.swift, forceCast: isInstance).toSwift
@@ -677,6 +673,18 @@ public func callSetter(_ indentation: String, _ record: GIR.Record? = nil, ptr p
         let code = ( method.returns.isVoid ? "" : "let _ = " ) +
             "\(method.cname.swift)(\(args.map(toSwift).joined(separator: ", ")))\n"
         return code
+    }
+}
+
+/// Swift code for assigning the raw return value
+public func instanceSetter(_ indentation: String, _ record: GIR.Record? = nil, ptr parameterName: String = "newValue") -> (GIR.CType) -> String {
+    return { field in
+        guard !field.isVoid else { return "// \(field.name) is Void\n" }
+        let name = field.nonClashingName
+        guard !field.isScalarArray else { return "&" + name }
+        let types = typeCastTuple(field.ctype, field.type.swift, varName: parameterName)
+        let code = types.toC.hasSuffix("ptr") ? "cast(\(types.toC))" : types.toC
+        return "\(field.name.swift) = \(code)"
     }
 }
 

@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 25/03/2016.
-//  Copyright © 2016, 2017, 2018, 2019 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018, 2019, 2020 Rene Hexel. All rights reserved.
 //
 #if os(Linux)
     import Glibc
@@ -346,9 +346,15 @@ public class GIR {
         /// list of contained types
         public let containedTypes: [CType]
         /// `true` if this is an optional
-        public let nullable: Bool
+        public let isNullable: Bool
         /// reference scope
         public let scope: String?
+        /// `true` if this is a readable element
+        public let isReadable: Bool
+        /// `true` if this is a writable element
+        public let isWritable: Bool
+        /// `true` if this is a private element
+        public let isPrivate: Bool
 
         /// Designated initialiser
         /// - Parameters:
@@ -359,11 +365,15 @@ public class GIR {
         ///   - introspectable: Set to `true` if introspectable
         ///   - deprecated: Documentation on deprecation status if non-`nil`
         ///   - isNullable: Set to `true` if this is a nullable type
+        ///   - isWritable: Set to `true` if this is a writable type
         ///   - contains: Array of C types contained within this type
         ///   - scope: The scope this type belongs in
-        public init(name: String, type: String, ctype: String, comment: String, introspectable: Bool = false, deprecated: String? = nil, isNullable: Bool = false, contains: [CType] = [], scope: String? = nil) {
+        public init(name: String, type: String, ctype: String, comment: String, introspectable: Bool = false, deprecated: String? = nil, isNullable: Bool = false, isPrivate: Bool = false, isReadable: Bool = false, isWritable: Bool = false, contains: [CType] = [], scope: String? = nil) {
             self.ctype = ctype
-            self.nullable = isNullable
+            self.isNullable = isNullable
+            self.isPrivate  = isPrivate
+            self.isReadable = isReadable
+            self.isWritable = isWritable
             self.containedTypes = contains
             self.scope = scope
             super.init(name: name, type: type, comment: comment, introspectable: introspectable, deprecated: deprecated)
@@ -376,11 +386,17 @@ public class GIR {
         ///   - nameAttr: Key for the attribute to extract the `name` property from
         ///   - typeAttr: Key for the attribute to extract the `type` property from
         ///   - cTypeAttr: Key for the attribute to extract the  C type property from
-        ///   - nullableAttr: Key for the attribute to extract the  nullability status from
+        ///   - nullableAttr: Key for the attribute to extract the nullability status from
+        ///   - privateAttr:  Key for the attribute to extract the privacy status from
+        ///   - readableAttr: Key for the attribute to extract the readbility status from
+        ///   - writableAttr: Key for the attribute to extract the writability status from
         ///   - scopeAttr: Key for the attribute to extract the  scope string from
-        public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", cTypeAttr: String? = nil, nullableAttr: String = "nullable", scopeAttr: String = "scope") {
+        public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", cTypeAttr: String? = nil, nullableAttr: String = "nullable", privateAttr: String = "private", readableAttr: String = "readable", writableAttr: String = "writable", scopeAttr: String = "scope") {
             containedTypes = node.children.filter { $0.name == "type" }.map { CType(node: $0, atIndex: i, cTypeAttr: "type") }
-            nullable = node.attribute(named: nullableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
+            isNullable = node.attribute(named: nullableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
+            isPrivate  = node.attribute(named: privateAttr) .map({ Int($0) }).map({ $0 != 0 }) ?? false
+            isReadable = node.attribute(named: readableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
+            isWritable = node.attribute(named: writableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
             scope = node.attribute(named: scopeAttr)
             if let cta = cTypeAttr {
                 ctype = node.attribute(named: cta) ?? "Void /* unknown \(i) */"
@@ -408,10 +424,13 @@ public class GIR {
         ///   - typeAttr: Key for the attribute to extract the `type` property from
         ///   - nullableAttr: Key for the attribute to extract the  nullability status from
         ///   - scopeAttr: Key for the attribute to extract the  scope string from
-        public init(fromChildrenOf node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", nullableAttr: String = "nullable", scopeAttr: String = "scope") {
+        public init(fromChildrenOf node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", nullableAttr: String = "nullable", privateAttr: String = "private", readableAttr: String = "readable", writableAttr: String = "writable", scopeAttr: String = "scope") {
             let type: String
             let ctype: String
-            nullable = node.attribute(named: nullableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
+            isNullable = node.attribute(named: nullableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
+            isPrivate  = node.attribute(named: privateAttr) .map({ Int($0) }).map({ $0 != 0 }) ?? false
+            isReadable = node.attribute(named: readableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
+            isWritable = node.attribute(named: writableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
             scope = node.attribute(named: scopeAttr)
             if let array = node.children.filter({ $0.name == "array" }).first {
                 containedTypes = array.children.filter { $0.name == "type" }.map { CType(node: $0, atIndex: i, cTypeAttr: "type") }
@@ -433,6 +452,57 @@ public class GIR {
 
         /// return whether the type is an array
         public var isArray: Bool { return !containedTypes.isEmpty }
+
+        /// return whether the receiver is an instance of the given record (class)
+        func isInstanceOf(_ record: GIR.Record?) -> Bool {
+            if let r = record, r.name == type.withoutNameSpace {
+                return true
+            } else {
+                return false
+            }
+        }
+        
+        /// return whether the receiver is an instance of the given record (class) or any of its ancestors
+        func isInstanceOfHierarchy(_ record: GIR.Record) -> Bool {
+            if isInstanceOf(record) { return true }
+            guard let parent = record.parentType else { return false }
+            return isInstanceOfHierarchy(parent)
+        }
+
+        /// indicates whether the receiver is any known kind of pointer
+        var isAnyKindOfPointer: Bool {
+            return ctype.isGPointer || ctype.isPointer || ctype.isCastablePointer || type.isSwiftPointer || type.hasSuffix("Func")
+        }
+        
+        /// indicates whether the receiver is an array of scalar values
+        var isScalarArray: Bool { return isArray && !isAnyKindOfPointer }
+        
+        /// return a non-clashing argument name
+        var nonClashingName: String {
+            let sw = name.swift
+            let nt = sw + (sw.isKnownType ? "_" : "")
+            let ct = ctype.innerCType.swiftType // swift name for C type
+            let st = ctype.innerCType.swift     // corresponding Swift type
+            let nc = nt == ct ? nt + "_" : nt
+            let ns = nc == st ? nc + "_" : nc
+            let na = ns == type.swift  ? ns + "_" : ns
+            return na
+        }
+
+        //// return the known type of the argument (nil if not known)
+        var knownType: GIR.Datatype? { return GIR.KnownTypes[type.isEmpty ? ctype : type] }
+        
+        //// return the known class/record of the argument (nil if not known)
+        var knownRecord: GIR.Record? { return GIR.KnownRecords[type.isEmpty ? ctype : type] }
+        
+        /// indicates whether the receiver is a known type
+        var isKnownType: Bool { return knownType != nil }
+        
+        /// indicates whether the receiver is a known class or record
+        var isKnownRecord: Bool { return knownRecord != nil }
+        
+        /// return the non-prefixed argument name
+        var argumentName: String { return nonClashingName }
     }
 
     /// a type alias is just a type with an underlying C type
@@ -538,6 +608,8 @@ public class GIR {
         public let constructors: [Method]
         /// Properties of this record
         public let properties: [Property]
+        /// Fieldss of this record
+        public let fields: [Field]
         /// List of signals for this record
         public let signals: [Signal]
         /// Parent type (`nil` for plain records)
@@ -569,18 +641,20 @@ public class GIR {
         ///   - functions: Functions associated with this record
         ///   - constructors: Constructors for this record
         ///   - properties: Properties of this record
+        ///   - fields: Fields of this record
         ///   - signals: List of signals for this record
         ///   - interfaces: Interfaces implemented by this record
         ///   - comment: Documentation text for the constant
         ///   - introspectable: Set to `true` if introspectable
         ///   - deprecated: Documentation on deprecation status if non-`nil`
-        public init(name: String, type: String, ctype: String, cprefix: String, typegetter: String, methods: [Method] = [], functions: [Function] = [], constructors: [Method] = [], properties: [Property] = [], signals: [Signal] = [], interfaces: [String] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
+        public init(name: String, type: String, ctype: String, cprefix: String, typegetter: String, methods: [Method] = [], functions: [Function] = [], constructors: [Method] = [], properties: [Property] = [], fields: [Field] = [], signals: [Signal] = [], interfaces: [String] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
             self.cprefix = cprefix
             self.typegetter = typegetter
             self.methods = methods
             self.functions = functions
             self.constructors = constructors
             self.properties = properties
+            self.fields = fields
             self.signals = signals
             self.implements = interfaces
             super.init(name: name, type: type, ctype: ctype, comment: comment, introspectable: introspectable, deprecated: deprecated)
@@ -602,6 +676,8 @@ public class GIR {
             constructors = cons.enumerated().map { Method(node: $0.1, atIndex: $0.0) }
             let props = children.filter { $0.name == "property" }
             properties = props.enumerated().map { Property(node: $0.1, atIndex: $0.0) }
+            let fattrs = children.filter { $0.name == "field" }
+            fields = fattrs.enumerated().map { Field(node: $0.1, atIndex: $0.0) }
             let sigs = children.filter { $0.name == "signal" }
             signals = sigs.enumerated().map { Signal(node: $0.1, atIndex: $0.0) }
             let interfaces = children.filter { $0.name == "implements" }
@@ -819,6 +895,11 @@ public class GIR {
         public override var kind: String { return "Property" }
     }
 
+    /// a field is a Property
+    public class Field: Property {
+        public override var kind: String { return "Field" }
+    }
+    
     /// data type representing a function/method argument or return type
     public class Argument: CType {
         public override var kind: String { return "Argument" }
