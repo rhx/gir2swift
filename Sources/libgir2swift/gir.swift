@@ -393,10 +393,10 @@ public class GIR {
         ///   - scopeAttr: Key for the attribute to extract the  scope string from
         public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", cTypeAttr: String? = nil, nullableAttr: String = "nullable", privateAttr: String = "private", readableAttr: String = "readable", writableAttr: String = "writable", scopeAttr: String = "scope") {
             containedTypes = node.children.filter { $0.name == "type" }.map { CType(node: $0, atIndex: i, cTypeAttr: "type") }
-            isNullable = node.attribute(named: nullableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
-            isPrivate  = node.attribute(named: privateAttr) .map({ Int($0) }).map({ $0 != 0 }) ?? false
-            isReadable = node.attribute(named: readableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? true
-            isWritable = node.attribute(named: writableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
+            isNullable = node.attribute(named: nullableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
+            isPrivate  = node.attribute(named: privateAttr) .flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
+            isReadable = node.attribute(named: readableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? true
+            isWritable = node.attribute(named: writableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
             scope = node.attribute(named: scopeAttr)
             if let cta = cTypeAttr {
                 ctype = node.attribute(named: cta) ?? "Void /* unknown \(i) */"
@@ -427,10 +427,10 @@ public class GIR {
         public init(fromChildrenOf node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", nullableAttr: String = "nullable", privateAttr: String = "private", readableAttr: String = "readable", writableAttr: String = "writable", scopeAttr: String = "scope") {
             let type: String
             let ctype: String
-            isNullable = node.attribute(named: nullableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
-            isPrivate  = node.attribute(named: privateAttr) .map({ Int($0) }).map({ $0 != 0 }) ?? false
-            isReadable = node.attribute(named: readableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
-            isWritable = node.attribute(named: writableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
+            isNullable = node.attribute(named: nullableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
+            isPrivate  = node.attribute(named: privateAttr) .flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
+            isReadable = node.attribute(named: readableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? true
+            isWritable = node.attribute(named: writableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
             scope = node.attribute(named: scopeAttr)
             if let array = node.children.filter({ $0.name == "array" }).first {
                 containedTypes = array.children.filter { $0.name == "type" }.map { CType(node: $0, atIndex: i, cTypeAttr: "type") }
@@ -681,7 +681,7 @@ public class GIR {
             let sigs = children.filter { $0.name == "signal" }
             signals = sigs.enumerated().map { Signal(node: $0.1, atIndex: $0.0) }
             let interfaces = children.filter { $0.name == "implements" }
-            implements = interfaces.enumerated().map { $0.1.attribute(named: "name") }.filter { $0 != nil }.map { $0! }
+            implements = interfaces.enumerated().compactMap { $0.1.attribute(named: "name") }
             super.init(node: node, atIndex: i, typeAttr: "type-name", cTypeAttr: "type")
         }
 
