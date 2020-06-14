@@ -357,7 +357,7 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
 public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: GIR.Record, indentation: String = "    ", ptr ptrName: String = "ptr") -> String {
     let mcode = methodCode(indentation, record: e, publicDesignation: "", ptr: ptrName)
     let vcode = computedPropertyCode(indentation, record: e, publicDesignation: "", ptr: ptrName)
-    let fcode = fieldCode(indentation, record: e, publicDesignation: "", ptr: ptrName)
+//    let fcode = fieldCode(indentation, record: e, publicDesignation: "", ptr: ptrName)
     let allFunctions = e.functions + globalFunctions
     let instanceMethods: [GIR.Method] = allFunctions.filter {
         let fun = $0
@@ -375,7 +375,7 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
         "var \(ptrName): UnsafeMutablePointer<\(ctype)> { return ptr.assumingMemoryBound(to: \(ctype).self) }\n\n" +
         methods.map(mcode).joined(separator: "\n") +
         gsPairs.map(vcode).joined(separator: "\n") +
-        e.fields.map(fcode).joined(separator: "\n") +
+//        e.fields.map(fcode).joined(separator: "\n") +
     "}\n\n"
     return code
 }
@@ -484,22 +484,25 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, publ
 
 
 /// Swift code for field properties
-public func fieldCode(_ indentation: String, record: GIR.Record, publicDesignation: String = "public ", ptr ptrName: String = "ptr") -> (GIR.Field) -> String {
+public func fieldCode(_ indentation: String, record: GIR.Record, publicDesignation: String = "public ", ptr: String = "_ptr") -> (GIR.Field) -> String {
     let doubleIndent = indentation + indentation
-    let scall = instanceSetter(doubleIndent, record, ptr: ptrName)
-    let ret = instanceReturnCode(doubleIndent, ptr: ptrName)
     return { (field: GIR.Field) -> String in
         let name = field.name.swiftName
-        guard !field.isPrivate else { return indentation + "// var \(name) is unavailable because it is private\n" }
+        let swname = name.camelCase.swift
+        guard !field.isPrivate else { return indentation + "// var \(swname) is unavailable because \(name) is private\n" }
+        let pointee = ptr + ".pointee." + name
+        let scall = instanceSetter(doubleIndent, record, ptr: "newValue")
+        let ret = instanceReturnCode(doubleIndent, ptr: pointee)
         guard field.isReadable || field.isWritable else { return indentation + "// var \(name) is unavailable because it is neigher readable nor writable\n" }
-        let type = typeCastTuple(field.ctype, field.type.swift).swift
-        let varDecl = swiftCode(field, indentation + "\(publicDesignation)var \(name): \(type) {\n", indentation: indentation)
+        guard !field.isVoid else { return indentation + "// var \(swname) is unavailable because \(name) is void\n" }
+        let type = typeCastTuple(field.ctype, field.type.swift, varName: pointee).swift
+        let varDecl = swiftCode(field, indentation + "\(publicDesignation)var \(swname): \(type) {\n", indentation: indentation)
         let deprecated = field.deprecated != nil ? "@available(*, deprecated) " : ""
         let getterCode: String
         if field.isReadable {
-            getterCode = swiftCode(field, doubleIndent + "\(deprecated)get {\n" +
-            doubleIndent + indentation + "let rv = " +
-            indentation  + ret(field) + doubleIndent +
+            getterCode = swiftCode(field, doubleIndent + "\(deprecated)get {\n" + doubleIndent +
+            indentation + "let rv = " + pointee + "\n" +
+            indentation + ret(field) + doubleIndent +
             "}\n", indentation: doubleIndent)
         } else {
             getterCode = ""
@@ -507,7 +510,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, publicDesignati
         let setterCode: String
         if field.isWritable {
             setterCode = swiftCode(field, doubleIndent + "\(deprecated) set {\n" +
-                doubleIndent + indentation + scall(field) +
+                doubleIndent + indentation + pointee + " = " + scall(field) + "\n" +
                 doubleIndent + "}\n", indentation: doubleIndent)
         } else {
             setterCode = ""
@@ -680,8 +683,7 @@ public func callSetter(_ indentation: String, _ record: GIR.Record? = nil, ptr p
 public func instanceSetter(_ indentation: String, _ record: GIR.Record? = nil, ptr parameterName: String = "newValue") -> (GIR.CType) -> String {
     return { field in
         guard !field.isVoid else { return "// \(field.name) is Void\n" }
-        let name = field.nonClashingName
-        guard !field.isScalarArray else { return "&" + name }
+        guard field.containedTypes.count > 1 else { return parameterName }
         let types = typeCastTuple(field.ctype, field.type.swift, varName: parameterName)
         let code = types.toC.hasSuffix("ptr") ? "cast(\(types.toC))" : types.toC
         return "\(field.name.swift) = \(code)"
