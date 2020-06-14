@@ -368,7 +368,7 @@ public class GIR {
         ///   - isWritable: Set to `true` if this is a writable type
         ///   - contains: Array of C types contained within this type
         ///   - scope: The scope this type belongs in
-        public init(name: String, type: String, ctype: String, comment: String, introspectable: Bool = false, deprecated: String? = nil, isNullable: Bool = false, isPrivate: Bool = false, isReadable: Bool = false, isWritable: Bool = false, contains: [CType] = [], scope: String? = nil) {
+        public init(name: String, type: String, ctype: String, comment: String, introspectable: Bool = false, deprecated: String? = nil, isNullable: Bool = false, isPrivate: Bool = false, isReadable: Bool = true, isWritable: Bool = false, contains: [CType] = [], scope: String? = nil) {
             self.ctype = ctype
             self.isNullable = isNullable
             self.isPrivate  = isPrivate
@@ -395,7 +395,7 @@ public class GIR {
             containedTypes = node.children.filter { $0.name == "type" }.map { CType(node: $0, atIndex: i, cTypeAttr: "type") }
             isNullable = node.attribute(named: nullableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
             isPrivate  = node.attribute(named: privateAttr) .map({ Int($0) }).map({ $0 != 0 }) ?? false
-            isReadable = node.attribute(named: readableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
+            isReadable = node.attribute(named: readableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? true
             isWritable = node.attribute(named: writableAttr).map({ Int($0) }).map({ $0 != 0 }) ?? false
             scope = node.attribute(named: scopeAttr)
             if let cta = cTypeAttr {
