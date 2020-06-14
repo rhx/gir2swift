@@ -95,13 +95,13 @@ Normally, `gir2swift` tries to translate constants from C to Swift, as per the d
 To build, you need at least Swift 4.2 (Swift 5.x should work fine), download from https://swift.org/download/ -- if you are using macOS, make sure you have the command line tools installed as well).  Test that your compiler works using `swift --version`, which should give you something like
 
 	$ swift --version
-	Apple Swift version 5.1 (swiftlang-1100.0.270.13 clang-1100.0.33.7)
-	Target: x86_64-apple-darwin18.6.0
+	Apple Swift version 5.2.4 (swiftlang-1103.0.32.9 clang-1103.0.32.53)
+      Target: x86_64-apple-darwin19.6.0
 
 on macOS, or on Linux you should get something like:
 
 	$ swift --version
-	Swift version 5.1 (swift-5.1-RELEASE)
+	Swift version 5.2.4 (swift-5.2.4-RELEASE)
 	Target: x86_64-unknown-linux-gnu
 
 ### LibXML 2.9.4 or higher
