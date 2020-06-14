@@ -11,6 +11,16 @@ public extension GIR {
     /// code boiler plate
     var boilerPlate: String {
         return """
+
+               func cast(_ param: UInt)   -> Int    {    Int(bitPattern: param) }
+               func cast(_ param: Int)    -> UInt   {   UInt(bitPattern: param) }
+               func cast(_ param: UInt16) -> Int16  {  Int16(bitPattern: param) }
+               func cast(_ param: Int16)  -> UInt16 { UInt16(bitPattern: param) }
+               func cast(_ param: UInt32) -> Int32  {  Int32(bitPattern: param) }
+               func cast(_ param: Int32)  -> UInt32 { UInt32(bitPattern: param) }
+               func cast(_ param: UInt64) -> Int64  {  Int64(bitPattern: param) }
+               func cast(_ param: Int64)  -> UInt64 { UInt64(bitPattern: param) }
+
                func cast(_ param: UnsafeRawPointer) -> OpaquePointer! {
                    return OpaquePointer(param)
                }
@@ -336,13 +346,21 @@ public func valueCode(_ indentation: String) -> (GIR.Enumeration.Member) -> Stri
 public func bitfieldTypeHead(_ bf: GIR.Bitfield, enumRawType: String = "UInt32", indentation: String) -> String {
     let bftype = bf.type.swift
     return swiftCode(bf, "public struct \(bf.escapedName.swift): OptionSet {\n" + indentation +
+        "/// The corresponding value of the raw type\n" + indentation +
         "public var rawValue: \(enumRawType) = 0\n" + indentation +
+        "/// The equivalent raw Int value\n" + indentation +
         "public var intValue: Int { get { Int(rawValue) } set { rawValue = \(enumRawType)(newValue) } }\n" + indentation +
+        "/// The equivalent raw `gint` value\n" + indentation +
         "public var int: gint { get { gint(rawValue) } set { rawValue = \(enumRawType)(newValue) } }\n" + indentation +
-        "public var value: \(bftype) { get { \(bftype)(rawValue: rawValue) } set { rawValue = \(enumRawType)(newValue.rawValue) } }\n\n" + indentation +
+        "/// The equivalent underlying `\(bftype)` enum value\n" + indentation +
+        "public var value: \(bftype) { get { \(bftype)(rawValue: cast(rawValue)) } set { rawValue = \(enumRawType)(newValue.rawValue) } }\n\n" + indentation +
+        "/// Creates a new instance with the specified raw value\n" + indentation +
         "public init(rawValue: \(enumRawType)) { self.rawValue = rawValue }\n" + indentation +
+        "/// Creates a new instance with the specified `\(bftype)` enum value\n" + indentation +
         "public init(_ enumValue: \(bftype)) { self.rawValue = \(enumRawType)(enumValue.rawValue) }\n" + indentation +
+        "/// Creates a new instance with the specified Int value\n" + indentation +
         "public init(_ intValue: Int)   { self.rawValue = \(enumRawType)(intValue)  }\n" + indentation +
+        "/// Creates a new instance with the specified `gint` value\n" + indentation +
         "public init(_ gintValue: gint) { self.rawValue = \(enumRawType)(gintValue) }\n\n"
     )
 }
@@ -351,15 +369,27 @@ public func bitfieldTypeHead(_ bf: GIR.Bitfield, enumRawType: String = "UInt32",
 public func swiftCode(_ bf: GIR.Bitfield) -> String {
     let indent = "    "
     let head = bitfieldTypeHead(bf, indentation: indent)
-    let code = head + bf.members.map(bitfieldValueCode(bf, indent)).joined(separator: "\n") + "\n}"
+    let names = Set(bf.members.map(\.name.camelCase.swift))
+    let deprecated = bf.members.lazy.filter { !names.contains($0.name.swiftName) }
+    let code = head + bf.members.map(bitfieldValueCode(bf, indent)).joined(separator: "\n") + "\n\n"
+                    + deprecated.map(bitfieldDeprecated(bf, indent)).joined(separator: "\n") + "\n}"
     return code
 }
 
-/// Swift code representation of an enum value
+/// Swift code representation of a bit field value
 public func bitfieldValueCode(_ bf: GIR.Bitfield, _ indentation: String) -> (GIR.Bitfield.Member) -> String {
     let type = bf.escapedName.swift
     return { (m: GIR.Enumeration.Member) -> String in
         swiftCode(m, indentation + "public static let \(m.name.camelCase.swift) = \(type)(\(m.ctype.swift)) /* \(m.value) */", indentation: indentation)
+    }
+}
+
+
+/// Deprecated Swift code representation of a bit field value
+public func bitfieldDeprecated(_ bf: GIR.Bitfield, _ indentation: String) -> (GIR.Bitfield.Member) -> String {
+    let type = bf.escapedName.swift
+    return { (m: GIR.Enumeration.Member) -> String in
+        swiftCode(m, indentation + "@available(*, deprecated) public static let \(m.name.swiftName) = \(type)(\(m.ctype.swift)) /* \(m.value) */", indentation: indentation)
     }
 }
 
