@@ -332,6 +332,38 @@ public func valueCode(_ indentation: String) -> (GIR.Enumeration.Member) -> Stri
 }
 
 
+/// Swift code type definition of a bitfield
+public func bitfieldTypeHead(_ bf: GIR.Bitfield, enumRawType: String = "UInt32", indentation: String) -> String {
+    let bftype = bf.type.swift
+    return swiftCode(bf, "public struct \(bf.escapedName.swift): OptionSet {\n" + indentation +
+        "public var rawValue: \(enumRawType) = 0\n" + indentation +
+        "public var intValue: Int { get { Int(rawValue) } set { rawValue = \(enumRawType)(newValue) } }\n" + indentation +
+        "public var int: gint { get { gint(rawValue) } set { rawValue = \(enumRawType)(newValue) } }\n" + indentation +
+        "public var value: \(bftype) { get { \(bftype)(rawValue: rawValue) } set { rawValue = \(enumRawType)(newValue.rawValue) } }\n\n" + indentation +
+        "public init(rawValue: \(enumRawType)) { self.rawValue = rawValue }\n" + indentation +
+        "public init(_ enumValue: \(bftype)) { self.rawValue = \(enumRawType)(enumValue.rawValue) }\n" + indentation +
+        "public init(_ intValue: Int)   { self.rawValue = \(enumRawType)(intValue)  }\n" + indentation +
+        "public init(_ gintValue: gint) { self.rawValue = \(enumRawType)(gintValue) }\n\n"
+    )
+}
+
+/// Swift code representation of an enum
+public func swiftCode(_ bf: GIR.Bitfield) -> String {
+    let indent = "    "
+    let head = bitfieldTypeHead(bf, indentation: indent)
+    let code = head + bf.members.map(bitfieldValueCode(bf, indent)).joined(separator: "\n") + "\n}"
+    return code
+}
+
+/// Swift code representation of an enum value
+public func bitfieldValueCode(_ bf: GIR.Bitfield, _ indentation: String) -> (GIR.Bitfield.Member) -> String {
+    let type = bf.escapedName.swift
+    return { (m: GIR.Enumeration.Member) -> String in
+        swiftCode(m, indentation + "public static let \(m.name.camelCase.swift) = \(type)(\(m.ctype.swift)) /* \(m.value) */", indentation: indentation)
+    }
+}
+
+
 /// Swift protocol representation of a record/class as a wrapper of a pointer
 public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: String = "    ", ptr: String = "ptr") -> String {
     let p = (parent.isEmpty ? "" : ": \(parent)")
@@ -648,7 +680,7 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         guard !arg.isScalarArray else { return "&" + name }
         let instance = !hadInstance && (arg.instance || arg.isInstanceOf(record))
         if instance { hadInstance = true }
-        let types = typeCastTuple(arg.ctype, arg.type.swift, varName: instance ? ptr : (name + (arg.isKnownRecord ? ".ptr" : "")))
+        let types = typeCastTuple(arg.ctype, arg.type.swift, varName: instance ? ptr : (name + (arg.isKnownRecord ? ".ptr" : "") + (!arg.isAnyKindOfPointer && arg.isKnownBitfield ? ".value" : "")))
         let param = types.toC.hasSuffix("ptr") ? "cast(\(types.toC))" : types.toC
         return param
     }

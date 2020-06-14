@@ -125,6 +125,8 @@ public class GIR {
     public static var KnownTypes:   [ String : Datatype ] = [:]
     /// context of known records
     public static var KnownRecords: [ String : Record ] = [:]
+    /// context of known records
+    public static var KnownBitfields: [ String : Bitfield ] = [:]
     /// context of known functions
     public static var KnownFunctions: [ String : Function ] = [:]
     /// Type of `GError`
@@ -151,6 +153,7 @@ public class GIR {
         }
         withUnsafeMutablePointer(to: &GIR.KnownTypes) { (knownTypes: UnsafeMutablePointer<[ String : Datatype ]>) -> Void in
           withUnsafeMutablePointer(to: &GIR.KnownRecords) { (knownRecords: UnsafeMutablePointer<[ String : Record]>) -> Void in
+            withUnsafeMutablePointer(to: &GIR.KnownBitfields) { (knownBitfields: UnsafeMutablePointer<[ String : Bitfield]>) -> Void in
             let prefixed: (String) -> String = { $0.prefixed(with: self.prefix) }
             
             func setKnown<T>(_ d: UnsafeMutablePointer<[ String : T]>) -> (String, T) -> Bool {
@@ -163,6 +166,7 @@ public class GIR {
             }
             let setKnownType   = setKnown(knownTypes)
             let setKnownRecord = setKnown(knownRecords)
+            let setKnownBitfield = setKnown(knownBitfields)
             //
             // get all type alias records
             //
@@ -184,6 +188,10 @@ public class GIR {
                 guard notKnownType($0) else { return false }
                 return setKnownRecord($0.name, $0)
             }
+            let notKnownBitfield: (Bitfield) -> Bool     = {
+                guard notKnownType($0) else { return false }
+                return setKnownBitfield($0.name, $0)
+            }
             let notKnownFunction: (Function) -> Bool = {
                 let name = $0.name
                 guard GIR.KnownFunctions[name] == nil else { return false }
@@ -196,7 +204,7 @@ public class GIR {
             //
             constants    = enumerate(xml, path: "/*/*/gir:constant",    inNS: namespaces, quiet: quiet, construct: { Constant(node: $0, atIndex: $1) },    check: notKnownType)
             enumerations = enumerate(xml, path: "/*/*/gir:enumeration", inNS: namespaces, quiet: quiet, construct: { Enumeration(node: $0, atIndex: $1) }, check: notKnownType)
-            bitfields    = enumerate(xml, path: "/*/*/gir:bitfield",    inNS: namespaces, quiet: quiet, construct: { Bitfield(node: $0, atIndex: $1) },    check: notKnownType)
+            bitfields    = enumerate(xml, path: "/*/*/gir:bitfield",    inNS: namespaces, quiet: quiet, construct: { Bitfield(node: $0, atIndex: $1) },    check: notKnownBitfield)
             interfaces   = enumerate(xml, path: "/*/*/gir:interface",   inNS: namespaces, quiet: quiet, construct: { Interface(node: $0, atIndex: $1) }, check: notKnownRecord)
             records      = enumerate(xml, path: "/*/*/gir:record",      inNS: namespaces, quiet: quiet, construct: { Record(node: $0, atIndex: $1) },    check: notKnownRecord)
             classes      = enumerate(xml, path: "/*/*/gir:class",       inNS: namespaces, quiet: quiet, construct: { Class(node: $0, atIndex: $1) },     check: notKnownRecord)
@@ -204,6 +212,7 @@ public class GIR {
             functions    = enumerate(xml, path: "//gir:function",       inNS: namespaces, quiet: quiet, construct: {
                 isFreeFunction($0) ? Function(node: $0, atIndex: $1) : nil
                 }, check: notKnownFunction)
+          }
         }
       }
     }
@@ -495,11 +504,17 @@ public class GIR {
         //// return the known class/record of the argument (nil if not known)
         var knownRecord: GIR.Record? { return GIR.KnownRecords[type.isEmpty ? ctype : type] }
         
+        //// return the known bitfield the argument represents (nil if not known)
+        var knownBitfield: GIR.Bitfield? { return GIR.KnownBitfields[type.isEmpty ? ctype : type] }
+
         /// indicates whether the receiver is a known type
         var isKnownType: Bool { return knownType != nil }
-        
+
         /// indicates whether the receiver is a known class or record
         var isKnownRecord: Bool { return knownRecord != nil }
+
+        /// indicates whether the receiver is a known bit field
+        var isKnownBitfield: Bool { return knownBitfield != nil }
         
         /// return the non-prefixed argument name
         var argumentName: String { return nonClashingName }
