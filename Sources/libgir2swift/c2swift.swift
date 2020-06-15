@@ -76,6 +76,10 @@ private let swiftReplacementsForC = [ "char" : "CChar", "unsigned char" : "CUnsi
   "int32_t" : "Int32", "uint32_t" : "UInt32",
   "int64_t" : "Int64", "uint64_t" : "UInt64",
   "Error" : "ErrorType", "ErrorType" : "ErrorEnum" ]
+
+/// Verbatim Swift type equivalents for C types
+private let swiftVerbatimReplacements = swiftReplacementsForC.mapValues { $0 == "String" ? "UnsafePointer<CChar>" : $0 }
+
 /// Types that already exist in Swift and therefore need to be treated specially
 private let reservedTypes: Set = ["String", "Array", "Optional", "Set", "Error", "ErrorProtocol"]
 /// Known Swift type names
@@ -186,6 +190,12 @@ public extension String {
         return swiftIdentifier
     }
 
+    /// return a valid Swift type for an underlying C type
+    var swiftTypeVerbatim: String {
+        if let s = swiftVerbatimReplacements[self] { return s }
+        return swiftIdentifier
+    }
+    
     /// return a valid Swift name by appending '_' to a reserved name
     var swiftName: String {
         guard !reservedNames.contains(self) else { return self + "_" }
@@ -202,6 +212,16 @@ public extension String {
         return s.swiftName
     }
 
+    /// return a swift representation of an identifier string (escaped if necessary)
+    var swiftVerbatim: String {
+        if let s = castableScalars[self] { return s }
+        if let s = castablePointers[self] { return s }
+        if let s = swiftVerbatimReplacements[self] { return s }
+        let s = swiftType
+        guard !reservedTypes.contains(s) else { return s + "Type" }
+        return s.swiftName
+    }
+    
     /// indicate whether the type represented by the receiver is a constant
     var isCConst: Bool {
         let ns = trimmed
@@ -421,18 +441,19 @@ func cast_from_swift(_ value: String, forCType t: String) -> String {
 typealias TypeCastTuple = (c: String, swift: String, toC: String, toSwift: String)
 
 /// return a C+Swift type pair
-func typeCastTuple(_ ctype: String, _ swiftType: String, varName: String = "rv", forceCast: Bool = false) -> TypeCastTuple {
+func typeCastTuple(_ ctype: String, _ swiftType: String, varName: String = "rv", castVar: String = "rv", forceCast: Bool = false, convertToSwiftTypes: Bool = true) -> TypeCastTuple {
+    let swiftStringType = convertToSwiftTypes ? "String" : "UnsafePointer<CChar>"
     let u = ctype.unwrappedCTypeWithCount()
     let rawPointers = u.pointerCount + ((swiftType.isPointer || ctype.isPointer) ? 1 : 0)
     let ct = u.gType != "" ? u.gType : swiftType
+    let chr = (ct.contains("uchar") || ct.contains("unsigned")) ? "CUnsignedChar" : "CChar"
     let st: String
     let cast: String
     let nPointers: Int
-    if swiftType == "String" && u.pointerCount == 1 {
-        let chr = (ct.contains("uchar") || ct.contains("unsigned")) ? "CUnsignedChar" : "CChar"
+    if swiftType == swiftStringType && u.pointerCount == 1 {
         nPointers = u.pointerCount
         st = swiftType
-        cast = varName == "rv" ? "\(varName).map { String(cString: UnsafePointer<\(chr)>($0)) }" : varName
+        cast = varName == castVar ? (convertToSwiftTypes ? "\(varName).map { String(cString: UnsafePointer<\(chr)>($0)) }" : "cast(\(varName))") : varName
     } else {
         nPointers = rawPointers
         st = u.swift != "" ? u.swift : ct
@@ -440,8 +461,8 @@ func typeCastTuple(_ ctype: String, _ swiftType: String, varName: String = "rv",
     }
     let cswift: TypeCastTuple
     switch (ct, st) {
-    case ("utf8", _), (_, "String"):
-        cswift = nPointers == 1 ? (ct, st, varName, cast) : (ct, "[String]", varName, "asStringArray(\(cast))")
+    case ("utf8", _), (_, swiftStringType):
+        cswift = nPointers == 1 ? (ct, st, varName, cast) : (ct, "[\(swiftStringType)]", varName, "asStringArray(\(cast))")
         if nPointers > 2 {
             fputs("Warning: unhandled pointer count of \(nPointers) for '\(ct)' as '\(st)'", stderr)
         }

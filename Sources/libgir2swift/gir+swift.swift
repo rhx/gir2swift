@@ -419,7 +419,7 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
 public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: GIR.Record, indentation: String = "    ", ptr ptrName: String = "ptr") -> String {
     let mcode = methodCode(indentation, record: e, publicDesignation: "", ptr: ptrName)
     let vcode = computedPropertyCode(indentation, record: e, publicDesignation: "", ptr: ptrName)
-//    let fcode = fieldCode(indentation, record: e, publicDesignation: "", ptr: ptrName)
+    let fcode = fieldCode(indentation, record: e, publicDesignation: "", ptr: ptrName)
     let allFunctions = e.functions + globalFunctions
     let instanceMethods: [GIR.Method] = allFunctions.filter {
         let fun = $0
@@ -436,8 +436,8 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
         "/// Return the stored, untyped pointer as a typed pointer to the `\(ctype)` instance.\n" + indentation +
         "var \(ptrName): UnsafeMutablePointer<\(ctype)> { return ptr.assumingMemoryBound(to: \(ctype).self) }\n\n" +
         methods.map(mcode).joined(separator: "\n") +
-        gsPairs.map(vcode).joined(separator: "\n") +
-//        e.fields.map(fcode).joined(separator: "\n") +
+        gsPairs.map(vcode).joined(separator: "\n") + "\n" +
+        e.fields.map(fcode).joined(separator: "\n") +
     "}\n\n"
     return code
 }
@@ -550,14 +550,15 @@ public func fieldCode(_ indentation: String, record: GIR.Record, publicDesignati
     let doubleIndent = indentation + indentation
     return { (field: GIR.Field) -> String in
         let name = field.name.swiftName
-        let swname = name.camelCase.swift
+        let swname = name.camelCase.swiftVerbatim
         guard !field.isPrivate else { return indentation + "// var \(swname) is unavailable because \(name) is private\n" }
+        let containedType = field.containedTypes.first ?? field
         let pointee = ptr + ".pointee." + name
-        let scall = instanceSetter(doubleIndent, record, ptr: "newValue")
-        let ret = instanceReturnCode(doubleIndent, ptr: pointee)
+        let scall = instanceSetter(doubleIndent, record, target: pointee, ptr: "newValue")
+        let ret = instanceReturnCode(doubleIndent, ptr: "rv", castVar: "rv")
         guard field.isReadable || field.isWritable else { return indentation + "// var \(name) is unavailable because it is neigher readable nor writable\n" }
         guard !field.isVoid else { return indentation + "// var \(swname) is unavailable because \(name) is void\n" }
-        let type = typeCastTuple(field.ctype, field.type.swift, varName: pointee).swift
+        let type = typeCastTuple(containedType.ctype, field.ctype.swiftVerbatim, varName: pointee, castVar: pointee, convertToSwiftTypes: false).swift
         let varDecl = swiftCode(field, indentation + "\(publicDesignation)var \(swname): \(type) {\n", indentation: indentation)
         let deprecated = field.deprecated != nil ? "@available(*, deprecated) " : ""
         let getterCode: String
@@ -572,7 +573,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, publicDesignati
         let setterCode: String
         if field.isWritable {
             setterCode = swiftCode(field, doubleIndent + "\(deprecated) set {\n" +
-                doubleIndent + indentation + pointee + " = " + scall(field) + "\n" +
+                doubleIndent + indentation + scall(field) + "\n" +
                 doubleIndent + "}\n", indentation: doubleIndent)
         } else {
             setterCode = ""
@@ -675,17 +676,19 @@ public func returnCode(_ indentation: String, _ tr: (typeName: String, record: G
 }
 
 /// Return code for instances (e.g. fields)
-public func instanceReturnCode(_ indentation: String, _ tr: (typeName: String, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil, ptr: String = "ptr", hasParent: Bool = false) -> (GIR.CType) -> String {
-    returnCode(indentation, tr, ptr: ptr, hasParent: hasParent) { $0 }
+public func instanceReturnCode(_ indentation: String, _ tr: (typeName: String, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil, ptr: String = "ptr", castVar: String = "rv", hasParent: Bool = false, forceCast doForce: Bool = true, convertToSwiftTypes doConvert: Bool = false) -> (GIR.CType) -> String {
+    returnCode(indentation, tr, ptr: ptr, rv: castVar, hasParent: hasParent, forceCast: doForce, convertToSwiftTypes: doConvert) { $0 }
 }
 
 /// Generic return code for methods/types
-public func returnCode<T>(_ indentation: String, _ tr: (typeName: String, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil, ptr: String = "ptr", hasParent: Bool = false, extract: @escaping (T) -> GIR.CType) -> (T) -> String {
+public func returnCode<T>(_ indentation: String, _ tr: (typeName: String, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil, ptr: String = "ptr", rv: String = "rv", hasParent: Bool = false, forceCast doForce: Bool = false, convertToSwiftTypes doConvert: Bool = true, extract: @escaping (T) -> GIR.CType) -> (T) -> String {
     return { (param: T) -> String in
-        let rv = extract(param)
-        guard !rv.isVoid else { return "\n" }
-        let isInstance = tr?.record != nil && rv.isInstanceOfHierarchy((tr?.record)!)
-        let cast2swift = typeCastTuple(rv.ctype, rv.type.swift, forceCast: isInstance).toSwift
+        let field = extract(param)
+        guard !field.isVoid else { return "\n" }
+        let isInstance = tr?.record != nil && field.isInstanceOfHierarchy((tr?.record)!)
+//        let containedType = field.containedTypes.first ?? field
+        let swiftType = doConvert ? field.type.swift : field.type.swiftVerbatim
+        let cast2swift = typeCastTuple(field.ctype, swiftType, varName: rv, castVar: rv, forceCast: doForce || isInstance, convertToSwiftTypes: doConvert).toSwift
         guard isInstance, let tr = tr else { return indentation + "return \(cast2swift)\n" }
         let (cons, cast, end) = tr.isConstructor ?
             (tr.isConvenience ? ("self.init", cast2swift, "") : (hasParent ?
@@ -742,13 +745,16 @@ public func callSetter(_ indentation: String, _ record: GIR.Record? = nil, ptr p
 }
 
 /// Swift code for assigning the raw return value
-public func instanceSetter(_ indentation: String, _ record: GIR.Record? = nil, ptr parameterName: String = "newValue") -> (GIR.CType) -> String {
+public func instanceSetter(_ indentation: String, _ record: GIR.Record? = nil, target: String = "ptr", ptr parameterName: String = "newValue", castVar: String = "newValue", convertToSwiftTypes doConvert: Bool = false) -> (GIR.CType) -> String {
     return { field in
         guard !field.isVoid else { return "// \(field.name) is Void\n" }
-        guard field.containedTypes.count > 1 else { return parameterName }
-        let types = typeCastTuple(field.ctype, field.type.swift, varName: parameterName)
-        let code = types.toC.hasSuffix("ptr") ? "cast(\(types.toC))" : types.toC
-        return "\(field.name.swift) = \(code)"
+        let containedType = field.containedTypes.first ?? field
+        let ftype = field.type.isEmpty ? field.ctype : field.type
+        let swiftType = doConvert ? ftype.swift : ftype.swiftVerbatim
+        let types = typeCastTuple(containedType.ctype, swiftType, varName: parameterName, castVar: castVar, convertToSwiftTypes: doConvert)
+        let cType = types.toC
+        let code = cType == castVar || cType.hasSuffix("ptr") ? "cast(\(cType))" : cType
+        return "\(target) = \(code)"
     }
 }
 
