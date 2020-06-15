@@ -502,7 +502,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, publ
     let scall = callSetter(doubleIndent, record, ptr: ptrName)
     let ret = returnCode(doubleIndent, ptr: ptrName)
     return { (pair: GetterSetterPair) -> String in
-        let name = pair.name.swiftName
+        let name = pair.name.swiftQuoted
         let getter = pair.getter
         let gs: GIR.Method
         let type: String
@@ -519,7 +519,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, publ
             gs = setter!
         }
         let property: GIR.CType
-        if let prop = record.properties.filter({ $0.name.swiftName == name }).first {
+        if let prop = record.properties.filter({ $0.name.swiftQuoted == name }).first {
             property = prop
         } else {
             property = gs
@@ -549,8 +549,8 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, publ
 public func fieldCode(_ indentation: String, record: GIR.Record, publicDesignation: String = "public ", ptr: String = "_ptr") -> (GIR.Field) -> String {
     let doubleIndent = indentation + indentation
     return { (field: GIR.Field) -> String in
-        let name = field.name.swiftName
-        let swname = name.camelCase.swiftVerbatim
+        let name = field.name.swiftQuoted
+        let swname = name.camelCase
         guard !field.isPrivate else { return indentation + "// var \(swname) is unavailable because \(name) is private\n" }
         let containedType = field.containedTypes.first ?? field
         let pointee = ptr + ".pointee." + name
