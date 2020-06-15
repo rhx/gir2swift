@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 29/04/2016.
-//  Copyright © 2016, 2017, 2018, 2019 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018, 2019, 2020 Rene Hexel. All rights reserved.
 //
 #if os(Linux)
     import Glibc
@@ -77,8 +77,23 @@ private let swiftReplacementsForC = [ "char" : "CChar", "unsigned char" : "CUnsi
   "int64_t" : "Int64", "uint64_t" : "UInt64",
   "Error" : "ErrorType", "ErrorType" : "ErrorEnum" ]
 
+/// Mapping that allows casting from original C types to more idiomatic Swift types
+/// FIXME: these types only work correctly on 64bit systems
+private let swiftConvenience = [ "CInt" : "Int", "CUnsignedInt" : "Int",
+  "CLong" : "Int", "CUnsignedLong" : "Int", "CLongLong" : "Int", "CUnsignedLongLong" : "Int",
+  "CShort" : "Int", "CUnsignedShort" : "Int", "CDouble" : "Double", "CFloat" : "Double" ]
+
+/// Idiomatic Swift type equivalents for C types
+private let swiftIdiomaticReplacements: [ String : String] = swiftReplacementsForC.mapValues {
+    guard let replacement = swiftConvenience[$0] else { return $0 }
+    return replacement
+}
+
 /// Verbatim Swift type equivalents for C types
 private let swiftVerbatimReplacements = swiftReplacementsForC.mapValues { $0 == "String" ? "UnsafePointer<CChar>" : $0 }
+
+/// Verbatim Swift type equivalents for C types
+private let swiftVerbatimIdiomaticReplacements = swiftIdiomaticReplacements.mapValues { $0 == "String" ? "UnsafePointer<CChar>" : $0 }
 
 /// Types that already exist in Swift and therefore need to be treated specially
 private let reservedTypes: Set = ["String", "Array", "Optional", "Set", "Error", "ErrorProtocol"]
@@ -190,15 +205,33 @@ public extension String {
         return swiftIdentifier
     }
 
-    /// return a valid Swift type for an underlying C type
+    /// return a valid, idiomatic Swift type for an underlying C type
+    var swiftTypeIdiomatic: String {
+        if let s = swiftIdiomaticReplacements[self] { return s }
+        return swiftIdentifier
+    }
+    
+    /// return a valid, verbatim Swift type for an underlying C type
     var swiftTypeVerbatim: String {
         if let s = swiftVerbatimReplacements[self] { return s }
         return swiftIdentifier
     }
     
+    /// return an idiomatic, verbatim Swift type for an underlying C type
+    var swiftTypeVerbatimIdiomatic: String {
+        if let s = swiftVerbatimIdiomaticReplacements[self] { return s }
+        return swiftIdentifier
+    }
+
     /// return a valid Swift name by appending '_' to a reserved name
     var swiftName: String {
         guard !reservedNames.contains(self) else { return self + "_" }
+        return swiftIdentifier
+    }
+
+    /// return a valid Swift name by quoting a reserved name
+    var swiftQuoted: String {
+        guard !reservedNames.contains(self) else { return "`" + self + "`" }
         return swiftIdentifier
     }
 
@@ -212,7 +245,17 @@ public extension String {
         return s.swiftName
     }
 
-    /// return a swift representation of an identifier string (escaped if necessary)
+    /// return an idiomatic swift representation of an identifier string (escaped if necessary)
+    var swiftIdiomatic: String {
+        if let s = castableScalars[self] { return s }
+        if let s = castablePointers[self] { return s }
+        if let s = swiftIdiomaticReplacements[self] { return s }
+        let s = swiftType
+        guard !reservedTypes.contains(s) else { return s + "Type" }
+        return s.swiftName
+    }
+    
+    /// return a verbatim swift representation of an identifier string (escaped if necessary)
     var swiftVerbatim: String {
         if let s = castableScalars[self] { return s }
         if let s = castablePointers[self] { return s }
@@ -221,7 +264,17 @@ public extension String {
         guard !reservedTypes.contains(s) else { return s + "Type" }
         return s.swiftName
     }
-    
+
+    /// return a verbatim, idiomatic swift representation of an identifier string (escaped if necessary)
+    var swiftVerbatimIdiomatic: String {
+        if let s = castableScalars[self] { return s }
+        if let s = castablePointers[self] { return s }
+        if let s = swiftVerbatimIdiomaticReplacements[self] { return s }
+        let s = swiftType
+        guard !reservedTypes.contains(s) else { return s + "Type" }
+        return s.swiftName
+    }
+
     /// indicate whether the type represented by the receiver is a constant
     var isCConst: Bool {
         let ns = trimmed
