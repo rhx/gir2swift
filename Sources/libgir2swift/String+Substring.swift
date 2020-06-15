@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 25/04/2016.
-//  Copyright © 2016, 2017, 2018, 2019 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018, 2019, 2020 Rene Hexel. All rights reserved.
 //
 //
 #if os(Linux)
@@ -52,18 +52,6 @@ public extension String {
         let components = split(separator: s)
         guard components.count > 1 else { return nil }
         return components[components.index(after: components.startIndex)..<components.endIndex].joined(separator: String(s))
-    }
-
-    /// return the capidalised name of the receiver
-    var capitalised: String {
-        guard let u = unicodeScalars.first, u.isASCII else { return self }
-        let c = Int32(u.value)
-        guard islower(c) != 0 else { return self }
-        let utf = utf8
-        let t = utf[utf.index(after: utf.startIndex)..<utf.endIndex]
-        guard let upper = UnicodeScalar(UInt16(toupper(c))),
-              let tail = String(t) else { return self }
-        return String(Character(upper))+tail
     }
 
     /// return the de-capidalised (lower-case first character) name of the receiver
@@ -125,6 +113,6 @@ public extension String {
 
     /// convert a signal name component with '-' to camel case
     var camelSignalComponent: String {
-        return camelise { $0 == minus || $0 == underscore }.capitalised
+        return camelise { $0 == minus || $0 == underscore }.capitalized
     }
 }

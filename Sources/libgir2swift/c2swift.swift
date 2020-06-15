@@ -205,6 +205,13 @@ public extension String {
         return swiftIdentifier
     }
 
+    /// Assuming the receiver is a Swift type,
+    /// return an idiomatic type corresponding to the receiver
+    var idiomatic: String {
+        guard let idiomatic = swiftConvenience[self] else { return self }
+        return idiomatic
+    }
+
     /// return a valid, idiomatic Swift type for an underlying C type
     var swiftTypeIdiomatic: String {
         if let s = swiftIdiomaticReplacements[self] { return s }
@@ -480,8 +487,8 @@ func toSwift(_ ctype: String) -> String {
 
 
 /// C type cast to swift
-func cast_to_swift(_ value: String, forCType t: String) -> String {
-    if let s = castableScalars[t] { return "\(s)(\(s == "Bool" ? value + " != 0" : value))" }
+func cast_to_swift(_ value: String, forCType t: String, useIdiomaticSwift: Bool = true) -> String {
+    if let s = castableScalars[t] { return "\(useIdiomaticSwift ? s.idiomatic : s)(\(s == "Bool" ? value + " != 0" : value))" }
     return value
 }
 
@@ -494,7 +501,7 @@ func cast_from_swift(_ value: String, forCType t: String) -> String {
 typealias TypeCastTuple = (c: String, swift: String, toC: String, toSwift: String)
 
 /// return a C+Swift type pair
-func typeCastTuple(_ ctype: String, _ swiftType: String, varName: String = "rv", castVar: String = "rv", forceCast: Bool = false, convertToSwiftTypes: Bool = true) -> TypeCastTuple {
+func typeCastTuple(_ ctype: String, _ swiftType: String, varName: String = "rv", castVar: String = "rv", forceCast: Bool = false, convertToSwiftTypes: Bool = true, useIdiomaticSwift beIdiomatic: Bool = true) -> TypeCastTuple {
     let swiftStringType = convertToSwiftTypes ? "String" : "UnsafePointer<CChar>"
     let u = ctype.unwrappedCTypeWithCount()
     let rawPointers = u.pointerCount + ((swiftType.isPointer || ctype.isPointer) ? 1 : 0)
@@ -522,7 +529,7 @@ func typeCastTuple(_ ctype: String, _ swiftType: String, varName: String = "rv",
     default:
         cswift = (ct, st,
             forceCast || nPointers != 0 ? cast : cast_from_swift(varName, forCType: ct),
-            forceCast || nPointers != 0 ? cast : cast_to_swift(varName, forCType: ct))
+            forceCast || nPointers != 0 ? cast : cast_to_swift(varName, forCType: ct, useIdiomaticSwift: beIdiomatic))
     }
     return cswift
 }
