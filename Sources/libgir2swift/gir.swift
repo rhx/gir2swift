@@ -105,6 +105,8 @@ public class GIR {
     public var interfaces: [Interface] = []
     /// Records defined by this GIR file
     public var records: [Record] = []
+    /// Unions defined by this GIR file
+    public var unions: [Union] = []
     /// Classes defined by this GIR file
     public var classes: [Class] = []
     /// Free functions defined by this GIR file
@@ -749,7 +751,25 @@ public class GIR {
             return Array(all).sorted()
         }
     }
+    
+    /// a union data type record
+    public class Union: Record {
+        /// String representation of `Union`s
+        public override var kind: String { return "Union" }
+        /// records contained within the union
+        public var records: [Record] = []
 
+        /// Initialiser to construct a union type from XML
+        /// - Parameters:
+        ///   - node: `XMLElement` to construct this constant from
+        ///   - i: Index within the siblings of the `node`
+        override init(node: XMLElement, atIndex i: Int) {
+            records = node.children.lazy.filter { $0.name ==  "record" }.enumerated().map {
+                Record(node: $0.element, atIndex: $0.offset)
+            }
+            super.init(node: node, atIndex: i)
+        }
+    }
 
     /// a class data type record
     public class Class: Record {
@@ -778,7 +798,7 @@ public class GIR {
         override init(node: XMLElement, atIndex i: Int) {
             var parent = node.attribute(named: "parent") ?? ""
             if parent.isEmpty {
-                parent = node.children.filter { $0.name ==  "prerequisite" }.first?.attribute(named: "name") ?? ""
+                parent = node.children.lazy.filter { $0.name ==  "prerequisite" }.first?.attribute(named: "name") ?? ""
             }
             self.parent = parent
             super.init(node: node, atIndex: i)
