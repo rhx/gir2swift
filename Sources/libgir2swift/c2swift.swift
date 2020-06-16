@@ -501,23 +501,25 @@ func cast_from_swift(_ value: String, forCType t: String) -> String {
 typealias TypeCastTuple = (c: String, swift: String, toC: String, toSwift: String)
 
 /// return a C+Swift type pair
-func typeCastTuple(_ ctype: String, _ swiftType: String, varName: String = "rv", castVar: String = "rv", forceCast: Bool = false, convertToSwiftTypes: Bool = true, useIdiomaticSwift beIdiomatic: Bool = true) -> TypeCastTuple {
+func typeCastTuple(_ ctype: String, _ swiftType: String, varName: String = "rv", castVar: String = "rv", forceCast: Bool = false, convertToSwiftTypes: Bool = true, useIdiomaticSwift beIdiomatic: Bool = true, noCast: Bool = false) -> TypeCastTuple {
     let swiftStringType = convertToSwiftTypes ? "String" : "UnsafePointer<CChar>"
     let u = ctype.unwrappedCTypeWithCount()
     let rawPointers = u.pointerCount + ((swiftType.isPointer || ctype.isPointer) ? 1 : 0)
     let ct = u.gType != "" ? u.gType : swiftType
     let chr = (ct.contains("uchar") || ct.contains("unsigned")) ? "CUnsignedChar" : "CChar"
+    let castS = noCast ? "" : "cast("
+    let castE = noCast ? "" : ")"
     let st: String
     let cast: String
     let nPointers: Int
     if swiftType == swiftStringType && u.pointerCount == 1 {
         nPointers = u.pointerCount
         st = swiftType
-        cast = varName == castVar ? (convertToSwiftTypes ? "\(varName).map { String(cString: UnsafePointer<\(chr)>($0)) }" : "cast(\(varName))") : varName
+        cast = varName == castVar ? (convertToSwiftTypes ? "\(varName).map { String(cString: UnsafePointer<\(chr)>($0)) }" : "\(castS)\(varName)\(castE)") : varName
     } else {
         nPointers = rawPointers
         st = u.swift != "" ? u.swift : ct
-        cast = "cast(\(varName))"
+        cast = "\(castS)\(varName)\(castE)"
     }
     let cswift: TypeCastTuple
     switch (ct, st) {

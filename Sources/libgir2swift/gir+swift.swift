@@ -22,6 +22,9 @@ public extension GIR {
                func cast(_ param: Int64)  -> UInt64 { UInt64(bitPattern: param) }
                func cast<U: UnsignedInteger>(_ param: U) -> Int { Int(param) }
                func cast<S: SignedInteger>(_ param: S) -> Int { Int(param) }
+               func cast<I: BinaryInteger>(_ param: I) -> Bool { param != 0 }
+               func cast<I: BinaryInteger>(_ param: Bool) -> I { param ? 1 : 0 }
+
 
                func cast(_ param: UnsafeRawPointer) -> OpaquePointer! {
                    return OpaquePointer(param)
@@ -461,7 +464,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
     let call = callCode(doubleIndent, record, ptr: ptrName)
     let returnDeclaration = returnDeclarationCode()
     let ret = returnCode(indentation, ptr: ptrName)
-
+//    let rtypeF = returnTypeCode()
     return { (method: GIR.Method) -> String in
         let rawName = method.name.isEmpty ? method.cname : method.name
         let potentiallyClashingName = convertName(rawName)
@@ -562,6 +565,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoi
 /// Swift code for field properties
 public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existingNames: Set<String> = [], publicDesignation: String = "public ", ptr: String = "_ptr") -> (GIR.Field) -> String {
     let doubleIndent = indentation + indentation
+    let ret = instanceReturnCode(doubleIndent, ptr: "rv", castVar: "rv")
     return { (field: GIR.Field) -> String in
         let name = field.name
         let potentiallyClashingName = name.camelCase
@@ -581,7 +585,6 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         let containedType = field.containedTypes.first ?? field
         let pointee = ptr + ".pointee." + name
         let scall = instanceSetter(doubleIndent, record, target: pointee, ptr: "newValue")
-        let ret = instanceReturnCode(doubleIndent, ptr: "rv", castVar: "rv")
         guard field.isReadable || field.isWritable else { return indentation + "// var \(name) is unavailable because it is neigher readable nor writable\n" }
         guard !field.isVoid else { return indentation + "// var \(swname) is unavailable because \(name) is void\n" }
         let type = typeCastTuple(containedType.ctype, field.ctype.swiftVerbatim, varName: pointee, castVar: pointee, convertToSwiftTypes: false).swift
@@ -591,7 +594,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         let getterCode: String
         if field.isReadable {
             getterCode = swiftCode(field, doubleIndent + "\(deprecated)get {\n" + doubleIndent +
-            indentation + "let rv = " + pointee + "\n" +
+            indentation + "let rv: \(idiomaticType) = cast(" + pointee + ")\n" +
             indentation + ret(field) + doubleIndent +
             "}\n", indentation: doubleIndent)
         } else {
@@ -678,8 +681,11 @@ public func returnTypeCode(_ tr: (typeName: String, record: GIR.Record, isConstr
         if tr != nil && rv.isInstanceOfHierarchy((tr?.record)!)  {
             returnType = tr!.typeName + "!"
         } else {
-            let swiftType = beIdiomatic ? rv.type.swiftIdiomatic : rv.type.swift
-            let rt = typeCastTuple(rv.ctype, swiftType, useIdiomaticSwift: beIdiomatic).swift
+            let swiftEquivalent = rv.type.swift
+            let swiftType = beIdiomatic ? swiftEquivalent.idiomatic : swiftEquivalent
+            let typeTuple = typeCastTuple(rv.ctype, swiftType, useIdiomaticSwift: beIdiomatic)
+            let rtSwift = typeTuple.swift
+            let rt = beIdiomatic ? rtSwift.idiomatic : rtSwift
             returnType = rv.isAnyKindOfPointer ? "\(rt)!" : rt
         }
         return returnType
@@ -700,29 +706,28 @@ public func returnDeclarationCode(_ tr: (typeName: String, record: GIR.Record, i
 
 /// Return code for functions/methods/convenience constructors
 public func returnCode(_ indentation: String, _ tr: (typeName: String, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil,
-                       ptr: String = "ptr", hasParent: Bool = false, useIdiomaticSwift beIdiomatic: Bool = true) -> (GIR.Method) -> String {
-    returnCode(indentation, tr, ptr: ptr, hasParent: hasParent, useIdiomaticSwift: beIdiomatic) { $0.returns }
+                       ptr: String = "ptr", hasParent: Bool = false, useIdiomaticSwift beIdiomatic: Bool = true, noCast: Bool = false) -> (GIR.Method) -> String {
+    returnCode(indentation, tr, ptr: ptr, hasParent: hasParent, useIdiomaticSwift: beIdiomatic, noCast: noCast) { $0.returns }
 }
 
 /// Return code for instances (e.g. fields)
 public func instanceReturnCode(_ indentation: String, _ tr: (typeName: String, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil,
-                               ptr: String = "ptr", castVar: String = "rv", hasParent: Bool = false, forceCast doForce: Bool = true,
+                               ptr: String = "ptr", castVar: String = "rv", hasParent: Bool = false, forceCast doForce: Bool = true, noCast: Bool = true,
                                convertToSwiftTypes doConvert: Bool = false, useIdiomaticSwift beIdiomatic: Bool = true) -> (GIR.CType) -> String {
-    returnCode(indentation, tr, ptr: ptr, rv: castVar, hasParent: hasParent, forceCast: doForce, convertToSwiftTypes: doConvert, useIdiomaticSwift: beIdiomatic) { $0 }
+    returnCode(indentation, tr, ptr: ptr, rv: castVar, hasParent: hasParent, forceCast: doForce, convertToSwiftTypes: doConvert, useIdiomaticSwift: beIdiomatic, noCast: noCast) { $0 }
 }
 
 /// Generic return code for methods/types
 public func returnCode<T>(_ indentation: String, _ tr: (typeName: String, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil,
                           ptr: String = "ptr", rv: String = "rv", hasParent: Bool = false, forceCast doForce: Bool = false,
-                          convertToSwiftTypes doConvert: Bool = true, useIdiomaticSwift beIdiomatic: Bool = true,
+                          convertToSwiftTypes doConvert: Bool = true, useIdiomaticSwift beIdiomatic: Bool = true, noCast: Bool = true,
                           extract: @escaping (T) -> GIR.CType) -> (T) -> String {
     return { (param: T) -> String in
         let field = extract(param)
         guard !field.isVoid else { return "\n" }
         let isInstance = tr?.record != nil && field.isInstanceOfHierarchy((tr?.record)!)
-//        let containedType = field.containedTypes.first ?? field
         let swiftType = doConvert ? field.type.swift : field.type.swiftVerbatim
-        let cast2swift = typeCastTuple(field.ctype, swiftType, varName: rv, castVar: rv, forceCast: doForce || isInstance, convertToSwiftTypes: doConvert, useIdiomaticSwift: beIdiomatic).toSwift
+        let cast2swift = typeCastTuple(field.ctype, swiftType, varName: rv, castVar: rv, forceCast: doForce || isInstance, convertToSwiftTypes: doConvert, useIdiomaticSwift: beIdiomatic, noCast: noCast).toSwift
         guard isInstance, let tr = tr else { return indentation + "return \(cast2swift)\n" }
         let (cons, cast, end) = tr.isConstructor ?
             (tr.isConvenience ? ("self.init", cast2swift, "") : (hasParent ?
@@ -740,7 +745,7 @@ public func returnCode<T>(_ indentation: String, _ tr: (typeName: String, record
 
 
 /// Swift code for calling the underlying function and assigning the raw return value
-public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: String = "ptr") -> (GIR.Method) -> String {
+public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: String = "ptr", rvVar: String = "rv", useIdiomaticSwift: Bool = true) -> (GIR.Method) -> String {
     var hadInstance = false
     let toSwift: (GIR.Argument) -> String = { arg in
         let name = arg.nonClashingName
@@ -758,10 +763,21 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         let n = args.count
         let rv = method.returns
         let isVoid = rv.isVoid
-        let code = ( throwsError ? "var error: Optional<UnsafeMutablePointer<\(gerror)>> = nil\n" + indentation : "") +
-        ( isVoid ? "" : "let rv = " ) +
-        "\(method.cname.swift)(\(args.map(toSwift).joined(separator: ", "))" +
-            ( throwsError ? ((n == 0 ? "" : ", ") + "&error)\n" + indentation + "if let error = error {\n" + indentation + indentation + "throw ErrorType(error)\n" + indentation + "}\n") : ")\n" )
+        let rvType: String
+        let rvSType = rv.type.swift
+        if useIdiomaticSwift {
+            let rvIType = rvSType.idiomatic
+            rvType = rvIType == rvSType ? "" : rvIType
+        } else {
+            rvType = rvSType
+        }
+        let errCode = ( throwsError ? "var error: Optional<UnsafeMutablePointer<\(gerror)>> = nil\n" + indentation : "")
+        let varCode = isVoid || rvVar.isEmpty ? "" : "let \(rvVar)\(rvType.isEmpty ?  "" : ": \(rvType)") = "
+        let callCode = ( rvType.isEmpty ? "" : "cast(" ) + method.cname.swift +
+            "(\(args.map(toSwift).joined(separator: ", "))"
+        let throwCode = throwsError ? ((n == 0 ? "" : ", ") + "&error)\(rvType.isEmpty ? "" : ")")\n" +
+            indentation + "if let error = error { throw ErrorType(error) }\n") : ")\(rvType.isEmpty ? "" : ")")\n"
+        let code = errCode + varCode + callCode + throwCode
         return code
     }
 }
