@@ -382,7 +382,7 @@ public func swiftCode(_ bf: GIR.Bitfield) -> String {
 public func bitfieldValueCode(_ bf: GIR.Bitfield, _ indentation: String) -> (GIR.Bitfield.Member) -> String {
     let type = bf.escapedName.swift
     return { (m: GIR.Enumeration.Member) -> String in
-        swiftCode(m, indentation + "public static let \(m.name.camelCase.swift) = \(type)(\(m.ctype.swift)) /* \(m.value) */", indentation: indentation)
+        swiftCode(m, indentation + "public static let \(m.name.camelCase.swift) = \(type)(\(m.value)) /* \(m.ctype.swift) */", indentation: indentation)
     }
 }
 
@@ -391,7 +391,7 @@ public func bitfieldValueCode(_ bf: GIR.Bitfield, _ indentation: String) -> (GIR
 public func bitfieldDeprecated(_ bf: GIR.Bitfield, _ indentation: String) -> (GIR.Bitfield.Member) -> String {
     let type = bf.escapedName.swift
     return { (m: GIR.Enumeration.Member) -> String in
-        swiftCode(m, indentation + "@available(*, deprecated) public static let \(m.name.swiftName) = \(type)(\(m.ctype.swift)) /* \(m.value) */", indentation: indentation)
+        swiftCode(m, indentation + "@available(*, deprecated) public static let \(m.name.swiftName) = \(type)(\(m.value)) /* \(m.ctype.swift) */", indentation: indentation)
     }
 }
 
