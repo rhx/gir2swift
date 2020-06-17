@@ -81,7 +81,8 @@ private let swiftReplacementsForC = [ "char" : "CChar", "unsigned char" : "CUnsi
 /// FIXME: these types only work correctly on 64bit systems
 private let swiftConvenience = [ "CInt" : "Int", "CUnsignedInt" : "Int",
   "CLong" : "Int", "CUnsignedLong" : "Int", "CLongLong" : "Int", "CUnsignedLongLong" : "Int",
-  "CShort" : "Int", "CUnsignedShort" : "Int", "CDouble" : "Double", "CFloat" : "Double" ]
+  "CShort" : "Int", "CUnsignedShort" : "Int", "CDouble" : "Double", "CFloat" : "Double",
+  "gfloat" : "Double", "gdouble" : "Double"  ]
 
 /// Idiomatic Swift type equivalents for C types
 private let swiftIdiomaticReplacements: [ String : String] = swiftReplacementsForC.mapValues {

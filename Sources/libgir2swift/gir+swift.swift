@@ -20,6 +20,10 @@ public extension GIR {
                func cast(_ param: Int32)  -> UInt32 { UInt32(bitPattern: param) }
                func cast(_ param: UInt64) -> Int64  {  Int64(bitPattern: param) }
                func cast(_ param: Int64)  -> UInt64 { UInt64(bitPattern: param) }
+               func cast(_ param: Float)  -> Double { Double(param) }
+               func cast(_ param: Float80) -> Double { Double(param) }
+               func cast(_ param: Double) -> Float { Float(param) }
+               func cast(_ param: Double) -> Float80 { Float80(param) }
                func cast<U: UnsignedInteger>(_ param: U) -> Int { Int(param) }
                func cast<S: SignedInteger>(_ param: S) -> Int { Int(param) }
                func cast<I: BinaryInteger>(_ param: I) -> Bool { param != 0 }
