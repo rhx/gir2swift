@@ -82,7 +82,7 @@ private let swiftReplacementsForC = [ "char" : "CChar", "unsigned char" : "CUnsi
 private let swiftConvenience = [ "CInt" : "Int", "CUnsignedInt" : "Int",
   "CLong" : "Int", "CUnsignedLong" : "Int", "CLongLong" : "Int", "CUnsignedLongLong" : "Int",
   "CShort" : "Int", "CUnsignedShort" : "Int", "CDouble" : "Double", "CFloat" : "Double",
-  "gfloat" : "Double", "gdouble" : "Double"  ]
+  "gfloat" : "Float", "gdouble" : "Double"  ]
 
 /// Idiomatic Swift type equivalents for C types
 private let swiftIdiomaticReplacements: [ String : String] = swiftReplacementsForC.mapValues {
