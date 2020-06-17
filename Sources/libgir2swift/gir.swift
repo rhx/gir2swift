@@ -210,6 +210,7 @@ public class GIR {
             interfaces   = enumerate(xml, path: "/*/*/gir:interface",   inNS: namespaces, quiet: quiet, construct: { Interface(node: $0, atIndex: $1) }, check: notKnownRecord)
             records      = enumerate(xml, path: "/*/*/gir:record",      inNS: namespaces, quiet: quiet, construct: { Record(node: $0, atIndex: $1) },    check: notKnownRecord)
             classes      = enumerate(xml, path: "/*/*/gir:class",       inNS: namespaces, quiet: quiet, construct: { Class(node: $0, atIndex: $1) },     check: notKnownRecord)
+            unions       = enumerate(xml, path: "/*/*/gir:union",       inNS: namespaces, quiet: quiet, construct: { Union(node: $0, atIndex: $1) },     check: notKnownRecord)
             callbacks    = enumerate(xml, path: "/*/*/gir:callback",    inNS: namespaces, quiet: quiet, construct: { Callback(node: $0, atIndex: $1) },    check: notKnownType)
             functions    = enumerate(xml, path: "//gir:function",       inNS: namespaces, quiet: quiet, construct: {
                 isFreeFunction($0) ? Function(node: $0, atIndex: $1) : nil
