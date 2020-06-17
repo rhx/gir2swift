@@ -441,7 +441,8 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
     let methods = allMethods.filter { method in
         !method.name.hasPrefix("is_") || !gsPairs.contains { $0.getter === method } }
     let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
-    let code = "public extension \(e.protocolName) {\n" + indentation +
+    let code = "// MARK: \(e.name) \(e.kind): \(e.protocolName) extension (methods and fields)\n" +
+        "public extension \(e.protocolName) {\n" + indentation +
         "/// Return the stored, untyped pointer as a typed pointer to the `\(ctype)` instance.\n" + indentation +
         "var \(ptrName): UnsafeMutablePointer<\(ctype)> { return ptr.assumingMemoryBound(to: \(ctype).self) }\n\n" +
         methods.map(mcode).joined(separator: "\n") +
@@ -1052,7 +1053,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
             "\(retain)(cast(\(ptr)))\n") + indentation +
         "}\n\n") + (hasParent ? "" : (indentation +
 
-        "/// \(e.unref == nil ? "Do-nothing destructor for`\(e.ctype.swift)`." : "Releases the underlying `\(e.ctype.swift)` instance using `\(e.unref?.cname ?? "unref")`.")\n" + indentation +
+        "/// \(e.unref == nil ? "Do-nothing destructor for `\(e.ctype.swift)`." : "Releases the underlying `\(e.ctype.swift)` instance using `\(e.unref?.cname ?? "unref")`.")\n" + indentation +
         "deinit {\n" + indentation + indentation +
             "\(release)(cast(\(ptr)))\n" + indentation +
         "}\n\n")) + ((indentation +
@@ -1130,7 +1131,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let code2 = constructors.map(ccode).joined(separator: "\n") + "\n" +
         factories.map(fcode).joined(separator: "\n") + "\n" +
     "}\n\n"
-    let code3 = String(noProperties ? "// MARK: - no \(classType) properties\n" : "public enum \(classType)PropertyName: String, PropertyNameProtocol {\n") +
+    let code3 = String(noProperties ? "// MARK: no \(classType) properties\n" : "public enum \(classType)PropertyName: String, PropertyNameProtocol {\n") +
 //        "public typealias Class = \(protocolName)\n") +
         properties.map(scode).joined(separator: "\n") + "\n" +
     (noProperties ? "" : ("}\n\npublic extension \(protocolName) {\n" + indentation +
@@ -1181,7 +1182,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     "func set(property: \(classType)PropertyName, value v: GLibObject.Value) {\n" + doubleIndentation +
         "g_object_set_property(ptr.assumingMemoryBound(to: GObject.self), property.rawValue, v.value_ptr)\n" + indentation +
     "}\n}\n\n"))
-    let code = code1 + code2 + code3 + (noSignals ? "// MARK: - no signals\n" : "public enum \(classType)SignalName: String, SignalNameProtocol {\n") +
+    let code = code1 + code2 + code3 + (noSignals ? "// MARK: no \(classType) signals\n" : "public enum \(classType)SignalName: String, SignalNameProtocol {\n") +
 //        "public typealias Class = \(protocolName)\n") +
         signals.map(scode).joined(separator: "\n") + "\n" +
         properties.map(ncode).joined(separator: "\n") + "\n" +
