@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 22/03/2016.
-//  Copyright © 2016, 2017, 2018, 2019 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018, 2019, 2020 Rene Hexel. All rights reserved.
 //
 #if os(Linux)
     import Glibc
@@ -155,6 +155,15 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
                 let output = prefix + bitfields
                 write(output, to: f)
             } else { outq.async(group: queues) { print(bitfields) } }
+        }
+        background.async(group: queues) {
+            let convert = swiftUnionsConversion(gir.functions)
+            let unions = gir.unions.filter {!blacklist.contains($0.name)}.map(convert).joined(separator: "\n\n")
+            if let dir = outputDirectory {
+                let f = "\(dir)/\(node)-unions.swift"
+                let output = prefix + unions
+                write(output, to: f)
+            } else { outq.async(group: queues) { print(unions) } }
         }
         background.async(group: queues) {
             let convert = swiftCode(gir.functions)

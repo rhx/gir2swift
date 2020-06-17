@@ -25,7 +25,6 @@ public extension GIR {
                func cast<I: BinaryInteger>(_ param: I) -> Bool { param != 0 }
                func cast<I: BinaryInteger>(_ param: Bool) -> I { param ? 1 : 0 }
 
-
                func cast(_ param: UnsafeRawPointer) -> OpaquePointer! {
                    return OpaquePointer(param)
                }
@@ -1237,3 +1236,21 @@ public func swiftCode(_ f: GIR.Function) -> String {
     let code = functionCode(f)
     return code
 }
+
+
+/// Return a unions-to-swift conversion closure for the array of functions passed in
+public func swiftUnionsConversion(_ funcs: [GIR.Function]) -> (GIR.Union) -> String {
+    return { (u: GIR.Union) -> String in
+        let ptrName = "\(u.cprefix)_ptr"
+        let parents = [ u.parentType?.protocolName ?? "", u.ctype == gerror ? errorProtocol : "" ].filter { !$0.isEmpty } +
+            u.implements.filter { !(u.parentType?.implements.contains($0) ?? false) }.map { $0.protocolName }
+        let p = recordProtocolCode(u, parent: parents.joined(separator: ", "), ptr: ptrName)
+        let s = recordStructCode(u, ptr: ptrName)
+        let c = recordClassCode(u, parent: "", ptr: ptrName)
+        let e = recordProtocolExtensionCode(funcs, u, ptr: ptrName)
+        let code = p + s + c + e
+        return code
+    }
+}
+
+
