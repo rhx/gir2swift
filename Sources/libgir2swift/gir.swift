@@ -872,12 +872,12 @@ public class GIR {
 
         /// indicate whether this is a getter method
         public var isGetter: Bool {
-            return !throwsError && args.count == 1 && ( name.hasPrefix("get_") || name.hasPrefix("is_"))
+            return args.count == 1  && ( name.hasPrefix("get_") || name.hasPrefix("is_"))
         }
 
         /// indicate whether this is a setter method
         public var isSetter: Bool {
-            return !throwsError && args.count == 2 && name.hasPrefix("set_")
+            return args.count == 2 && name.hasPrefix("set_")
         }
 
         /// indicate whether this is a setter method for the given getter

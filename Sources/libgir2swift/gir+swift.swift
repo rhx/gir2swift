@@ -552,7 +552,8 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
 /// Swift code for computed properties
 public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoiding existingNames: Set<String> = [], publicDesignation: String = "public ", ptr ptrName: String = "ptr") -> (GetterSetterPair) -> String {
     let doubleIndent = indentation + indentation
-    let gcall = callCode(doubleIndent, record, ptr: ptrName)
+    let tripleIndent = doubleIndent + indentation
+    let gcall = callCode(doubleIndent, record, ptr: ptrName, doThrow: false)
     let scall = callSetter(doubleIndent, record, ptr: ptrName)
     let ret = returnCode(doubleIndent, ptr: ptrName)
     return { (pair: GetterSetterPair) -> String in
@@ -594,8 +595,14 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoi
         let setterCode: String
         if let setter = pair.setter {
             let deprecated = setter.deprecated != nil ? "@available(*, deprecated) " : ""
-            setterCode = swiftCode(setter, doubleIndent + "\(deprecated)nonmutating set {\n" +
-                doubleIndent + indentation + scall(setter) +
+            setterCode = swiftCode(setter, doubleIndent + "\(deprecated)nonmutating set {\n" + tripleIndent +
+                (setter.throwsError ? (
+                    "var err: UnsafeMutablePointer<GError>?\n" + tripleIndent
+                ) : "") +
+                scall(setter) +
+                (setter.throwsError ? ( tripleIndent +
+                    "g_log(messagePtr: err?.pointee.message, level: .error)\n"
+                    ) : "") +
                 doubleIndent + "}\n", indentation: doubleIndent)
         } else {
             setterCode = ""
@@ -787,7 +794,7 @@ public func returnCode<T>(_ indentation: String, _ tr: (typeName: String, record
 
 
 /// Swift code for calling the underlying function and assigning the raw return value
-public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: String = "ptr", rvVar: String = "rv", useIdiomaticSwift: Bool = true) -> (GIR.Method) -> String {
+public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: String = "ptr", rvVar: String = "rv", doThrow: Bool = true, useIdiomaticSwift: Bool = true) -> (GIR.Method) -> String {
     var hadInstance = false
     let toSwift: (GIR.Argument) -> String = { arg in
         let name = arg.nonClashingName
@@ -813,12 +820,15 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         } else {
             rvType = rvSType
         }
-        let errCode = ( throwsError ? "var error: Optional<UnsafeMutablePointer<\(gerror)>> = nil\n" + indentation : "")
+        let errCode = ( throwsError ? "var error: UnsafeMutablePointer<\(gerror)>?\n" + indentation : "")
         let varCode = isVoid || rvVar.isEmpty ? "" : "let \(rvVar)\(rvType.isEmpty ?  "" : ": \(rvType)") = "
         let callCode = ( rvType.isEmpty ? "" : "cast(" ) + method.cname.swift +
             "(\(args.map(toSwift).joined(separator: ", "))"
         let throwCode = throwsError ? ((n == 0 ? "" : ", ") + "&error)\(rvType.isEmpty ? "" : ")")\n" +
-            indentation + "if let error = error { throw ErrorType(error) }\n") : ")\(rvType.isEmpty ? "" : ")")\n"
+            indentation + (doThrow ?
+                "if let error = error { throw ErrorType(error) }\n" :
+                "g_log(messagePtr: error?.pointee.message, level: .error)\n"))
+            : ")\(rvType.isEmpty ? "" : ")")\n"
         let code = errCode + varCode + callCode + throwCode
         return code
     }
@@ -830,8 +840,10 @@ public func callSetter(_ indentation: String, _ record: GIR.Record? = nil, ptr p
     let toSwift = convertSetterArgumentToSwiftFor(record, ptr: ptrName)
     return { method in
         let args = method.args // not .lazy
-        let code = ( method.returns.isVoid ? "" : "let _ = " ) +
-            "\(method.cname.swift)(\(args.map(toSwift).joined(separator: ", ")))\n"
+        let code = ( method.returns.isVoid ? "" : "_ = " ) +
+            "\(method.cname.swift)(\(args.map(toSwift).joined(separator: ", "))" +
+            ( method.throwsError ? ", &err" : "" ) +
+        ")\n"
         return code
     }
 }
