@@ -443,13 +443,15 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
     let methods = allMethods.filter { method in
         !method.name.hasPrefix("is_") || !gsPairs.contains { $0.getter === method } }
     let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
+    let subTypeProperties = e.records.map { subRecordProperty(e, ptr: ptrName, $0, indentation: indentation, publicDesignation: "") }.joined()
     let code = "// MARK: \(e.name) \(e.kind): \(e.protocolName) extension (methods and fields)\n" +
         "public extension \(e.protocolName) {\n" + indentation +
         "/// Return the stored, untyped pointer as a typed pointer to the `\(ctype)` instance.\n" + indentation +
         "var \(ptrName): UnsafeMutablePointer<\(ctype)> { return ptr.assumingMemoryBound(to: \(ctype).self) }\n\n" +
         methods.map(mcode).joined(separator: "\n") +
         gsPairs.map(vcode).joined(separator: "\n") + "\n" +
-        e.fields.map(fcode).joined(separator: "\n") +
+        e.fields.map(fcode).joined(separator: "\n") + "\n" +
+        subTypeProperties +
     "}\n\n"
     return code
 }
@@ -468,7 +470,8 @@ public func subTypeAlias(_ e: GIR.Record, _ r: GIR.Record, publicDesignation: St
 public func subRecordProperty(_ e: GIR.Record, ptr: String, _ r: GIR.Record, indentation: String = "    ", publicDesignation: String = "public ") -> String {
     let doubleIndentation = indentation + indentation
     let documentation = commentCode(r)
-    let classType = r.type.capitalized.swift
+    let type = r.type.isEmpty ? r.ctype : r.type
+    let classType = type.swift.capitalized
     let name = r.name.swift
     let typeDef = indentation + publicDesignation + "var \(name): \(classType) {\n" +
         doubleIndentation + "get { \(ptr).pointee.\(r.name) }\n" +
@@ -1040,7 +1043,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let parentName = hasParent ? parentType!.name.swift : ""
     let p = parent.isEmpty ? (hasParent ? "\(parentName), " : "") : "\(parent), "
     let documentation = commentCode(e)
-    let subTypeAliases = e.records.map { subTypeAlias(e, $0, publicDesignation: "") }.joined()
+    let subTypeAliases = e.records.map { subTypeAlias(e, $0) }.joined()
     let code1 = "/// The `\(classType)` type acts as a\(e.ref == nil ? "n" : " reference-counted") owner of an underlying `\(ctype)` instance.\n" +
     "/// It provides the methods that can operate on this data type through `\(protocolName)` conformance.\n" +
     "/// Use `\(classType)` as a strong reference or owner of a `\(ctype)` instance.\n///\n" +
