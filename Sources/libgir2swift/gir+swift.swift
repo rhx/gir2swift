@@ -26,8 +26,18 @@ public extension GIR {
                func cast(_ param: Double) -> Float80 { Float80(param) }
                func cast<U: UnsignedInteger>(_ param: U) -> Int { Int(param) }
                func cast<S: SignedInteger>(_ param: S) -> Int { Int(param) }
+               func cast<U: UnsignedInteger>(_ param: Int) -> U { U(param) }
+               func cast<S: SignedInteger>(_ param: Int) -> S  { S(param) }
                func cast<I: BinaryInteger>(_ param: I) -> Bool { param != 0 }
                func cast<I: BinaryInteger>(_ param: Bool) -> I { param ? 1 : 0 }
+
+               func cast(_ param: UnsafeRawPointer?) -> String! {
+                   return param.map { String(cString: $0.assumingMemoryBound(to: CChar.self)) }
+               }
+
+               func cast(_ param: OpaquePointer?) -> String! {
+                   return param.map { String(cString: UnsafePointer<CChar>($0)) }
+               }
 
                func cast(_ param: UnsafeRawPointer) -> OpaquePointer! {
                    return OpaquePointer(param)
@@ -917,7 +927,7 @@ public func convertSetterArgumentToSwiftFor(_ record: GIR.Record?, ptr: String =
         let name = arg.nonClashingName
         guard !arg.isScalarArray else { return "&" + name }
         let types = typeCastTuple(arg.ctype, arg.type.swift, varName: arg.instance || arg.isInstanceOf(record) ? ptr : ("newValue"))
-        let param = types.toC.hasSuffix("ptr") ? "cast(\(types.toC))" : types.toC
+        let param = types.toC.hasSuffix("ptr") || types.toC == "newValue" ? "cast(\(types.toC))" : types.toC
         return param
     }
 }

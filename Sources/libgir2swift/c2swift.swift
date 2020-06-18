@@ -507,7 +507,7 @@ func typeCastTuple(_ ctype: String, _ swiftType: String, varName: String = "rv",
     let u = ctype.unwrappedCTypeWithCount()
     let rawPointers = u.pointerCount + ((swiftType.isPointer || ctype.isPointer) ? 1 : 0)
     let ct = u.gType != "" ? u.gType : swiftType
-    let chr = (ct.contains("uchar") || ct.contains("unsigned")) ? "CUnsignedChar" : "CChar"
+//    let chr = (ct.contains("uchar") || ct.contains("unsigned")) ? "CUnsignedChar" : "CChar"
     let castS = noCast ? "" : "cast("
     let castE = noCast ? "" : ")"
     let st: String
@@ -516,7 +516,8 @@ func typeCastTuple(_ ctype: String, _ swiftType: String, varName: String = "rv",
     if swiftType == swiftStringType && u.pointerCount == 1 {
         nPointers = u.pointerCount
         st = swiftType
-        cast = varName == castVar ? (convertToSwiftTypes ? "\(varName).map { String(cString: UnsafePointer<\(chr)>($0)) }" : "\(castS)\(varName)\(castE)") : varName
+        cast = "\(castS)\(varName)\(castE)"
+//        cast = varName == castVar ? (convertToSwiftTypes ? "\(varName).map { String(cString: UnsafePointer<\(chr)>($0)) }" : "\(castS)\(varName)\(castE)") : varName
     } else {
         nPointers = rawPointers
         st = u.swift != "" ? u.swift : ct
