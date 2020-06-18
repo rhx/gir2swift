@@ -405,7 +405,8 @@ public func bitfieldDeprecated(_ bf: GIR.Bitfield, _ indentation: String) -> (GI
 /// Swift protocol representation of a record/class as a wrapper of a pointer
 public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: String = "    ", ptr: String = "ptr") -> String {
     let p = (parent.isEmpty ? "" : ": \(parent)")
-    let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
+    let cOriginalType = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
+    let ctype = cOriginalType.isEmpty ? e.name.swift : cOriginalType
     let subTypeAliases = e.records.map { subTypeAlias(e, $0, publicDesignation: "") }.joined()
     let documentation = commentCode(e)
     let code = "// MARK: - \(e.name) \(e.kind)\n\n" +
@@ -442,7 +443,8 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
     let fcode = fieldCode(indentation, record: e, avoiding: propertyNames, publicDesignation: "", ptr: ptrName)
     let methods = allMethods.filter { method in
         !method.name.hasPrefix("is_") || !gsPairs.contains { $0.getter === method } }
-    let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
+    let cOriginalType = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
+    let ctype = cOriginalType.isEmpty ? e.name.swift : cOriginalType
     let subTypeProperties = e.records.map { subRecordProperty(e, ptr: ptrName, $0, indentation: indentation, publicDesignation: "") }.joined()
     let code = "// MARK: \(e.name) \(e.kind): \(e.protocolName) extension (methods and fields)\n" +
         "public extension \(e.protocolName) {\n" + indentation +
@@ -942,12 +944,8 @@ public func signalNameCode(indentation indent: String, prefixes: (String, String
 public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr: String = "ptr") -> String {
     let structType = "\(e.name)Ref"
     let protocolName = e.protocolName
-//    let parent = e.parentType
-//    let root = parent?.rootType
-//    let p = parent ?? e
-//    let r = root ?? p
-    let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
-//    let rtype = r.ctype.isEmpty ? r.type.swift : r.ctype.swift
+    let cOriginalType = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
+    let ctype = cOriginalType.isEmpty ? e.name.swift : cOriginalType
     let ccode = convenienceConstructorCode(structType, indentation: indentation, publicDesignation: "")(e)
     let fcode = convenienceConstructorCode(structType, indentation: indentation, publicDesignation: "", factory: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
@@ -1016,7 +1014,8 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let protocolName = e.protocolName
     let parentType = e.parentType
     let hasParent = parentType != nil
-    let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
+    let cOriginalType = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
+    let ctype = cOriginalType.isEmpty ? e.name.swift : cOriginalType
     let scode = signalNameCode(indentation: indentation)
     let ncode = signalNameCode(indentation: indentation, prefixes: ("notify", "notify::"))
     let ccode = convenienceConstructorCode(classType, indentation: indentation, override: "override ", hasParent: hasParent)(e)
