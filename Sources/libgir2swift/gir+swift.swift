@@ -609,7 +609,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
             } else {
                 swname = underscored
             }
-        } else { swname = field.name.swiftQuoted }
+        } else { swname = potentiallyClashingName.swiftQuoted }
         guard !GIR.Blacklist.contains(name) && !GIR.Blacklist.contains(swname) else {
             return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
         }
