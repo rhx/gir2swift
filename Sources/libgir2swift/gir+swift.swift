@@ -406,6 +406,7 @@ public func bitfieldDeprecated(_ bf: GIR.Bitfield, _ indentation: String) -> (GI
 public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: String = "    ", ptr: String = "ptr") -> String {
     let p = (parent.isEmpty ? "" : ": \(parent)")
     let ctype = e.ctype.isEmpty ? e.type.swift : e.ctype.swift
+    let subTypeAliases = e.records.map { subTypeAlias(e, $0, publicDesignation: "") }.joined()
     let documentation = commentCode(e)
     let code = "// MARK: - \(e.name) \(e.kind)\n\n" +
         "/// The `\(e.protocolName)` protocol exposes the methods and properties of an underlying `\(ctype)` instance.\n" +
@@ -414,6 +415,7 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
         "/// Alternatively, use `\(e.structName)` as a lighweight, `unowned` reference if you already have an instance you just want to use.\n///\n" +
             documentation + "\n" +
         "public protocol \(e.protocolName)\(p) {\n" + indentation +
+            subTypeAliases + indentation +
             "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
             "var ptr: UnsafeMutableRawPointer { get }\n\n" + indentation +
             "/// Typed pointer to the underlying `\(ctype)` instance.\n" + indentation +
@@ -453,6 +455,28 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
 }
 
 
+/// Type alias for sub-records
+public func subTypeAlias(_ e: GIR.Record, _ r: GIR.Record, publicDesignation: String = "public ") -> String {
+    let documentation = commentCode(r)
+    let type = r.type.isEmpty ? r.ctype : r.type
+    let classType = type.swift.capitalized
+    let typeDef = publicDesignation + "typealias \(classType) = \(e.ctype).__Unnamed_struct_\(r.ctype)\n"
+    return documentation + typeDef
+}
+
+/// Property definition for sub-records
+public func subRecordProperty(_ e: GIR.Record, ptr: String, _ r: GIR.Record, indentation: String = "    ", publicDesignation: String = "public ") -> String {
+    let doubleIndentation = indentation + indentation
+    let documentation = commentCode(r)
+    let classType = r.type.capitalized.swift
+    let name = r.name.swift
+    let typeDef = indentation + publicDesignation + "var \(name): \(classType) {\n" +
+        doubleIndentation + "get { \(ptr).pointee.\(r.name) }\n" +
+        doubleIndentation + "set { \(ptr).pointee.\(r.name) = newValue }\n" + indentation +
+    "}\n\n"
+    return documentation + typeDef
+}
+
 /// Default implementation for functions
 public func functionCode(_ f: GIR.Function, indentation: String = "    ", initialIndentation i: String = "") -> String {
     let mcode = methodCode(indentation, initialIndentation: i)
@@ -462,7 +486,7 @@ public func functionCode(_ f: GIR.Function, indentation: String = "    ", initia
 
 
 /// Swift code for methods (with a given indentation)
-public func methodCode(_ indentation: String, initialIndentation: String? = nil, record: GIR.Record? = nil, avoiding existingNames: Set<String> = [], publicDesignation: String = "public ", convertName: @escaping (String) -> String = { $0.camelCase }, ptr ptrName: String = "ptr") -> (GIR.Method) -> String {
+public func methodCode(_ indentation: String, initialIndentation: String? = nil, record: GIR.Record? = nil, functionPrefix: String = "", avoiding existingNames: Set<String> = [], publicDesignation: String = "public ", convertName: @escaping (String) -> String = { $0.camelCase }, ptr ptrName: String = "ptr") -> (GIR.Method) -> String {
     let indent = initialIndentation ?? indentation
     let doubleIndent = indent + indentation
     let call = callCode(doubleIndent, record, ptr: ptrName)
@@ -471,7 +495,8 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
 //    let rtypeF = returnTypeCode()
     return { (method: GIR.Method) -> String in
         let rawName = method.name.isEmpty ? method.cname : method.name
-        let potentiallyClashingName = convertName(rawName)
+        let prefixedRawName = functionPrefix.isEmpty ? rawName : (functionPrefix + rawName.capitalized)
+        let potentiallyClashingName = convertName(prefixedRawName)
         let name: String
         if existingNames.contains(potentiallyClashingName) {
             name = "get" + potentiallyClashingName.capitalized
@@ -616,8 +641,6 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         return varDecl + getterCode + setterCode + varEnd
     }
 }
-
-
 
 
 /// Swift code for convenience constructors
@@ -927,12 +950,14 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
     let allFunctions: [GIR.Method] = e.methods + e.functions
     let factories: [GIR.Method] = (e.constructors + allFunctions).filter { $0.isFactoryOf(e) }
+    let subTypeAliases = e.records.map { subTypeAlias(e, $0, publicDesignation: "") }.joined()
     let documentation = commentCode(e)
     let code = "/// The `\(structType)` type acts as a lightweight Swift reference to an underlying `\(ctype)` instance.\n" +
     "/// It exposes methods that can operate on this data type through `\(protocolName)` conformance.\n" +
     "/// Use `\(structType)` only as an `unowned` reference to an existing `\(ctype)` instance.\n///\n" +
         documentation + "\n" +
     "public struct \(structType): \(protocolName) {\n" + indentation +
+        subTypeAliases + indentation +
         "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
         "/// For type-safe access, use the generated, typed pointer `\(ptr)` property instead.\n" + indentation +
         "public let ptr: UnsafeMutableRawPointer\n" +
@@ -1015,11 +1040,13 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let parentName = hasParent ? parentType!.name.swift : ""
     let p = parent.isEmpty ? (hasParent ? "\(parentName), " : "") : "\(parent), "
     let documentation = commentCode(e)
+    let subTypeAliases = e.records.map { subTypeAlias(e, $0, publicDesignation: "") }.joined()
     let code1 = "/// The `\(classType)` type acts as a\(e.ref == nil ? "n" : " reference-counted") owner of an underlying `\(ctype)` instance.\n" +
     "/// It provides the methods that can operate on this data type through `\(protocolName)` conformance.\n" +
     "/// Use `\(classType)` as a strong reference or owner of a `\(ctype)` instance.\n///\n" +
         documentation + "\n" +
     "open class \(classType): \(p)\(protocolName) {\n" + indentation +
+       subTypeAliases + indentation +
         (hasParent ? "" : (
             "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
             "/// For type-safe access, use the generated, typed pointer `\(ptr)` property instead.\n" + indentation +
@@ -1029,7 +1056,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "/// This creates an instance without performing an unbalanced retain\n" + indentation +
         "/// i.e., ownership is transferred to the `\(classType)` instance.\n" + indentation +
         "/// - Parameter op: pointer to the underlying object\n" + indentation +
-        "public init(_ op: UnsafeMutablePointer<\(ctype)>) {\n" + indentation + indentation +
+        "public init(_ op: UnsafeMutablePointer<\(ctype)>) {\n" + doubleIndentation +
             (hasParent ? "super.init(cast(op))\n" : "ptr = UnsafeMutableRawPointer(op)\n") + indentation +
         "}\n\n" + (indentation +
 

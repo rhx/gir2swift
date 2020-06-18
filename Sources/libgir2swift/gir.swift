@@ -636,6 +636,8 @@ public class GIR {
         public var rootType: Record { return self }
         /// Names of implemented interfaces
         public var implements: [String]
+        /// records contained within this record
+        public var records: [Record] = []
 
         /// return all functions, methods, and constructors
         public var allMethods: [Method] {
@@ -700,6 +702,9 @@ public class GIR {
             signals = sigs.enumerated().map { Signal(node: $0.1, atIndex: $0.0) }
             let interfaces = children.filter { $0.name == "implements" }
             implements = interfaces.enumerated().compactMap { $0.1.attribute(named: "name") }
+            records = node.children.lazy.filter { $0.name ==  "record" }.enumerated().map {
+                Record(node: $0.element, atIndex: $0.offset)
+            }
             super.init(node: node, atIndex: i, typeAttr: "type-name", cTypeAttr: "type")
         }
 
@@ -757,19 +762,6 @@ public class GIR {
     public class Union: Record {
         /// String representation of `Union`s
         public override var kind: String { return "Union" }
-        /// records contained within the union
-        public var records: [Record] = []
-
-        /// Initialiser to construct a union type from XML
-        /// - Parameters:
-        ///   - node: `XMLElement` to construct this constant from
-        ///   - i: Index within the siblings of the `node`
-        override init(node: XMLElement, atIndex i: Int) {
-            records = node.children.lazy.filter { $0.name ==  "record" }.enumerated().map {
-                Record(node: $0.element, atIndex: $0.offset)
-            }
-            super.init(node: node, atIndex: i)
-        }
     }
 
     /// a class data type record
