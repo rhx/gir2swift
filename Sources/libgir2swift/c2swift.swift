@@ -490,7 +490,7 @@ func toSwift(_ ctype: String) -> String {
 /// C type cast to swift
 func cast_to_swift(_ value: String, forCType t: String, useIdiomaticSwift: Bool = true) -> String {
     if let s = castableScalars[t] { return "\(useIdiomaticSwift ? s.idiomatic : s)(\(s == "Bool" ? value + " != 0" : value))" }
-    return value
+    return "cast(" + value + ")"
 }
 
 /// C type cast from swift
