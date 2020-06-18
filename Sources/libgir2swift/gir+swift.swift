@@ -1222,8 +1222,8 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "/// - Parameter flags: signal connection flags\n" + indentation +
         "/// - Parameter handler: signal handler to use\n" + indentation +
         "/// - Returns: positive handler ID, or a value less than or equal to `0` in case of an error\n" + indentation +
-        "@discardableResult func connect(signal kind: \(classType)SignalName, flags f: ConnectFlags = ConnectFlags(0), to handler: @escaping GLibObject.SignalHandler) -> CUnsignedLong {\n" + doubleIndentation +
-            "func _connect(signal name: UnsafePointer<gchar>, flags: ConnectFlags, data: GLibObject.SignalHandlerClosureHolder, handler: @convention(c) @escaping (gpointer, gpointer) -> Void) -> CUnsignedLong {\n" + tripleIndentation +
+        "@discardableResult func connect(signal kind: \(classType)SignalName, flags f: ConnectFlags = ConnectFlags(0), to handler: @escaping GLibObject.SignalHandler) -> Int {\n" + doubleIndentation +
+            "func _connect(signal name: UnsafePointer<gchar>, flags: ConnectFlags, data: GLibObject.SignalHandlerClosureHolder, handler: @convention(c) @escaping (gpointer, gpointer) -> Void) -> Int {\n" + tripleIndentation +
                 "let holder = UnsafeMutableRawPointer(Unmanaged.passRetained(data).toOpaque())\n" + tripleIndentation +
                 "let callback = unsafeBitCast(handler, to: GLibObject.Callback.self)\n" + tripleIndentation +
                 "let rv = GLibObject.ObjectRef(cast(\(ptr))).signalConnectData(detailedSignal: name, cHandler: callback, data: holder, destroyData: {\n" + tripleIndentation + indentation +
