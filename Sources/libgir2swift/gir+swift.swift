@@ -352,7 +352,7 @@ public func swiftCode(_ e: GIR.Enumeration) -> String {
     let vcf = valueCode(indentation)
     let vdf = valueDeprecated(indentation, typeName: name)
     let values = e.members
-    let names = Set(values.map(\.name.camelCase.swift))
+    let names = Set(values.map(\.name.camelCase.swiftQuoted))
     let deprecated = values.lazy.filter { !names.contains($0.name.swiftName) }
     let code = alias + "\n\n\(pub)extension \(name)\(ext) {\n" +
         values.map(vcf).joined(separator: "\n") + "\n" +
@@ -364,14 +364,14 @@ public func swiftCode(_ e: GIR.Enumeration) -> String {
 /// Swift code representation of an enum value
 public func valueCode(_ indentation: String) -> (GIR.Enumeration.Member) -> String {
     return { (m: GIR.Enumeration.Member) -> String in
-        swiftCode(m, indentation + "static let \(m.name.camelCase.swift) = \(m.ctype.swift) /* \(m.value) */", indentation: indentation)
+        swiftCode(m, indentation + "static let \(m.name.camelCase.swiftQuoted) = \(m.ctype.swift) /* \(m.value) */", indentation: indentation)
     }
 }
 
 /// Swift code representation of an enum value
 public func valueDeprecated(_ indentation: String, typeName: String) -> (GIR.Enumeration.Member) -> String {
     return { (m: GIR.Enumeration.Member) -> String in
-        swiftCode(m, indentation + "@available(*, deprecated) static let \(m.name.swiftName) = \(typeName).\(m.name.camelCase.swift) /* \(m.ctype.swift) */", indentation: indentation)
+        swiftCode(m, indentation + "@available(*, deprecated) static let \(m.name.swiftName) = \(typeName).\(m.name.camelCase.swiftQuoted) /* \(m.ctype.swift) */", indentation: indentation)
     }
 }
 
@@ -404,7 +404,7 @@ public func swiftCode(_ bf: GIR.Bitfield) -> String {
     let indent = "    "
     let head = bitfieldTypeHead(bf, indentation: indent)
     let bitfields = bf.members
-    let names = Set(bitfields.map(\.name.camelCase.swift))
+    let names = Set(bitfields.map(\.name.camelCase.swiftQuoted))
     let deprecated = bitfields.lazy.filter { !names.contains($0.name.swiftName) }
     let code = head + bitfields.map(bitfieldValueCode(bf, indent)).joined(separator: "\n") + "\n\n"
                     + deprecated.map(bitfieldDeprecated(bf, indent)).joined(separator: "\n") + "\n}"
@@ -415,7 +415,7 @@ public func swiftCode(_ bf: GIR.Bitfield) -> String {
 public func bitfieldValueCode(_ bf: GIR.Bitfield, _ indentation: String) -> (GIR.Bitfield.Member) -> String {
     let type = bf.escapedName.swift
     return { (m: GIR.Enumeration.Member) -> String in
-        swiftCode(m, indentation + "public static let \(m.name.camelCase.swift) = \(type)(\(m.value)) /* \(m.ctype.swift) */", indentation: indentation)
+        swiftCode(m, indentation + "public static let \(m.name.camelCase.swiftQuoted) = \(type)(\(m.value)) /* \(m.ctype.swift) */", indentation: indentation)
     }
 }
 
