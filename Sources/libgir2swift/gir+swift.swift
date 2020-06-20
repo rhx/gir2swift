@@ -559,7 +559,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
         } .map(codeFor)
         let funcParam = params.joined(separator: ", ")
         let fname: String
-        if let firstParamName = params.first?.split(separator: " ").first?.split(separator: ":").first?.capitalized {
+        if let firstParamName = params.first?.split(separator: " ").first?.split(separator: ":").first?.capitalised {
             fname = name.stringByRemoving(suffix: firstParamName) ?? name
         } else {
             fname = name

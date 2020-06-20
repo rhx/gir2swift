@@ -54,16 +54,18 @@ public extension String {
         return components[components.index(after: components.startIndex)..<components.endIndex].joined(separator: String(s))
     }
 
+    /// return the capidalised name of the receiver,
+    /// without changing the case of subsequent letters
+    /// Note: this is different from `capitalized` in the Swift standard library
+    var capitalised: String {
+        guard let c = first, c.isLowercase else { return self }
+        return c.uppercased() + self[index(after: startIndex)...]
+    }
+
     /// return the de-capidalised (lower-case first character) name of the receiver
     var deCapitalised: String {
-        guard let u = unicodeScalars.first, u.isASCII else { return self }
-        let c = Int32(u.value)
-        guard isupper(c) != 0 else { return self }
-        let utf = utf8
-        let t = utf[utf.index(after: utf.startIndex)..<utf.endIndex]
-        guard let tail = String(t) else { return self }
-        let lower = UnicodeScalar(UInt8(tolower(c)))
-        return String(Character(lower))+tail
+        guard let c = first, c.isUppercase else { return self }
+        return c.lowercased() + self[index(after: startIndex)...]
     }
 
     /// convert a string with separators to camel case
