@@ -831,11 +831,15 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         let isVoid = rv.isVoid
         let rvType: String
         let rvSType = rv.type.swift
-        if useIdiomaticSwift {
-            let rvIType = rvSType.idiomatic
-            rvType = rvIType == rvSType ? "" : rvIType
+        if rv.isAnyKindOfPointer {
+            rvType = returnTypeCode()(method) ?? "UnsafeMutablePointer<\(rvSType)>!"
         } else {
-            rvType = rvSType
+            if useIdiomaticSwift {
+                let rvIType = rvSType.idiomatic
+                rvType = rvIType == rvSType ? "" : rvIType
+            } else {
+                rvType = rvSType
+            }
         }
         let errCode = ( throwsError ? "var error: UnsafeMutablePointer<\(gerror)>?\n" + indentation : "")
         let varCode = isVoid || rvVar.isEmpty ? "" : "let \(rvVar)\(rvType.isEmpty ?  "" : ": \(rvType)") = "
