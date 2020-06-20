@@ -28,6 +28,8 @@ public extension GIR {
                func cast<S: SignedInteger>(_ param: S) -> Int { Int(param) }
                func cast<U: UnsignedInteger>(_ param: Int) -> U { U(param) }
                func cast<S: SignedInteger>(_ param: Int) -> S  { S(param) }
+               func cast<I: BinaryInteger>(_ param: I) -> Int32 { Int32(param) }
+               func cast<I: BinaryInteger>(_ param: I) -> UInt32 { UInt32(param) }
                func cast<I: BinaryInteger>(_ param: I) -> Bool { param != 0 }
                func cast<I: BinaryInteger>(_ param: Bool) -> I { param ? 1 : 0 }
 
@@ -354,10 +356,13 @@ public func swiftCode(_ e: GIR.Enumeration) -> String {
     let values = e.members
     let names = Set(values.map(\.name.camelCase.swiftQuoted))
     let deprecated = values.lazy.filter { !names.contains($0.name.swiftName) }
-    let code = alias + "\n\n\(pub)extension \(name)\(ext) {\n" +
+    let fields = "\n\n\(pub)extension \(name)\(ext) {\n" +
         values.map(vcf).joined(separator: "\n") + "\n" +
-        deprecated.map(vdf).joined(separator: "\n") +
-    "\n}"
+        deprecated.map(vdf).joined(separator: "\n")
+    let tail = "\n}\n" +
+        "func cast<I: BinaryInteger>(_ param: I) -> \(name) { \(name)(rawValue: cast(param)) }\n" +
+        "func cast(_ param: \(name)) -> UInt32 { cast(param.rawValue) }\n"
+    let code = alias + fields + tail
     return code
 }
 
@@ -406,8 +411,12 @@ public func swiftCode(_ bf: GIR.Bitfield) -> String {
     let bitfields = bf.members
     let names = Set(bitfields.map(\.name.camelCase.swiftQuoted))
     let deprecated = bitfields.lazy.filter { !names.contains($0.name.swiftName) }
-    let code = head + bitfields.map(bitfieldValueCode(bf, indent)).joined(separator: "\n") + "\n\n"
-                    + deprecated.map(bitfieldDeprecated(bf, indent)).joined(separator: "\n") + "\n}"
+    let fields = bitfields.map(bitfieldValueCode(bf, indent)).joined(separator: "\n") + "\n\n"
+                    + deprecated.map(bitfieldDeprecated(bf, indent)).joined(separator: "\n")
+    let tail = "\n}\n" +
+        "func cast<I: BinaryInteger>(_ param: I) -> \(bf.escapedName.swift) { \(bf.escapedName.swift)(rawValue: cast(param)) }\n" +
+        "func cast(_ param: \(bf.escapedName.swift)) -> UInt32 { cast(param.rawValue) }\n"
+    let code = head + fields + tail
     return code
 }
 
