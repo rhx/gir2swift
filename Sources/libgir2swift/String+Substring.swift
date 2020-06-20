@@ -115,6 +115,6 @@ public extension String {
 
     /// convert a signal name component with '-' to camel case
     var camelSignalComponent: String {
-        return camelise { $0 == minus || $0 == underscore }.capitalized
+        return camelise { $0 == minus || $0 == underscore }.capitalised
     }
 }

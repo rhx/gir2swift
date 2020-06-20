@@ -499,7 +499,7 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
 public func subTypeAlias(_ e: GIR.Record, _ r: GIR.Record, publicDesignation: String = "public ") -> String {
     let documentation = commentCode(r)
     let type = r.type.isEmpty ? r.ctype : r.type
-    let classType = type.swift.capitalized
+    let classType = type.swift.capitalised
     let typeDef = publicDesignation + "typealias \(classType) = \(e.ctype).__Unnamed_struct_\(r.ctype)\n"
     return documentation + typeDef
 }
@@ -509,7 +509,7 @@ public func subRecordProperty(_ e: GIR.Record, ptr: String, _ r: GIR.Record, ind
     let doubleIndentation = indentation + indentation
     let documentation = commentCode(r)
     let type = r.type.isEmpty ? r.ctype : r.type
-    let classType = type.swift.capitalized
+    let classType = type.swift.capitalised
     let name = r.name.swift
     let typeDef = indentation + publicDesignation + "var \(name): \(classType) {\n" +
         doubleIndentation + "get { \(ptr).pointee.\(r.name) }\n" +
@@ -536,11 +536,11 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
 //    let rtypeF = returnTypeCode()
     return { (method: GIR.Method) -> String in
         let rawName = method.name.isEmpty ? method.cname : method.name
-        let prefixedRawName = functionPrefix.isEmpty ? rawName : (functionPrefix + rawName.capitalized)
+        let prefixedRawName = functionPrefix.isEmpty ? rawName : (functionPrefix + rawName.capitalised)
         let potentiallyClashingName = convertName(prefixedRawName)
         let name: String
         if existingNames.contains(potentiallyClashingName) {
-            name = "get" + potentiallyClashingName.capitalized
+            name = "get" + potentiallyClashingName.capitalised
         } else { name = potentiallyClashingName }
         guard !GIR.Blacklist.contains(rawName) && !GIR.Blacklist.contains(name) else {
             return "\n\(indent)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
@@ -726,10 +726,10 @@ public func convenienceConstructorCode(_ typeName: String, indentation: String, 
             let deprecated = method.deprecated != nil ? "@available(*, deprecated) " : ""
             let isOverride = GIR.overrides.contains(method.cname)
             let override = record.inheritedMethods.filter { $0.name == rawName }.first != nil
-            let fullname = override ? convertName((method.cname.afterFirst() ?? (record.name + nameWithoutPostFix.capitalized))) : name
+            let fullname = override ? convertName((method.cname.afterFirst() ?? (record.name + nameWithoutPostFix.capitalised))) : name
             let consPrefix = constructorPrefix(method)
             let fname: String
-            if let prefix = consPrefix?.capitalized {
+            if let prefix = consPrefix?.capitalised {
                 fname = fullname.stringByRemoving(suffix: prefix) ?? fullname
             } else {
                 fname = fullname
