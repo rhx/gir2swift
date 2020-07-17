@@ -224,54 +224,54 @@ public class NestedConversion: CustomConversion {
 }
 
 public extension GIR {
-    static var floatType   = GIRType(name: "Float", ctype: "float")
-    static var doubleType  = GIRType(name: "Double", ctype: "double")
-    static var float80Type = GIRType(name: "Float80", ctype: "long double")
-    static var intType     = GIRType(name: "Int", ctype: "long")
-    static var uintType    = GIRType(name: "UInt", ctype: "unsigned long")
-    static var int8Type    = GIRType(name: "Int8", ctype: "int8_t")
-    static var int16Type   = GIRType(name: "Int16", ctype: "int16_t")
-    static var int32Type   = GIRType(name: "Int32", ctype: "int32_t")
-    static var int64Type   = GIRType(name: "Int64", ctype: "int64_t")
-    static var uint8Type   = GIRType(name: "UInt8", ctype: "u_int8_t")
-    static var uint16Type  = GIRType(name: "UInt16", ctype: "u_int16_t")
-    static var uint32Type  = GIRType(name: "UInt32", ctype: "u_int32_t")
-    static var uint64Type  = GIRType(name: "UInt64", ctype: "u_int64_t")
-    static var swiftNumericTypes: Set<GIRType> = [floatType, doubleType, float80Type, intType, uintType, int8Type, int16Type, int32Type, int64Type, uint8Type, uint16Type, uint32Type, uint64Type]
+    static let floatType   = GIRType(name: "Float", ctype: "float")
+    static let doubleType  = GIRType(name: "Double", ctype: "double")
+    static let float80Type = GIRType(name: "Float80", ctype: "long double")
+    static let intType     = GIRType(name: "Int", ctype: "long")
+    static let uintType    = GIRType(name: "UInt", ctype: "unsigned long")
+    static let int8Type    = GIRType(name: "Int8", ctype: "int8_t")
+    static let int16Type   = GIRType(name: "Int16", ctype: "int16_t")
+    static let int32Type   = GIRType(name: "Int32", ctype: "int32_t")
+    static let int64Type   = GIRType(name: "Int64", ctype: "int64_t")
+    static let uint8Type   = GIRType(name: "UInt8", ctype: "u_int8_t")
+    static let uint16Type  = GIRType(name: "UInt16", ctype: "u_int16_t")
+    static let uint32Type  = GIRType(name: "UInt32", ctype: "u_int32_t")
+    static let uint64Type  = GIRType(name: "UInt64", ctype: "u_int64_t")
+    static let swiftNumericTypes: Set<GIRType> = [floatType, doubleType, float80Type, intType, uintType, int8Type, int16Type, int32Type, int64Type, uint8Type, uint16Type, uint32Type, uint64Type]
 
-    static var cintType     = GIRType(name: "CInt", ctype: "int")
-    static var clongType    = GIRType(name: "CLong", ctype: "long")
-    static var cshortType   = GIRType(name: "CShort", ctype: "short")
-    static var cboolType    = GIRType(name: "CBool", ctype: "bool")
-    static var ccharType    = GIRType(name: "CChar", ctype: "char")
-    static var cscharType   = GIRType(name: "CSignedChar", ctype: "signed char")
-    static var cuintType    = GIRType(name: "CUnsignedInt", ctype: "unsigned int")
-    static var culongType   = GIRType(name: "CUnsignedLong", ctype: "unsigned long")
-    static var cushortType  = GIRType(name: "CUnsignedShort", ctype: "unsigned short")
-    static var cucharType   = GIRType(name: "CUnsignedChar", ctype: "unsigned char")
-    static var cfloatType   = GIRType(name: "CFloat", ctype: "float")
-    static var cdoubleType  = GIRType(name: "CDouble", ctype: "double")
-    static var cldoubleType = GIRType(name: "CLongDouble", ctype: "long double")
-    static var cNumericTypes: Set<GIRType> = [cintType, clongType, cshortType, cboolType, ccharType, cscharType, cuintType, culongType, cushortType, cucharType, cfloatType, cdoubleType, cldoubleType]
+    static let cintType     = GIRType(name: "CInt", ctype: "int")
+    static let clongType    = GIRType(name: "CLong", ctype: "long")
+    static let cshortType   = GIRType(name: "CShort", ctype: "short")
+    static let cboolType    = GIRType(name: "CBool", ctype: "bool")
+    static let ccharType    = GIRType(name: "CChar", ctype: "char")
+    static let cscharType   = GIRType(name: "CSignedChar", ctype: "signed char")
+    static let cuintType    = GIRType(name: "CUnsignedInt", ctype: "unsigned int")
+    static let culongType   = GIRType(name: "CUnsignedLong", ctype: "unsigned long")
+    static let cushortType  = GIRType(name: "CUnsignedShort", ctype: "unsigned short")
+    static let cucharType   = GIRType(name: "CUnsignedChar", ctype: "unsigned char")
+    static let cfloatType   = GIRType(name: "CFloat", ctype: "float")
+    static let cdoubleType  = GIRType(name: "CDouble", ctype: "double")
+    static let cldoubleType = GIRType(name: "CLongDouble", ctype: "long double")
+    static let cNumericTypes: Set<GIRType> = [cintType, clongType, cshortType, cboolType, ccharType, cscharType, cuintType, culongType, cushortType, cucharType, cfloatType, cdoubleType, cldoubleType]
 
-    static var gfloatType  = GIRType(name: "gfloat", ctype: "gfloat")
-    static var gdoubleType = GIRType(name: "gdouble", ctype: "gdouble")
-    static var gintType    = GIRType(name: "gnt", ctype: "glong")
-    static var guintType   = GIRType(name: "guint", ctype: "guint")
-    static var gint8Type   = GIRType(name: "gint8", ctype: "gint8")
-    static var gint16Type  = GIRType(name: "gint16", ctype: "gint16")
-    static var gint32Type  = GIRType(name: "gint32", ctype: "gint32")
-    static var gint64Type  = GIRType(name: "gint64", ctype: "gint64")
-    static var guint8Type  = GIRType(name: "guint8", ctype: "guint8")
-    static var guint16Type = GIRType(name: "guint16", ctype: "guint16")
-    static var guint32Type = GIRType(name: "guint32", ctype: "guint32")
-    static var guint64Type = GIRType(name: "guint64", ctype: "guint64")
-    static var gsizeType   = GIRType(name: "gsize", ctype: "gsize")
-    static var goffsetType = GIRType(name: "goffset", ctype: "goffset")
-    static var gbooleanType = GIRType(name: "gboolean", ctype: "gboolean")
-    static var glibNumericTypes: Set<GIRType> = [gfloatType, gdoubleType, gintType, guintType, gint8Type, gint16Type, gint32Type, gint64Type, guint8Type, guint16Type, guint32Type, guint64Type, gsizeType, gbooleanType]
+    static let gfloatType  = GIRType(name: "gfloat", ctype: "gfloat")
+    static let gdoubleType = GIRType(name: "gdouble", ctype: "gdouble")
+    static let gintType    = GIRType(name: "gnt", ctype: "glong")
+    static let guintType   = GIRType(name: "guint", ctype: "guint")
+    static let gint8Type   = GIRType(name: "gint8", ctype: "gint8")
+    static let gint16Type  = GIRType(name: "gint16", ctype: "gint16")
+    static let gint32Type  = GIRType(name: "gint32", ctype: "gint32")
+    static let gint64Type  = GIRType(name: "gint64", ctype: "gint64")
+    static let guint8Type  = GIRType(name: "guint8", ctype: "guint8")
+    static let guint16Type = GIRType(name: "guint16", ctype: "guint16")
+    static let guint32Type = GIRType(name: "guint32", ctype: "guint32")
+    static let guint64Type = GIRType(name: "guint64", ctype: "guint64")
+    static let gsizeType   = GIRType(name: "gsize", ctype: "gsize")
+    static let goffsetType = GIRType(name: "goffset", ctype: "goffset")
+    static let gbooleanType = GIRType(name: "gboolean", ctype: "gboolean")
+    static let glibNumericTypes: Set<GIRType> = [gfloatType, gdoubleType, gintType, guintType, gint8Type, gint16Type, gint32Type, gint64Type, guint8Type, guint16Type, guint32Type, guint64Type, gsizeType, gbooleanType]
 
-    static var numericTypes = swiftNumericTypes.union(cNumericTypes).union(glibNumericTypes)
+    static let numericTypes = swiftNumericTypes.union(cNumericTypes).union(glibNumericTypes)
 
     static var boolType: GIRType = {
         let b = GIRType(name: "Bool", ctype: "bool")
@@ -290,7 +290,7 @@ public extension GIR {
         return b
     }()
 
-    static var knownTypes: Set<GIRType> = {
+    static var fundamentalTypes: Set<GIRType> = {
         return numericTypes ∪ boolType
     }()
 
