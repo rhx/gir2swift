@@ -126,9 +126,29 @@ infix operator ∪: LogicalDisjunctionPrecedence
 /// - Parameters:
 ///   - left: lefthand side set to form a union from
 ///   - right: righthand side set to form a union from
+@inlinable
 func ∪<T>(left: Set<T>, right: Set<T>) -> Set<T> {
     return left.union(right)
 }
+
+/// Set union operator
+/// - Parameters:
+///   - left: lefthand side set to form a union from
+///   - right: set element to include in the union
+@inlinable
+func ∪<T>(left: Set<T>, right: T) -> Set<T> {
+    return left.union([right])
+}
+
+/// Set union operator
+/// - Parameters:
+///   - left: set element to include in the union
+///   - right: righthand side set to form a union from
+@inlinable
+func ∪<T>(left: T, right: Set<T>) -> Set<T> {
+    return Set<T>(arrayLiteral: left).union(right)
+}
+
 /// List of all Swiftwords in Swift
 let swiftKeywords = declarationKeywords ∪ statementKeywords ∪ expressionKeywords ∪ specificKeywords
 /// List of all reserved names in Swift
