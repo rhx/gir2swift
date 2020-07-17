@@ -271,7 +271,7 @@ public extension GIR.Record {
 /// GIR extension for Strings
 extension String {
     /// indicates whether the receiver is a known type
-    public var isKnownType: Bool { return GIR.KnownTypes[self] != nil }
+    public var isKnownType: Bool { return GIR.KnownDataTypes[self] != nil }
 
     /// swift protocol name for a given string
     var protocolName: String { return self + "Protocol" }

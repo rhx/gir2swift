@@ -124,7 +124,7 @@ public class GIR {
     public static var overrides: Set<String> = []
     
     /// context of known types
-    public static var KnownTypes:   [ String : Datatype ] = [:]
+    public static var KnownDataTypes:   [ String : Datatype ] = [:]
     /// context of known records
     public static var KnownRecords: [ String : Record ] = [:]
     /// context of known records
@@ -153,7 +153,7 @@ public class GIR {
             identifierPrefixes = ns.sortedSubAttributesFor(attr: "identifier-prefixes")
             symbolPrefixes     = ns.sortedSubAttributesFor(attr: "symbol-prefixes")
         }
-        withUnsafeMutablePointer(to: &GIR.KnownTypes) { (knownTypes: UnsafeMutablePointer<[ String : Datatype ]>) -> Void in
+        withUnsafeMutablePointer(to: &GIR.KnownDataTypes) { (knownTypes: UnsafeMutablePointer<[ String : Datatype ]>) -> Void in
           withUnsafeMutablePointer(to: &GIR.KnownRecords) { (knownRecords: UnsafeMutablePointer<[ String : Record]>) -> Void in
             withUnsafeMutablePointer(to: &GIR.KnownBitfields) { (knownBitfields: UnsafeMutablePointer<[ String : Bitfield]>) -> Void in
             let prefixed: (String) -> String = { $0.prefixed(with: self.prefix) }
@@ -502,7 +502,7 @@ public class GIR {
         }
 
         //// return the known type of the argument (nil if not known)
-        var knownType: GIR.Datatype? { return GIR.KnownTypes[type.isEmpty ? ctype : type] }
+        var knownType: GIR.Datatype? { return GIR.KnownDataTypes[type.isEmpty ? ctype : type] }
         
         //// return the known class/record of the argument (nil if not known)
         var knownRecord: GIR.Record? { return GIR.KnownRecords[type.isEmpty ? ctype : type] }
@@ -774,13 +774,13 @@ public class GIR {
         /// return the parent type of the given class
         public override var parentType: Record? {
             guard !parent.isEmpty else { return nil }
-            return GIR.KnownTypes[parent] as? GIR.Record
+            return GIR.KnownDataTypes[parent] as? GIR.Record
         }
 
         /// return the top level ancestor type of the given class
         public override var rootType: Record {
             guard parent != "" else { return self }
-            guard let p = GIR.KnownTypes[parent] as? GIR.Record else { return self }
+            guard let p = GIR.KnownDataTypes[parent] as? GIR.Record else { return self }
             return p.rootType
         }
 

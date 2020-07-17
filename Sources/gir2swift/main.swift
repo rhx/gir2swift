@@ -50,7 +50,7 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
     let wlfile = node + ".whitelist"
     if let whitelist = String(contentsOfFile: wlfile, quiet: true)?.lines.asSet {
         for name in whitelist {
-            GIR.KnownTypes.removeValue(forKey: name)
+            GIR.KnownDataTypes.removeValue(forKey: name)
             GIR.KnownRecords.removeValue(forKey: name)
             GIR.KnownFunctions.removeValue(forKey: name)
         }
