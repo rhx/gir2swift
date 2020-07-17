@@ -115,20 +115,20 @@ public class GIR {
     public var callbacks: [Callback] = []
 
     /// names of black-listed identifiers
-    public static var Blacklist: Set<String> = []
+    public static var blacklist: Set<String> = []
 
     /// names of constants to be taken verbatim
-    public static var VerbatimConstants: Set<String> = []
+    public static var verbatimConstants: Set<String> = []
 
     /// names of override initialisers
     public static var overrides: Set<String> = []
     
     /// context of known types
-    public static var KnownDataTypes:   [ String : Datatype ] = [:]
+    public static var knownDataTypes:   [ String : Datatype ] = [:]
     /// context of known records
-    public static var KnownRecords: [ String : Record ] = [:]
+    public static var knownRecords: [ String : Record ] = [:]
     /// context of known records
-    public static var KnownBitfields: [ String : Bitfield ] = [:]
+    public static var knownBitfields: [ String : Bitfield ] = [:]
     /// context of known functions
     public static var KnownFunctions: [ String : Function ] = [:]
     /// Type of `GError`
@@ -153,9 +153,9 @@ public class GIR {
             identifierPrefixes = ns.sortedSubAttributesFor(attr: "identifier-prefixes")
             symbolPrefixes     = ns.sortedSubAttributesFor(attr: "symbol-prefixes")
         }
-        withUnsafeMutablePointer(to: &GIR.KnownDataTypes) { (knownTypes: UnsafeMutablePointer<[ String : Datatype ]>) -> Void in
-          withUnsafeMutablePointer(to: &GIR.KnownRecords) { (knownRecords: UnsafeMutablePointer<[ String : Record]>) -> Void in
-            withUnsafeMutablePointer(to: &GIR.KnownBitfields) { (knownBitfields: UnsafeMutablePointer<[ String : Bitfield]>) -> Void in
+        withUnsafeMutablePointer(to: &GIR.knownDataTypes) { (knownTypes: UnsafeMutablePointer<[ String : Datatype ]>) -> Void in
+          withUnsafeMutablePointer(to: &GIR.knownRecords) { (knownRecords: UnsafeMutablePointer<[ String : Record]>) -> Void in
+            withUnsafeMutablePointer(to: &GIR.knownBitfields) { (knownBitfields: UnsafeMutablePointer<[ String : Bitfield]>) -> Void in
             let prefixed: (String) -> String = { $0.prefixed(with: self.prefix) }
             
             func setKnown<T>(_ d: UnsafeMutablePointer<[ String : T]>) -> (String, T) -> Bool {
@@ -502,13 +502,13 @@ public class GIR {
         }
 
         //// return the known type of the argument (nil if not known)
-        var knownType: GIR.Datatype? { return GIR.KnownDataTypes[type.isEmpty ? ctype : type] }
+        var knownType: GIR.Datatype? { return GIR.knownDataTypes[type.isEmpty ? ctype : type] }
         
         //// return the known class/record of the argument (nil if not known)
-        var knownRecord: GIR.Record? { return GIR.KnownRecords[type.isEmpty ? ctype : type] }
+        var knownRecord: GIR.Record? { return GIR.knownRecords[type.isEmpty ? ctype : type] }
         
         //// return the known bitfield the argument represents (nil if not known)
-        var knownBitfield: GIR.Bitfield? { return GIR.KnownBitfields[type.isEmpty ? ctype : type] }
+        var knownBitfield: GIR.Bitfield? { return GIR.knownBitfields[type.isEmpty ? ctype : type] }
 
         /// indicates whether the receiver is a known type
         var isKnownType: Bool { return knownType != nil }
@@ -774,13 +774,13 @@ public class GIR {
         /// return the parent type of the given class
         public override var parentType: Record? {
             guard !parent.isEmpty else { return nil }
-            return GIR.KnownDataTypes[parent] as? GIR.Record
+            return GIR.knownDataTypes[parent] as? GIR.Record
         }
 
         /// return the top level ancestor type of the given class
         public override var rootType: Record {
             guard parent != "" else { return self }
-            guard let p = GIR.KnownDataTypes[parent] as? GIR.Record else { return self }
+            guard let p = GIR.knownDataTypes[parent] as? GIR.Record else { return self }
             return p.rootType
         }
 

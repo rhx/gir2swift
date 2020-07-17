@@ -271,7 +271,7 @@ public extension GIR.Record {
 /// GIR extension for Strings
 extension String {
     /// indicates whether the receiver is a known type
-    public var isKnownType: Bool { return GIR.KnownDataTypes[self] != nil }
+    public var isKnownType: Bool { return GIR.knownDataTypes[self] != nil }
 
     /// swift protocol name for a given string
     var protocolName: String { return self + "Protocol" }
@@ -322,7 +322,7 @@ public func swiftCallbackAliasCode(callback: GIR.Callback) -> String {
 public func swiftCode(constant: GIR.Constant) -> String {
     let type = constant.type.swift
     let name = constant.escapedName.swift
-    guard !GIR.VerbatimConstants.contains(name) else {
+    guard !GIR.verbatimConstants.contains(name) else {
         return swiftCode(constant, "public let \(name): \(constant.ctype.swift) = \(constant.value) /* \(type) */")
     }
     return swiftCode(constant, "public let \(name) = \(type) /* \(constant.ctype) \(constant.value) */")
@@ -542,7 +542,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
         if existingNames.contains(potentiallyClashingName) {
             name = "get" + potentiallyClashingName.capitalised
         } else { name = potentiallyClashingName }
-        guard !GIR.Blacklist.contains(rawName) && !GIR.Blacklist.contains(name) else {
+        guard !GIR.blacklist.contains(rawName) && !GIR.blacklist.contains(name) else {
             return "\n\(indent)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
         }
         guard !method.varargs else {
@@ -587,7 +587,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoi
         if existingNames.contains(pair.name) {
             name = "_" + pair.name
         } else { name = pair.name.swiftQuoted }
-        guard !GIR.Blacklist.contains(name) else {
+        guard !GIR.blacklist.contains(name) else {
             return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
         }
         let getter = pair.getter
@@ -655,7 +655,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
                 swname = underscored
             }
         } else { swname = potentiallyClashingName.swiftQuoted }
-        guard !GIR.Blacklist.contains(name) && !GIR.Blacklist.contains(swname) else {
+        guard !GIR.blacklist.contains(name) && !GIR.blacklist.contains(swname) else {
             return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
         }
         guard !field.isPrivate else { return indentation + "// var \(swname) is unavailable because \(name) is private\n" }
@@ -717,7 +717,7 @@ public func convenienceConstructorCode(_ typeName: String, indentation: String, 
                 nameWithoutPostFix = rawName
             }
             let name = convertName(nameWithoutPostFix)
-            guard !GIR.Blacklist.contains(rawName) && !GIR.Blacklist.contains(name) else {
+            guard !GIR.blacklist.contains(rawName) && !GIR.blacklist.contains(name) else {
                 return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
             }
             guard !method.varargs else {

@@ -50,15 +50,15 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
     let wlfile = node + ".whitelist"
     if let whitelist = String(contentsOfFile: wlfile, quiet: true)?.lines.asSet {
         for name in whitelist {
-            GIR.KnownDataTypes.removeValue(forKey: name)
-            GIR.KnownRecords.removeValue(forKey: name)
+            GIR.knownDataTypes.removeValue(forKey: name)
+            GIR.knownRecords.removeValue(forKey: name)
             GIR.KnownFunctions.removeValue(forKey: name)
         }
     }
 
     load_gir(file) { gir in
         processSpecialCases(gir, forFile: node)
-        let blacklist = GIR.Blacklist
+        let blacklist = GIR.blacklist
         let boilerplate = gir.boilerPlate
         let prefix = gir.preamble
         let modulePrefix = modulePrefix + boilerplate
@@ -190,7 +190,7 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
         }
         queues.wait()
         if verbose {
-            fputs("** Verbatim: \(GIR.VerbatimConstants.count)\n\(GIR.VerbatimConstants.joined(separator: "\n"))\n\n", stderr)
+            fputs("** Verbatim: \(GIR.verbatimConstants.count)\n\(GIR.verbatimConstants.joined(separator: "\n"))\n\n", stderr)
             fputs("** Blacklisted: \(blacklist.count)\n\(blacklist.joined(separator: "\n\n"))\n\n", stderr)
         }
     }
@@ -202,9 +202,9 @@ func processSpecialCases(_ gir: GIR, forFile node: String) {
     let preamble = node + ".preamble"
     gir.preamble = preamble.contents ?? ""
     let blacklist = node + ".blacklist"
-    GIR.Blacklist = blacklist.contents?.lines.asSet ?? []
+    GIR.blacklist = blacklist.contents?.lines.asSet ?? []
     let verbatimConstants = node + ".verbatim"
-    GIR.VerbatimConstants = verbatimConstants.contents?.lines.asSet ?? []
+    GIR.verbatimConstants = verbatimConstants.contents?.lines.asSet ?? []
     let overrideFile = node + ".override"
     GIR.overrides = overrideFile.contents?.lines.asSet ?? []
 }
