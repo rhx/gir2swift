@@ -117,4 +117,22 @@ public extension String {
     var camelSignalComponent: String {
         return camelise { $0 == minus || $0 == underscore }.capitalised
     }
+
+    /// Return the number of trailing asterisks to count, ignoring white space
+    var trailingAsteriskCountIgnoringWhitespace: Int { countTrailing(character: "*", in: self, ignoringWhiteSpace: true) }
+}
+
+/// Count the number of specific trailing characters
+/// - Parameters:
+///   - character: The trailing character to match
+///   - string: The String (or SubString) to examine
+/// - Returns: The numbber of trailing characters matching the given character
+func countTrailing<S: StringProtocol>(character: Character, in string: S, ignoringWhiteSpace: Bool = false) -> Int {
+    let c = string.last
+    let isWhiteSpace = c?.isWhitespace ?? false
+    guard c == character || ignoringWhiteSpace && isWhiteSpace else { return 0 }
+    let k = ignoringWhiteSpace && isWhiteSpace ? 0 : 1
+    let s = string.startIndex
+    let e = string.index(before: string.endIndex)
+    return k + countTrailing(character: character, in: string[s..<e], ignoringWhiteSpace: ignoringWhiteSpace)
 }

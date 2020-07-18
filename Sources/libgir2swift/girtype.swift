@@ -16,6 +16,9 @@ public struct TypeReference: Hashable {
     /// `1` representing a pointer to an instance of the referenced type,
     /// `2` representing an array of pointers (or a pointer to a pointer), etc.
     public let indirectionLevel: Int
+
+    /// Reference to void type
+    public static var void: TypeReference = TypeReference(type: GIR.voidType, indirectionLevel: 0)
 }
 
 /// Representation of a fundamental type, its relationship to other types,
@@ -224,6 +227,8 @@ public class NestedConversion: CustomConversion {
 }
 
 public extension GIR {
+    static let voidType = GIRType(name: "Void", ctype: "void")
+
     static let floatType   = GIRType(name: "Float", ctype: "float")
     static let doubleType  = GIRType(name: "Double", ctype: "double")
     static let float80Type = GIRType(name: "Float80", ctype: "long double")
@@ -291,7 +296,7 @@ public extension GIR {
     }()
 
     static var fundamentalTypes: Set<GIRType> = {
-        return numericTypes ∪ boolType
+        return numericTypes ∪ boolType ∪ voidType
     }()
 
     static var numericConversions = { numericTypes.flatMap { s in numericTypes.map { t in

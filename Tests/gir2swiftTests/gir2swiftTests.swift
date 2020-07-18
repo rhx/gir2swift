@@ -191,6 +191,17 @@ final class gir2swiftTests: XCTestCase {
         XCTAssertEqual(output, expected)
     }
 
+    func testSubstringFunctions() {
+        XCTAssertEqual("1*".trailingAsteriskCountIgnoringWhitespace, 1)
+        XCTAssertEqual("1**".trailingAsteriskCountIgnoringWhitespace, 2)
+        XCTAssertEqual("1* ".trailingAsteriskCountIgnoringWhitespace, 1)
+        XCTAssertEqual("1 *".trailingAsteriskCountIgnoringWhitespace, 1)
+        XCTAssertEqual("1 * ".trailingAsteriskCountIgnoringWhitespace, 1)
+        XCTAssertEqual("1 ** ".trailingAsteriskCountIgnoringWhitespace, 2)
+        XCTAssertEqual("1 * * ".trailingAsteriskCountIgnoringWhitespace, 2)
+        XCTAssertEqual("1 * * *".trailingAsteriskCountIgnoringWhitespace, 3)
+    }
+
     static var allTests = [
         ("testGtkDoc2SwiftDoc", testGtkDoc2SwiftDoc),
         ("testGtkDoc2SwiftDocNewline", testGtkDoc2SwiftDocNewline),
