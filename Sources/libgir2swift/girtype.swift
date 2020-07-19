@@ -108,6 +108,28 @@ public class GIRType: Hashable {
         self.init(aliasOf: TypeReference(type: aliasOf), name: name, swiftName: swiftName, ctype: ctype)
     }
 
+    /// Return the cast to convert the given expression to the target type
+    /// - Parameters:
+    ///   - expression: The expression to cast
+    ///   - target: The target type to cast to
+    /// - Returns: The cast expression string, or `nil` if there is no way to cast to `target`
+    @inlinable
+    public func cast(expression: String, to target: GIRType) -> String? {
+        guard let conversion = conversions[target] else { return nil }
+        return conversion.castToTarget(from: expression)
+    }
+
+    /// Return the cast to convert the given expression to the target type
+    /// - Parameters:
+    ///   - expression: The expression to cast
+    ///   - source: The source type to cast from
+    /// - Returns: The cast expression string, or `nil` if there is no way to cast from `source`
+    @inlinable
+    public func cast(expression e: String, from source: GIRType) -> String? {
+        guard let conversion = conversions[source] else { return nil }
+        return conversion.castFromTarget(expression: e)
+    }
+
     /// Equality check for a type.
     /// Two types are considered equal if they have the same names and C types.
     /// - Parameters:
