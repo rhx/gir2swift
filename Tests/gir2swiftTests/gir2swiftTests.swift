@@ -202,7 +202,51 @@ final class gir2swiftTests: XCTestCase {
         XCTAssertEqual("1 * * *".trailingAsteriskCountIgnoringWhitespace, 3)
     }
 
+    func testGIRTypes() {
+        XCTAssertTrue(GIR.knownTypes.count >= 53)
+        XCTAssertTrue(GIR.namedTypes.count >= 49)
+        let ct = GIR.cintType
+        let cint = GIR.namedTypes[ct.name]
+        XCTAssertNotNil(cint)
+        let ci = cint?.index(of: ct)
+        XCTAssertNotNil(ci)
+        let t = cint?[ci!]
+        XCTAssertNotNil(t)
+        XCTAssertTrue(ct === t)
+        let ut = GIR.guintType
+        let guints = GIR.namedTypes[ut.name]
+        XCTAssertNotNil(guints)
+        XCTAssertTrue(guints!.count > 1)
+        XCTAssertTrue(guints!.contains(ut))
+        XCTAssertTrue(GIR.numericConversions.count >= 2116)
+        let e = "some_expression"
+        let castTo   = ct.cast(expression: e, to: ut)
+        let castFrom = ct.cast(expression: e, from: ut)
+        let revTo    = ut.cast(expression: e, from: ct)
+        let revFrom  = ut.cast(expression: e, to: ct)
+        XCTAssertNotNil(castTo)
+        XCTAssertNotNil(castFrom)
+        XCTAssertEqual(castTo, revTo)
+        XCTAssertEqual(castFrom, revFrom)
+        XCTAssertEqual(castTo, "guint(\(e))")
+        XCTAssertEqual(castFrom, "CInt(\(e))")
+        let bt = GIR.boolType
+        let gt = GIR.gbooleanType
+        let b = "bool_expression"
+        let bcastTo   = bt.cast(expression: b, to: gt)
+        let bcastFrom = bt.cast(expression: b, from: gt)
+        let brevTo    = gt.cast(expression: b, from: bt)
+        let brevFrom  = gt.cast(expression: b, to: bt)
+        XCTAssertNotNil(bcastTo)
+        XCTAssertNotNil(bcastFrom)
+        XCTAssertEqual(bcastTo, brevTo)
+        XCTAssertEqual(bcastFrom, brevFrom)
+        XCTAssertEqual(bcastTo, "gboolean((\(b)) ? 1 : 0)")
+        XCTAssertEqual(bcastFrom, "((\(b)) != 0)")
+    }
+
     static var allTests = [
+        ("testGIRTypes", testGIRTypes),
         ("testGtkDoc2SwiftDoc", testGtkDoc2SwiftDoc),
         ("testGtkDoc2SwiftDocNewline", testGtkDoc2SwiftDocNewline),
         ("testGtkDoc2SwiftDocFunction", testGtkDoc2SwiftDocFunction),
@@ -230,5 +274,6 @@ final class gir2swiftTests: XCTestCase {
         ("testGtkDoc2SwiftDocTripleQuotedNewlinesLinePrefix", testGtkDoc2SwiftDocTripleQuotedNewlinesLinePrefix),
         ("testGtkDoc2SwiftDocTripleQuotedLanguage", testGtkDoc2SwiftDocTripleQuotedLanguage),
         ("testGtkDoc2SwiftDocTripleQuotedLanguageWhitespace", testGtkDoc2SwiftDocTripleQuotedLanguageWhitespace),
+        ("testSubstringFunctions", testSubstringFunctions),
     ]
 }
