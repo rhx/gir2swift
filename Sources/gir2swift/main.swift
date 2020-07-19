@@ -209,6 +209,7 @@ func processSpecialCases(_ gir: GIR, forFile node: String) {
     GIR.overrides = overrideFile.contents?.lines.asSet ?? []
 }
 
+let nTypesPrior = GIR.knownTypes.count
 
 //
 // get options
@@ -241,4 +242,10 @@ while let (opt, param) = get_opt("m:o:p:sv") {
 
 for argument in CommandLine.arguments[Int(optind)..<CommandLine.arguments.count] {
     process_gir(file: argument, boilerPlate: moduleBoilerPlate, to: outputDirectory, split: singleFilePerClass)
+}
+
+if verbose {
+    let nTypesAfter = GIR.knownTypes.count
+    let nTypesAdded = nTypesAfter - nTypesPrior
+    print("Processed \(nTypesAdded) types (total: \(nTypesAfter)).")
 }
