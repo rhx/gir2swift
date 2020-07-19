@@ -47,6 +47,87 @@ public struct TypeReference: Hashable {
     public static func pointer(to target: GIRType, isConst const: Bool = false, pointerIsConst: Bool = false) -> TypeReference {
         TypeReference(type: target, isConst: const, constPointers: [pointerIsConst])
     }
+
+    /// Test whether the receiver references the given type
+    /// - Parameter type: The type to test for
+    /// - Returns: `true` if the receiver references the given type
+    @inlinable
+    public func references(_ type: GIRType) -> Bool {
+        if self.type === type { return true }
+        guard let supertype = self.type.isa else { return false }
+        return self.type.isAlias && supertype.references(type)
+    }
+
+    /// Test whether the receiver references the given type reference
+    /// - Parameter ref: The type reference to test for
+    /// - Returns: `true` if the receiver references the given type reference
+    @inlinable
+    public func references(_ ref: TypeReference) -> Bool {
+        if self.type === ref.type && self.indirectionLevel >= ref.indirectionLevel { return true }
+        guard let supertype = self.type.isa else { return false }
+        return self.type.isAlias && supertype.references(type)
+    }
+
+    /// Test whether the receiver is a pointer at some level to the given type
+    /// - Parameter type: The type to test for
+    /// - Returns: `true` if the receiver is some pointer to the given type
+    @inlinable
+    public func isSomePointer(to type: GIRType) -> Bool {
+        if self.type === type && indirectionLevel > 0 { return true }
+        guard let supertype = self.type.isa else { return false }
+        return self.type.isAlias && supertype.isSomePointer(to: type)
+    }
+
+    /// Test whether the receiver is a pointer at some level to the given type reference
+    /// - Parameter ref: The type reference to test for
+    /// - Returns: `true` if the receiver is some pointer to the given type reference
+    @inlinable
+    public func isSomePointer(to ref: TypeReference) -> Bool {
+        if self.type === ref.type && self.indirectionLevel > ref.indirectionLevel { return true }
+        guard let supertype = self.type.isa else { return false }
+        return self.type.isAlias && supertype.isSomePointer(to: type)
+    }
+
+    /// Test whether the receiver is a direct pointer to the given type
+    /// - Parameter type: The type to test for
+    /// - Returns: `true` if the receiver  is a direct pointer to the given type
+    @inlinable
+    public func isDirectPointer(to type: GIRType) -> Bool {
+        if self.type === type && indirectionLevel == 1 { return true }
+        guard let supertype = self.type.isa else { return false }
+        return self.type.isAlias && supertype.isDirectPointer(to: type)
+    }
+
+    /// Test whether the receiver is a direct pointer to the given type reference
+    /// - Parameter ref: The type reference to test for
+    /// - Returns: `true` if the receiver  is a direct pointer to the given type reference
+    @inlinable
+    public func isDirectPointer(to ref: TypeReference) -> Bool {
+        if self.type === ref.type && self.indirectionLevel == ref.indirectionLevel + 1 { return true }
+        guard let supertype = self.type.isa else { return false }
+        return self.type.isAlias && supertype.isDirectPointer(to: type)
+    }
+
+    /// Test whether the receiver is an alias of the given type
+    /// - Parameter type: The type to test for
+    /// - Returns: `true` if the receiver is an alias of the passed-in type
+    @inlinable
+    public func isAlias(of type: GIRType) -> Bool {
+        if self.type === type && indirectionLevel == 0 { return true }
+        guard let supertype = self.type.isa else { return false }
+        return self.type.isAlias && supertype.isAlias(of: type)
+    }
+
+    /// Test whether the receiver is an alias of the given type reference
+    /// - Parameter ref: The type reference to test for
+    /// - Returns: `true` if the receiver is an alias of the passed-in type
+    @inlinable
+    public func isAlias(of ref: TypeReference) -> Bool {
+        if self.type === ref.type && indirectionLevel == ref.indirectionLevel { return true }
+        guard let supertype = self.type.isa else { return false }
+        return self.type.isAlias && supertype.isAlias(of: ref)
+            || ref.type.isAlias && ref.type.isa.map { isAlias(of: $0) } ?? false
+    }
 }
 
 /// Representation of a fundamental type, its relationship to other types,
