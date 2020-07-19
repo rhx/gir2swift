@@ -143,8 +143,12 @@ public class GIRType: Hashable {
     public let isa: TypeReference?
     /// Indicatow whether this type is an alias that doesn't need casting
     public let isAlias: Bool
-    /// Dictionary of possible type conversion (cast) operations to target types
-    public var conversions: [GIRType : TypeConversion] = [:]
+    /// Dictionary of possible type conversion (cast) operations to target types.
+    /// - Note: The index into the array is the level of constness and indirection*2,
+    /// e.g., `0` is direct, non-const, `1` is direct and `const`, `2` is a single-level,
+    /// mutable pointer, `3`, is a single-level immutable pointer, `4` is a mutable pointer
+    /// to a pointer, `5` is an immutable pointer to a pointer, etc.
+    public var conversions: [GIRType : [TypeConversion]] = [:]
 
     /// Designated initialiser for a GIR type
     /// - Parameters:
@@ -189,26 +193,78 @@ public class GIRType: Hashable {
         self.init(aliasOf: TypeReference(type: aliasOf), name: name, swiftName: swiftName, ctype: ctype)
     }
 
-    /// Return the cast to convert the given expression to the target type
+    /// Return an explicitly known cast to convert the given expression to the target type
     /// - Parameters:
     ///   - expression: The expression to cast
     ///   - target: The target type to cast to
+    ///   - pointerLevel: The number of indirection levels (pointers)
+    ///   - const: An indicator whether the cast is to a `const` value
     /// - Returns: The cast expression string, or `nil` if there is no way to cast to `target`
     @inlinable
-    public func cast(expression: String, to target: GIRType) -> String? {
+    public func knownCast(expression: String, to target: GIRType, pointerLevel: Int = 0, const: Bool = false) -> String? {
         guard let conversion = conversions[target] else { return nil }
-        return conversion.castToTarget(from: expression)
+        let i = 2*pointerLevel + (const ? 1 : 0)
+        guard i < conversion.count else { return nil }
+        return conversion[i].castToTarget(from: expression)
     }
 
-    /// Return the cast to convert the given expression to the target type
+    /// Return  an explicitly known cast to convert the given expression to the target type
     /// - Parameters:
     ///   - expression: The expression to cast
     ///   - source: The source type to cast from
+    ///   - pointerLevel: The number of indirection levels (pointers)
+    ///   - const: An indicator whether the cast is to a `const` value
     /// - Returns: The cast expression string, or `nil` if there is no way to cast from `source`
     @inlinable
-    public func cast(expression e: String, from source: GIRType) -> String? {
+    public func knownCast(expression e: String, from source: GIRType, pointerLevel: Int = 0, const: Bool = false) -> String? {
         guard let conversion = conversions[source] else { return nil }
-        return conversion.castFromTarget(expression: e)
+        let i = 2*pointerLevel + (const ? 1 : 0)
+        guard i < conversion.count else { return nil }
+        return conversion[i].castFromTarget(expression: e)
+    }
+
+    /// Return the default cast to convert the given expression to the target type
+    /// - Parameters:
+    ///   - expression: The expression to cast
+    ///   - target: The target type to cast to
+    ///   - pointerLevel: The number of indirection levels (pointers)
+    ///   - const: An indicator whether the cast is to a `const` value
+    /// - Returns: The cast expression string, or `nil` if there is no way to cast to `target`
+    @inlinable
+    public func cast(expression: String, to target: GIRType, pointerLevel: Int = 0, const: Bool = false) -> String? {
+        if let castExpr = knownCast(expression: expression, to: target, pointerLevel: pointerLevel, const: const) {
+            return castExpr
+        }
+        let prefix: String
+        if pointerLevel == 0 {
+            prefix = target.swiftName
+        } else {
+            let ptr = const ? "UnsafePointer" : "UnsafeMutablePointer"
+            prefix = ptr + "<" + target.swiftName + ">"
+        }
+        return prefix + "(" + expression + ")"
+    }
+
+    /// Return the default cast to convert the given expression to the target type
+    /// - Parameters:
+    ///   - expression: The expression to cast
+    ///   - source: The source type to cast from
+    ///   - pointerLevel: The number of indirection levels (pointers)
+    ///   - const: An indicator whether the cast is to a `const` value
+    /// - Returns: The cast expression string, or `nil` if there is no way to cast from `source`
+    @inlinable
+    public func cast(expression e: String, from source: GIRType, pointerLevel: Int = 0, const: Bool = false) -> String? {
+        if let castExpr = knownCast(expression: e, from: source, pointerLevel: pointerLevel, const: const) {
+            return castExpr
+        }
+        let prefix: String
+        if pointerLevel == 0 {
+            prefix = swiftName
+        } else {
+            let ptr = const ? "UnsafePointer" : "UnsafeMutablePointer"
+            prefix = ptr + "<" + swiftName + ">"
+        }
+        return prefix + "(" + e + ")"
     }
 
     /// Equality check for a type.
@@ -468,12 +524,10 @@ public extension GIR {
         numericTypes.forEach { type in
             let tp = type.name + "(("
             let ts = ") ? 1 : 0)"
-            type.conversions = Dictionary(uniqueKeysWithValues: numericConversions.filter {
-                $0.source == type
-            }.map { ($0.target, $0) } + [
-                (b, CustomConversion(source: type, target: b, downPrefix: p, downSuffix: s, upPrefix: tp, upSuffix: ts))
-            ])
-            b.conversions[type] = CustomConversion(source: b, target: type, downPrefix: tp, downSuffix: ts, upPrefix: p, upSuffix: s)
+            let conv = CustomConversion(source: type, target: b, downPrefix: p, downSuffix: s, upPrefix: tp, upSuffix: ts)
+            let rev = CustomConversion(source: b, target: type, downPrefix: tp, downSuffix: ts, upPrefix: p, upSuffix: s)
+            type.conversions = [ b : [conv, conv]]
+            b.conversions[type] = [rev, rev]
         }
         return b
     }()
@@ -493,6 +547,19 @@ public extension GIR {
 
     static let stringTypes: Set<GIRType> = [stringType, constStringType, gstringType, constGStringType, gustringType, constGUStringType]
 
+    static let errorProtocol = GIRType(name: "Error", ctype: "")
+    static let errorReference = TypeReference(type: errorProtocol)
+    static let gErrorStruct = GIRType(name: "GError", swiftName: "GError", ctype: "GError", superType: errorReference)
+    static let errorPointer = TypeReference.pointer(to: gErrorStruct)
+    static let constErrorPointer = TypeReference.pointer(to: gErrorStruct, isConst: true)
+    static let errorType = GIRType(aliasOf: errorPointer, name: "Error", swiftName: "ErrorType")
+    static let gerrorType = GIRType(aliasOf: errorPointer)
+
+    static var errorTypes: Set<GIRType> = {
+        let types: Set<GIRType> = [errorType, gerrorType]
+        return types
+    }()
+
     /// Common aliases used
     static var aliases: Set<GIRType> = {[
         GIRType(aliasOf: guintType, ctype: "unsigned int"),
@@ -503,7 +570,7 @@ public extension GIR {
 
     /// All fundamental types prior to GIR parsing
     static var fundamentalTypes: Set<GIRType> = {
-        return numericTypes ∪ boolType ∪ voidType ∪ stringType ∪ aliases
+        return numericTypes ∪ boolType ∪ voidType ∪ stringType ∪ errorTypes ∪ aliases
     }()
 
     /// All numeric conversions
