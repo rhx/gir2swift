@@ -349,6 +349,9 @@ public class TypeConversion: Hashable {
     }
 }
 
+/// An empty conversion has no explicit casting
+public typealias EmptyConversion = TypeConversion
+
 public class CastConversion: TypeConversion {
     /// Swift code for converting to the target type.
     /// By default, the type conversion is just a conversion constructor call.
@@ -415,7 +418,7 @@ public class CustomConversion: TypeConversion {
     /// - Parameter upPrefix: The prefix to apply when upcasting an expression
     /// - Parameter upSuffix: The suffix to apply when upcasting an expression
     @inlinable
-    public init(source: GIRType, target: GIRType, downPrefix: String, downSuffix: String, upPrefix: String, upSuffix: String) {
+    public init(source: GIRType, target: GIRType, downPrefix: String = "", downSuffix: String = "", upPrefix: String = "", upSuffix: String = "") {
         downcastPrefix = downPrefix
         downcastSuffix = downSuffix
         upcastPrefix = upPrefix
@@ -477,11 +480,13 @@ public extension GIR {
     static let uint64Type  = GIRType(name: "UInt64", ctype: "u_int64_t")
     static let swiftNumericTypes: Set<GIRType> = [floatType, doubleType, float80Type, intType, uintType, int8Type, int16Type, int32Type, int64Type, uint8Type, uint16Type, uint32Type, uint64Type]
 
+    static let Bool = "Bool"
+    static let bool = "bool"
     static let cintType     = GIRType(name: "CInt", ctype: "int")
     static let clongType    = GIRType(name: "CLong", ctype: "long")
     static let cshortType   = GIRType(name: "CShort", ctype: "short")
-    static let cboolType    = GIRType(name: "CBool", ctype: "bool")
-    static let ccharType    = GIRType(name: "CChar", ctype: "char")
+    static let cboolType    = GIRType(name: "CBool", ctype: bool)
+    static let ccharType    = GIRType(name: "CChar", ctype: char)
     static let cscharType   = GIRType(name: "CSignedChar", ctype: "signed char")
     static let cuintType    = GIRType(name: "CUnsignedInt", ctype: "unsigned int")
     static let culongType   = GIRType(name: "CUnsignedLong", ctype: "unsigned long")
@@ -492,13 +497,18 @@ public extension GIR {
     static let cldoubleType = GIRType(name: "CLongDouble", ctype: "long double")
     static let cNumericTypes: Set<GIRType> = [cintType, clongType, cshortType, cboolType, ccharType, cscharType, cuintType, culongType, cushortType, cucharType, cfloatType, cdoubleType, cldoubleType]
 
+    static let char = "char"
+    static let gchar = "gchar"
+    static let guchar = "guchar"
+    static let utf8 = "utf8"
+    static let string = "String"
     static let gfloatType  = GIRType(name: "gfloat", ctype: "gfloat")
     static let gdoubleType = GIRType(name: "gdouble", ctype: "gdouble")
-    static let gcharType   = GIRType(name: "gchar", ctype: "gchar")
+    static let gcharType   = GIRType(name: gchar, ctype: gchar)
     static let gintType    = GIRType(name: "gint", ctype: "gint")
     static let glongType   = GIRType(name: "glong", ctype: "glong")
     static let gshortType  = GIRType(name: "gshort", ctype: "gshort")
-    static let gucharType  = GIRType(name: "guchar", ctype: "guchar")
+    static let gucharType  = GIRType(name: guchar, ctype: guchar)
     static let guintType   = GIRType(name: "guint", ctype: "guint")
     static let gulongType  = GIRType(name: "gulong", ctype: "gulong")
     static let gushortType = GIRType(name: "gushort", ctype: "gushort")
@@ -518,7 +528,7 @@ public extension GIR {
     static let numericTypes = swiftNumericTypes ∪ cNumericTypes ∪ glibNumericTypes
 
     static var boolType: GIRType = {
-        let b = GIRType(name: "Bool", ctype: "bool")
+        let b = GIRType(name: Bool, ctype: bool)
         let p = "(("
         let s = ") != 0)"
         numericTypes.forEach { type in
@@ -526,7 +536,7 @@ public extension GIR {
             let ts = ") ? 1 : 0)"
             let conv = CustomConversion(source: type, target: b, downPrefix: p, downSuffix: s, upPrefix: tp, upSuffix: ts)
             let rev = CustomConversion(source: b, target: type, downPrefix: tp, downSuffix: ts, upPrefix: p, upSuffix: s)
-            type.conversions = [ b : [conv, conv]]
+            type.conversions[b] = [conv, conv]
             b.conversions[type] = [rev, rev]
         }
         return b
@@ -538,21 +548,38 @@ public extension GIR {
     static let constGCharPtr = TypeReference.pointer(to: gcharType, isConst: true)
     static let gucharPtr = TypeReference.pointer(to: gucharType)
     static let constGUCharPtr = TypeReference.pointer(to: gucharType, isConst: true)
-    static let stringType = GIRType(name: "utf8", swiftName: "String", ctype: "char", superType: charPtr)
-    static let constStringType = GIRType(name: "utf8", swiftName: "String", ctype: "char", superType: constCharPtr)
-    static let gstringType = GIRType(name: "utf8", swiftName: "String", ctype: "gchar", superType: gcharPtr)
-    static let constGStringType = GIRType(name: "utf8", swiftName: "String", ctype: "gchar", superType: gcharPtr)
-    static let gustringType = GIRType(name: "utf8", swiftName: "String", ctype: "guchar", superType: gucharPtr)
-    static let constGUStringType = GIRType(name: "utf8", swiftName: "String", ctype: "guchar", superType: constGUCharPtr)
+    static let stringType = GIRType(name: utf8, swiftName: string, ctype: char, superType: charPtr)
+    static let constStringType = GIRType(name: utf8, swiftName: string, ctype: char, superType: constCharPtr)
+    static let gstringType = GIRType(name: utf8, swiftName: string, ctype: gchar, superType: gcharPtr)
+    static let constGStringType = GIRType(name: utf8, swiftName: string, ctype: gchar, superType: gcharPtr)
+    static let gustringType = GIRType(name: utf8, swiftName: string, ctype: guchar, superType: gucharPtr)
+    static let constGUStringType = GIRType(name: utf8, swiftName: string, ctype: guchar, superType: constGUCharPtr)
 
-    static let stringTypes: Set<GIRType> = [stringType, constStringType, gstringType, constGStringType, gustringType, constGUStringType]
+    static let stringTypes: Set<GIRType> = {
+        let ts: Set<GIRType> = [stringType, constStringType, gstringType, constGStringType, gustringType, constGUStringType]
+        let t = stringType
+        let p = t.swiftName + "(cString: "
+        let s = ")"
+        ts.forEach { type in
+            let e = EmptyConversion(source: type, target: t)
+            let r = EmptyConversion(source: t, target: type)
+            let conv = CustomConversion(source: type, target: t, downPrefix: p, downSuffix: s)
+            let rev = CustomConversion(source: t, target: type, upPrefix: p, upSuffix: s)
+            type.conversions[t] = [e, e, conv, conv]
+            t.conversions[type] = [r, r, rev, rev]
+        }
+        return ts
+    }()
 
-    static let errorProtocol = GIRType(name: "Error", ctype: "")
+    static let error = "Error"
+    static let gerror = "GError"
+    static let errorT = "ErrorType"
+    static let errorProtocol = GIRType(name: error, ctype: "")
     static let errorReference = TypeReference(type: errorProtocol)
-    static let gErrorStruct = GIRType(name: "GError", swiftName: "GError", ctype: "GError", superType: errorReference)
+    static let gErrorStruct = GIRType(name: gerror, ctype: gerror, superType: errorReference)
     static let errorPointer = TypeReference.pointer(to: gErrorStruct)
     static let constErrorPointer = TypeReference.pointer(to: gErrorStruct, isConst: true)
-    static let errorType = GIRType(aliasOf: errorPointer, name: "Error", swiftName: "ErrorType")
+    static let errorType = GIRType(aliasOf: errorPointer, name: error, swiftName: errorT)
     static let gerrorType = GIRType(aliasOf: errorPointer)
 
     static var errorTypes: Set<GIRType> = {
