@@ -80,7 +80,7 @@ public func <(lhs: GIR.Thing, rhs: GIR.Thing) -> Bool {
 }
 
 /// Representation of a GIR file
-public class GIR {
+public final class GIR {
     /// The parsed XML document represented by the receiver
     public let xml: XMLDocument
     /// Preample boilerplate to output before any generated code
@@ -173,7 +173,7 @@ public class GIR {
             // get all type alias records
             //
             if let entries = xml.xpath("/*/*/gir:alias", namespaces: namespaces, defaultPrefix: "gir") {
-                aliases = entries.enumerated().map { Alias(node: $0.1, atIndex: $0.0) }.filter {
+                aliases = entries.enumerated().map { Alias(node: $0.1, at: $0.0) }.filter {
                     let name = $0.name
                     guard setKnownType(name, $0) else {
                         if !quiet { fputs("Warning: duplicate type '\(name)' for alias ignored!\n", stderr) }
@@ -204,17 +204,19 @@ public class GIR {
             //
             // get all constants, enumerations, records, classes, and functions
             //
-            constants    = enumerate(xml, path: "/*/*/gir:constant",    inNS: namespaces, quiet: quiet, construct: { Constant(node: $0, atIndex: $1) },    check: notKnownType)
-            enumerations = enumerate(xml, path: "/*/*/gir:enumeration", inNS: namespaces, quiet: quiet, construct: { Enumeration(node: $0, atIndex: $1) }, check: notKnownType)
-            bitfields    = enumerate(xml, path: "/*/*/gir:bitfield",    inNS: namespaces, quiet: quiet, construct: { Bitfield(node: $0, atIndex: $1) },    check: notKnownBitfield)
-            interfaces   = enumerate(xml, path: "/*/*/gir:interface",   inNS: namespaces, quiet: quiet, construct: { Interface(node: $0, atIndex: $1) }, check: notKnownRecord)
-            records      = enumerate(xml, path: "/*/*/gir:record",      inNS: namespaces, quiet: quiet, construct: { Record(node: $0, atIndex: $1) },    check: notKnownRecord)
-            classes      = enumerate(xml, path: "/*/*/gir:class",       inNS: namespaces, quiet: quiet, construct: { Class(node: $0, atIndex: $1) },     check: notKnownRecord)
-            unions       = enumerate(xml, path: "/*/*/gir:union",       inNS: namespaces, quiet: quiet, construct: { Union(node: $0, atIndex: $1) },     check: notKnownRecord)
-            callbacks    = enumerate(xml, path: "/*/*/gir:callback",    inNS: namespaces, quiet: quiet, construct: { Callback(node: $0, atIndex: $1) },    check: notKnownType)
+            constants    = enumerate(xml, path: "/*/*/gir:constant",    inNS: namespaces, quiet: quiet, construct: { Constant(node: $0, at: $1) },    check: notKnownType)
+            enumerations = enumerate(xml, path: "/*/*/gir:enumeration", inNS: namespaces, quiet: quiet, construct: { Enumeration(node: $0, at: $1) }, check: notKnownType)
+            bitfields    = enumerate(xml, path: "/*/*/gir:bitfield",    inNS: namespaces, quiet: quiet, construct: { Bitfield(node: $0, at: $1) },    check: notKnownBitfield)
+            interfaces   = enumerate(xml, path: "/*/*/gir:interface",   inNS: namespaces, quiet: quiet, construct: { Interface(node: $0, at: $1) }, check: notKnownRecord)
+            records      = enumerate(xml, path: "/*/*/gir:record",      inNS: namespaces, quiet: quiet, construct: { Record(node: $0, at: $1) },    check: notKnownRecord)
+            classes      = enumerate(xml, path: "/*/*/gir:class",       inNS: namespaces, quiet: quiet, construct: { Class(node: $0, at: $1) },     check: notKnownRecord)
+            unions       = enumerate(xml, path: "/*/*/gir:union",       inNS: namespaces, quiet: quiet, construct: { Union(node: $0, at: $1) },     check: notKnownRecord)
+            callbacks    = enumerate(xml, path: "/*/*/gir:callback",    inNS: namespaces, quiet: quiet, construct: { Callback(node: $0, at: $1) },    check: notKnownType)
             functions    = enumerate(xml, path: "//gir:function",       inNS: namespaces, quiet: quiet, construct: {
-                isFreeFunction($0) ? Function(node: $0, atIndex: $1) : nil
+                isFreeFunction($0) ? Function(node: $0, at: $1) : nil
                 }, check: notKnownFunction)
+            buildClassHierarchy()
+            buildConformanceGraph()
           }
         }
       }
@@ -232,6 +234,41 @@ public class GIR {
         self.init(xmlDocument: xml, quiet: q)
     }
 
+    /// Traverse all the classes and record their relationship in the type hierarchy
+    @inlinable
+    public func buildClassHierarchy() {
+        for cl in classes {
+            recordImplementedInterfaces(for: cl)
+            guard cl.typeRef.type.parent == nil else { continue }
+            if let parent = cl.parentType {
+                cl.typeRef.type.parent = parent.typeRef
+            }
+        }
+    }
+
+    /// Traverse all the records and record all the interfaces implemented
+    @inlinable
+    public func buildConformanceGraph() {
+        records.forEach { recordImplementedInterfaces(for: $0) }
+    }
+
+    /// Traverse all the records and record all the interfaces implemented
+    @discardableResult @inlinable
+    public func recordImplementedInterfaces(for record: Record) -> Set<TypeReference> {
+        let t = record.typeRef.type
+        if let interfaces = GIR.implements[t] { return interfaces }
+        let implements = record.implements.compactMap { GIR.knownDataTypes[$0] }
+        var implementations = Set(implements.map(\.typeRef))
+        let implementedRecords = implements.compactMap { $0 as? Record }
+        implementations.formUnion(implementedRecords.flatMap { recordImplementedInterfaces(for: $0) })
+        if let parent = record.parentType {
+            implementations.formUnion(recordImplementedInterfaces(for: parent))
+        }
+        GIR.implements[t] = implementations
+        if let ref = GIR.recordRefs[t] { GIR.implements[ref.type] = implementations }
+        if let pro = GIR.protocols[t]  { GIR.implements[pro.type] = implementations }
+        return implementations
+    }
 
     /// GIR named thing class
     public class Thing: Hashable, Comparable {
@@ -279,10 +316,10 @@ public class GIR {
         /// XML Element initialser
         /// - Parameters:
         ///   - node: `XMLElement` to construct this `Thing` from
-        ///   - i: Index within the siblings of the `node`
+        ///   - index: Index within the siblings of the `node`
         ///   - nameAttr: Key for the attribute to extract the `name` property from
-        public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name") {
-            name = node.attribute(named: nameAttr) ?? "Unknown\(i)"
+        public init(node: XMLElement, at index: Int, nameAttr: String = "name") {
+            name = node.attribute(named: nameAttr) ?? "Unknown\(index)"
             let c = node.children.lazy
             let depr = node.bool(named: "deprecated")
             comment = GIR.docs(children: c)
@@ -298,53 +335,49 @@ public class GIR {
     public class Datatype: Thing {
         /// String representation of the `Datatype` thing
         public override var kind: String { return "Datatype" }
-        /// C typedef name
-        public let type: String
+        /// The underlying type
+        public var typeRef: TypeReference
+        /// The identifier of this instance (e.g. C enum value type)
+        public var identifier: String? { typeRef.identifier }
 
         /// Memberwise initialiser
         /// - Parameters:
         ///   - name: The name of the `Datatype` to initialise
-        ///   - type: C typedef name of the data type
+        ///   - type: The corresponding, underlying GIR type
         ///   - comment: Documentation text for the data type
         ///   - introspectable: Set to `true` if introspectable
         ///   - deprecated: Documentation on deprecation status if non-`nil`
         ///   - version: The version this data type is first available in
-        public init(name: String, type: String, comment: String, introspectable: Bool = false, deprecated: String? = nil) {
-            self.type = type
+        public init(name: String, type: TypeReference, comment: String, introspectable: Bool = false, deprecated: String? = nil) {
+            typeRef = type
             super.init(name: name, comment: comment, introspectable: introspectable, deprecated: deprecated)
+            registerKnownType()
         }
 
         /// XML Element initialser
         /// - Parameters:
         ///   - node: `XMLElement` to construct this data type from
-        ///   - i: Index within the siblings of the `node`
+        ///   - index: Index within the siblings of the `node`
+        ///   - type: Type reference for the data type (taken from XML if `nil`)
         ///   - nameAttr: Key for the attribute to extract the `name` property from
-        ///   - typeAttr: Key for the attribute to extract the `type` property from
-        public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type") {
-            type = node.attribute(named: typeAttr) ?? ""
-            super.init(node: node, atIndex: i, nameAttr: nameAttr)
-
-            // handle the magic error type
-            if name == errorType { GErrorType = type.swift }
+        public init(node: XMLElement, at index: Int, with type: TypeReference? = nil, nameAttr: String = "name") {
+            typeRef = type ?? node.alias
+            super.init(node: node, at: index, nameAttr: nameAttr)
+            typeRef.isArray = node.name == "array"
+            registerKnownType()
+//
+//            // handle the magic error type
+//            if name == errorType { GErrorType = type.swift }
         }
 
-        /// XML Element initialser
-        /// - Parameters:
-        ///   - node: `XMLElement` to construct this data type from
-        ///   - i: Index within the siblings of the `node`
-        ///   - t: Type string of the data type
-        ///   - nameAttr: Key for the attribute to extract the `name` property from
-        public init(node: XMLElement, atIndex i: Int, withType t: String, nameAttr: String = "name") {
-            type = t
-            super.init(node: node, atIndex: i, nameAttr: nameAttr)
-
-            // handle the magic error type
-            if name == errorType { GErrorType = type.swift }
+        /// Register this type as an enumeration type
+        @inlinable
+        public func registerKnownType() {
         }
-        
+
         /// Returns `true` if the data type is `void`
         public var isVoid: Bool {
-            return type.hasPrefix("Void") || type.hasPrefix("void")
+            return typeRef.isVoid
         }
     }
 
@@ -353,12 +386,8 @@ public class GIR {
     public class CType: Datatype {
         /// String representation of the `CType` thing
         public override var kind: String { return "CType" }
-        /// underlying C type
-        public let ctype: String
         /// list of contained types
-        public let containedTypes: [CType]
-        /// `true` if this is an optional
-        public let isNullable: Bool
+        public let containedTypes: [TypeReference]
         /// reference scope
         public let scope: String?
         /// `true` if this is a readable element
@@ -371,18 +400,14 @@ public class GIR {
         /// Designated initialiser
         /// - Parameters:
         ///   - name: The name of the `Datatype` to initialise
-        ///   - type: C typedef name of the data type
-        ///   - ctype: underlying C type
+        ///   - type: The corresponding, underlying GIR type
         ///   - comment: Documentation text for the data type
         ///   - introspectable: Set to `true` if introspectable
         ///   - deprecated: Documentation on deprecation status if non-`nil`
-        ///   - isNullable: Set to `true` if this is a nullable type
         ///   - isWritable: Set to `true` if this is a writable type
         ///   - contains: Array of C types contained within this type
         ///   - scope: The scope this type belongs in
-        public init(name: String, type: String, ctype: String, comment: String, introspectable: Bool = false, deprecated: String? = nil, isNullable: Bool = false, isPrivate: Bool = false, isReadable: Bool = true, isWritable: Bool = false, contains: [CType] = [], scope: String? = nil) {
-            self.ctype = ctype
-            self.isNullable = isNullable
+        public init(name: String, type: TypeReference, comment: String, introspectable: Bool = false, deprecated: String? = nil, isPrivate: Bool = false, isReadable: Bool = true, isWritable: Bool = false, contains: [TypeReference] = [], scope: String? = nil) {
             self.isPrivate  = isPrivate
             self.isReadable = isReadable
             self.isWritable = isWritable
@@ -394,72 +419,42 @@ public class GIR {
         /// XML Element initialser
         /// - Parameters:
         ///   - node: `XMLElement` to construct this C type from
-        ///   - i: Index within the siblings of the `node`
+        ///   - index: Index within the siblings of the `node`
         ///   - nameAttr: Key for the attribute to extract the `name` property from
-        ///   - typeAttr: Key for the attribute to extract the `type` property from
-        ///   - cTypeAttr: Key for the attribute to extract the  C type property from
-        ///   - nullableAttr: Key for the attribute to extract the nullability status from
         ///   - privateAttr:  Key for the attribute to extract the privacy status from
         ///   - readableAttr: Key for the attribute to extract the readbility status from
         ///   - writableAttr: Key for the attribute to extract the writability status from
         ///   - scopeAttr: Key for the attribute to extract the  scope string from
-        public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", cTypeAttr: String? = nil, nullableAttr: String = "nullable", privateAttr: String = "private", readableAttr: String = "readable", writableAttr: String = "writable", scopeAttr: String = "scope") {
-            containedTypes = node.children.filter { $0.name == "type" }.map { CType(node: $0, atIndex: i, cTypeAttr: "type") }
-            isNullable = node.attribute(named: nullableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
+        public init(node: XMLElement, at index: Int, nameAttr: String = "name", privateAttr: String = "private", readableAttr: String = "readable", writableAttr: String = "writable", scopeAttr: String = "scope") {
+            containedTypes = node.children.filter { $0.name == "type" }.map(\.alias)
             isPrivate  = node.attribute(named: privateAttr) .flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
             isReadable = node.attribute(named: readableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? true
             isWritable = node.attribute(named: writableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
             scope = node.attribute(named: scopeAttr)
-            if let cta = cTypeAttr {
-                ctype = node.attribute(named: cta) ?? "Void /* unknown \(i) */"
-            } else {
-                if node.name == "array" {
-                    ctype = node.attribute(named: "type") ?? "Void /* unknown \(i) */"
-                } else {
-                    let children = node.children.lazy
-                    var types = children.filter { $0.name == "type" }.makeIterator()
-                    if let typeEntry = types.next() {
-                        ctype = typeEntry.attribute(named: "name") ?? (typeEntry.attribute(named: "type") ?? "Void /* unknown type \(i) */")
-                    } else {
-                        ctype = "Void /* unknown type \(i) */"
-                    }
-                }
-            }
-            super.init(node: node, atIndex: i, nameAttr: nameAttr, typeAttr: typeAttr)
+            super.init(node: node, at: index, nameAttr: nameAttr)
         }
 
         /// Factory method to construct a C Type from XML with types taken from children
         /// - Parameters:
         ///   - node: `XMLElement` whose descendants to construct this C type from
-        ///   - i: Index within the siblings of the `node`
+        ///   - index: Index within the siblings of the `node`
         ///   - nameAttr: Key for the attribute to extract the `name` property from
         ///   - typeAttr: Key for the attribute to extract the `type` property from
-        ///   - nullableAttr: Key for the attribute to extract the  nullability status from
         ///   - scopeAttr: Key for the attribute to extract the  scope string from
-        public init(fromChildrenOf node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", nullableAttr: String = "nullable", privateAttr: String = "private", readableAttr: String = "readable", writableAttr: String = "writable", scopeAttr: String = "scope") {
-            let type: String
-            let ctype: String
-            isNullable = node.attribute(named: nullableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
+        public init(fromChildrenOf node: XMLElement, at index: Int, nameAttr: String = "name", privateAttr: String = "private", readableAttr: String = "readable", writableAttr: String = "writable", scopeAttr: String = "scope") {
+            let type: TypeReference
             isPrivate  = node.attribute(named: privateAttr) .flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
             isReadable = node.attribute(named: readableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? true
             isWritable = node.attribute(named: writableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
             scope = node.attribute(named: scopeAttr)
             if let array = node.children.filter({ $0.name == "array" }).first {
-                containedTypes = array.children.filter { $0.name == "type" }.map { CType(node: $0, atIndex: i, cTypeAttr: "type") }
-                ctype = array.attribute(named: "type") ?? "Void /* unknown ctype \(i) */"
-                type  = array.attribute(named: "name") ?? ctype
+                type = array.type
+                containedTypes = array.children.filter { $0.name == "type" }.map(\.alias)
             } else {
                 containedTypes = []
-                (type, ctype) = GIR.types(node: node, at: i)
+                type = GIR.typeOf(node: node)
             }
-            self.ctype = ctype
-            super.init(node: node, atIndex: i, withType: type, nameAttr: nameAttr)
-        }
-
-        /// return whether the give C type is void
-        override public var isVoid: Bool {
-            let t = ctype.isEmpty ? type.swift : toSwift(ctype)
-            return t.hasPrefix("Void")
+            super.init(node: node, at: index, with: type, nameAttr: nameAttr)
         }
 
         /// return whether the type is an array
@@ -467,7 +462,7 @@ public class GIR {
 
         /// return whether the receiver is an instance of the given record (class)
         func isInstanceOf(_ record: GIR.Record?) -> Bool {
-            if let r = record, r.name == type.withoutNameSpace {
+            if let r = record?.typeRef, typeRef.references(r) {
                 return true
             } else {
                 return false
@@ -483,9 +478,9 @@ public class GIR {
 
         /// indicates whether the receiver is any known kind of pointer
         var isAnyKindOfPointer: Bool {
-            return ctype.isGPointer || ctype.isPointer || ctype.isCastablePointer || type.isSwiftPointer || type.hasSuffix("Func")
+            typeRef.indirectionLevel > 0 || typeRef.type.name.hasSuffix("Func")
         }
-        
+
         /// indicates whether the receiver is an array of scalar values
         var isScalarArray: Bool { return isArray && !isAnyKindOfPointer }
         
@@ -493,22 +488,24 @@ public class GIR {
         var nonClashingName: String {
             let sw = name.swift
             let nt = sw + (sw.isKnownType ? "_" : "")
+            let type = typeRef.type
+            let ctype = type.ctype
             let ct = ctype.innerCType.swiftType // swift name for C type
             let st = ctype.innerCType.swift     // corresponding Swift type
             let nc = nt == ct ? nt + "_" : nt
             let ns = nc == st ? nc + "_" : nc
-            let na = ns == type.swift  ? ns + "_" : ns
+            let na = ns == type.swiftName  ? ns + "_" : ns
             return na
         }
 
         //// return the known type of the argument (nil if not known)
-        var knownType: GIR.Datatype? { return GIR.knownDataTypes[type.isEmpty ? ctype : type] }
+        var knownType: GIR.Datatype? { return GIR.knownDataTypes[typeRef.type.name] }
         
         //// return the known class/record of the argument (nil if not known)
-        var knownRecord: GIR.Record? { return GIR.knownRecords[type.isEmpty ? ctype : type] }
+        var knownRecord: GIR.Record? { return GIR.knownRecords[typeRef.type.name] }
         
         //// return the known bitfield the argument represents (nil if not known)
-        var knownBitfield: GIR.Bitfield? { return GIR.knownBitfields[type.isEmpty ? ctype : type] }
+        var knownBitfield: GIR.Bitfield? { return GIR.knownBitfields[typeRef.type.name] }
 
         /// indicates whether the receiver is a known type
         var isKnownType: Bool { return knownType != nil }
@@ -540,31 +537,29 @@ public class GIR {
         /// Designated initialiser
         /// - Parameters:
         ///   - name: The name of the `Constant` to initialise
-        ///   - type: C typedef name of the constant
+        ///   - type: The type of the enum
         ///   - ctype: underlying C type
         ///   - value: the value of the constant
         ///   - comment: Documentation text for the constant
         ///   - introspectable: Set to `true` if introspectable
         ///   - deprecated: Documentation on deprecation status if non-`nil`
-        public init(name: String, type: String, ctype: String, value: Int, comment: String, introspectable: Bool = false, deprecated: String? = nil) {
+        public init(name: String, type: TypeReference, value: Int, comment: String, introspectable: Bool = false, deprecated: String? = nil) {
             self.value = value
-            super.init(name: name, type: type, ctype: ctype, comment: comment, introspectable: introspectable, deprecated: deprecated)
+            super.init(name: name, type: type, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
         /// Initialiser to construct a constant from XML
         /// - Parameters:
         ///   - node: `XMLElement` to construct this constant from
-        ///   - i: Index within the siblings of the `node`
+        ///   - index: Index within the siblings of the `node`
         ///   - nameAttr: Key for the attribute to extract the `name` property from
-        ///   - typeAttr: Key for the attribute to extract the `type` property from
-        ///   - cTypeAttr: Key for the attribute to extract the  C type property from
-        public init(node: XMLElement, atIndex i: Int, nameAttr: String = "name", typeAttr: String = "type", cTypeAttr: String? = nil) {
+        public init(node: XMLElement, at index: Int, nameAttr: String = "name") {
             if let val = node.attribute(named: "value"), let v = Int(val) {
                 value = v
             } else {
-                value = i
+                value = index
             }
-            super.init(node: node, atIndex: i, nameAttr: nameAttr, typeAttr: typeAttr, cTypeAttr: cTypeAttr)
+            super.init(node: node, at: index, nameAttr: nameAttr)
         }
     }
 
@@ -587,7 +582,7 @@ public class GIR {
         ///   - comment: Documentation text for the enum
         ///   - introspectable: Set to `true` if introspectable
         ///   - deprecated: Documentation on deprecation status if non-`nil`
-        public init(name: String, type: String, members: [Member], comment: String, introspectable: Bool = false, deprecated: String? = nil) {
+        public init(name: String, type: TypeReference, members: [Member], comment: String, introspectable: Bool = false, deprecated: String? = nil) {
             self.members = members
             super.init(name: name, type: type, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
@@ -595,11 +590,19 @@ public class GIR {
         /// Initialiser to construct an enumeration from XML
         /// - Parameters:
         ///   - node: `XMLElement` to construct this enum from
-        ///   - i: Index within the siblings of the `node`
-        public init(node: XMLElement, atIndex i: Int) {
+        ///   - index: Index within the siblings of the `node`
+        public init(node: XMLElement, at index: Int) {
             let mem = node.children.lazy.filter { $0.name == "member" }
-            members = mem.enumerated().map { Member(node: $0.1, atIndex: $0.0, cTypeAttr: "identifier") }
-            super.init(node: node, atIndex: i)
+            members = mem.enumerated().map { Member(node: $0.1, at: $0.0) }
+            super.init(node: node, at: index)
+        }
+
+        /// Register this type as an enumeration type
+        @inlinable
+        override public func registerKnownType() {
+            if !GIR.enums.contains(typeRef.type) {
+                GIR.enums.insert(typeRef.type)
+            }
         }
     }
 
@@ -607,6 +610,25 @@ public class GIR {
     public class Bitfield: Enumeration {
         /// String representation of `Bitfield`s
         public override var kind: String { return "Bitfield" }
+
+        /// Register this type as an enumeration type
+        @inlinable
+        override public func registerKnownType() {
+            let type = typeRef.type
+            let ctype = GIRType(name: type.typeName, typeName: type.typeName, ctype: type.ctype)
+
+            if !GIR.bitfields.contains(ctype) {
+                let c = BitfieldTypeConversion(source: ctype, target: type)
+                type.conversions[ctype] = [c, c]
+                GIR.bitfields.insert(ctype)
+            }
+
+            if !GIR.bitfields.contains(type) {
+                let c = BitfieldTypeConversion(source: type, target: ctype)
+                type.conversions[ctype] = [c, c]
+                GIR.bitfields.insert(type)
+            }
+        }
     }
 
 
@@ -630,7 +652,9 @@ public class GIR {
         public let fields: [Field]
         /// List of signals for this record
         public let signals: [Signal]
-        /// Parent type (`nil` for plain records)
+        /// Type struct (e.g. class definition), typically nil for records
+        public var typeStruct: String?
+        /// Name of the function that returns the GType for this record (`nil` if unspecified)
         public var parentType: Record? { return nil }
         /// Root class (`nil` for plain records)
         public var rootType: Record { return self }
@@ -667,7 +691,7 @@ public class GIR {
         ///   - comment: Documentation text for the constant
         ///   - introspectable: Set to `true` if introspectable
         ///   - deprecated: Documentation on deprecation status if non-`nil`
-        public init(name: String, type: String, ctype: String, cprefix: String, typegetter: String, methods: [Method] = [], functions: [Function] = [], constructors: [Method] = [], properties: [Property] = [], fields: [Field] = [], signals: [Signal] = [], interfaces: [String] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
+        public init(name: String, type: TypeReference, cprefix: String, typegetter: String, methods: [Method] = [], functions: [Function] = [], constructors: [Method] = [], properties: [Property] = [], fields: [Field] = [], signals: [Signal] = [], interfaces: [String] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
             self.cprefix = cprefix
             self.typegetter = typegetter
             self.methods = methods
@@ -677,36 +701,82 @@ public class GIR {
             self.fields = fields
             self.signals = signals
             self.implements = interfaces
-            super.init(name: name, type: type, ctype: ctype, comment: comment, introspectable: introspectable, deprecated: deprecated)
+            super.init(name: name, type: type, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
         /// Initialiser to construct a record type from XML
         /// - Parameters:
         ///   - node: `XMLElement` to construct this constant from
-        ///   - i: Index within the siblings of the `node`
-        public init(node: XMLElement, atIndex i: Int) {
+        ///   - index: Index within the siblings of the `node`
+        public init(node: XMLElement, at index: Int) {
             cprefix = node.attribute(named: "symbol-prefix") ?? ""
             typegetter = node.attribute(named: "get-type") ?? ""
+            typeStruct = node.attribute(named: "type-struct")
             let children = node.children.lazy
             let funcs = children.filter { $0.name == "function" }
-            functions = funcs.enumerated().map { Function(node: $0.1, atIndex: $0.0) }
+            functions = funcs.enumerated().map { Function(node: $0.1, at: $0.0) }
             let meths = children.filter { $0.name == "method" }
-            methods = meths.enumerated().map { Method(node: $0.1, atIndex: $0.0) }
+            methods = meths.enumerated().map { Method(node: $0.1, at: $0.0) }
             let cons = children.filter { $0.name == "constructor" }
-            constructors = cons.enumerated().map { Method(node: $0.1, atIndex: $0.0) }
+            constructors = cons.enumerated().map { Method(node: $0.1, at: $0.0) }
             let props = children.filter { $0.name == "property" }
-            properties = props.enumerated().map { Property(node: $0.1, atIndex: $0.0) }
+            properties = props.enumerated().map { Property(node: $0.1, at: $0.0) }
             let fattrs = children.filter { $0.name == "field" }
-            fields = fattrs.enumerated().map { Field(node: $0.1, atIndex: $0.0) }
+            fields = fattrs.enumerated().map { Field(node: $0.1, at: $0.0) }
             let sigs = children.filter { $0.name == "signal" }
-            signals = sigs.enumerated().map { Signal(node: $0.1, atIndex: $0.0) }
+            signals = sigs.enumerated().map { Signal(node: $0.1, at: $0.0) }
             let interfaces = children.filter { $0.name == "implements" }
             implements = interfaces.enumerated().compactMap { $0.1.attribute(named: "name") }
             records = node.children.lazy.filter { $0.name ==  "record" }.enumerated().map {
-                Record(node: $0.element, atIndex: $0.offset)
+                Record(node: $0.element, at: $0.offset)
             }
-            super.init(node: node, atIndex: i, typeAttr: "type-name", cTypeAttr: "type")
+            super.init(node: node, at: index)
         }
+
+        /// Register this type as a record type
+        @inlinable
+        override public func registerKnownType() {
+            let type = typeRef.type
+            let proType = protocolType
+            let refType = structType
+            let protocolRef = self.protocolRef
+            if type.parent == nil { type.parent = protocolRef }
+            if !GIR.recordTypes.contains(type) {
+                GIR.recordTypes.insert(type)
+            }
+            let ref = structRef
+            if GIR.protocols[type] == nil     { GIR.protocols[type] = protocolRef }
+            if GIR.protocols[refType] == nil  { GIR.protocols[refType] = protocolRef }
+            if GIR.recordRefs[type] == nil    { GIR.recordRefs[type] = ref }
+            if GIR.recordRefs[refType] == nil { GIR.recordRefs[type] = ref }
+            if GIR.recordRefs[proType] == nil { GIR.recordRefs[proType] = ref }
+            if GIR.refRecords[proType] == nil { GIR.refRecords[proType] = typeRef }
+            if GIR.refRecords[refType] == nil { GIR.refRecords[refType] = typeRef }
+            if GIR.refRecords[type] == nil    { GIR.refRecords[type] = typeRef }
+        }
+
+        /// Name of the Protocol for this record
+        @inlinable
+        public var protocolName: String { typeRef.type.swiftName.protocolName }
+        /// Name of the `Ref` struct for this record
+        @inlinable
+        public var structName: String { typeRef.type.swiftName + "Ref" }
+
+        /// Type of the Protocol for this record
+        @inlinable
+        public var protocolType: GIRType { GIRType(name: protocolName, typeName: protocolName, ctype: "") }
+
+        /// Protocol reference for this record
+        @inlinable
+        public var protocolRef: TypeReference { TypeReference(type: protocolType) }
+
+        /// Type of the `Ref` struct for this record
+        @inlinable
+        public var structType: GIRType { GIRType(name: structName, typeName: structName, ctype: "", superType: protocolRef) }
+
+        /// Protocol reference for this record
+        @inlinable
+        public var structRef: TypeReference { TypeReference(type: structType) }
 
         /// return the first method where the passed predicate closure returns `true`
         public func methodMatching(_ predictate: (Method) -> Bool) -> Method? {
@@ -787,14 +857,14 @@ public class GIR {
         /// Initialiser to construct a class type from XML
         /// - Parameters:
         ///   - node: `XMLElement` to construct this constant from
-        ///   - i: Index within the siblings of the `node`
-        override init(node: XMLElement, atIndex i: Int) {
+        ///   - index: Index within the siblings of the `node`
+        override init(node: XMLElement, at index: Int) {
             var parent = node.attribute(named: "parent") ?? ""
             if parent.isEmpty {
                 parent = node.children.lazy.filter { $0.name ==  "prerequisite" }.first?.attribute(named: "name") ?? ""
             }
             self.parent = parent
-            super.init(node: node, atIndex: i)
+            super.init(node: node, at: index)
         }
     }
 
@@ -833,23 +903,23 @@ public class GIR {
             self.returns = returns
             self.args = args
             throwsError = throwsAnError
-            super.init(name: name, type: returns.type, ctype: returns.ctype, instance: returns.instance, comment: comment, introspectable: introspectable, deprecated: deprecated)
+            super.init(name: name, type: returns.typeRef, instance: returns.instance, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
         /// Initialiser to construct a method type from XML
         /// - Parameters:
         ///   - node: `XMLElement` to construct this constant from
-        ///   - i: Index within the siblings of the `node`
-        public override init(node: XMLElement, atIndex i: Int) {
+        ///   - index: Index within the siblings of the `node`
+        public override init(node: XMLElement, at index: Int) {
             cname = node.attribute(named: "identifier") ?? ""
             let thrAttr = node.attribute(named: "throws") ?? "0"
             throwsError = (Int(thrAttr) ?? 0) != 0
             let children = node.children.lazy
             if let ret = children.findFirstWhere({ $0.name == "return-value"}) {
-                let arg = Argument(node: ret, atIndex: -1)
+                let arg = Argument(node: ret, at: -1)
                 returns = arg
             } else {
-                returns = Argument(name: "", type: "Void", ctype: "void", instance: false, comment: "")
+                returns = Argument(name: "", type: .void, instance: false, comment: "")
             }
             if let params = children.findFirstWhere({ $0.name == "parameters"}) {
                 let children = params.children.lazy
@@ -857,7 +927,7 @@ public class GIR {
             } else {
                 args = GIR.args(children: children)
             }
-            super.init(node: node, atIndex: i, varargs: args.lazy.filter({$0.varargs}).first != nil)
+            super.init(node: node, at: index, varargs: args.lazy.filter({$0.varargs}).first != nil)
         }
 
         /// indicate whether this is an unref method
@@ -940,24 +1010,24 @@ public class GIR {
         }
 
         /// default constructor
-        public init(name: String, type: String, ctype: String, instance: Bool, comment: String, introspectable: Bool = false, deprecated: String? = nil, varargs: Bool = false) {
+        public init(name: String, type: TypeReference, instance: Bool, comment: String, introspectable: Bool = false, deprecated: String? = nil, varargs: Bool = false) {
             self.instance = instance
             _varargs = varargs
-            super.init(name: name, type: type, ctype: ctype, comment: comment, introspectable: introspectable, deprecated: deprecated)
+            super.init(name: name, type: type, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
         /// XML constructor
-        public init(node: XMLElement, atIndex i: Int) {
+        public init(node: XMLElement, at index: Int) {
             instance = node.name.hasPrefix("instance")
             _varargs = node.children.lazy.findFirstWhere({ $0.name == "varargs"}) != nil
-            super.init(fromChildrenOf: node, atIndex: i)
+            super.init(fromChildrenOf: node, at: index)
         }
 
         /// XML constructor for functions/methods/callbacks
-        public init(node: XMLElement, atIndex i: Int, varargs: Bool) {
+        public init(node: XMLElement, at index: Int, varargs: Bool) {
             instance = node.name.hasPrefix("instance")
             _varargs = varargs
-            super.init(node: node, atIndex: i)
+            super.init(node: node, at: index)
         }
     }
 }
@@ -1059,25 +1129,21 @@ extension GIR {
     ///
     public class func args(children: LazySequence<AnySequence<XMLElement>>) -> [Argument] {
         let parameters = children.filter { $0.name.hasSuffix("parameter") }
-        let args = parameters.enumerated().map { Argument(node: $1, atIndex: $0) }
+        let args = parameters.enumerated().map { Argument(node: $1, at: $0) }
         return args
     }
 
     ///
-    /// return the array / type information of an argument or return type node
+    /// return the type information of an argument or return type node
     ///
-    class func types(node: XMLElement, at i: Int) -> (type: String, ctype: String) {
+    class func typeOf(node: XMLElement) -> TypeReference {
+        let t = node.type
+        if !t.isVoid { return t }
         for child in node.children {
-            let type = child.attribute(named: "name") ?? (child.attribute(named: "type") ?? "Void /* unknown type \(i) */")
-            let t: XMLElement
-            if child.name == "type" { t = child }
-            else if let at = child.children.filter({ $0.name == "type" }).first {
-                t = at
-            } else { continue }
-            let ctype = t.attribute(named: "type") ?? (t.attribute(named: "name") ?? "void /* untyped argument \(i) */")
-            return (type: type, ctype: ctype)
+            let t = child.type
+            if !t.isVoid { return t }
         }
-        return (type: "Void /* missing type \(i) */", ctype: "void /* missing C type \(i) */")
+        return .void
     }
 
     ///

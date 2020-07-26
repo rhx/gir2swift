@@ -15,9 +15,12 @@ extension SwiftLibXML.XMLElement {
     /// through `const` and non-`const` pointers
     var alias: TypeReference {
         guard let name = attribute(named: "name") else { return .void }
-        let ctypeRaw = attribute(named: "type") ?? name
+        let typeName = attribute(named: "type-name")
+        let ctype = attribute(named: "type") ?? typeName ?? name
+        let identifier = attribute(named: "identifier")
+        let isNullable = attribute(named: "nullable").flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
         let oldN = GIR.namedTypes[name]?.count ?? 0
-        let typeRef = typeReference(for: name, cType: ctypeRaw)
+        let typeRef = typeReference(named: identifier, for: name, typeName: typeName, cType: ctype, isOptional: isNullable)
         let newN = GIR.namedTypes[name]?.count ?? 0
         let isNewType = oldN != newN
         guard isNewType, let typeXMLNode = children.filter({ $0.name == "type" }).first else {
