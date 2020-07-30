@@ -32,8 +32,8 @@ public class GIRType: Hashable {
     /// Designated initialiser for a GIR type
     /// - Parameters:
     ///   - name: The name of the type
-    ///   - swiftName: The name of the type in Swift (or `nil` if same as `name`)
-    ///   - typeName: The name of the underlying type (or `nil` if same as `ctype`)
+    ///   - swiftName: The name of the type in Swift (empty or `nil` if same as `name`)
+    ///   - typeName: The name of the underlying type (empty or `nil` if same as `ctype`)
     ///   - ctype: The name of the type in C
     ///   - superType: The parent or alias type (or `nil` if fundamental)
     ///   - isAlias: An indicator whether the type is an alias of its supertype that does not need casting
@@ -41,8 +41,8 @@ public class GIRType: Hashable {
     public init(name: String, swiftName: String? = nil, typeName: String? = nil, ctype: String, superType: TypeReference? = nil, isAlias: Bool = false, conversions: [GIRType : [TypeConversion]] = [:]) {
         precondition(isAlias == false || superType != nil)
         self.name = name
-        self.swiftName = swiftName ?? name
-        self.typeName = typeName ?? ctype
+        self.swiftName = swiftName.map { $0.isEmpty ? name : $0 } ?? name
+        self.typeName = typeName.map { $0.isEmpty ? ctype : $0 } ?? ctype
         self.ctype = ctype
         self.parent = superType
         self.isAlias = isAlias
@@ -199,7 +199,7 @@ public class GIRType: Hashable {
     @inlinable
     public static func == (lhs: GIRType, rhs: GIRType) -> Bool {
         return lhs.isAlias == rhs.isAlias && lhs.parent == rhs.parent && lhs.ctype == rhs.ctype
-            && lhs.name == rhs.name && lhs.swiftName == rhs.swiftName
+            && lhs.name == rhs.name && lhs.swiftName == rhs.swiftName && lhs.typeName == rhs.typeName
     }
 
     /// Hashes the essential components of this type by feeding them into the
@@ -211,8 +211,8 @@ public class GIRType: Hashable {
     public func hash(into hasher: inout Hasher) {
         hasher.combine(name)
         hasher.combine(swiftName)
+        hasher.combine(typeName)
         hasher.combine(ctype)
-        hasher.combine(parent)
         hasher.combine(isAlias)
     }
 }
@@ -264,7 +264,7 @@ func typeReference(named identifier: String? = nil, for name: String, typeName: 
     let maybeType = GIR.namedTypes[name]?.first { $0.ctype == info.innerType }
     let type = maybeType ?? GIRType(name: name, typeName: typeName, ctype: info.innerType)
     let t = addType(type)
-    return TypeReference(type: t, isConst: info.isConst, isOptional: isOptional, constPointers: info.indirection)
+    return TypeReference(type: t, identifier: identifier, isConst: info.isConst, isOptional: isOptional, constPointers: info.indirection)
 }
 
 /// Add a new type to the list of known types
