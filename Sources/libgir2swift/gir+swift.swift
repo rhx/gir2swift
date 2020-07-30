@@ -232,22 +232,35 @@ public func swiftCode(_ thing: GIR.Thing, _ postfix: String = "", indentation: S
 
 /// Swift code representation of a type alias
 public func swiftCode(alias: GIR.Alias) -> String {
-    return swiftCode(alias, "public typealias \(alias.escapedName.swift) = \(alias.typeRef.type.swiftName.swift)")
+    let original = alias.typeRef.type.typeName.swift
+    let parent = alias.typeRef.type.parent?.fullCType ?? alias.typeRef.fullCType
+    let comment = original == parent ? "" : (" // " + parent)
+    let code = swiftCode(alias, "public typealias " + alias.escapedName.swift + " = " + original + comment)
+    return code
 }
 
 /// Swift code representation of a callback as a type alias
 public func swiftCallbackAliasCode(callback: GIR.Callback) -> String {
-    return swiftCode(callback, "public typealias \(callback.escapedName.swift) = \(callback.typeRef.type.swiftName.swift)")
+    let original = callback.typeRef.type.typeName.swift
+    let parent = callback.typeRef.type.parent?.type.typeName ?? callback.typeRef.type.ctype
+    let comment = original == parent ? "" : (" // " + parent)
+    let code = swiftCode(callback, "public typealias " + callback.escapedName.swift + " = " + original + comment)
+    return code
 }
 
 /// Swift code representation of a constant
 public func swiftCode(constant: GIR.Constant) -> String {
-    let type = constant.typeRef.type.swiftName.swift
+    let original = constant.typeRef.type.typeName.swift
+    let parent = constant.typeRef.type.parent?.type.typeName ?? constant.typeRef.type.ctype
+    let comment = " // " + (original == parent ? "" : (parent + " value "))
+    let value = "\(constant.value)"
     let name = constant.escapedName.swift
     guard !GIR.verbatimConstants.contains(name) else {
-        return swiftCode(constant, "public let \(name): \(constant.typeRef.type.swiftName.swift) = \(constant.value) /* \(type) */")
+        let code = swiftCode(constant, "public let \(name): " + parent.swift + " = " + value + comment + original)
+        return code
     }
-    return swiftCode(constant, "public let \(name) = \(type) /* \(constant.typeRef.type.ctype) \(constant.value) */")
+    let code = swiftCode(constant, "public let \(name) = \(name == original ? value : original)" + comment + (name == original ? "" : value))
+    return code
 }
 
 ///// Magic error type for throwing
@@ -261,7 +274,11 @@ public func swiftCode(constant: GIR.Constant) -> String {
 
 /// Swift code type alias representation of an enum
 public func typeAlias(_ e: GIR.Enumeration) -> String {
-    return swiftCode(e, "public typealias \(e.escapedName.swift) = \(e.typeRef.type.swiftName.swift)")
+    let original = e.typeRef.type.typeName.swift
+    let parent = e.typeRef.type.parent?.type.typeName ?? e.typeRef.type.ctype
+    let comment = original == parent ? "" : (" // " + parent)
+    let code = swiftCode(e, "public typealias " + e.escapedName.swift + " = " + original + comment)
+    return code
 }
 
 /// Swift code representation of an enum
