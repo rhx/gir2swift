@@ -26,11 +26,12 @@ extension SwiftLibXML.XMLElement {
         guard isNewType, let typeXMLNode = children.filter({ $0.name == "type" }).first else {
             return typeRef
         }
+        let orig = typeRef.type
         let alias = typeXMLNode.alias
-        let parent = alias.type
-        let gt = GIRType(name: name, swiftName: parent.swiftName, ctype: parent.ctype, superType: alias, isAlias: true)
+//        let parent = alias.type
+        let gt = GIRType(name: name, swiftName: orig.swiftName, typeName: orig.typeName, ctype: orig.ctype, superType: alias, isAlias: true)
         let t = addType(gt)
-        let ref = TypeReference(type: t)
+        let ref = TypeReference(type: t, identifier: identifier)
         return ref
     }
 
