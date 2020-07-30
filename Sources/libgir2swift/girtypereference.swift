@@ -36,6 +36,15 @@ public struct TypeReference: Hashable {
     /// Returns `true` if the receiver is a reference to `void`
     public var isVoid: Bool { return isAlias(of: .void) }
 
+    /// returns the full C type including pointers and `const`
+    public var fullCType: String {
+        var ct = type.ctype + (constPointers.isEmpty ? "" : " ")
+        for isConst in constPointers {
+            ct = ct + (isConst ? "const*" : "*")
+        }
+        return ct
+    }
+
     /// Reference to void type
     public static var void: TypeReference = TypeReference(type: GIR.voidType)
 
