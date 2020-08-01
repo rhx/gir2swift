@@ -24,6 +24,8 @@ public extension GIR {
     static let uint32Type  = GIRType(name: "UInt32", ctype: "u_int32_t")
     static let uint64Type  = GIRType(name: "UInt64", ctype: "u_int64_t")
     static let swiftNumericTypes: Set<GIRType> = [floatType, doubleType, float80Type, intType, uintType, int8Type, int16Type, int32Type, int64Type, uint8Type, uint16Type, uint32Type, uint64Type]
+    static let intRef = TypeReference(type: intType)
+    static let doubleRef = TypeReference(type: doubleType)
 
     static let Bool = "Bool"
     static let bool = "bool"
@@ -99,6 +101,7 @@ public extension GIR {
     static let constGStringType = GIRType(name: utf8, swiftName: string, ctype: gchar, superType: gcharPtr)
     static let gustringType = GIRType(name: utf8, swiftName: string, ctype: guchar, superType: gucharPtr)
     static let constGUStringType = GIRType(name: utf8, swiftName: string, ctype: guchar, superType: constGUCharPtr)
+    static let stringRef = TypeReference(type: stringType)
 
     static let stringTypes: Set<GIRType> = {
         let ts: Set<GIRType> = [stringType, constStringType, gstringType, constGStringType, gustringType, constGUStringType]
