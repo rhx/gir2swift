@@ -37,64 +37,6 @@ public extension GIR {
 }
 
 
-/// Swift extentsion for things
-public extension GIR.Thing {
-    /// return a name with reserved Ref or Protocol suffixes escaped
-    var escapedName: String {
-        let na = name.typeEscaped
-        return na
-    }
-}
-
-
-/// Swift extension for arguments
-public extension GIR.CType {
-    /// return the, potentially prefixed argument name to use in a method declaration
-    var prefixedArgumentName: String {
-        let name = argumentName
-        let swname = name.camelCase.swift
-        let prefixedname = name == swname ? name : (swname + " " + name)
-        return prefixedname
-    }
-
-    /// return the swift (known) type of the receiver
-    var argumentType: String {
-        let type = typeRef.type
-        let name = type.swiftName
-        let ct = type.typeName
-        let t = name.isEmpty ? ct : name
-        let array = isScalarArray
-        let swift = (array ? t.swiftType : t.swift).typeEscaped
-        let isPtr  = ct.isPointer
-        let record = knownRecord
-        let code = "\(array ? "inout [" : "")\(isPtr ? (record.map { $0.protocolName } ?? ct.swiftRepresentationOfCType) : swift)\(array ? "]" : "")"
-        return code
-    }
-}
-
-
-/// Swift extension for methods
-public extension GIR.Method {
-    var isDesignatedConstructor: Bool {
-        return name == "new"
-    }
-
-    /// is this a bare factory method that is not the default constructor
-    var isBareFactory: Bool {
-        return args.isEmpty && !isDesignatedConstructor
-    }
-
-    /// return whether the method is a constructor of the given record
-    func isConstructorOf(_ record: GIR.Record?) -> Bool {
-        return record != nil && returns.isInstanceOfHierarchy(record!) && !(args.first?.isInstanceOf(record) ?? false)
-    }
-
-    /// return whether the method is a factory of the given record
-    func isFactoryOf(_ record: GIR.Record?) -> Bool {
-        return !isDesignatedConstructor && isConstructorOf(record)
-    }
-}
-
 /// a pair of getters and setters (both cannot be nil at the same time)
 public struct GetterSetterPair {
     let getter: GIR.Method
@@ -174,18 +116,6 @@ public func getterSetterPairs(for allMethods: [GIR.Method]) -> [GetterSetterPair
     }
     return pairs
 }
-
-/// Swift extension for records
-public extension GIR.Record {
-    /// swift node name for this record
-    @inlinable
-    var swift: String { return name.swift }
-
-    /// swift class name for this record
-    @inlinable
-    var className: String { return swift }
-}
-
 
 /// GIR extension for Strings
 public extension String {
@@ -541,7 +471,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
             if instance { hadInstance = true }
             return !instance
         }
-        let params = arguments.map(codeFor)
+        let params = arguments.map(parameterCode)
         let funcParam = params.joined(separator: ", ")
         let fname: String
         if let firstParamName = params.first?.split(separator: " ").first?.split(separator: ":").first?.capitalised {
@@ -819,15 +749,13 @@ public func returnCode<T>(_ indentation: String, _ tr: (typeRef: TypeReference, 
 public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: String = "ptr", rvVar: String = "rv", doThrow: Bool = true, useIdiomaticSwift: Bool = true) -> (GIR.Method) -> String {
     var hadInstance = false
     let toSwift: (GIR.Argument) -> String = { arg in
-        let name = arg.nonClashingName
+        let name = arg.camelQuoted
         guard !arg.isScalarArray else { return "&" + name }
         let instance = !hadInstance && (arg.instance || arg.isInstanceOf(record))
         if instance { hadInstance = true }
         let varName = instance ? ptr : (name + (arg.isKnownRecord ? ".ptr" : ""))
-//        let types = typeCastTuple(arg.ctype, arg.type.swift,  + (!arg.isAnyKindOfPointer && arg.isKnownBitfield ? ".value" : "")))
         let ref = arg.typeRef
-        let argType = ref.type
-        let param = argType.cast(expression: varName)
+        let param = ref.cast(expression: varName, from: arg.swiftParamRef)
         return param
     }
     return { method in
@@ -837,21 +765,14 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         let n = args.count
         let rv = method.returns
         let rvRef = rv.typeRef
-        let rvType = rvRef.type
-        let rvSType = rvType.swiftName
+        let rvSwiftRef = useIdiomaticSwift ? rv.swiftReturnRef : rvRef
         let isVoid = rv.isVoid
-        let rvName: String
-        if rv.isAnyKindOfPointer {
-            rvName = returnTypeCode()(method) ?? "UnsafeMutablePointer<\(rvSType)>!"
+        let rvTypeName: String
+        if rvSwiftRef == rvRef {
+            rvTypeName = ""
         } else {
-            if useIdiomaticSwift {
-                let rvIType = rvSType.idiomatic
-                rvName = rvIType == rvSType ? "" : rvIType
-            } else {
-                rvName = rvSType
-            }
+            rvTypeName = rvSwiftRef.fullSwiftTypeName
         }
-        let varCode = isVoid || rvVar.isEmpty ? "" : "let \(rvVar)\(rvName.isEmpty ?  "" : ": \(rvName)") = "
         let errCode: String
         let throwCode: String
         let invocationTail: String
@@ -859,16 +780,17 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
             errCode = "var error: UnsafeMutablePointer<\(GIR.gerror)>?\n" + indentation
             invocationTail = (n == 0 ? "" : ", ") + "&error)\n"
             throwCode = indentation + (doThrow ?
-                "if let error = error { throw ErrorType(error) }\n" :
-                "g_log(messagePtr: error?.pointee.message, level: .error)\n")
+                                        "if let error = error { throw ErrorType(error) }\n" :
+                                        "g_log(messagePtr: error?.pointee.message, level: .error)\n")
         } else {
             errCode = ""
-            throwCode = ""
-            invocationTail = ")\n"
+            throwCode = "\n"
+            invocationTail = ")"
         }
         let invocationStart = method.cname.swift + "(\(args.map(toSwift).joined(separator: ", "))"
         let call = invocationStart + invocationTail
-        let callCode = rvName.isEmpty ? call : rvType.cast(expression: call)
+        let callCode = rvSwiftRef.cast(expression: call, from: rvRef)
+        let varCode = isVoid || rvVar.isEmpty ? "" : "let \(rvVar)\(rvTypeName.isEmpty || callCode != call ?  "" : ": \(rvTypeName)") = "
         let code = errCode + varCode + callCode + throwCode
         return code
     }
@@ -910,12 +832,12 @@ public func constructorParam(_ method: GIR.Method, prefix: String?) -> String {
     let comma = ", "
     let args = method.args
     guard let first = args.first else { return "" }
-    guard let p = prefix else { return args.map(codeFor).joined(separator: comma) }
-    let firstParam = codeFor(argument: first, prefix: p)
+    guard let p = prefix else { return args.map(parameterCode).joined(separator: comma) }
+    let firstParam = parameterCode(for: first, prefix: p)
     let n = args.count
     guard n > 1 else { return firstParam }
     let tail = args[1..<n]
-    return firstParam + comma + tail.map(codeFor).joined(separator: comma)
+    return firstParam + comma + tail.map(parameterCode).joined(separator: comma)
 }
 
 
@@ -949,18 +871,35 @@ public func constructorPrefix(_ method: GIR.Method) -> String? {
 
 
 /// Swift code for auto-prefixed arguments
-public func codeFor(argument a: GIR.Argument) -> String {
-    let prefixedname = a.prefixedArgumentName
-    let type = a.argumentType
+public func parameterCode(for argument: GIR.Argument) -> String {
+    let prefixedname = argument.prefixedArgumentName
+    let type = argument.argumentType
+    let code = "\(prefixedname): \(type)"
+    return code
+}
+
+/// Swift code for auto-prefixed return values
+public func returnCode(for argument: GIR.Argument) -> String {
+    let prefixedname = argument.prefixedArgumentName
+    let type = argument.argumentType
     let code = "\(prefixedname): \(type)"
     return code
 }
 
 
-/// Swift code for methods
-public func codeFor(argument a: GIR.Argument, prefix: String) -> String {
-    let name = a.argumentName
-    let type = a.argumentType
+/// Swift code for method parameters
+public func parameterCode(for argument: GIR.Argument, prefix: String) -> String {
+    let name = argument.argumentName
+    let type = argument.argumentType
+    let code = "\(prefix) \(name): \(type)"
+    return code
+}
+
+
+/// Swift code for method return values
+public func returnCode(for argument: GIR.Argument, prefix: String) -> String {
+    let name = argument.argumentName
+    let type = argument.returnType
     let code = "\(prefix) \(name): \(type)"
     return code
 }
