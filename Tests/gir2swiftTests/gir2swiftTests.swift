@@ -245,6 +245,84 @@ final class gir2swiftTests: XCTestCase {
         XCTAssertEqual(bcastFrom, "((\(b)) != 0)")
     }
 
+    func testGIRPointers() {
+        let t = GIRType(name: "CChar", ctype: "char")
+        let a = t.ctype + " *"
+        let sa = "UnsafeMutablePointer<" + t.swiftName + ">"
+        let b = "const " + a
+        let sb = "UnsafePointer<" + t.swiftName + ">"
+        let c = "const " + a + " const"
+        let sc = "UnsafePointer<" + t.swiftName + ">"
+        let d = a + " const"
+        let sd = "UnsafePointer<" + t.swiftName + ">"
+        let e = "char**"
+        let f = b + "*"
+        let g = "const " + a + "const*"
+        let a1 = decodeIndirection(for: a)
+        let b1 = decodeIndirection(for: b)
+        let c1 = decodeIndirection(for: c)
+        let d1 = decodeIndirection(for: d)
+        let e1 = decodeIndirection(for: e)
+        let f1 = decodeIndirection(for: f)
+        let g1 = decodeIndirection(for: g)
+        let ra = TypeReference.pointer(to: t)
+        let rb = TypeReference.pointer(to: t, isConst: true)
+        let rc = TypeReference.pointer(to: t, isConst: true, pointerIsConst: true)
+        let rd = TypeReference.pointer(to: t, isConst: false, pointerIsConst: true)
+        let re = TypeReference(type: t, constPointers: [false, false])
+        let rf = TypeReference(type: t, isConst: true, constPointers: [false, false])
+        let rg = TypeReference(type: t, isConst: true, constPointers: [false, true])
+        XCTAssertEqual(ra.fullCType, a)
+        XCTAssertEqual(ra.fullSwiftTypeName, sa)
+        XCTAssertEqual(a1.innerType, t.ctype)
+        XCTAssertEqual(a1.isConst, false)
+        XCTAssertEqual(a1.isConst, ra.isConst)
+        XCTAssertEqual(a1.indirection.count, 1)
+        XCTAssertEqual(a1.indirection.first, false)
+        XCTAssertEqual(rb.fullCType, b)
+        XCTAssertEqual(rb.fullSwiftTypeName, sb)
+        XCTAssertEqual(a1.indirection, ra.constPointers)
+        XCTAssertEqual(b1.innerType, t.ctype)
+        XCTAssertEqual(b1.isConst, true)
+        XCTAssertEqual(b1.isConst, rb.isConst)
+        XCTAssertEqual(b1.indirection.count, 1)
+        XCTAssertEqual(b1.indirection.first, false)
+        XCTAssertEqual(b1.indirection, rb.constPointers)
+        XCTAssertEqual(c1.innerType, t.ctype)
+        XCTAssertEqual(c1.isConst, true)
+        XCTAssertEqual(c1.isConst, rc.isConst)
+        XCTAssertEqual(c1.indirection.count, 1)
+        XCTAssertEqual(c1.indirection.first, true)
+        XCTAssertEqual(c1.indirection, rc.constPointers)
+        XCTAssertEqual(d1.innerType, t.ctype)
+        XCTAssertEqual(d1.isConst, false)
+        XCTAssertEqual(d1.isConst, rd.isConst)
+        XCTAssertEqual(d1.indirection.count, 1)
+        XCTAssertEqual(d1.indirection.first, true)
+        XCTAssertEqual(d1.indirection, rd.constPointers)
+        XCTAssertEqual(e1.innerType, t.ctype)
+        XCTAssertEqual(e1.isConst, false)
+        XCTAssertEqual(e1.isConst, re.isConst)
+        XCTAssertEqual(e1.indirection.count, 2)
+        XCTAssertEqual(e1.indirection.first, false)
+        XCTAssertEqual(e1.indirection.last, false)
+        XCTAssertEqual(e1.indirection, re.constPointers)
+        XCTAssertEqual(f1.innerType, t.ctype)
+        XCTAssertEqual(f1.isConst, true)
+        XCTAssertEqual(f1.isConst, rf.isConst)
+        XCTAssertEqual(f1.indirection.count, 2)
+        XCTAssertEqual(f1.indirection.first, false)
+        XCTAssertEqual(f1.indirection.last, false)
+        XCTAssertEqual(f1.indirection, rf.constPointers)
+        XCTAssertEqual(g1.innerType, t.ctype)
+        XCTAssertEqual(g1.isConst, true)
+        XCTAssertEqual(g1.isConst, rg.isConst)
+        XCTAssertEqual(g1.indirection.count, 2)
+        XCTAssertEqual(g1.indirection.first, false)
+        XCTAssertEqual(g1.indirection.last, true)
+        XCTAssertEqual(g1.indirection, rg.constPointers)
+    }
+
     static var allTests = [
         ("testGIRTypes", testGIRTypes),
         ("testGtkDoc2SwiftDoc", testGtkDoc2SwiftDoc),

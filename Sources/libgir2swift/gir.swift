@@ -458,10 +458,12 @@ public final class GIR {
         }
 
         /// return whether the type is an array
+        @inlinable
         public var isArray: Bool { return !containedTypes.isEmpty }
 
         /// return whether the receiver is an instance of the given record (class)
-        func isInstanceOf(_ record: GIR.Record?) -> Bool {
+        @inlinable
+        public func isInstanceOf(_ record: GIR.Record?) -> Bool {
             if let r = record?.typeRef, typeRef.references(r) {
                 return true
             } else {
@@ -470,22 +472,30 @@ public final class GIR {
         }
         
         /// return whether the receiver is an instance of the given record (class) or any of its ancestors
-        func isInstanceOfHierarchy(_ record: GIR.Record) -> Bool {
+        @inlinable
+        public func isInstanceOfHierarchy(_ record: GIR.Record) -> Bool {
             if isInstanceOf(record) { return true }
             guard let parent = record.parentType else { return false }
             return isInstanceOfHierarchy(parent)
         }
 
         /// indicates whether the receiver is any known kind of pointer
-        var isAnyKindOfPointer: Bool {
+        @inlinable
+        public var isAnyKindOfPointer: Bool {
             typeRef.indirectionLevel > 0 || typeRef.type.name.hasSuffix("Func")
         }
 
         /// indicates whether the receiver is an array of scalar values
-        var isScalarArray: Bool { return isArray && !isAnyKindOfPointer }
-        
+        @inlinable
+        public var isScalarArray: Bool { return isArray && !isAnyKindOfPointer }
+
+        /// return the Swift camel case name, quoted if necessary
+        @inlinable
+        public var camelQuoted: String { name.camelCase.swiftQuoted }
+
         /// return a non-clashing argument name
-        var nonClashingName: String {
+        @inlinable
+        public var nonClashingName: String {
             let sw = name.swift
             let nt = sw + (sw.isKnownType ? "_" : "")
             let type = typeRef.type
@@ -499,25 +509,32 @@ public final class GIR {
         }
 
         //// return the known type of the argument (nil if not known)
-        var knownType: GIR.Datatype? { return GIR.knownDataTypes[typeRef.type.name] }
+        @inlinable
+        public var knownType: GIR.Datatype? { return GIR.knownDataTypes[typeRef.type.name] }
         
         //// return the known class/record of the argument (nil if not known)
-        var knownRecord: GIR.Record? { return GIR.knownRecords[typeRef.type.name] }
+        @inlinable
+        public var knownRecord: GIR.Record? { return GIR.knownRecords[typeRef.type.name] }
         
         //// return the known bitfield the argument represents (nil if not known)
-        var knownBitfield: GIR.Bitfield? { return GIR.knownBitfields[typeRef.type.name] }
+        @inlinable
+        public var knownBitfield: GIR.Bitfield? { return GIR.knownBitfields[typeRef.type.name] }
 
         /// indicates whether the receiver is a known type
-        var isKnownType: Bool { return knownType != nil }
+        @inlinable
+        public var isKnownType: Bool { return knownType != nil }
 
         /// indicates whether the receiver is a known class or record
-        var isKnownRecord: Bool { return knownRecord != nil }
+        @inlinable
+        public var isKnownRecord: Bool { return knownRecord != nil }
 
         /// indicates whether the receiver is a known bit field
-        var isKnownBitfield: Bool { return knownBitfield != nil }
+        @inlinable
+        public var isKnownBitfield: Bool { return knownBitfield != nil }
         
         /// return the non-prefixed argument name
-        var argumentName: String { return nonClashingName }
+        @inlinable
+        public var argumentName: String { return name.swiftQuoted }
     }
 
     /// a type alias is just a type with an underlying C type

@@ -39,10 +39,32 @@ public struct TypeReference: Hashable {
     /// returns the full C type including pointers and `const`
     public var fullCType: String {
         var ct = type.ctype + (constPointers.isEmpty ? "" : " ")
-        for isConst in constPointers {
-            ct = ct + (isConst ? "const*" : "*")
+        for e in constPointers.enumerated() {
+            ct = ct + (e.element || (e.offset == 0 && isConst) ? "const*" : "*")
         }
         return ct
+    }
+
+    /// returns the full Swift type including pointers and  taking into account `const`
+    public var fullSwiftTypeName: String {
+        let prefix = (isArray ? "[" : "") + constPointers.enumerated().map {
+            "Unsafe" + ($0.element || ($0.offset == 0 && isConst) ? "" : "Mutable") + "Pointer<"
+        }.joined()
+        let suffix = constPointers.map { _ in ">" }.joined() + (isArray ? "]" : "")
+        let st = prefix + type.swiftName + suffix
+        return st
+    }
+
+    /// Cast from one type reference to another
+    /// - Parameters:
+    ///   - expression: The expression to cast
+    ///   - source: The source type reference to cast from
+    /// - Returns: The expression cast to the receiver type
+    @inlinable public func cast(expression e: String, from source: TypeReference) -> String {
+        guard self != source else { return e }
+        let p = indirectionLevel == 0 ? 0 : max(1, indirectionLevel - source.indirectionLevel)
+        let cast = type.cast(expression: e, from: source.type, pointerLevel: p, const: isConst)
+        return cast
     }
 
     /// Reference to void type
@@ -59,7 +81,7 @@ public struct TypeReference: Hashable {
     @inlinable
     public init(type: GIRType, identifier: String? = nil, isConst: Bool = false, isOptional: Bool = false, isArray: Bool = false, constPointers: [Bool] = []) {
         self.type = type
-        self.identifier = identifier
+        self.identifier = identifier?.isEmpty ?? true ? nil : identifier
         self.isConst = isConst
         self.isOptional = isOptional
         self.isArray = isArray

@@ -83,6 +83,24 @@ public class CastConversion: TypeConversion {
     }
 }
 
+public class StringConversion: TypeConversion {
+    /// Swift code for converting from a string to a pointer of the target type.
+    /// By default, the type conversion is just a conversion constructor call.
+    /// - Parameter expression: An expression of source type to cast to the target type
+    @inlinable
+    override public func castToTarget(from expression: String) -> String {
+        return "\(expression)"
+    }
+
+    /// Swift code for converting from the target type to the source string type.
+    /// By default, the type conversion is just a conversion constructor call.
+    /// - Parameter expression: An expression of target type to cast to the source type
+    @inlinable
+    override public func castFromTarget(expression: String) -> String {
+        return "\(source.swiftName)(cString: \(expression))"
+    }
+}
+
 /// Parent/Child class conversion operation
 public class SubClassConversion: TypeConversion {
     /// Swift code for converting to the target type using `as`.

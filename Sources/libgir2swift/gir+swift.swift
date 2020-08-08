@@ -508,7 +508,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoi
         let getter = pair.getter
         let gs: GIR.Method
         let type: String
-        if let rt = returnTypeCode()(getter) {
+        if let rt = returnTypeCode(for: getter) {
             gs = getter
             type = rt
         } else {
@@ -668,25 +668,11 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
 
 
 /// Return the return type of a method, 
-public func returnTypeCode(_ tr: (typeRef: TypeReference, record: GIR.Record, isConstructor: Bool)? = nil, useIdiomaticSwift beIdiomatic: Bool = true) -> (GIR.Method) -> String? {
-    return { method in
-        let rv = method.returns
-        guard !rv.isVoid, !(tr?.isConstructor ?? false) else { return nil }
-        let returnType: String
-        if let tr = tr, rv.isInstanceOfHierarchy(tr.record)  {
-            let type = tr.typeRef.type
-            returnType = type.swiftName + "!"
-        } else {
-            let t = rv.typeRef.type
-//            let swiftEquivalent = t.swiftName.swift
-//            let swiftType = beIdiomatic ? swiftEquivalent.idiomatic : swiftEquivalent
-//            let typeTuple = typeCastTuple(rv.ctype, swiftType, useIdiomaticSwift: beIdiomatic)
-            let rtSwift = t.swiftName.swift
-            let rt = beIdiomatic ? rtSwift.idiomatic : rtSwift
-            returnType = rv.isAnyKindOfPointer ? "\(rt)!" : rt
-        }
-        return returnType
-    }
+public func returnTypeCode(for method: GIR.Method, _ tr: (typeRef: TypeReference, record: GIR.Record, isConstructor: Bool)? = nil, useIdiomaticSwift beIdiomatic: Bool = true) -> String? {
+    let rv = method.returns
+    guard !rv.isVoid, !(tr?.isConstructor ?? false) else { return nil }
+    let returnType = rv.returnTypeName(for: tr?.record, beingIdiomatic: beIdiomatic)
+    return returnType
 }
 
 
@@ -695,7 +681,7 @@ public func returnTypeCode(_ tr: (typeRef: TypeReference, record: GIR.Record, is
 public func returnDeclarationCode(_ tr: (typeRef: TypeReference, record: GIR.Record, isConstructor: Bool)? = nil) -> (GIR.Method) -> String {
     return { method in
         let throwCode = method.throwsError ? " throws" : ""
-        guard let returnType = returnTypeCode(tr)(method) else { return throwCode }
+        guard let returnType = returnTypeCode(for: method, tr) else { return throwCode }
         return throwCode + " -> \(returnType)"
     }
 }
@@ -723,16 +709,17 @@ public func returnCode<T>(_ indentation: String, _ tr: (typeRef: TypeReference, 
         let field = extract(param)
         guard !field.isVoid else { return "\n" }
         let isInstance = tr?.record != nil && field.isInstanceOfHierarchy((tr?.record)!)
-        let t = field.typeRef.type
-//        let swiftType = doConvert ? t.swiftName.swift : t.typeName.swiftVerbatim
-//        let cast2swift = typeCastTuple(field.ctype, swiftType, varName: rv, castVar: rv, forceCast: doForce || isInstance, convertToSwiftTypes: doConvert, useIdiomaticSwift: beIdiomatic, noCast: noCast).toSwift
-        guard isInstance, let tr = tr else { return indentation + "return \(t.cast(expression: rv))\n" }
-        let s = tr.typeRef.type
-        let cast2swift = t.cast(expression: rv, from: s)
+        let fieldRef = field.typeRef
+        let swiftRef = field.swiftReturnRef
+        let returnRef = doConvert ? swiftRef : fieldRef
+        let t = returnRef.type
+        guard isInstance, let tr = tr else { return indentation + "return rv\n" }
+        let typeRef = tr.typeRef
+        let cast2swift = returnRef.cast(expression: rv, from: typeRef)
         let cons = tr.isConstructor ? (tr.isConvenience ? "self.init" :
                                         (hasParent ? "super.init" : "\(ptr) = UnsafeMutableRawPointer")) :
             "return rv.map { \(t.swiftName)"
-        let cast = tr.isConstructor ? cast2swift : t.cast(expression: "$0", from: s)
+        let cast = tr.isConstructor ? cast2swift : returnRef.cast(expression: "$0", from: typeRef)
         let end = tr.isConstructor ? "" : " }"
         if tr.isConvenience || !tr.isConstructor {
             return indentation + "\(cons)(\(cast))\(end)\n"
@@ -763,16 +750,6 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         let throwsError = method.throwsError
         let args = method.args // not .lazy
         let n = args.count
-        let rv = method.returns
-        let rvRef = rv.typeRef
-        let rvSwiftRef = useIdiomaticSwift ? rv.swiftReturnRef : rvRef
-        let isVoid = rv.isVoid
-        let rvTypeName: String
-        if rvSwiftRef == rvRef {
-            rvTypeName = ""
-        } else {
-            rvTypeName = rvSwiftRef.fullSwiftTypeName
-        }
         let errCode: String
         let throwCode: String
         let invocationTail: String
@@ -787,10 +764,25 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
             throwCode = "\n"
             invocationTail = ")"
         }
+        let rv = method.returns
+        let rvRef = rv.typeRef
+        let rvSwiftRef = useIdiomaticSwift ? rv.swiftReturnRef : rvRef
         let invocationStart = method.cname.swift + "(\(args.map(toSwift).joined(separator: ", "))"
         let call = invocationStart + invocationTail
-        let callCode = rvSwiftRef.cast(expression: call, from: rvRef)
-        let varCode = isVoid || rvVar.isEmpty ? "" : "let \(rvVar)\(rvTypeName.isEmpty || callCode != call ?  "" : ": \(rvTypeName)") = "
+        let callCode: String
+        if rv.maybeOptional(for: record) {
+            callCode = call + ".map { " + rvSwiftRef.cast(expression: "$0", from: rvRef) + " }"
+        } else {
+            callCode = rvSwiftRef.cast(expression: call, from: rvRef)
+        }
+        let rvTypeName = rv.idiomaticReturnTypeName
+        let varCode: String
+        if rvVar.isEmpty || rv.isVoid {
+            varCode = ""
+        } else {
+            let typeDeclaration = rvTypeName.isEmpty || callCode != call ? "" : (": " + rvTypeName)
+            varCode = "let " + rvVar + typeDeclaration + " = "
+        }
         let code = errCode + varCode + callCode + throwCode
         return code
     }

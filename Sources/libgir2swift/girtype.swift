@@ -29,6 +29,9 @@ public class GIRType: Hashable {
     /// to a pointer, `5` is an immutable pointer to a pointer, etc.
     public var conversions: [GIRType : [TypeConversion]] = [:]
 
+    /// Swift name of the parent type (or the receiver if `parent` is `nil`)
+    public var underlyingSwiftName: String { parent?.fullSwiftTypeName ?? swiftName }
+
     /// Designated initialiser for a GIR type
     /// - Parameters:
     ///   - name: The name of the type
@@ -41,7 +44,8 @@ public class GIRType: Hashable {
     public init(name: String, swiftName: String? = nil, typeName: String? = nil, ctype: String, superType: TypeReference? = nil, isAlias: Bool = false, conversions: [GIRType : [TypeConversion]] = [:]) {
         precondition(isAlias == false || superType != nil)
         self.name = name
-        self.swiftName = swiftName.map { $0.isEmpty ? name : $0 } ?? name
+        let swiftDefault = swiftName.map { $0.isEmpty ? name : $0 } ?? name
+        self.swiftName = GIR.underlyingPrimitiveSwiftTypes[swiftDefault] ?? swiftDefault
         self.typeName = typeName.map { $0.isEmpty ? ctype : $0 } ?? ctype
         self.ctype = ctype
         self.parent = superType
@@ -198,7 +202,8 @@ public class GIRType: Hashable {
     /// - Returns: `true` if both types are considered equal
     @inlinable
     public static func == (lhs: GIRType, rhs: GIRType) -> Bool {
-        return lhs.isAlias == rhs.isAlias && lhs.parent == rhs.parent && lhs.ctype == rhs.ctype
+        return /* lhs.isAlias == rhs.isAlias && lhs.parent == rhs.parent && */
+            lhs.ctype == rhs.ctype
             && lhs.name == rhs.name && lhs.swiftName == rhs.swiftName && lhs.typeName == rhs.typeName
     }
 
@@ -213,11 +218,28 @@ public class GIRType: Hashable {
         hasher.combine(swiftName)
         hasher.combine(typeName)
         hasher.combine(ctype)
-        hasher.combine(isAlias)
+//        hasher.combine(isAlias)
     }
 }
 
-/// Representation of a fundamental type, its relationship to other types,
+/// Representation of a string type, its relationship to other types,
+/// and casting operations
+public final class GIRStringType: GIRType {
+    /// Return the default cast to convert the given expression to a string
+    /// - Parameters:
+    ///   - expression: The expression to cast
+    ///   - source: The source type to cast from
+    ///   - pointerLevel: The number of indirection levels (pointers)
+    ///   - const: An indicator whether the cast is to a `const` value
+    /// - Returns: The cast expression string
+    @inlinable
+    override public func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false) -> String {
+        let cast = swiftName + "(cString: " + e + ")"
+        return cast
+    }
+}
+
+/// Representation of a raw pointer type, its relationship to other types,
 /// and casting operations
 public final class GIRRawPointerType: GIRType {
     /// Return the default cast to convert the given expression to an opaque pointer
@@ -234,7 +256,7 @@ public final class GIRRawPointerType: GIRType {
     }
 }
 
-/// Representation of a fundamental type, its relationship to other types,
+/// Representation of a opaque pointer type, its relationship to other types,
 /// and casting operations
 public final class GIROpaquePointerType: GIRType {
     /// Return the default cast to convert the given expression to an opaque pointer
@@ -298,7 +320,7 @@ func addKnownType(_ type: GIRType, to namedTypes: inout [String : Set<GIRType>])
 /// - Parameter cType: A string containing a type in C
 /// - Returns: The inner type, whether the type is `const`, and the pointers (`true` if `const`) representing the indirection levels
 func decodeIndirection<S: StringProtocol>(for cType: S) -> (innerType: String, isConst: Bool, indirection: [Bool]) {
-    let s = cType.trimmingCharacters(in: .whitespacesAndNewlines)
+    let s = cType.trimmingCharacters(in: .whitespacesAndNewlines).typeWithoutLeadingOrTrailingVolatile
     let const = s.hasPrefix("const")
     guard !const else {
         let si = s.index(s.startIndex, offsetBy: 5)
