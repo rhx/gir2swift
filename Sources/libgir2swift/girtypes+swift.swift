@@ -40,11 +40,19 @@ public extension GIR.CType {
 
     /// Type reference to an idiomatic Swift type used for a Swift function parameter
     @inlinable
-    var swiftParamRef: TypeReference { GIR.swiftParameterTypeReplacements[typeRef] ?? typeRef }
+    var swiftParamRef: TypeReference {
+        guard var replacement = GIR.swiftParameterTypeReplacements[typeRef] else { return typeRef }
+        replacement.isConst = typeRef.isConst
+        return replacement
+    }
 
     /// Type reference to an idiomatic Swift type used for a Swift function return value
     @inlinable
-    var swiftReturnRef: TypeReference { GIR.swiftReturnTypeReplacements[typeRef] ?? typeRef }
+    var swiftReturnRef: TypeReference {
+        guard var replacement = GIR.swiftReturnTypeReplacements[typeRef] else { return typeRef }
+        replacement.isConst = typeRef.isConst
+        return replacement
+    }
 
     /// return the swift (known) type of the receiver when passed as an argument
     @inlinable
