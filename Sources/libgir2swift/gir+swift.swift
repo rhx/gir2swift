@@ -44,7 +44,7 @@ public struct GetterSetterPair {
 }
 
 /// constant for "i" as a code unit
-private let iU = "i".utf8.first
+private let iU = "i".utf8.first!
 /// constant for "_" as a code unit
 private let _U = "_".utf8.first!
 
@@ -736,7 +736,7 @@ public func returnCode<T>(_ indentation: String, _ tr: (typeRef: TypeReference, 
 public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: String = "ptr", rvVar: String = "rv", doThrow: Bool = true, useIdiomaticSwift: Bool = true) -> (GIR.Method) -> String {
     var hadInstance = false
     let toSwift: (GIR.Argument) -> String = { arg in
-        let name = arg.camelQuoted
+        let name = arg.argumentName
         guard !arg.isScalarArray else { return "&" + name }
         let instance = !hadInstance && (arg.instance || arg.isInstanceOf(record))
         if instance { hadInstance = true }
