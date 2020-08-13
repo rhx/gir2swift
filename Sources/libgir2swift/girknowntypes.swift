@@ -9,6 +9,8 @@ import Foundation
 
 public extension GIR {
     static let voidType = GIRType(name: "Void", ctype: "void")
+    static let voidRef  = TypeReference(type: voidType)
+    static let noneType = GIRType(name: "none", ctype: "void", superType: voidRef, isAlias: true)
 
     static let floatType   = GIRType(name: "Float", ctype: "float")
     static let doubleType  = GIRType(name: "Double", ctype: "double")
@@ -204,7 +206,7 @@ public extension GIR {
 
     /// All fundamental types prior to GIR parsing
     static var fundamentalTypes: Set<GIRType> = {
-        return numericTypes ∪ boolType ∪ voidType ∪ stringType ∪ errorTypes ∪ aliases ∪ enums ∪ bitfields
+        return numericTypes ∪ boolType ∪ voidType ∪ noneType ∪ stringType ∪ errorTypes ∪ aliases ∪ enums ∪ bitfields
     }()
 
     /// All numeric conversions
