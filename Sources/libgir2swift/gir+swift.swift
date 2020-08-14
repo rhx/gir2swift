@@ -715,19 +715,17 @@ public func returnCode<T>(_ indentation: String, _ tr: (typeRef: TypeReference, 
         let t = returnRef.type
         guard isInstance, let tr = tr else { return indentation + "return rv\n" }
         let typeRef = tr.typeRef
-        let cast2swift = returnRef.cast(expression: rv, from: typeRef)
-        let cons = tr.isConstructor ? (tr.isConvenience ? "self.init" :
-                                        (hasParent ? "super.init" : "\(ptr) = UnsafeMutableRawPointer")) :
-            "return rv.map { \(t.swiftName)"
-        let cast = tr.isConstructor ? cast2swift : returnRef.cast(expression: "$0", from: typeRef)
-        let end = tr.isConstructor ? "" : " }"
-        if tr.isConvenience || !tr.isConstructor {
-            return indentation + "\(cons)(\(cast))\(end)\n"
-        } else if tr.isConstructor {
-            return indentation + "\(cons)(\(cast))\(end)\n"
-        } else {
-            return indentation + "self.init(\(cast2swift))\n"
+        guard !tr.isConstructor else {
+            let cons = tr.isConvenience ? "self.init" : (hasParent ? "super.init" : "\(ptr) = UnsafeMutableRawPointer")
+            let cast = "(" + rv + "!)"
+            let ret = indentation + cons + cast + "\n"
+            return ret
         }
+        let cons = "return rv.map { \(t.swiftName)"
+        let cast = returnRef.cast(expression: "$0", from: typeRef)
+        let end = " }"
+        let ret = indentation + cons + cast + end + "\n"
+        return ret
     }
 }
 
@@ -750,40 +748,46 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         let throwsError = method.throwsError
         let args = method.args // not .lazy
         let n = args.count
+        let rv = method.returns
+        let isVoid = rvVar.isEmpty || rv.isVoid
+        let maybeOptional = rv.maybeOptional(for: record)
+        let needsNilGuard = !isVoid && maybeOptional
         let errCode: String
         let throwCode: String
         let invocationTail: String
+        let conditional: String
+        let suffix: String
         if throwsError {
+            conditional = ""
+            suffix = ""
             errCode = "var error: UnsafeMutablePointer<\(GIR.gerror)>?\n" + indentation
             invocationTail = (n == 0 ? "" : ", ") + "&error)\n"
-            throwCode = indentation + (doThrow ?
+            let errorCode = indentation + (doThrow ?
                                         "if let error = error { throw ErrorType(error) }\n" :
                                         "g_log(messagePtr: error?.pointee.message, level: .error)\n")
+            let nilCode = needsNilGuard ? "guard let " + rvVar + " = " + rvVar + " else { return nil }\n" : ""
+            throwCode = errorCode + nilCode
         } else {
             errCode = ""
             throwCode = "\n"
             invocationTail = ")"
+            conditional = needsNilGuard ? "guard " : ""
+            suffix = needsNilGuard ? " else { return nil }" : ""
         }
-        let rv = method.returns
         let rvRef = rv.typeRef
         let rvSwiftRef = useIdiomaticSwift ? rv.swiftReturnRef : rvRef
         let invocationStart = method.cname.swift + "(\(args.map(toSwift).joined(separator: ", "))"
         let call = invocationStart + invocationTail
-        let callCode: String
-        if rv.maybeOptional(for: record) {
-            callCode = call + ".map { " + rvSwiftRef.cast(expression: "$0", from: rvRef) + " }"
-        } else {
-            callCode = rvSwiftRef.cast(expression: call, from: rvRef)
-        }
-        let rvTypeName = rv.idiomaticReturnTypeName
+        let callCode = rvSwiftRef.cast(expression: call, from: rvRef)
+        let rvTypeName = rv.idiomaticWrappedTypeName
         let varCode: String
-        if rvVar.isEmpty || rv.isVoid {
+        if isVoid {
             varCode = ""
         } else {
             let typeDeclaration = rvTypeName.isEmpty || callCode != call ? "" : (": " + rvTypeName)
             varCode = "let " + rvVar + typeDeclaration + " = "
         }
-        let code = errCode + varCode + callCode + throwCode
+        let code = errCode + conditional + varCode + callCode + suffix + throwCode
         return code
     }
 }
