@@ -108,6 +108,19 @@ public extension GIR.Argument {
         return typeName
     }
 
+    /// explicit, idiomatic type name (empty if same as the underlying C type)
+    @inlinable var idiomaticWrappedTypeName: String {
+        let typeName: String
+        if typeRef.indirectionLevel == 1, let record = knownRecord {
+            typeName = record.structName
+        } else if typeRef == swiftReturnRef {
+            typeName = ""
+        } else {
+            typeName = swiftReturnRef.fullSwiftTypeName
+        }
+        return typeName
+    }
+
     /// Check whether the return type may need to be optional,
     /// e.g. when derived from a pointer that may be `nil`
     @inlinable func maybeOptional(for record: GIR.Record? = nil) -> Bool {
@@ -118,7 +131,7 @@ public extension GIR.Argument {
 
     /// return the idiomatic/non-idiomatic return type name
     @inlinable func returnTypeName(for record: GIR.Record? = nil, beingIdiomatic: Bool = true) -> String {
-        let idiomaticName = idiomaticReturnTypeName
+        let idiomaticName = idiomaticWrappedTypeName
         let name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : typeRef.fullSwiftTypeName
         if maybeOptional(for: record) {
             return name + "!"
