@@ -761,8 +761,8 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
             conditional = ""
             suffix = ""
             errCode = "var error: UnsafeMutablePointer<\(GIR.gerror)>?\n" + indentation
-            invocationTail = (n == 0 ? "" : ", ") + "&error)\n"
-            let errorCode = indentation + (doThrow ?
+            invocationTail = (n == 0 ? "" : ", ") + "&error)"
+            let errorCode = "\n" + indentation + (doThrow ?
                                         "if let error = error { throw ErrorType(error) }\n" :
                                         "g_log(messagePtr: error?.pointee.message, level: .error)\n")
             let nilCode = needsNilGuard ? "guard let " + rvVar + " = " + rvVar + " else { return nil }\n" : ""

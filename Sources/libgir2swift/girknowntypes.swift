@@ -104,6 +104,7 @@ public extension GIR {
         }
         return b
     }()
+    static let boolRef: TypeReference =  { TypeReference(type: boolType) }()
 
     static let charPtr = TypeReference.pointer(to: ccharType)
     static let constCharPtr = TypeReference.pointer(to: ccharType, isConst: true)
