@@ -97,7 +97,7 @@ public class StringConversion: TypeConversion {
     /// - Parameter expression: An expression of target type to cast to the source type
     @inlinable
     override public func castFromTarget(expression: String) -> String {
-        return "\(source.swiftName)(cString: \(expression))"
+        return expression + ".map({ " + source.swiftName + "(cString: $0) })"
     }
 }
 

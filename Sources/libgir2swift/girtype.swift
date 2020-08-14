@@ -154,7 +154,7 @@ public class GIRType: Hashable {
             prefix = target.swiftName
         } else {
             let ptr = const ? "UnsafePointer" : "UnsafeMutablePointer"
-            prefix = ptr + "<" + target.swiftName + ">"
+            prefix = ptr + "<" + target.swiftName + ">?"
         }
         return prefix + "(" + expression + ")"
     }
@@ -189,7 +189,7 @@ public class GIRType: Hashable {
             prefix = swiftName
         } else {
             let ptr = const ? "UnsafePointer" : "UnsafeMutablePointer"
-            prefix = ptr + "<" + swiftName + ">"
+            prefix = ptr + "<" + swiftName + ">?"
         }
         return prefix + "(" + e + ")"
     }
@@ -234,7 +234,7 @@ public final class GIRStringType: GIRType {
     /// - Returns: The cast expression string
     @inlinable
     override public func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false) -> String {
-        let cast = swiftName + "(cString: " + e + ")"
+        let cast = e + ".map({ " + swiftName + "(cString: $0) })"
         return cast
     }
 }

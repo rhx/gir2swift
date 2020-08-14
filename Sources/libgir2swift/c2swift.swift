@@ -91,10 +91,10 @@ private let swiftIdiomaticReplacements: [ String : String] = swiftReplacementsFo
 }
 
 /// Verbatim Swift type equivalents for C types
-private let swiftVerbatimReplacements = swiftReplacementsForC.mapValues { $0 == "String" ? "UnsafePointer<CChar>" : $0 }
+private let swiftVerbatimReplacements = swiftReplacementsForC.mapValues { $0 == "String" ? "UnsafePointer<CChar>?" : $0 }
 
 /// Verbatim Swift type equivalents for C types
-private let swiftVerbatimIdiomaticReplacements = swiftIdiomaticReplacements.mapValues { $0 == "String" ? "UnsafePointer<CChar>" : $0 }
+private let swiftVerbatimIdiomaticReplacements = swiftIdiomaticReplacements.mapValues { $0 == "String" ? "UnsafePointer<CChar>?" : $0 }
 
 /// Types that already exist in Swift and therefore need to be treated specially
 private let reservedTypes: Set = ["String", "Array", "Optional", "Set", "Error", "ErrorProtocol"]
@@ -432,16 +432,21 @@ public extension String {
     }
 
     /// return the C type unwrapped and converted to Swift
-    func unwrappedCTypeWithCount(_ pointerCount: Int = 0, _ constCount: Int = 0) -> (gType: String, swift: String, pointerCount: Int, constCount: Int, innerType: String) {
+    /// - Parameters:
+    ///   - pointerCount: the number of pointer indirections to deal with
+    ///   - constCount: the number of consts
+    ///   - optionalTail: the tail to add, e.g. "?" for optional, "!", for a force-unwrapped optional, or "" for a non-optional pointer
+    /// - Returns: Tuple of the Swift version of the C type, the Swift-encoded version of the inner type, the pointer and const counts, as well as the inner type
+    func unwrappedCTypeWithCount(_ pointerCount: Int = 0, _ constCount: Int = 0, optionalTail: String = "!") -> (gType: String, swift: String, pointerCount: Int, constCount: Int, innerType: String) {
         if let base = underlyingTypeForCPointer {
             let (pointer, cc) = isCConst ? ("UnsafePointer", constCount+1) : ("UnsafeMutablePointer", constCount)
-            let t = base.unwrappedCTypeWithCount(pointerCount+1, cc)
-            let wrappedOrig = pointer + "<\(t.gType)>"
+            let t = base.unwrappedCTypeWithCount(pointerCount+1, cc, optionalTail: "?")
+            let wrappedOrig = pointer + "<\(t.gType)>" + optionalTail
             let wrappedSwift: String
             if t.swift == "Void" {
                 wrappedSwift = pointer == "UnsafePointer" ? "UnsafeRawPointer" : "UnsafeMutableRawPointer"
             } else {
-                wrappedSwift = pointer + "<\(t.swift)>"
+                wrappedSwift = pointer + "<\(t.swift)>" + optionalTail
             }
             return (gType: wrappedOrig, swift: wrappedSwift, pointerCount: t.pointerCount, constCount: t.constCount, innerType: t.innerType)
         }

@@ -50,7 +50,16 @@ public struct TypeReference: Hashable {
         let prefix = (isArray ? "[" : "") + constPointers.enumerated().map {
             "Unsafe" + ($0.element || ($0.offset == 0 && isConst) ? "" : "Mutable") + "Pointer<"
         }.joined()
-        let suffix = constPointers.map { _ in ">" }.joined() + (isArray ? "]" : "")
+        let innerSuffix: String
+        if constPointers.count <= 1 {
+            innerSuffix = ""
+        } else {
+            let s = constPointers.startIndex
+            let e = constPointers.index(before: constPointers.endIndex)
+            innerSuffix = constPointers[s..<e].map { _ in ">?" }.joined()
+        }
+        let outerSuffix = constPointers.isEmpty ? "" : ">!"
+        let suffix = innerSuffix + outerSuffix + (isArray ? "]" : "")
         let st = prefix + type.swiftName + suffix
         return st
     }

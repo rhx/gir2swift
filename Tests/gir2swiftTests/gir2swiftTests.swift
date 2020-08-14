@@ -248,9 +248,9 @@ final class gir2swiftTests: XCTestCase {
     func testGIRPointers() {
         let t = GIRType(name: "CChar", ctype: "char")
         let a = t.ctype + " *"
-        let sa = "UnsafeMutablePointer<" + t.swiftName + ">"
+        let sa = "UnsafeMutablePointer<" + t.swiftName + ">!"
         let b = "const " + a
-        let sb = "UnsafePointer<" + t.swiftName + ">"
+        let sb = "UnsafePointer<" + t.swiftName + ">!"
         let c = "const " + a + " const"
         let sc = "UnsafePointer<" + t.swiftName + ">"
         let d = a + " const"

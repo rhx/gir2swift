@@ -130,8 +130,8 @@ public extension GIR {
     static let stringTypes: Set<GIRType> = {
         let ts: Set<GIRType> = [stringType, constStringType, gstringType, constGStringType, gustringType, constGUStringType]
         let t = stringType
-        let p = t.swiftName + "(cString: "
-        let s = ")"
+        let p = ""
+        let s = ".map({ " + t.swiftName + "(cString: $0)})"
         ts.forEach { type in
             let e = EmptyConversion(source: type, target: t)
             let r = EmptyConversion(source: t, target: type)
