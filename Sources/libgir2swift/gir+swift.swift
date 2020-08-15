@@ -609,9 +609,9 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         let getterCode: String
         if field.isReadable {
             let cast = idiomaticRef.cast(expression: pointee, from: containedTypeRef)
-            let typeDeclaration = idiomaticName.isEmpty || cast != pointee ? "" : (": " + idiomaticName)
+//            let typeDeclaration = idiomaticName.isEmpty || cast != pointee ? "" : (": " + idiomaticName)
             let head = doubleIndent + "\(deprecated)get {\n" + doubleIndent +
-                indentation + "let rv" + typeDeclaration + " = "
+                indentation + "let rv = "
             let tail = "\n"
             getterCode = swiftCode(field, head + cast + tail +
             indentation + ret(field) + doubleIndent +
