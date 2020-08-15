@@ -28,7 +28,8 @@ extension SwiftLibXML.XMLElement {
         let identifier = attribute(named: "identifier")
         let isNullable = attribute(named: "nullable").flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
         let oldN = GIR.namedTypes[name]?.count ?? 0
-        let typeRef = typeReference(named: identifier, for: name, typeName: typeName, cType: cName, isOptional: isNullable)
+        let rawTypeRef = typeReference(named: identifier, for: name, typeName: typeName, cType: cName, isOptional: isNullable)
+        let typeRef = GIR.swiftFundamentalReplacements[rawTypeRef] ?? rawTypeRef
         let newN = GIR.namedTypes[name]?.count ?? 0
         let isNewType = oldN != newN
         guard isNewType, let typeXMLNode = children.filter({ $0.name == "type" }).first else {
