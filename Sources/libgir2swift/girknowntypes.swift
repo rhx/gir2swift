@@ -149,13 +149,21 @@ public extension GIR {
     static let mutablerawPointerType = GIRRawPointerType(aliasOf: mutableVoidPointer, name: "UnsafeMutableRawPointer")
     static let opaquePointer = "OpaquePointer"
     static let gpointer = "gpointer"
+    static let gpointerB = gpointer + "!"
     static let gconstpointer = "gconstpointer"
-    static let gpointerType = GIRRawPointerType(aliasOf: mutableVoidPointer, name: gpointer)
-    static let gconstpointerType = GIRRawPointerType(aliasOf: voidPointer, name: gconstpointer)
+    static let gconstpointerB = gconstpointer + "!"
+    static let gpointerType = GIRRawPointerType(aliasOf: mutableVoidPointer, name: gpointer, swiftName: gpointer, ctype: gpointer)
+    static let gconstpointerType = GIRRawPointerType(aliasOf: voidPointer, name: gconstpointer, swiftName: gconstpointer, ctype: gconstpointer)
     static let opaquePointerType = GIROpaquePointerType(aliasOf: mutableVoidPointer, name: opaquePointer)
-    static let constPointerTypes: Set<GIRType> = [rawPointerType, gconstpointerType]
-    static let mutablePointerTypes: Set<GIRType> = [mutablerawPointerType, gpointerType]
+    static let forceUnwrappedGPointerType = GIRRawPointerType(aliasOf: mutableVoidPointer, name: gpointerB, swiftName: gpointerB, ctype: gpointerB)
+    static let forceUnwrappedGConstPointerType = GIRRawPointerType(aliasOf: mutableVoidPointer, name: gconstpointerB, swiftName: gconstpointerB, ctype: gconstpointerB)
+    static let constPointerTypes: Set<GIRType> = [rawPointerType, gconstpointerType, forceUnwrappedGConstPointerType]
+    static let mutablePointerTypes: Set<GIRType> = [mutablerawPointerType, gpointerType, forceUnwrappedGPointerType]
     static let pointerTypes = constPointerTypes ∪ mutablePointerTypes ∪ opaquePointerType
+    static let gpointerRef = TypeReference(type: gpointerType)
+    static let forceUnwrappedGPointerRef = TypeReference(type: forceUnwrappedGPointerType)
+    static let gconstpointerRef = TypeReference(type: gconstpointerType)
+    static let forceUnwrappedGConstPointerRef = TypeReference(type: forceUnwrappedGConstPointerType)
 
     static let error = "Error"
     static let gerror = "GError"

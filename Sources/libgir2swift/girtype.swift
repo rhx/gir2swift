@@ -32,6 +32,14 @@ public class GIRType: Hashable {
     /// Swift name of the parent type (or the receiver if `parent` is `nil`)
     public var underlyingSwiftName: String { parent?.fullSwiftTypeName ?? swiftName }
 
+    /// Swift name to use for casting: replaces trailing `!` with `?`
+    @inlinable public var swiftCastName: String {
+        guard swiftName.hasSuffix("!") else { return swiftName }
+        let s = swiftName.startIndex
+        let e = swiftName.index(before: swiftName.endIndex)
+        return swiftName[s..<e] + "?"
+    }
+
     /// Designated initialiser for a GIR type
     /// - Parameters:
     ///   - name: The name of the type
@@ -151,10 +159,10 @@ public class GIRType: Hashable {
         }
         let prefix: String
         if pointerLevel == 0 {
-            prefix = target.swiftName
+            prefix = target.swiftCastName
         } else {
             let ptr = const ? "UnsafePointer" : "UnsafeMutablePointer"
-            prefix = ptr + "<" + target.swiftName + ">?"
+            prefix = ptr + "<" + target.swiftCastName + ">?"
         }
         return prefix + "(" + expression + ")"
     }
@@ -186,10 +194,10 @@ public class GIRType: Hashable {
     public func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false) -> String {
         let prefix: String
         if pointerLevel == 0 {
-            prefix = swiftName
+            prefix = swiftCastName
         } else {
             let ptr = const ? "UnsafePointer" : "UnsafeMutablePointer"
-            prefix = ptr + "<" + swiftName + ">?"
+            prefix = ptr + "<" + swiftCastName + ">?"
         }
         return prefix + "(" + e + ")"
     }
@@ -234,7 +242,7 @@ public final class GIRStringType: GIRType {
     /// - Returns: The cast expression string
     @inlinable
     override public func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false) -> String {
-        let cast = e + ".map({ " + swiftName + "(cString: $0) })"
+        let cast = e + ".map({ " + swiftCastName + "(cString: $0) })"
         return cast
     }
 }
@@ -251,7 +259,7 @@ public final class GIRRawPointerType: GIRType {
     /// - Returns: The cast expression string
     @inlinable
     public override func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false) -> String {
-        let expression = swiftName + "(" + e + ")"
+        let expression = swiftCastName + "(" + e + ")"
         return expression
     }
 }
@@ -268,7 +276,7 @@ public final class GIROpaquePointerType: GIRType {
     /// - Returns: The cast expression string
     @inlinable
     public override func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false) -> String {
-        let expression = swiftName + "(" + e + ")"
+        let expression = swiftCastName + "(" + e + ")"
         return expression
     }
 }
