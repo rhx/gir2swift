@@ -560,7 +560,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoi
             let deprecated = setter.deprecated != nil ? "@available(*, deprecated) " : ""
             setterCode = swiftCode(setter, doubleIndent + "\(deprecated)nonmutating set {\n" + tripleIndent +
                 (setter.throwsError ? (
-                    "var err: UnsafeMutablePointer<GError>?\n" + tripleIndent
+                    "var error: UnsafeMutablePointer<\(GIR.gerror)>?\n" + tripleIndent
                 ) : "") +
                 scall(setter) +
                 (setter.throwsError ? ( tripleIndent +
@@ -597,7 +597,6 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         }
         guard !field.isPrivate else { return indentation + "// var \(swname) is unavailable because \(name) is private\n" }
         let containedTypeRef = field.containedTypes.first ?? field.typeRef
-        let containedType = containedTypeRef.type
         let pointee = ptr + ".pointee." + name
         let scall = instanceSetter(doubleIndent, record, target: pointee, ptr: "newValue")
         guard field.isReadable || field.isWritable else { return indentation + "// var \(name) is unavailable because it is neigher readable nor writable\n" }
@@ -609,9 +608,10 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         let deprecated = field.deprecated != nil ? "@available(*, deprecated) " : ""
         let getterCode: String
         if field.isReadable {
+            let cast = idiomaticRef.cast(expression: pointee, from: containedTypeRef)
+            let typeDeclaration = idiomaticName.isEmpty || cast != pointee ? "" : (": " + idiomaticName)
             let head = doubleIndent + "\(deprecated)get {\n" + doubleIndent +
-                indentation + "let rv: \(idiomaticName) = "
-            let cast = idiomaticType.cast(expression: pointee, from: containedType)
+                indentation + "let rv" + typeDeclaration + " = "
             let tail = "\n"
             getterCode = swiftCode(field, head + cast + tail +
             indentation + ret(field) + doubleIndent +
@@ -839,13 +839,8 @@ public func callSetter(_ indentation: String, _ record: GIR.Record? = nil, ptr p
 public func instanceSetter(_ indentation: String, _ record: GIR.Record? = nil, target: String = "ptr", ptr parameterName: String = "newValue", castVar: String = "newValue", convertToSwiftTypes doConvert: Bool = false) -> (GIR.CType) -> String {
     return { field in
         guard !field.isVoid else { return "// \(field.name) is Void\n" }
-        let ftype = field.typeRef.type
-//        let containedType = field.containedTypes.first ?? field.typeRef
-//        let swiftType = doConvert ? ftype.swiftName.swift : ftype.name.swiftVerbatim
-//        let types = typeCastTuple(containedType.ctype, swiftType, varName: parameterName, castVar: castVar, convertToSwiftTypes: doConvert)
-//        let cType = types.toC
-//        let code = cType == castVar || cType.hasSuffix("ptr") ? "cast(\(cType))" : cType
-        let code = ftype.cast(expression: parameterName)
+        let ref = field.typeRef
+        let code = ref.cast(expression: parameterName, from: ref.idiomaticType)
         return "\(target) = \(code)"
     }
 }
