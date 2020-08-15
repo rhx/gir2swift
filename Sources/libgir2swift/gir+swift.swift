@@ -602,8 +602,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         guard field.isReadable || field.isWritable else { return indentation + "// var \(name) is unavailable because it is neigher readable nor writable\n" }
         guard !field.isVoid else { return indentation + "// var \(swname) is unavailable because \(name) is void\n" }
         let idiomaticRef = containedTypeRef.idiomaticType
-        let idiomaticType = idiomaticRef.type
-        let idiomaticName = idiomaticType.swiftName
+        let idiomaticName = idiomaticRef.fullSwiftTypeName
         let varDecl = swiftCode(field, indentation + "@inlinable \(publicDesignation)var \(swname): \(idiomaticName) {\n", indentation: indentation)
         let deprecated = field.deprecated != nil ? "@available(*, deprecated) " : ""
         let getterCode: String
