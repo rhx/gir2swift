@@ -146,7 +146,7 @@ public extension GIR {
     static let voidPointer = TypeReference.pointer(to: voidType, isConst: true)
     static let mutableVoidPointer = TypeReference.pointer(to: voidType)
     static let rawPointerType = GIRRawPointerType(aliasOf: voidPointer, name: "UnsafeRawPointer")
-    static let mutablerawPointerType = GIRRawPointerType(aliasOf: mutableVoidPointer, name: "UnsafeMutableRawPointer")
+    static let mutableRawPointerType = GIRRawPointerType(aliasOf: mutableVoidPointer, name: "UnsafeMutableRawPointer")
     static let opaquePointer = "OpaquePointer"
     static let gpointer = "gpointer"
     static let gpointerB = gpointer + "!"
@@ -157,9 +157,12 @@ public extension GIR {
     static let opaquePointerType = GIROpaquePointerType(aliasOf: mutableVoidPointer, name: opaquePointer)
     static let forceUnwrappedGPointerType = GIRRawPointerType(aliasOf: mutableVoidPointer, name: gpointerB, swiftName: gpointerB, ctype: gpointerB)
     static let forceUnwrappedGConstPointerType = GIRRawPointerType(aliasOf: mutableVoidPointer, name: gconstpointerB, swiftName: gconstpointerB, ctype: gconstpointerB)
+    static let rawPointerTypes: Set<GIRType> = [rawPointerType, mutableRawPointerType]
     static let constPointerTypes: Set<GIRType> = [rawPointerType, gconstpointerType, forceUnwrappedGConstPointerType]
-    static let mutablePointerTypes: Set<GIRType> = [mutablerawPointerType, gpointerType, forceUnwrappedGPointerType]
+    static let mutablePointerTypes: Set<GIRType> = [mutableRawPointerType, gpointerType, forceUnwrappedGPointerType]
     static let pointerTypes = constPointerTypes ∪ mutablePointerTypes ∪ opaquePointerType
+    static let rawPointerRef = TypeReference(type: rawPointerType)
+    static let mutableRawPointerRef = TypeReference(type: mutableRawPointerType)
     static let gpointerRef = TypeReference(type: gpointerType)
     static let forceUnwrappedGPointerRef = TypeReference(type: forceUnwrappedGPointerType)
     static let gconstpointerRef = TypeReference(type: gconstpointerType)

@@ -195,6 +195,8 @@ public class GIRType: Hashable {
         let prefix: String
         if pointerLevel == 0 {
             prefix = swiftCastName
+        } else if GIR.rawPointerTypes.contains(self) {
+            return RawPointerConversion(source: self, target: self).castFromTarget(expression: e)
         } else {
             let ptr = const ? "UnsafePointer" : "UnsafeMutablePointer"
             prefix = ptr + "<" + swiftCastName + ">?"

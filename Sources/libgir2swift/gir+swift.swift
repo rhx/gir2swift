@@ -751,7 +751,8 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         let rv = method.returns
         let isVoid = rvVar.isEmpty || rv.isVoid
         let maybeOptional = rv.maybeOptional(for: record)
-        let needsNilGuard = !isVoid && maybeOptional
+        let isConstructor = method.isDesignatedConstructor || method.isConstructorOf(record)
+        let needsNilGuard = !isVoid && maybeOptional && !isConstructor
         let errCode: String
         let throwCode: String
         let invocationTail: String
@@ -779,7 +780,7 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         let invocationStart = method.cname.swift + "(\(args.map(toSwift).joined(separator: ", "))"
         let call = invocationStart + invocationTail
         let callCode = rvSwiftRef.cast(expression: call, from: rvRef)
-        let rvTypeName = rv.idiomaticWrappedTypeName
+        let rvTypeName = isConstructor ? "" : rv.idiomaticWrappedTypeName
         let varCode: String
         if isVoid {
             varCode = ""
@@ -1029,6 +1030,8 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let protocolName = protocolType.swiftName
     let cOriginalType = t.ctype.isEmpty ? t.typeName.swift : t.ctype.swift
     let ctype = cOriginalType.isEmpty ? t.name.swift : cOriginalType
+    let cGIRType = GIRType(name: ctype, ctype: ctype)
+//    let ctypeRef = TypeReference.pointer(to: cGIRType)
     let parentType = e.parentType
     let hasParent = parentType != nil
     let scode = signalNameCode(indentation: indentation)
@@ -1044,18 +1047,18 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let noSignals = noProperties && signals.isEmpty
     let retain: String
     let retainPtr: String
-    if let ref = e.ref {
+    if let ref = e.ref, ref.args.count == 1 {
         retain = ref.cname
-        retainPtr = ref.typeRef.type.cast(expression: "ptr", pointerLevel: 1)
+        retainPtr = RawPointerConversion(source: cGIRType, target: GIR.rawPointerType).castFromTarget(expression: "ptr")
     } else {
         retain = "// no reference counting for \(ctype.swift), cannot ref"
         retainPtr = ptr
     }
     let release: String
     let releasePtr: String
-    if let unref = e.unref {
+    if let unref = e.unref, unref.args.count == 1 {
         release = unref.cname
-        releasePtr = unref.typeRef.type.cast(expression: "ptr", pointerLevel: 1)
+        releasePtr = RawPointerConversion(source: cGIRType, target: GIR.rawPointerType).castFromTarget(expression: "ptr")
     } else {
         release = "// no reference counting for \(ctype.swift), cannot unref"
         releasePtr = ptr

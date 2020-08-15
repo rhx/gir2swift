@@ -205,3 +205,14 @@ public class EnumTypeConversion: CastConversion {
 
 /// Bit field (`OptionSet`) type conversion operation.
 public class BitfieldTypeConversion: EnumTypeConversion {}
+
+/// Raw pointer conversion
+public class RawPointerConversion: TypeConversion {
+    /// Swift code for optional conversion from the target type to the source type
+    /// using `assumingMemoryBound(to:)`.
+    /// - Parameter expression: An expression of target type to cast to the source type
+    @inlinable
+    override public func castFromTarget(expression: String) -> String {
+        return "\(expression).assumingMemoryBound(to: \(source.swiftName).self)"
+    }
+}
