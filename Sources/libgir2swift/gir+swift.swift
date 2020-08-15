@@ -148,6 +148,8 @@ public func deprecatedCode(_ thing: GIR.Thing, indentation: String) -> String? {
     }
 }
 
+// MARK: - default Swift code for things
+
 /// Swift code representation with code following the comments
 public func swiftCode(_ thing: GIR.Thing, _ postfix: String = "", indentation: String = "") -> String {
     let s = commentCode(thing, indentation: indentation)
@@ -159,6 +161,8 @@ public func swiftCode(_ thing: GIR.Thing, _ postfix: String = "", indentation: S
     }
     return t + ((t.isEmpty || t.hasSuffix("\n")) ? "" : "\n") + postfix
 }
+
+// MARK: - Swift code for Aliases
 
 /// Swift code representation of a type alias
 public func swiftCode(alias: GIR.Alias) -> String {
@@ -177,6 +181,8 @@ public func swiftCallbackAliasCode(callback: GIR.Callback) -> String {
     let code = swiftCode(callback, "public typealias " + callback.escapedName.swift + " = " + original + comment)
     return code
 }
+
+// MARK: - Swift code for Constants
 
 /// Swift code representation of a constant
 public func swiftCode(constant: GIR.Constant) -> String {
@@ -210,6 +216,8 @@ public func typeAlias(_ e: GIR.Enumeration) -> String {
     let code = swiftCode(e, "public typealias " + e.escapedName.swift + " = " + original + comment)
     return code
 }
+
+// MARK: - Swift code for Enumerations
 
 /// Swift code representation of an enum
 public func swiftCode(_ e: GIR.Enumeration) -> String {
@@ -273,6 +281,7 @@ public func valueCode(_ indentation: String) -> (GIR.Enumeration.Member) -> Stri
 //    }
 //}
 
+// MARK: - Bitfields
 
 /// Swift code type definition of a bitfield
 public func bitfieldTypeHead(_ bf: GIR.Bitfield, enumRawType: String = "UInt32", indentation: String) -> String {
@@ -304,6 +313,8 @@ public func bitfieldTypeHead(_ bf: GIR.Bitfield, enumRawType: String = "UInt32",
         "@inlinable public init<I: BinaryInteger>(_ intValue: I) { self.rawValue = \(enumRawType)(intValue)  }\n\n"
     )
 }
+
+// MARK: Swift code for Bitfields
 
 /// Swift code representation of an enum
 public func swiftCode(_ bf: GIR.Bitfield) -> String {
@@ -346,6 +357,7 @@ public func bitfieldValueCode(_ bf: GIR.Bitfield, _ indentation: String) -> (GIR
 //    }
 //}
 
+// MARK: - Records
 
 /// Swift protocol representation of a record/class as a wrapper of a pointer
 public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: String = "    ", ptr: String = "ptr") -> String {
@@ -748,7 +760,13 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         guard !arg.isScalarArray else { return "&" + name }
         let instance = !hadInstance && (arg.instance || arg.isInstanceOf(record))
         if instance { hadInstance = true }
-        let varName = instance ? ptr : (name + (arg.isKnownRecord ? ".ptr" : ""))
+        let argPtrName: String
+        if let knownRecord = arg.knownRecord {
+            argPtrName = "." + knownRecord.ptrName
+        } else {
+            argPtrName = ""
+        }
+        let varName = instance ? ptr : (name + argPtrName)
         let ref = arg.typeRef
         let param = ref.cast(expression: varName, from: arg.swiftParamRef)
         return param
@@ -1287,6 +1305,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
 
 
 
+// MARK: - Swift code for Record/Class methods
 
 /// Swift code representation of a record
 public func swiftCode(_ funcs: [GIR.Function]) -> (String) -> (GIR.Record) -> String {
@@ -1306,17 +1325,20 @@ public func swiftCode(_ funcs: [GIR.Function]) -> (String) -> (GIR.Record) -> St
 }
 
 
+// MARK: Swift code for free functions
+
 /// Swift code representation of a free standing function
 public func swiftCode(_ f: GIR.Function) -> String {
     let code = functionCode(f)
     return code
 }
 
+// MARK: - Union conversions
 
 /// Return a unions-to-swift conversion closure for the array of functions passed in
 public func swiftUnionsConversion(_ funcs: [GIR.Function]) -> (GIR.Union) -> String {
     return { (u: GIR.Union) -> String in
-        let ptrName = "\(u.cprefix)_ptr"
+        let ptrName = u.ptrName
         let ctype = u.typeRef.type.ctype
         let parents = [ u.parentType?.protocolName ?? "", ctype == GIR.gerror ? GIR.errorProtocol.name : "" ].filter { !$0.isEmpty } +
             u.implements.filter { !(u.parentType?.implements.contains($0) ?? false) }.map { $0.protocolName }

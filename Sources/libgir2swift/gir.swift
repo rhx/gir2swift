@@ -691,6 +691,9 @@ public final class GIR {
             return parent.allMethods + parent.inheritedMethods
         }
 
+        /// return the typed pointer name
+        @inlinable public var ptrName: String { cprefix + "_ptr" }
+
         /// Designated initialiser
         /// - Parameters:
         ///   - name: The name of the record to initialise

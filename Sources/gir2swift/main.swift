@@ -85,7 +85,7 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
                 var firstName = ""
                 var name = ""
                 for type in types {
-                    let convert = ptrconvert("\(type.cprefix)_ptr")
+                    let convert = ptrconvert(type.ptrName)
                     let code = convert(type)
                     output += code + "\n\n"
                     name = type.className
@@ -108,7 +108,7 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
                 }
             } else {
                 let code = types.map { type in
-                    let convert = ptrconvert("\(type.cprefix)_ptr")
+                    let convert = ptrconvert(type.ptrName)
                     return convert(type)
                 }.joined(separator: "\n\n")
                 outq.async(group: queues) { print(code) }

@@ -54,26 +54,6 @@ public extension GIR.CType {
         return replacement
     }
 
-    /// return the swift (known) type of the receiver when passed as an argument
-    @inlinable
-    var argumentTypeName: String {
-        let swiftRef = swiftParamRef
-        let name = swiftRef.fullSwiftTypeName
-        guard typeRef.type === swiftRef.type && (isScalarArray || swiftRef.indirectionLevel > 0) else { return name }
-        let code = (isScalarArray ? "inout [" : "") + name + (isScalarArray ? "]" : "")
-        return code
-    }
-
-    /// return the swift (known) type of the receiver when passed as an argument
-    /// Returns a template name in case of a known record
-    @inlinable
-    var templateTypeName: String {
-        guard typeRef.indirectionLevel == 1, let record = knownRecord else {
-            return argumentTypeName
-        }
-        return record.className + "T"
-    }
-
     /// Return a Swift template declaration for a known record,
     /// or `nil` otherwise
     @inlinable
@@ -145,6 +125,29 @@ public extension GIR.Method {
 
 /// Swift extension for arguments
 public extension GIR.Argument {
+    /// return the swift (known) type of the receiver when passed as an argument
+    @inlinable
+    var argumentTypeName: String {
+        let swiftRef = swiftParamRef
+        let name = swiftRef.fullSwiftTypeName
+        guard typeRef.type === swiftRef.type && (isScalarArray || swiftRef.indirectionLevel > 0) else {
+            let optionalName = ((isNullable || isOptional) && !(name.hasSuffix("!") || name.hasSuffix("?"))) ? (name + "!") : name
+            return optionalName
+        }
+        let code = (isScalarArray ? "inout [" : "") + name + (isScalarArray ? "]" : "")
+        return code
+    }
+
+    /// return the swift (known) type of the receiver when passed as an argument
+    /// Returns a template name in case of a known record
+    @inlinable
+    var templateTypeName: String {
+        guard typeRef.indirectionLevel == 1, let record = knownRecord else {
+            return argumentTypeName
+        }
+        return record.className + "T"
+    }
+
     /// return the idiomatic/non-idiomatic return type name
     @inlinable func returnTypeName(for record: GIR.Record? = nil, beingIdiomatic: Bool = true) -> String {
         let idiomaticName = idiomaticWrappedTypeName
