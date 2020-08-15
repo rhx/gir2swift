@@ -480,11 +480,18 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
             fname = name
         }
         let deprecated = method.deprecated != nil ? "@available(*, deprecated) " : ""
-        let code = swiftCode(method, indent + "\(deprecated)\(publicDesignation)func \(fname.swift)(" +
-            funcParam + ")\(returnDeclaration(method)) {\n" +
-                doubleIndent + call(method) +
-                indent       + ret(method)  + indent +
-        "}\n", indentation: indent)
+        let discardable = record?.ref?.cname == method.cname && !method.returns.isVoid ? "@discardableResult " : ""
+        let funcDecl = deprecated + discardable + publicDesignation + "func " + fname.swift
+        let paramDecl = "(" + funcParam + ")"
+        let returnDecl = returnDeclaration(method)
+        let callCode = call(method)
+        let returnCode = ret(method)
+        let bodyCode = " {\n" +
+                doubleIndent + callCode +
+                indent       + returnCode  + indent +
+            "}\n"
+        let fullFunction = indent + funcDecl + paramDecl + returnDecl + bodyCode
+        let code = swiftCode(method, fullFunction, indentation: indent)
         return code
     }
 }
