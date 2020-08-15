@@ -10,6 +10,7 @@
 #else
     import Darwin
 #endif
+import Foundation
 import Dispatch
 import libgir2swift
 
@@ -55,7 +56,10 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
             GIR.KnownFunctions.removeValue(forKey: name)
         }
     }
-
+    let escfile = node + ".escaping"
+    GIR.escapingSuffixes = String(contentsOfFile: escfile, quiet: true)?.lines ?? [
+        "Notify", "Func", "Marshaller", "Callback"
+    ]
     load_gir(file) { gir in
         processSpecialCases(gir, forFile: node)
         let blacklist = GIR.blacklist

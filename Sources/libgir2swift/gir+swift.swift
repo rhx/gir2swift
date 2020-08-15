@@ -899,8 +899,9 @@ public func constructorPrefix(_ method: GIR.Method) -> String? {
 public func parameterCode(for argument: GIR.Argument) -> String {
     let prefixedname = argument.prefixedArgumentName
     let type = argument.templateTypeName
+    let escaping = type.maybeEscaping ? "@escaping " : ""
     let defaultValue = argument.isNullable && argument.allowNone ? " = nil" : ""
-    let code = "\(prefixedname): \(type)\(defaultValue)"
+    let code = prefixedname + ": " + escaping + type + defaultValue
     return code
 }
 

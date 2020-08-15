@@ -131,6 +131,8 @@ public final class GIR {
     public static var knownBitfields: [ String : Bitfield ] = [:]
     /// context of known functions
     public static var KnownFunctions: [ String : Function ] = [:]
+    /// suffixes for `@escaping` callback heuristics
+    public static var escapingSuffixes = [String]()
     /// Type of `GError`
     public static var GErrorType = "GErrorType"
 
@@ -1111,6 +1113,16 @@ public final class GIR {
             direction = node.attribute(named: "direction").flatMap { ParameterDirection(rawValue: $0) } ?? defaultDirection
             super.init(node: node, at: index)
         }
+    }
+}
+
+public extension StringProtocol {
+    /// Heuristic to check whether the receiver may be an escaping callback type
+    var maybeEscaping: Bool {
+        for suffix in GIR.escapingSuffixes {
+            guard !hasSuffix(suffix) else { return true }
+        }
+        return false
     }
 }
 
