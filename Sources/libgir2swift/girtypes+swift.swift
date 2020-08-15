@@ -100,24 +100,20 @@ public extension GIR.Method {
 
 /// Swift extension for arguments
 public extension GIR.Argument {
-    /// explicit, idiomatic type name (empty if same as the underlying C type)
-    @inlinable var idiomaticReturnTypeName: String {
-        let type = typeRef
-        let swiftReturnType = swiftReturnRef
-        let typeName = type == swiftReturnType ? "" : swiftReturnType.fullSwiftTypeName
-        return typeName
+    /// explicit, idiomatic type reference (struct if pointer to record)
+    @inlinable var idiomaticWrappedRef: TypeReference {
+        guard typeRef.indirectionLevel == 1, let record = knownRecord else {
+            return swiftReturnRef
+        }
+        return record.structRef
     }
 
     /// explicit, idiomatic type name (empty if same as the underlying C type)
     @inlinable var idiomaticWrappedTypeName: String {
-        let typeName: String
-        if typeRef.indirectionLevel == 1, let record = knownRecord {
-            typeName = record.structName
-        } else if typeRef == swiftReturnRef {
-            typeName = ""
-        } else {
-            typeName = swiftReturnRef.fullSwiftTypeName
-        }
+        let ref = idiomaticWrappedRef
+        guard ref == swiftReturnRef else { return ref.type.swiftName }
+        guard ref != typeRef else { return "" }
+        let typeName = swiftReturnRef.fullSwiftTypeName
         return typeName
     }
 

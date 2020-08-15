@@ -662,7 +662,7 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
                 fname = fullname
             }
             let p: String? = consPrefix == firstArgName?.swift ? nil : consPrefix
-            let fact = factory ? "static func \(fname.swift)(" : "\(isOverride ? ovr : conv)init("
+            let fact = factory ? "static func \(fname.swift)(" : "\(isOverride ? ovr : conv)init!("
             let code = swiftCode(method, indentation + "\(deprecated)@inlinable \(publicDesignation)\(fact)" +
                 constructorParam(method, prefix: p) + ")\(returnDeclaration(method)) {\n" +
                     doubleIndent + call(method) +
@@ -724,7 +724,7 @@ public func returnCode<T>(_ indentation: String, _ tr: (typeRef: TypeReference, 
         let typeRef = tr.typeRef
         guard !tr.isConstructor else {
             let cons = tr.isConvenience ? "self.init" : (hasParent ? "super.init" : "\(ptr) = UnsafeMutableRawPointer")
-            let cast = "(" + rv + "!)"
+            let cast = "(" + rv + ")"
             let ret = indentation + cons + cast + "\n"
             return ret
         }
@@ -759,7 +759,7 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         let isVoid = rvVar.isEmpty || rv.isVoid
         let maybeOptional = rv.maybeOptional(for: record)
         let isConstructor = method.isDesignatedConstructor || method.isConstructorOf(record)
-        let needsNilGuard = !isVoid && maybeOptional && !isConstructor
+        let needsNilGuard = !isVoid && maybeOptional // && !isConstructor
         let errCode: String
         let throwCode: String
         let invocationTail: String
@@ -783,7 +783,7 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
             suffix = needsNilGuard ? " else { return nil }" : ""
         }
         let rvRef = rv.typeRef
-        let rvSwiftRef = useIdiomaticSwift ? rv.swiftReturnRef : rvRef
+        let rvSwiftRef = useIdiomaticSwift && !isConstructor ? rv.idiomaticWrappedRef : rvRef
         let invocationStart = method.cname.swift + "(\(args.map(toSwift).joined(separator: ", "))"
         let call = invocationStart + invocationTail
         let callCode = rvSwiftRef.cast(expression: call, from: rvRef)
@@ -986,6 +986,11 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
         "/// Designated initialiser from the underlying `C` data type\n" + indentation +
         "@inlinable init(_ p: UnsafeMutablePointer<\(ctype)>) {\n" + doubleIndentation +
             "ptr = UnsafeMutableRawPointer(p)" + indentation +
+        "}\n\n" + indentation +
+        "/// Conditional initialiser from an optional pointer to the underlying `C` data type\n" + indentation +
+        "@inlinable init!(_ maybePointer: UnsafeMutablePointer<\(ctype)>?) {\n" + doubleIndentation +
+        "guard let p = maybePointer else { return nil }\n" + doubleIndentation +
+        "ptr = UnsafeMutableRawPointer(p)\n" + indentation +
         "}\n\n" + indentation +
         "/// Reference intialiser for a related type that implements `\(protocolName)`\n" + indentation +
         "@inlinable init<T: \(protocolName)>(_ other: T) {\n" + doubleIndentation +
