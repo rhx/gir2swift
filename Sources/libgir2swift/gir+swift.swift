@@ -471,6 +471,8 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
             if instance { hadInstance = true }
             return !instance
         }
+        let templateTypes = arguments.compactMap(\.templateDecl).asSet.joined(separator: ", ")
+        let templateDecl = templateTypes.isEmpty ? "" : ("<" + templateTypes + ">")
         let params = arguments.map(parameterCode)
         let funcParam = params.joined(separator: ", ")
         let fname: String
@@ -481,7 +483,8 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
         }
         let deprecated = method.deprecated != nil ? "@available(*, deprecated) " : ""
         let discardable = record?.ref?.cname == method.cname && !method.returns.isVoid ? "@discardableResult " : ""
-        let funcDecl = deprecated + discardable + publicDesignation + "func " + fname.swift
+        let inlinable = "@inlinable "
+        let funcDecl = deprecated + discardable + inlinable + publicDesignation + "func " + fname.swift + templateDecl
         let paramDecl = "(" + funcParam + ")"
         let returnDecl = returnDeclaration(method)
         let callCode = call(method)
@@ -524,7 +527,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoi
                   let at = args.first, args.count == 1 else {
                 return indentation + "// var \(name) is unavailable because it does not have a valid getter or setter\n"
             }
-            type = at.argumentType
+            type = at.argumentTypeName
             gs = setter!
         }
         let idiomaticType = type.idiomatic
@@ -678,8 +681,8 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
 public func returnTypeCode(for method: GIR.Method, _ tr: (typeRef: TypeReference, record: GIR.Record, isConstructor: Bool)? = nil, useIdiomaticSwift beIdiomatic: Bool = true) -> String? {
     let rv = method.returns
     guard !rv.isVoid, !(tr?.isConstructor ?? false) else { return nil }
-    let returnType = rv.returnTypeName(for: tr?.record, beingIdiomatic: beIdiomatic)
-    return returnType
+    let returnTypeName = rv.returnTypeName(for: tr?.record, beingIdiomatic: beIdiomatic)
+    return returnTypeName
 }
 
 
@@ -877,7 +880,7 @@ public func constructorPrefix(_ method: GIR.Method) -> String? {
 /// Swift code for auto-prefixed arguments
 public func parameterCode(for argument: GIR.Argument) -> String {
     let prefixedname = argument.prefixedArgumentName
-    let type = argument.argumentType
+    let type = argument.templateTypeName
     let code = "\(prefixedname): \(type)"
     return code
 }
@@ -885,7 +888,7 @@ public func parameterCode(for argument: GIR.Argument) -> String {
 /// Swift code for auto-prefixed return values
 public func returnCode(for argument: GIR.Argument) -> String {
     let prefixedname = argument.prefixedArgumentName
-    let type = argument.argumentType
+    let type = argument.argumentTypeName
     let code = "\(prefixedname): \(type)"
     return code
 }
@@ -894,7 +897,7 @@ public func returnCode(for argument: GIR.Argument) -> String {
 /// Swift code for method parameters
 public func parameterCode(for argument: GIR.Argument, prefix: String) -> String {
     let name = argument.argumentName
-    let type = argument.argumentType
+    let type = argument.argumentTypeName
     let code = "\(prefix) \(name): \(type)"
     return code
 }
@@ -903,7 +906,7 @@ public func parameterCode(for argument: GIR.Argument, prefix: String) -> String 
 /// Swift code for method return values
 public func returnCode(for argument: GIR.Argument, prefix: String) -> String {
     let name = argument.argumentName
-    let type = argument.returnType
+    let type = argument.returnTypeName
     let code = "\(prefix) \(name): \(type)"
     return code
 }

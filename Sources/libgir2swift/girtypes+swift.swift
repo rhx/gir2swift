@@ -56,7 +56,7 @@ public extension GIR.CType {
 
     /// return the swift (known) type of the receiver when passed as an argument
     @inlinable
-    var argumentType: String {
+    var argumentTypeName: String {
         let swiftRef = swiftParamRef
         let name = swiftRef.fullSwiftTypeName
         guard typeRef.type === swiftRef.type && (isScalarArray || swiftRef.indirectionLevel > 0) else { return name }
@@ -64,14 +64,59 @@ public extension GIR.CType {
         return code
     }
 
+    /// return the swift (known) type of the receiver when passed as an argument
+    /// Returns a template name in case of a known record
+    @inlinable
+    var templateTypeName: String {
+        guard typeRef.indirectionLevel == 1, let record = knownRecord else {
+            return argumentTypeName
+        }
+        return record.className + "T"
+    }
+
+    /// Return a Swift template declaration for a known record,
+    /// or `nil` otherwise
+    @inlinable
+    var templateDecl: String? {
+        guard typeRef.indirectionLevel == 1, let record = knownRecord else {
+            return nil
+        }
+        return record.className + "T: " + record.protocolName
+    }
+
     /// return the swift (known) type of the receiver when used as a return value
     @inlinable
-    var returnType: String {
+    var returnTypeName: String {
         let swiftRef = swiftReturnRef
         let name = swiftRef.fullSwiftTypeName
         guard typeRef.type === swiftRef.type && (isScalarArray || swiftRef.indirectionLevel > 0) else { return name }
         let code = (isScalarArray ? "[" : "") + name + (isScalarArray ? "]" : "")
         return code
+    }
+
+    /// explicit, idiomatic type reference (struct if pointer to record)
+    @inlinable var idiomaticWrappedRef: TypeReference {
+        guard typeRef.indirectionLevel == 1, let record = knownRecord else {
+            return swiftReturnRef
+        }
+        return record.structRef
+    }
+
+    /// explicit, idiomatic type name (empty if same as the underlying C type)
+    @inlinable var idiomaticWrappedTypeName: String {
+        let ref = idiomaticWrappedRef
+        guard ref == swiftReturnRef else { return ref.type.swiftName }
+        guard ref != typeRef else { return "" }
+        let typeName = swiftReturnRef.fullSwiftTypeName
+        return typeName
+    }
+
+    /// Check whether the return type may need to be optional,
+    /// e.g. when derived from a pointer that may be `nil`
+    @inlinable func maybeOptional(for record: GIR.Record? = nil) -> Bool {
+        let isPointer = isAnyKindOfPointer
+        guard let record = record else { return isPointer }
+        return isInstanceOfHierarchy(record)
     }
 }
 
@@ -100,31 +145,6 @@ public extension GIR.Method {
 
 /// Swift extension for arguments
 public extension GIR.Argument {
-    /// explicit, idiomatic type reference (struct if pointer to record)
-    @inlinable var idiomaticWrappedRef: TypeReference {
-        guard typeRef.indirectionLevel == 1, let record = knownRecord else {
-            return swiftReturnRef
-        }
-        return record.structRef
-    }
-
-    /// explicit, idiomatic type name (empty if same as the underlying C type)
-    @inlinable var idiomaticWrappedTypeName: String {
-        let ref = idiomaticWrappedRef
-        guard ref == swiftReturnRef else { return ref.type.swiftName }
-        guard ref != typeRef else { return "" }
-        let typeName = swiftReturnRef.fullSwiftTypeName
-        return typeName
-    }
-
-    /// Check whether the return type may need to be optional,
-    /// e.g. when derived from a pointer that may be `nil`
-    @inlinable func maybeOptional(for record: GIR.Record? = nil) -> Bool {
-        let isPointer = isAnyKindOfPointer
-        guard let record = record else { return isPointer }
-        return isInstanceOfHierarchy(record)
-    }
-
     /// return the idiomatic/non-idiomatic return type name
     @inlinable func returnTypeName(for record: GIR.Record? = nil, beingIdiomatic: Bool = true) -> String {
         let idiomaticName = idiomaticWrappedTypeName
