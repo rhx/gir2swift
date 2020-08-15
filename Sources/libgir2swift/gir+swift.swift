@@ -761,7 +761,7 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         if instance { hadInstance = true }
         let argPtrName: String
         if let knownRecord = arg.knownRecord {
-            argPtrName = "." + knownRecord.ptrName
+            argPtrName = (arg.isNullable ? "?." : ".") + knownRecord.ptrName
         } else {
             argPtrName = ""
         }

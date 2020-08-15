@@ -48,7 +48,9 @@ extension SwiftLibXML.XMLElement {
     /// through `const` and non-`const` pointers
     var type: TypeReference {
         guard let typeXMLNode = children.filter({ $0.name == "type" }).first else { return .void }
-        return typeXMLNode.alias
+        var type = typeXMLNode.alias
+        type.isOptional = attribute(named: "nullable").flatMap({ Int($0) }).map({ $0 != 0 }) ?? type.isOptional
+        return type
     }
 }
 

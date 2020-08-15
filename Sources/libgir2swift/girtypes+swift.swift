@@ -145,7 +145,9 @@ public extension GIR.Argument {
         guard typeRef.indirectionLevel == 1, let record = knownRecord else {
             return argumentTypeName
         }
-        return record.className + "T"
+        let templateName = record.className + "T"
+        let typeName = isNullable ? (templateName + "?") : templateName
+        return typeName
     }
 
     /// return the idiomatic/non-idiomatic return type name
