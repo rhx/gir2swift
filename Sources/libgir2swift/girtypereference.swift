@@ -58,7 +58,7 @@ public struct TypeReference: Hashable {
             let e = constPointers.index(before: constPointers.endIndex)
             innerSuffix = constPointers[s..<e].map { _ in ">?" }.joined()
         }
-        let outerSuffix = constPointers.isEmpty ? "" : ">!"
+        let outerSuffix = constPointers.isEmpty ? "" : (">" + (isOptional ? "?" : "!"))
         let suffix = innerSuffix + outerSuffix + (isArray ? "]" : "")
         let st = prefix + type.swiftName + suffix
         return st

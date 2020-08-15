@@ -1025,6 +1025,7 @@ public final class GIR {
         public let instance: Bool           ///< is this an instance parameter or return type?
         public let _varargs: Bool           ///< is this a varargs (...) parameter?
         public let isNullable: Bool         ///< is this a nullable parameter or return type?
+        public let allowNone: Bool          ///< is this a parameter that can be ommitted?
         public let isOptional: Bool         ///< is this an optional (out) parameter?
         public let callerAllocates: Bool    ///< is this a caller-allocated (out) parameter?
         public let ownershipTransfer: OwnershipTransfer ///< model of ownership transfer used
@@ -1036,10 +1037,11 @@ public final class GIR {
         }
 
         /// default constructor
-        public init(name: String, type: TypeReference, instance: Bool, comment: String, introspectable: Bool = false, deprecated: String? = nil, varargs: Bool = false, isNullable: Bool = false, isOptional: Bool = false, callerAllocates: Bool = false, ownershipTransfer: OwnershipTransfer = .none, direction: ParameterDirection = .in) {
+        public init(name: String, type: TypeReference, instance: Bool, comment: String, introspectable: Bool = false, deprecated: String? = nil, varargs: Bool = false, isNullable: Bool = false, allowNone: Bool = false, isOptional: Bool = false, callerAllocates: Bool = false, ownershipTransfer: OwnershipTransfer = .none, direction: ParameterDirection = .in) {
             self.instance = instance
             _varargs = varargs
             self.isNullable = isNullable
+            self.allowNone = allowNone
             self.isOptional = isOptional
             self.callerAllocates = callerAllocates
             self.ownershipTransfer = ownershipTransfer
@@ -1052,6 +1054,11 @@ public final class GIR {
             instance = node.name.hasPrefix("instance")
             _varargs = node.children.lazy.findFirstWhere({ $0.name == "varargs"}) != nil
             let allowNone = node.attribute(named: "allow-none")
+            if let allowNone = allowNone, !allowNone.isEmpty && allowNone != "0" && allowNone != "false" {
+                self.allowNone = true
+            } else {
+                self.allowNone = false
+            }
             if let nullable = node.attribute(named: "nullable") ?? allowNone, !nullable.isEmpty && nullable != "0" && nullable != "false" {
                 isNullable = true
             } else {
@@ -1077,6 +1084,11 @@ public final class GIR {
             instance = node.name.hasPrefix("instance")
             _varargs = varargs
             let allowNone = node.attribute(named: "allow-none")
+            if let allowNone = allowNone, !allowNone.isEmpty && allowNone != "0" && allowNone != "false" {
+                self.allowNone = true
+            } else {
+                self.allowNone = false
+            }
             if let nullable = node.attribute(named: "nullable") ?? allowNone, nullable != "0" && nullable != "false" {
                 isNullable = true
             } else {
