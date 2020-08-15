@@ -448,7 +448,7 @@ public final class GIR {
             isWritable = node.attribute(named: writableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
             scope = node.attribute(named: scopeAttr)
             if let array = node.children.filter({ $0.name == "array" }).first {
-                type = array.type
+                type = array.alias
                 containedTypes = array.children.filter { $0.name == "type" }.map(\.alias)
             } else {
                 containedTypes = []
@@ -1052,17 +1052,17 @@ public final class GIR {
             instance = node.name.hasPrefix("instance")
             _varargs = node.children.lazy.findFirstWhere({ $0.name == "varargs"}) != nil
             let allowNone = node.attribute(named: "allow-none")
-            if let nullable = node.attribute(named: "nullable") ?? allowNone, nullable != "0" && nullable != "false" {
+            if let nullable = node.attribute(named: "nullable") ?? allowNone, !nullable.isEmpty && nullable != "0" && nullable != "false" {
                 isNullable = true
             } else {
                 isNullable = false
             }
-            if let optional = node.attribute(named: "optional") ?? allowNone, optional != "0" && optional != "false" {
+            if let optional = node.attribute(named: "optional") ?? allowNone, !optional.isEmpty && optional != "0" && optional != "false" {
                 isOptional = true
             } else {
                 isOptional = false
             }
-            if let callerAlloc = node.attribute(named: "caller-allocates"), callerAlloc != "0" && callerAlloc != "false" {
+            if let callerAlloc = node.attribute(named: "caller-allocates"), !callerAlloc.isEmpty && callerAlloc != "0" && callerAlloc != "false" {
                 callerAllocates = true
             } else {
                 callerAllocates = false
