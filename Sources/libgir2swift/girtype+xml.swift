@@ -18,12 +18,13 @@ extension SwiftLibXML.XMLElement {
         let ctype = attribute(named: "type") ?? typeName
         let nameAttr = attribute(named: "name")
         guard let cAttr = nameAttr ?? ctype else { return .void }
-        let name: String
-        if let n = nameAttr { name = n }
+        let rawName: String
+        if let n = nameAttr { rawName = n }
         else {
             let innerType = decodeIndirection(for: cAttr).innerType
-            name = innerType.isEmpty ? type.type.name : innerType
+            rawName = innerType.isEmpty ? type.type.name : innerType
         }
+        let name = rawName.validSwift
         let cName = ctype ?? name
         let identifier = attribute(named: "identifier")
         let isNullable = attribute(named: "nullable").flatMap({ Int($0) }).map({ $0 != 0 }) ?? false

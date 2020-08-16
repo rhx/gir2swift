@@ -63,19 +63,26 @@ private let reversecast = castableScalars.reduce(reversePointers) {
     dict[$1.1] = $1.0
     return dict
 }
+
+/// Swift fundamental type names
+private let swiftFundamentalsForC = [
+    "char" : "CChar", "unsigned char" : "CUnsignedChar",
+    "int" : "CInt", "unsigned int" : "CUnsignedInt", "unsigned" : "CUnsignedInt",
+    "long" : "CLong", "unsigned long" : "CUnsignedLong",
+    "long long" : "CLongLong", "unsigned long long" : "CUnsignedLongLong",
+    "short" : "CShort", "unsigned short" : "CUnsignedShort",
+    "double" : "CDouble", "float" : "CFloat", "long double" : "CLongDouble",
+    "void" : "Void", "va_list" : "CVaListPointer",
+    "int8_t" : "Int8", "uint8_t" : "UInt8",
+    "int16_t" : "Int16", "uint16_t" : "UInt16",
+    "int32_t" : "Int32", "uint32_t" : "UInt32",
+    "int64_t" : "Int64", "uint64_t" : "UInt64"
+]
 /// Swift type equivalents for C types
-private let swiftReplacementsForC = [ "char" : "CChar", "unsigned char" : "CUnsignedChar",
-  "int" : "CInt", "unsigned int" : "CUnsignedInt", "unsigned" : "CUnsignedInt",
-  "long" : "CLong", "unsigned long" : "CUnsignedLong",
-  "long long" : "CLongLong", "unsigned long long" : "CUnsignedLongLong",
-  "short" : "CShort", "unsigned short" : "CUnsignedShort",
-  "double" : "CDouble", "float" : "CFloat", "long double" : "Float80",
-  "void" : "Void", "utf8" : "String", "filename" : "String", "va_list" : "CVaListPointer",
-  "int8_t" : "Int8", "uint8_t" : "UInt8",
-  "int16_t" : "Int16", "uint16_t" : "UInt16",
-  "int32_t" : "Int32", "uint32_t" : "UInt32",
-  "int64_t" : "Int64", "uint64_t" : "UInt64",
-  "Error" : "ErrorType", "ErrorType" : "ErrorEnum" ]
+private let swiftReplacementsForC = swiftFundamentalsForC.merging([
+    "utf8" : "String", "filename" : "String",
+    "Error" : "ErrorType", "ErrorType" : "ErrorEnum"
+]) { $1 }
 
 /// Mapping that allows casting from original C types to more idiomatic Swift types
 /// FIXME: these types only work correctly on 64bit systems
@@ -218,6 +225,12 @@ public extension String {
         let u = UnicodeScalar(f)
         guard isalpha(Int32(f)) != 0 || Character(u) == "_" else { return "_" + self }
         return self
+    }
+
+    /// return a valid Swift type for an underlying C type
+    var validSwift: String {
+        if let s = swiftFundamentalsForC[self] { return s }
+        return swiftIdentifier
     }
 
     /// return a valid Swift type for an underlying C type
