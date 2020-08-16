@@ -156,7 +156,7 @@ public extension GIR.Argument {
     @inlinable func returnTypeName(for record: GIR.Record? = nil, beingIdiomatic: Bool = true) -> String {
         let idiomaticName = idiomaticWrappedTypeName
         let name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : typeRef.fullSwiftTypeName
-        if (typeRef.isOptional || maybeOptional(for: record)) && !name.hasSuffix("?") && !name.hasSuffix("!") {
+        if (typeRef.isOptional || maybeOptional(for: record) || name.maybeCallback) && !name.hasSuffix("?") && !name.hasSuffix("!") {
             return name + "!"
         } else {
             return name

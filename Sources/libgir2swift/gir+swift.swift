@@ -542,7 +542,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoi
             type = at.argumentTypeName
             gs = setter!
         }
-        let idiomaticType = type.idiomatic
+        let idiomaticType = returnTypeCode(for: gs) ?? type.idiomatic
         let property: GIR.CType
         if let prop = record.properties.filter({ $0.name.swiftQuoted == name }).first {
             property = prop
@@ -602,13 +602,13 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         guard field.isReadable || field.isWritable else { return indentation + "// var \(name) is unavailable because it is neigher readable nor writable\n" }
         guard !field.isVoid else { return indentation + "// var \(swname) is unavailable because \(name) is void\n" }
         let idiomaticRef = containedTypeRef.idiomaticType
-        let idiomaticName = idiomaticRef.fullSwiftTypeName
+        let typeName = idiomaticRef.fullSwiftTypeName
+        let idiomaticName = typeName.maybeCallback ? (typeName + "!") : typeName
         let varDecl = swiftCode(field, indentation + "@inlinable \(publicDesignation)var \(swname): \(idiomaticName) {\n", indentation: indentation)
         let deprecated = field.deprecated != nil ? "@available(*, deprecated) " : ""
         let getterCode: String
         if field.isReadable {
             let cast = idiomaticRef.cast(expression: pointee, from: containedTypeRef)
-//            let typeDeclaration = idiomaticName.isEmpty || cast != pointee ? "" : (": " + idiomaticName)
             let head = doubleIndent + "\(deprecated)get {\n" + doubleIndent +
                 indentation + "let rv = "
             let tail = "\n"
@@ -898,7 +898,7 @@ public func constructorPrefix(_ method: GIR.Method) -> String? {
 public func parameterCode(for argument: GIR.Argument) -> String {
     let prefixedname = argument.prefixedArgumentName
     let type = argument.templateTypeName
-    let escaping = type.maybeEscaping ? "@escaping " : ""
+    let escaping = type.maybeCallback ? "@escaping " : ""
     let defaultValue = argument.isNullable && argument.allowNone ? " = nil" : ""
     let code = prefixedname + ": " + escaping + type + defaultValue
     return code

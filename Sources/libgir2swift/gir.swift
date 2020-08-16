@@ -132,7 +132,7 @@ public final class GIR {
     /// context of known functions
     public static var KnownFunctions: [ String : Function ] = [:]
     /// suffixes for `@escaping` callback heuristics
-    public static var escapingSuffixes = [String]()
+    public static var callbackSuffixes = [String]()
     /// Type of `GError`
     public static var GErrorType = "GErrorType"
 
@@ -1118,8 +1118,8 @@ public final class GIR {
 
 public extension StringProtocol {
     /// Heuristic to check whether the receiver may be an escaping callback type
-    var maybeEscaping: Bool {
-        for suffix in GIR.escapingSuffixes {
+    var maybeCallback: Bool {
+        for suffix in GIR.callbackSuffixes {
             guard !hasSuffix(suffix) else { return true }
         }
         return false
