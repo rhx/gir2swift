@@ -155,6 +155,7 @@ public extension GIR {
     static let gconstpointerB = gconstpointer + "!"
     static let gconstpointerQ = gconstpointer + "?"
     static let gpointerType = GIRRawPointerType(aliasOf: mutableVoidPointer, name: gpointer, swiftName: gpointer, ctype: gpointer)
+    static let gpointerConstPointerType = GIRRawPointerType(aliasOf: mutableVoidPointer, name: gpointer, swiftName: gpointer, ctype: gconstpointer)
     static let gconstpointerType = GIRRawPointerType(aliasOf: voidPointer, name: gconstpointer, swiftName: gconstpointer, ctype: gconstpointer)
     static let opaquePointerType = GIROpaquePointerType(aliasOf: mutableVoidPointer, name: opaquePointer)
     static let optionalGPointerType = GIRRawPointerType(aliasOf: mutableVoidPointer, name: gpointerQ, swiftName: gpointerQ, ctype: gpointerQ)
@@ -168,6 +169,7 @@ public extension GIR {
     static let rawPointerRef = TypeReference(type: rawPointerType)
     static let mutableRawPointerRef = TypeReference(type: mutableRawPointerType)
     static let gpointerRef = TypeReference(type: gpointerType)
+    static let gpointerConstPointerRef = TypeReference(type: gpointerConstPointerType)
     static let optionalGPointerRef = TypeReference(type: optionalGPointerType)
     static let forceUnwrappedGPointerRef = TypeReference(type: forceUnwrappedGPointerType)
     static let gconstpointerRef = TypeReference(type: gconstpointerType)

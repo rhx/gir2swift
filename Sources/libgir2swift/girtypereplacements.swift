@@ -19,12 +19,13 @@ public extension GIR {
     static private let floats = [floatType, doubleType, gfloatType, gdoubleType]
         .map { (TypeReference(type: $0), doubleRef) }
     static private let bools = [gbooleanType, cboolType].map { (TypeReference(type: $0), boolRef) }
-    static private let gpointers = [ (gpointerRef, forceUnwrappedGPointerRef), (gconstpointerRef, forceUnwrappedGConstPointerRef) ]
+    static private let gpointers = [ (gpointerRef, forceUnwrappedGPointerRef), (gconstpointerRef, forceUnwrappedGConstPointerRef)]
     static private let gpointerPointers = [
         (gpointerPointerRef, optionalGPointerPointerRef),
         (gpointerMutablePointerRef, optionalGPointerMutablePointerRef),
         (gconstpointerPointerRef, optionalGConstpointerPointerRef),
-        (gconstpointerMutablePointerRef, optionalGConstpointerMutablePointerRef)
+        (gconstpointerMutablePointerRef, optionalGConstpointerMutablePointerRef),
+        (gpointerConstPointerRef, forceUnwrappedGConstPointerRef)
     ]
     /// Fundamental swift type replacements required for the compiler
     static let swiftFundamentalReplacements = Dictionary(uniqueKeysWithValues: gpointerPointers)
