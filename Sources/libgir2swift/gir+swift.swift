@@ -675,8 +675,11 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
             } else {
                 fname = fullname
             }
+            let arguments = method.args
+            let templateTypes = arguments.compactMap(\.templateDecl).asSet.joined(separator: ", ")
+            let templateDecl = templateTypes.isEmpty ? "" : ("<" + templateTypes + ">")
             let p: String? = consPrefix == firstArgName?.swift ? nil : consPrefix
-            let fact = factory ? "static func \(fname.swift)(" : "\(isOverride ? ovr : conv)init!("
+            let fact = factory ? "static func \(fname.swift + templateDecl)(" : ("\(isOverride ? ovr : conv)init!" + templateDecl + "(")
             let code = swiftCode(method, indentation + "\(deprecated)@inlinable \(publicDesignation)\(fact)" +
                 constructorParam(method, prefix: p) + ")\(returnDeclaration(method)) {\n" +
                     doubleIndent + call(method) +
@@ -896,11 +899,11 @@ public func constructorPrefix(_ method: GIR.Method) -> String? {
 
 /// Swift code for auto-prefixed arguments
 public func parameterCode(for argument: GIR.Argument) -> String {
-    let prefixedname = argument.prefixedArgumentName
+    let prefixedName = argument.prefixedArgumentName
     let type = argument.templateTypeName
     let escaping = type.maybeCallback ? "@escaping " : ""
     let defaultValue = argument.isNullable && argument.allowNone ? " = nil" : ""
-    let code = prefixedname + ": " + escaping + type + defaultValue
+    let code = prefixedName + ": " + escaping + type + defaultValue
     return code
 }
 
@@ -916,8 +919,11 @@ public func returnCode(for argument: GIR.Argument) -> String {
 /// Swift code for method parameters
 public func parameterCode(for argument: GIR.Argument, prefix: String) -> String {
     let name = argument.argumentName
-    let type = argument.argumentTypeName
-    let code = "\(prefix) \(name): \(type)"
+    let prefixedName = prefix + " " + name
+    let type = argument.templateTypeName
+    let escaping = type.maybeCallback ? "@escaping " : ""
+    let defaultValue = argument.isNullable && argument.allowNone ? " = nil" : ""
+    let code = prefixedName + ": " + escaping + type + defaultValue
     return code
 }
 
