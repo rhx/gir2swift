@@ -564,7 +564,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoi
                 ) : "") +
                 scall(setter) +
                 (setter.throwsError ? ( tripleIndent +
-                    "g_log(messagePtr: err?.pointee.message, level: .error)\n"
+                    "g_log(messagePtr: error?.pointee.message, level: .error)\n"
                     ) : "") +
                 doubleIndent + "}\n", indentation: doubleIndent)
         } else {
@@ -789,7 +789,7 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         let suffix: String
         let maybeRV: String
         if throwsError {
-            maybeRV = "maybe" + rvVar.uppercased()
+            maybeRV = needsNilGuard ? ("maybe" + rvVar.uppercased()) : rvVar
             conditional = ""
             suffix = ""
             errCode = "var error: UnsafeMutablePointer<\(GIR.gerror)>?\n" + indentation
@@ -833,7 +833,7 @@ public func callSetter(_ indentation: String, _ record: GIR.Record? = nil, ptr p
         let args = method.args // not .lazy
         let code = ( method.returns.isVoid ? "" : "_ = " ) +
             "\(method.cname.swift)(\(args.map(toSwift).joined(separator: ", "))" +
-            ( method.throwsError ? ", &err" : "" ) +
+            ( method.throwsError ? ", &error" : "" ) +
         ")\n"
         return code
     }
@@ -947,11 +947,9 @@ public func convertSetterArgumentToSwiftFor(_ record: GIR.Record?, ptr: String =
     return { arg in
         let name = arg.nonClashingName
         guard !arg.isScalarArray else { return "&" + name }
-//        let types = typeCastTuple(arg.ctype, arg.type.swift, varName: arg.instance || arg.isInstanceOf(record) ? ptr : ("newValue"))
-        //        let param = types.toC.hasSuffix("ptr") || types.toC == "newValue" ? "cast(\(types.toC))" : types.toC
-        let t = arg.typeRef.type
         let varName = arg.instance || arg.isInstanceOf(record) ? ptr : ("newValue")
-        let param = t.cast(expression: varName)
+        let ref = arg.typeRef
+        let param = ref.cast(expression: varName, from: arg.swiftParamRef)
         return param
     }
 }
