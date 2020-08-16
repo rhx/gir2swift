@@ -133,6 +133,8 @@ public final class GIR {
     public static var KnownFunctions: [ String : Function ] = [:]
     /// suffixes for `@escaping` callback heuristics
     public static var callbackSuffixes = [String]()
+    /// types to turn into force-unwrapped optionals
+    public static var forceUnwrapped: Set<String> = ["gpointer", "gconstpointer"]
     /// Type of `GError`
     public static var GErrorType = "GErrorType"
 
@@ -1123,6 +1125,11 @@ public extension StringProtocol {
             guard !hasSuffix(suffix) else { return true }
         }
         return false
+    }
+
+    /// Return `true` if the receiver represents a type name that should be a force-unwrapped optional
+    var doForceOptional: Bool {
+        return GIR.forceUnwrapped.contains(String(self)) || maybeCallback
     }
 }
 
