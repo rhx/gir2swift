@@ -36,5 +36,5 @@ public extension GIR {
     static let swiftParameterTypeReplacements = Dictionary(uniqueKeysWithValues: ints + floats + bools + rawCharPtrs + gpointers + gpointerPointers)
 
     /// Mapping of gir type names to Swift names for underlying C types
-    static let underlyingPrimitiveSwiftTypes = [ utf8: CChar, filename: CChar ]
+    static let underlyingPrimitiveSwiftTypes = [ utf8: CChar, filename: CChar, glibList: glist ]
 }

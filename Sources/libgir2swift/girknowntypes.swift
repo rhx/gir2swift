@@ -182,6 +182,8 @@ public extension GIR {
     static let gconstpointerMutablePointerRef = TypeReference.pointer(to: gconstpointerType)
     static let optionalGConstpointerMutablePointerRef = TypeReference.pointer(to: optionalGConstPointerType)
 
+    static let glist = "GList"
+    static let glibList = "GLib.List"
     static let error = "Error"
     static let gerror = "GError"
     static let errorT = "ErrorType"
