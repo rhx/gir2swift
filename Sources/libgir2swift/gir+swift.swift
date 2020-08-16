@@ -638,7 +638,7 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
     let conv =  isConv ? "\(convenience) " : ""
     return { (record: GIR.Record) -> (GIR.Method) -> String in
         let doubleIndent = indentation + indentation
-        let call = callCode(doubleIndent)
+        let call = callCode(doubleIndent, isConstructor: !factory)
         let returnDeclaration = returnDeclarationCode((typeRef: typeRef, record: record, isConstructor: !factory))
         let ret = returnCode(indentation, (typeRef: typeRef, record: record, isConstructor: !factory, isConvenience: isConv), hasParent: hasParent)
         return { (method: GIR.Method) -> String in
@@ -742,6 +742,9 @@ public func returnCode<T>(_ indentation: String, _ tr: (typeRef: TypeReference, 
             let ret = indentation + cons + cast + "\n"
             return ret
         }
+        guard !(beIdiomatic && field.idiomaticWrappedRef != swiftRef) else {
+            return indentation + "return rv\n"
+        }
         let cons = "return rv.map { \(t.swiftName)"
         let cast = returnRef.cast(expression: "$0", from: typeRef)
         let end = " }"
@@ -752,7 +755,7 @@ public func returnCode<T>(_ indentation: String, _ tr: (typeRef: TypeReference, 
 
 
 /// Swift code for calling the underlying function and assigning the raw return value
-public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: String = "ptr", rvVar: String = "rv", doThrow: Bool = true, useIdiomaticSwift: Bool = true) -> (GIR.Method) -> String {
+public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: String = "ptr", rvVar: String = "rv", doThrow: Bool = true, useIdiomaticSwift: Bool = true, isConstructor: Bool = false) -> (GIR.Method) -> String {
     var hadInstance = false
     let toSwift: (GIR.Argument) -> String = { arg in
         let name = arg.argumentName
@@ -778,14 +781,15 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         let rv = method.returns
         let isVoid = rvVar.isEmpty || rv.isVoid
         let maybeOptional = rv.maybeOptional(for: record)
-        let isConstructor = method.isDesignatedConstructor || method.isConstructorOf(record)
         let needsNilGuard = !isVoid && maybeOptional // && !isConstructor
         let errCode: String
         let throwCode: String
         let invocationTail: String
         let conditional: String
         let suffix: String
+        let maybeRV: String
         if throwsError {
+            maybeRV = "maybe" + rvVar.uppercased()
             conditional = ""
             suffix = ""
             errCode = "var error: UnsafeMutablePointer<\(GIR.gerror)>?\n" + indentation
@@ -793,9 +797,10 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
             let errorCode = "\n" + indentation + (doThrow ?
                                         "if let error = error { throw ErrorType(error) }\n" :
                                         "g_log(messagePtr: error?.pointee.message, level: .error)\n")
-            let nilCode = needsNilGuard ? "guard let " + rvVar + " = " + rvVar + " else { return nil }\n" : ""
+            let nilCode = needsNilGuard ? indentation + "guard let " + rvVar + " = " + maybeRV + " else { return nil }\n" : ""
             throwCode = errorCode + nilCode
         } else {
+            maybeRV = rvVar
             errCode = ""
             throwCode = "\n"
             invocationTail = ")"
@@ -813,7 +818,7 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
             varCode = ""
         } else {
             let typeDeclaration = rvTypeName.isEmpty || callCode != call ? "" : (": " + rvTypeName)
-            varCode = "let " + rvVar + typeDeclaration + " = "
+            varCode = "let " + maybeRV + typeDeclaration + " = "
         }
         let code = errCode + conditional + varCode + callCode + suffix + throwCode
         return code
