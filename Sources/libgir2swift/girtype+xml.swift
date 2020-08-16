@@ -17,19 +17,22 @@ extension SwiftLibXML.XMLElement {
         let typeName = attribute(named: "type-name")
         let ctype = attribute(named: "type") ?? typeName
         let nameAttr = attribute(named: "name")
-        guard let cAttr = nameAttr ?? ctype else { return .void }
+        guard let cAttr = ctype ?? nameAttr else { return .void }
+        let cReference = decodeIndirection(for: cAttr)
+        let innerType = cReference.innerType
+        let innerName = innerType.isEmpty ? type.type.name : innerType
         let rawName: String
         if let n = nameAttr { rawName = n }
         else {
-            let innerType = decodeIndirection(for: cAttr).innerType
-            rawName = innerType.isEmpty ? type.type.name : innerType
+            rawName = innerName
         }
         let name = rawName.validSwift
         let cName = ctype ?? name
+        let plainType = typeName ?? (innerName.isEmpty ? nil : innerName)
         let identifier = attribute(named: "identifier")
         let isNullable = attribute(named: "nullable").flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
         let oldN = GIR.namedTypes[name]?.count ?? 0
-        let rawTypeRef = typeReference(named: identifier, for: name, typeName: typeName, cType: cName, isOptional: isNullable)
+        let rawTypeRef = typeReference(named: identifier, for: name, typeName: plainType, cType: cName, isOptional: isNullable)
         let typeRef = GIR.swiftFundamentalReplacements[rawTypeRef] ?? rawTypeRef
         let newN = GIR.namedTypes[name]?.count ?? 0
         let isNewType = oldN != newN

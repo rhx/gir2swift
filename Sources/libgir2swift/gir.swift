@@ -468,7 +468,7 @@ public final class GIR {
         /// return whether the receiver is an instance of the given record (class)
         @inlinable
         public func isInstanceOf(_ record: GIR.Record?) -> Bool {
-            if let r = record?.typeRef, typeRef.references(r) {
+            if let r = record?.typeRef, typeRef.isDirectPointer(to: r) {
                 return true
             } else {
                 return false
@@ -518,7 +518,7 @@ public final class GIR {
         
         //// return the known class/record of the argument (nil if not known)
         @inlinable
-        public var knownRecord: GIR.Record? { return GIR.knownRecords[typeRef.type.name] }
+        public var knownRecord: GIR.Record? { return typeRef.indirectionLevel == 1 ? GIR.knownRecords[typeRef.type.name] : nil }
         
         //// return the known bitfield the argument represents (nil if not known)
         @inlinable

@@ -32,7 +32,7 @@ public extension GIR.CType {
     /// return the swift (known) type of the receiver as parsed from the GIR file
     @inlinable
     var swiftType: String {
-        let name = typeRef.fullSwiftTypeName
+        let name = typeRef.fullTypeName
         guard typeRef.type === typeRef.type && (isScalarArray || typeRef.indirectionLevel > 0) else { return name }
         let code = (isScalarArray ? "inout [" : "") + name + (isScalarArray ? "]" : "")
         return code
@@ -70,7 +70,7 @@ public extension GIR.CType {
     @inlinable
     var returnTypeName: String {
         let swiftRef = swiftReturnRef
-        let name = swiftRef.fullSwiftTypeName
+        let name = swiftRef.fullTypeName
         guard typeRef.type === swiftRef.type && (isScalarArray || swiftRef.indirectionLevel > 0) else { return name }
         let code = (isScalarArray ? "[" : "") + name + (isScalarArray ? "]" : "")
         return code
@@ -89,7 +89,7 @@ public extension GIR.CType {
         let ref = idiomaticWrappedRef
         guard ref == swiftReturnRef else { return ref.type.swiftName }
         guard ref != typeRef else { return "" }
-        let typeName = swiftReturnRef.fullSwiftTypeName
+        let typeName = swiftReturnRef.fullTypeName
         return typeName
     }
 
@@ -131,7 +131,7 @@ public extension GIR.Argument {
     @inlinable
     var argumentTypeName: String {
         let swiftRef = swiftParamRef
-        let name = swiftRef.fullSwiftTypeName
+        let name = swiftRef.fullTypeName
         guard typeRef.type === swiftRef.type && (isScalarArray || swiftRef.indirectionLevel > 0) else {
             let optionalName = ((isNullable || isOptional) && !(name.hasSuffix("!") || name.hasSuffix("?"))) ? (name + "!") : name
             return optionalName
@@ -155,7 +155,7 @@ public extension GIR.Argument {
     /// return the idiomatic/non-idiomatic return type name
     @inlinable func returnTypeName(for record: GIR.Record? = nil, beingIdiomatic: Bool = true) -> String {
         let idiomaticName = idiomaticWrappedTypeName
-        let name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : typeRef.fullSwiftTypeName
+        let name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : typeRef.fullTypeName
         if (typeRef.isOptional || maybeOptional(for: record) || name.maybeCallback) && !name.hasSuffix("?") && !name.hasSuffix("!") {
             return name + "!"
         } else {

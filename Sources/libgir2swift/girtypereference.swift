@@ -45,8 +45,13 @@ public struct TypeReference: Hashable {
         return ct
     }
 
-    /// returns the full Swift type including pointers and  taking into account `const`
-    public var fullSwiftTypeName: String {
+    /// returns the full type including pointers and  taking into account `const`
+    public var fullTypeName: String {
+        let typeName = type.typeName.validSwift
+        return embeddedType(named: typeName)
+    }
+
+    public func embeddedType(named name: String) -> String {
         let prefix = (isArray ? "[" : "") + constPointers.enumerated().map {
             "Unsafe" + ($0.element || ($0.offset == 0 && isConst) ? "" : "Mutable") + "Pointer<"
         }.joined()
@@ -60,7 +65,7 @@ public struct TypeReference: Hashable {
         }
         let outerSuffix = constPointers.isEmpty ? "" : (">" + (isOptional ? "?" : "!"))
         let suffix = innerSuffix + outerSuffix + (isArray ? "]" : "")
-        let st = prefix + type.swiftName + suffix
+        let st = prefix + name + suffix
         return st
     }
 

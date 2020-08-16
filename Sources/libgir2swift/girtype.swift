@@ -30,7 +30,7 @@ public class GIRType: Hashable {
     public var conversions: [GIRType : [TypeConversion]] = [:]
 
     /// Swift name of the parent type (or the receiver if `parent` is `nil`)
-    public var underlyingSwiftName: String { parent?.fullSwiftTypeName ?? swiftName }
+    public var underlyingSwiftName: String { parent?.fullTypeName ?? swiftName }
 
     /// Swift name to use for casting: replaces trailing `!` with `?`
     @inlinable public var swiftCastName: String {
@@ -44,7 +44,7 @@ public class GIRType: Hashable {
     /// - Parameters:
     ///   - name: The name of the type
     ///   - swiftName: The name of the type in Swift (empty or `nil` if same as `name`)
-    ///   - typeName: The name of the underlying type (empty or `nil` if same as `ctype`)
+    ///   - typeName: The name of the underlying type (empty or `nil` if same as `swiftName`)
     ///   - ctype: The name of the type in C
     ///   - superType: The parent or alias type (or `nil` if fundamental)
     ///   - isAlias: An indicator whether the type is an alias of its supertype that does not need casting
@@ -53,8 +53,9 @@ public class GIRType: Hashable {
         precondition(isAlias == false || superType != nil)
         self.name = name
         let swiftDefault = swiftName.map { $0.isEmpty ? name : $0 } ?? name
-        self.swiftName = GIR.underlyingPrimitiveSwiftTypes[swiftDefault] ?? swiftDefault
-        self.typeName = typeName.map { $0.isEmpty ? ctype : $0 } ?? ctype
+        let swift = GIR.underlyingPrimitiveSwiftTypes[swiftDefault] ?? swiftDefault
+        self.swiftName = swift
+        self.typeName = typeName.map { $0.isEmpty ? swift : $0 } ?? swift
         self.ctype = ctype
         self.parent = superType
         self.isAlias = isAlias
@@ -287,14 +288,15 @@ public final class GIROpaquePointerType: GIRType {
 /// - Parameters:
 ///   - identifier: The identifier of this type reference
 ///   - name: The name of the type
+///   - swiftName: The name of the type to use in Swift (same as name if `nil`)
 ///   - typeName: The name of the underlying type (same as cType if `nil`)
 ///   - cType: The underlying C type
 ///   - isOptional: `true` if the reference is an optional
 /// - Returns: A type reference
-func typeReference(named identifier: String? = nil, for name: String, typeName: String? = nil, cType: String, isOptional: Bool = false) -> TypeReference {
+func typeReference(named identifier: String? = nil, for name: String, swiftName: String? = nil, typeName: String? = nil, cType: String, isOptional: Bool = false) -> TypeReference {
     let info = decodeIndirection(for: cType)
     let maybeType = GIR.namedTypes[name]?.first { $0.ctype == info.innerType }
-    let type = maybeType ?? GIRType(name: name, typeName: typeName, ctype: info.innerType)
+    let type = maybeType ?? GIRType(name: name, swiftName: swiftName, typeName: typeName, ctype: info.innerType)
     let t = addType(type)
     return TypeReference(type: t, identifier: identifier, isConst: info.isConst, isOptional: isOptional, constPointers: info.indirection)
 }
