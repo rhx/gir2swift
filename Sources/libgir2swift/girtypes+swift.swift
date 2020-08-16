@@ -43,6 +43,7 @@ public extension GIR.CType {
     var swiftParamRef: TypeReference {
         guard var replacement = GIR.swiftParameterTypeReplacements[typeRef] else { return typeRef }
         replacement.isConst = typeRef.isConst
+        replacement.isOptional = typeRef.isOptional
         return replacement
     }
 
@@ -51,6 +52,7 @@ public extension GIR.CType {
     var swiftReturnRef: TypeReference {
         guard var replacement = GIR.swiftReturnTypeReplacements[typeRef] else { return typeRef }
         replacement.isConst = typeRef.isConst
+        replacement.isOptional = typeRef.isOptional
         return replacement
     }
 
@@ -154,7 +156,7 @@ public extension GIR.Argument {
     @inlinable func returnTypeName(for record: GIR.Record? = nil, beingIdiomatic: Bool = true) -> String {
         let idiomaticName = idiomaticWrappedTypeName
         let name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : typeRef.fullSwiftTypeName
-        if maybeOptional(for: record) && !name.hasSuffix("?") && !name.hasSuffix("!") {
+        if (typeRef.isOptional || maybeOptional(for: record)) && !name.hasSuffix("?") && !name.hasSuffix("!") {
             return name + "!"
         } else {
             return name
