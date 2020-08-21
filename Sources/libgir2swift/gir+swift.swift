@@ -127,6 +127,15 @@ public extension String {
     /// Name of the Protocol for this record
     @inlinable
     var protocolName: String { return self + "Protocol" }
+
+    /// Type name without namespace prefix
+    @inlinable
+    var withoutDottedPrefix: String {
+        guard !hasPrefix(GIR.dottedPrefix) else {
+            return split(separator: ".").last ?? self
+        }
+        return self
+    }
 }
 
 
@@ -598,14 +607,15 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         guard !field.isPrivate else { return indentation + "// var \(swname) is unavailable because \(name) is private\n" }
         let containedTypeRef = field.containedTypes.first ?? field.typeRef
         let pointee = ptr + ".pointee." + name
-        let scall = instanceSetter(doubleIndent, record, target: pointee, ptr: "newValue")
         guard field.isReadable || field.isWritable else { return indentation + "// var \(name) is unavailable because it is neigher readable nor writable\n" }
         guard !field.isVoid else { return indentation + "// var \(swname) is unavailable because \(name) is void\n" }
-        let isStructRef = GIR.recordRefs[containedTypeRef.type] != nil
+        let ptrLevel = containedTypeRef.indirectionLevel
         let idiomaticRef = containedTypeRef.idiomaticType
         let typeName = idiomaticRef.fullTypeName
-        let idiomaticName = isStructRef || typeName.doForceOptional ? (typeName + "!") : typeName
-        let varDecl = swiftCode(field, indentation + "@inlinable \(publicDesignation)var \(swname): \(idiomaticName) {\n", indentation: indentation)
+        let knownRecord = ptrLevel == 1 ? GIR.knownRecords[containedTypeRef.type.name] : nil
+        let structRef = knownRecord?.structRef
+        let idiomaticTypeName = structRef?.forceUnwrappedName ?? (typeName.doForceOptional ? (typeName + "!") : typeName)
+        let varDecl = swiftCode(field, indentation + "@inlinable \(publicDesignation)var \(swname): \(idiomaticTypeName) {\n", indentation: indentation)
         let deprecated = field.deprecated != nil ? "@available(*, deprecated) " : ""
         let getterCode: String
         if field.isReadable {
@@ -621,8 +631,9 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         }
         let setterCode: String
         if field.isWritable {
+            let setterBody = instanceSetter(for: field, ref: idiomaticRef, knownRecord: knownRecord, indentation: doubleIndent, record, target: pointee, ptr: "newValue")
             setterCode = swiftCode(field, doubleIndent + "\(deprecated) set {\n" +
-                doubleIndent + indentation + scall(field) + "\n" +
+                doubleIndent + indentation + setterBody + "\n" +
                 doubleIndent + "}\n", indentation: doubleIndent)
         } else {
             setterCode = ""
@@ -844,13 +855,19 @@ public func callSetter(_ indentation: String, _ record: GIR.Record? = nil, ptr p
 }
 
 /// Swift code for assigning the raw return value
-public func instanceSetter(_ indentation: String, _ record: GIR.Record? = nil, target: String = "ptr", ptr parameterName: String = "newValue", castVar: String = "newValue", convertToSwiftTypes doConvert: Bool = false) -> (GIR.CType) -> String {
-    return { field in
-        guard !field.isVoid else { return "// \(field.name) is Void\n" }
-        let ref = field.typeRef
-        let code = ref.cast(expression: parameterName, from: ref.idiomaticType)
-        return "\(target) = \(code)"
+public func instanceSetter(for field: GIR.CType, ref: TypeReference, knownRecord: GIR.Record?, indentation: String, _ record: GIR.Record? = nil, target: String = "ptr", ptr parameterName: String = "newValue", castVar: String = "newValue", convertToSwiftTypes doConvert: Bool = false) -> String {
+    guard !field.isVoid else { return "// \(field.name) is Void\n" }
+    let ref = field.containedTypes.first ?? field.typeRef
+    let argPtrName: String
+    if ref.indirectionLevel == 1, let knownRecord = knownRecord {
+        argPtrName = "." + knownRecord.ptrName
+    } else {
+        argPtrName = ""
     }
+    let idiomaticRef = knownRecord?.structRef ?? ref
+    let e = parameterName + argPtrName
+    let code = idiomaticRef.cast(expression: e, from: ref.idiomaticType)
+    return "\(target) = \(code)"
 }
 
 

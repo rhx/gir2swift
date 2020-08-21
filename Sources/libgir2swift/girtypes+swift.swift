@@ -100,6 +100,17 @@ public extension GIR.CType {
         guard let record = record else { return isPointer }
         return isInstanceOfHierarchy(record)
     }
+
+    /// return the idiomatic/non-idiomatic return type name
+    @inlinable func returnTypeName(for record: GIR.Record? = nil, beingIdiomatic: Bool = true) -> String {
+        let idiomaticName = idiomaticWrappedTypeName
+        let name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : typeRef.fullTypeName
+        if (typeRef.isOptional || maybeOptional(for: record) || name.maybeCallback) && !name.hasSuffix("?") && !name.hasSuffix("!") {
+            return name + "!"
+        } else {
+            return name
+        }
+    }
 }
 
 
@@ -150,17 +161,6 @@ public extension GIR.Argument {
         let templateName = record.className + "T"
         let typeName = isNullable ? (templateName + "?") : templateName
         return typeName
-    }
-
-    /// return the idiomatic/non-idiomatic return type name
-    @inlinable func returnTypeName(for record: GIR.Record? = nil, beingIdiomatic: Bool = true) -> String {
-        let idiomaticName = idiomaticWrappedTypeName
-        let name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : typeRef.fullTypeName
-        if (typeRef.isOptional || maybeOptional(for: record) || name.maybeCallback) && !name.hasSuffix("?") && !name.hasSuffix("!") {
-            return name + "!"
-        } else {
-            return name
-        }
     }
 }
 

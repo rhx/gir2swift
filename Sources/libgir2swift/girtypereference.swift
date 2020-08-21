@@ -46,9 +46,16 @@ public struct TypeReference: Hashable {
     }
 
     /// returns the full type including pointers and  taking into account `const`
-    public var fullTypeName: String {
+    @inlinable public var fullTypeName: String {
         let typeName = type.typeName.validSwift
         return embeddedType(named: typeName)
+    }
+
+    /// returns the force-unwrapped, full type name
+    @inlinable public var forceUnwrappedName: String {
+        let name = fullTypeName
+        guard !name.hasSuffix("!") && !name.hasSuffix("?") else { return name }
+        return name + "!"
     }
 
     /// returns the full Swift type (e.g. class) including pointers and  taking into account `const`

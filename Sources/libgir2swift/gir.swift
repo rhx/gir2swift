@@ -86,7 +86,9 @@ public final class GIR {
     /// Preample boilerplate to output before any generated code
     public var preamble = ""
     /// Namespace prefix defined by the receiver
-    public var prefix = ""
+    public var prefix = "" { didSet { GIR.dottedPrefix = prefix + "." } }
+    /// Namespace prefix defined by the receiver with a trailing "."
+    static public var dottedPrefix = ""
     /// Collection of identifier prefixes
     public var identifierPrefixes = Array<String>()
     /// Collection of symbol prefixes
