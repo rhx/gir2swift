@@ -264,7 +264,7 @@ public extension TypeReference {
 
     /// Return the underlying type (e.g. class or primitive `C` type) for a given type reference
     var underlyingType: TypeReference {
-        if indirectionLevel <= 1, let ref = GIR.refRecords[type] { return ref }
+        if indirectionLevel == 1, let ref = GIR.refRecords[type] { return ref }
         return self
     }
 }
