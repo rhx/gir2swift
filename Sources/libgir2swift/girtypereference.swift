@@ -53,7 +53,7 @@ public struct TypeReference: Hashable {
 
     /// returns the full type including pointers and  taking into account `const`
     @inlinable public var fullUnderlyingTypeName: String {
-        let typeName = type.typeName.validSwift
+        let typeName = type.typeName.validSwift.optionalWhenCallback
         return embeddedType(named: typeName)
     }
 

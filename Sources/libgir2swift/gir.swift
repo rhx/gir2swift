@@ -1130,6 +1130,12 @@ public extension StringProtocol {
         return false
     }
 
+    /// Heuristic that returns an optional when the receiver may be a callback
+    var optionalWhenCallback: String {
+        guard maybeCallback && !hasSuffix("?") && !hasSuffix("!") else { return String(self) }
+        return self + "?"
+    }
+
     /// Return `true` if the receiver represents a type name that should be a force-unwrapped optional
     var doForceOptional: Bool {
         return GIR.forceUnwrapped.contains(String(self)) || maybeCallback
