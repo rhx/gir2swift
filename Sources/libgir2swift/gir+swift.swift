@@ -939,6 +939,8 @@ public func callbackDecl(for callback: GIR.Callback) -> String {
         let s = returnTypeCodeRaw.startIndex
         let e = returnTypeCodeRaw.index(before: returnTypeCodeRaw.endIndex)
         returnTypeCode = returnTypeCodeRaw[s..<e] + "?"
+    } else if returnTypeCodeRaw == GIR.gpointer.swiftName {
+        returnTypeCode = returnTypeCodeRaw + "?"
     } else {
         returnTypeCode = returnTypeCodeRaw
     }
@@ -959,6 +961,7 @@ public func forceUnwrappedDecl(for callback: GIR.Callback) -> String {
 /// - Returns: The Swift type for the parameter
 public func callbackParameterCode(for argument: GIR.Argument) -> String {
     let type = argument.callbackArgumentTypeName
+    guard type != GIR.gpointer.swiftName else { return type + "?" }
     return type
 }
 
