@@ -1078,7 +1078,7 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
     "public extension \(structName) {\n" + indentation +
         "/// Designated initialiser from the underlying `C` data type\n" + indentation +
         "@inlinable init(_ p: UnsafeMutablePointer<\(ctype)>) {\n" + doubleIndentation +
-            "ptr = UnsafeMutableRawPointer(p)" + indentation +
+            "ptr = UnsafeMutableRawPointer(p)\n" + indentation +
         "}\n\n" + indentation +
         "/// Conditional initialiser from an optional pointer to the underlying `C` data type\n" + indentation +
         "@inlinable init!(_ maybePointer: UnsafeMutablePointer<\(ctype)>?) {\n" + doubleIndentation +
