@@ -104,7 +104,13 @@ public extension GIR.CType {
     /// return the idiomatic/non-idiomatic return type name
     @inlinable func returnTypeName(for record: GIR.Record? = nil, beingIdiomatic: Bool = true) -> String {
         let idiomaticName = idiomaticWrappedTypeName
-        let name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : typeRef.fullTypeName
+        let ref = typeRef
+        let name: String
+        if ref.indirectionLevel == 1, let structRef = GIR.knownRecords[ref.type.name]?.structRef {
+            name = structRef.forceUnwrappedName
+        } else {
+            name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : ref.fullTypeName
+        }
         if (typeRef.isOptional || maybeOptional(for: record) || name.maybeCallback) && !name.hasSuffix("?") && !name.hasSuffix("!") {
             return name + "!"
         } else {
