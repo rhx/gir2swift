@@ -187,7 +187,7 @@ public extension GIR {
     static let glist = "GList"
     static let error = "Error"
     static let gerror = "GError"
-    static let errorT = "ErrorType"
+    static let errorT = "GLibError"
     static let errorProtocol = GIRType(name: error, ctype: "")
     static let errorReference = TypeReference(type: errorProtocol)
     static let gErrorStruct = GIRType(name: gerror, ctype: gerror, superType: errorReference)

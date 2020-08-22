@@ -208,15 +208,6 @@ public func swiftCode(constant: GIR.Constant) -> String {
     return code
 }
 
-///// Magic error type for throwing
-//let errorProtocol = "Error"
-//
-///// error type enum
-//let errorType = "ErrorType"
-//
-///// underlying error type
-//let gerror = "GError"
-
 /// Swift code type alias representation of an enum
 public func typeAlias(_ e: GIR.Enumeration) -> String {
     let original = e.typeRef.type.typeName.swift
@@ -816,7 +807,7 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
             errCode = "var error: UnsafeMutablePointer<\(GIR.gerror)>?\n" + indentation
             invocationTail = (n == 0 ? "" : ", ") + "&error)"
             let errorCode = "\n" + indentation + (doThrow ?
-                                        "if let error = error { throw ErrorType(error) }\n" :
+                                        "if let error = error { throw GLibError(error) }\n" :
                                         "g_log(messagePtr: error?.pointee.message, level: .error)\n")
             let nilCode = needsNilGuard ? indentation + "guard let " + rvVar + " = " + maybeRV + " else { return nil }\n" : ""
             throwCode = errorCode + nilCode

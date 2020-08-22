@@ -138,7 +138,7 @@ public final class GIR {
     /// types to turn into force-unwrapped optionals
     public static var forceUnwrapped: Set<String> = ["gpointer", "gconstpointer"]
     /// Type of `GError`
-    public static var GErrorType = "GErrorType"
+    public static var GErrorType = "GLibError"
 
     /// designated constructor
     public init(xmlDocument: XMLDocument, quiet: Bool = false) {
@@ -371,9 +371,6 @@ public final class GIR {
             super.init(node: node, at: index, nameAttr: nameAttr)
             typeRef.isArray = node.name == "array"
             registerKnownType()
-//
-//            // handle the magic error type
-//            if name == errorType { GErrorType = type.swift }
         }
 
         /// Register this type as an enumeration type

@@ -81,7 +81,7 @@ private let swiftFundamentalsForC = [
 /// Swift type equivalents for C types
 private let swiftReplacementsForC = swiftFundamentalsForC.merging([
     "utf8" : "String", "filename" : "String",
-    "Error" : "ErrorType", "ErrorType" : "ErrorEnum"
+    "Error" : "GLibError"
 ]) { $1 }
 
 /// Mapping that allows casting from original C types to more idiomatic Swift types
