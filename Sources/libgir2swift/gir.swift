@@ -393,7 +393,7 @@ public final class GIR {
         /// String representation of the `CType` thing
         public override var kind: String { return "CType" }
         /// list of contained types
-        public let containedTypes: [TypeReference]
+        public let containedTypes: [CType]
         /// reference scope
         public let scope: String?
         /// `true` if this is a readable element
@@ -413,7 +413,7 @@ public final class GIR {
         ///   - isWritable: Set to `true` if this is a writable type
         ///   - contains: Array of C types contained within this type
         ///   - scope: The scope this type belongs in
-        public init(name: String, type: TypeReference, comment: String, introspectable: Bool = false, deprecated: String? = nil, isPrivate: Bool = false, isReadable: Bool = true, isWritable: Bool = false, contains: [TypeReference] = [], scope: String? = nil) {
+        public init(name: String, type: TypeReference, comment: String, introspectable: Bool = false, deprecated: String? = nil, isPrivate: Bool = false, isReadable: Bool = true, isWritable: Bool = false, contains: [CType] = [], scope: String? = nil) {
             self.isPrivate  = isPrivate
             self.isReadable = isReadable
             self.isWritable = isWritable
@@ -432,7 +432,7 @@ public final class GIR {
         ///   - writableAttr: Key for the attribute to extract the writability status from
         ///   - scopeAttr: Key for the attribute to extract the  scope string from
         public init(node: XMLElement, at index: Int, nameAttr: String = "name", privateAttr: String = "private", readableAttr: String = "readable", writableAttr: String = "writable", scopeAttr: String = "scope") {
-            containedTypes = node.children.filter { $0.name == "type" }.map(\.alias)
+            containedTypes = node.containedTypes
             isPrivate  = node.attribute(named: privateAttr) .flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
             isReadable = node.attribute(named: readableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? true
             isWritable = node.attribute(named: writableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
@@ -455,7 +455,7 @@ public final class GIR {
             scope = node.attribute(named: scopeAttr)
             if let array = node.children.filter({ $0.name == "array" }).first {
                 type = array.alias
-                containedTypes = array.children.filter { $0.name == "type" }.map(\.alias)
+                containedTypes = array.containedTypes
             } else {
                 containedTypes = []
                 type = GIR.typeOf(node: node)
@@ -1008,7 +1008,8 @@ public final class GIR {
         }
     }
 
-    /// a callback is the same as a function
+    /// a callback is the same as a function,
+    /// except that the type definition is a `@convention(c)` callback definition
     public class Callback: Function {
         public override var kind: String { return "Callback" }
     }

@@ -605,13 +605,19 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
             return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
         }
         guard !field.isPrivate else { return indentation + "// var \(swname) is unavailable because \(name) is private\n" }
-        let containedTypeRef = field.containedTypes.first ?? field.typeRef
+        let fieldType = field.containedTypes.first
+        let containedTypeRef = fieldType?.typeRef ?? field.typeRef
         let pointee = ptr + ".pointee." + name
         guard field.isReadable || field.isWritable else { return indentation + "// var \(name) is unavailable because it is neigher readable nor writable\n" }
         guard !field.isVoid else { return indentation + "// var \(swname) is unavailable because \(name) is void\n" }
         let ptrLevel = containedTypeRef.indirectionLevel
         let idiomaticRef = containedTypeRef.idiomaticType
-        let typeName = idiomaticRef.fullTypeName
+        let typeName: String
+        if let callback = fieldType as? GIR.Callback {
+            typeName = forceUnwrappedDecl(for: callback)
+        } else {
+            typeName = idiomaticRef.fullTypeName
+        }
         let knownRecord = ptrLevel == 1 ? GIR.knownRecords[containedTypeRef.type.name] : nil
         let structRef = knownRecord?.structRef
         let idiomaticTypeName = structRef?.forceUnwrappedName ?? (typeName.doForceOptional ? (typeName + "!") : typeName)
@@ -857,7 +863,7 @@ public func callSetter(_ indentation: String, _ record: GIR.Record? = nil, ptr p
 /// Swift code for assigning the raw return value
 public func instanceSetter(for field: GIR.CType, ref: TypeReference, knownRecord: GIR.Record?, indentation: String, _ record: GIR.Record? = nil, target: String = "ptr", ptr parameterName: String = "newValue", castVar: String = "newValue", convertToSwiftTypes doConvert: Bool = false) -> String {
     guard !field.isVoid else { return "// \(field.name) is Void\n" }
-    let ref = field.containedTypes.first ?? field.typeRef
+    let ref = field.containedTypes.first?.typeRef ?? field.typeRef
     let argPtrName: String
     if ref.indirectionLevel == 1, let knownRecord = knownRecord {
         argPtrName = "." + knownRecord.ptrName
@@ -914,8 +920,51 @@ public func constructorPrefix(_ method: GIR.Method) -> String? {
     return name.camelCase.swift
 }
 
+/// Swift code for a `@convention(c)` callback type declaration
+/// - Parameter callback: The callback to generate type code for
+/// - Returns: The Swift type for the parameter
+public func callbackDecl(for callback: GIR.Callback) -> String {
+    let params = callback.args.map(callbackParameterCode)
+    let funcParam = params.joined(separator: ", ")
+    let callbackParam: String
+    if callback.throwsError {
+        callbackParam = funcParam + ", UnsafeMutablePointer<UnsafeMutablePointer<" + GIR.gerror + ">?>?"
+    } else {
+        callbackParam = funcParam
+    }
+    let voidCode = "@convention(c) (" + callbackParam + ")"
+    let returnTypeCodeRaw = callback.returns.returnTypeName(beingIdiomatic: false)
+    let returnTypeCode: String
+    if returnTypeCodeRaw.hasSuffix("!") {
+        let s = returnTypeCodeRaw.startIndex
+        let e = returnTypeCodeRaw.index(before: returnTypeCodeRaw.endIndex)
+        returnTypeCode = returnTypeCodeRaw[s..<e] + "?"
+    } else {
+        returnTypeCode = returnTypeCodeRaw
+    }
+    let code = voidCode + " -> " + returnTypeCode
+    return code
+}
+
+/// Swift code for a `@convention(c)` callback type declaration
+/// - Parameter callback: The callback to generate type code for
+/// - Returns: The Swift type for the parameter
+public func forceUnwrappedDecl(for callback: GIR.Callback) -> String {
+    let code = "(" + callbackDecl(for: callback) + ")!"
+    return code
+}
+
+/// Swift code for a `@convention(c)` callback parameter
+/// - Parameter argument: The argument to generate type code for
+/// - Returns: The Swift type for the parameter
+public func callbackParameterCode(for argument: GIR.Argument) -> String {
+    let type = argument.callbackArgumentTypeName
+    return type
+}
 
 /// Swift code for auto-prefixed arguments
+/// - Parameter argument: The argument to generate type code for
+/// - Returns: The Swift type for the parameter
 public func parameterCode(for argument: GIR.Argument) -> String {
     let prefixedName = argument.prefixedArgumentName
     let type = argument.templateTypeName

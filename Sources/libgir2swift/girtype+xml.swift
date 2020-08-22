@@ -56,5 +56,25 @@ extension SwiftLibXML.XMLElement {
         type.isOptional = attribute(named: "nullable").flatMap({ Int($0) }).map({ $0 != 0 }) ?? type.isOptional
         return type
     }
+
+
+    /// Return the types contained within the given field/parameter
+    var containedTypes: [GIR.CType] {
+        var index = 0
+        let containedTypes: [GIR.CType] = children.compactMap { child in
+            switch child.name {
+            case "type":
+                defer { index += 1 }
+                return GIR.CType(node: child, at: index)
+            case "callback":
+                defer { index += 1 }
+                return GIR.Callback(node: child, at: index)
+            default:
+                return nil
+            }
+        }
+        return containedTypes
+    }
+
 }
 

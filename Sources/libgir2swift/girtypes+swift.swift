@@ -152,6 +152,23 @@ public extension GIR.Argument {
     }
 
     /// return the swift (known) type of the receiver when passed as an argument
+    /// for a `@convention(c)` callback
+    @inlinable
+    var callbackArgumentTypeName: String {
+        let name = typeRef.fullTypeName
+        guard typeRef.indirectionLevel != 0 && !name.hasSuffix("?") else { return name }
+        let optionalName: String
+        if name.hasSuffix("!") {
+            let s = name.startIndex
+            let e = name.index(before: name.endIndex)
+            optionalName = name[s..<e] + "?"
+        } else {
+            optionalName = name + "?"
+        }
+        return optionalName
+    }
+
+    /// return the swift (known) type of the receiver when passed as an argument
     /// Returns a template name in case of a known record
     @inlinable
     var templateTypeName: String {
