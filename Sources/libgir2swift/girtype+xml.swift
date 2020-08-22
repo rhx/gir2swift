@@ -44,7 +44,9 @@ extension SwiftLibXML.XMLElement {
 //        let parent = alias.type
         let gt = GIRType(name: name, swiftName: orig.swiftName, typeName: orig.typeName, ctype: orig.ctype, superType: alias, isAlias: true)
         let t = addType(gt)
-        let ref = TypeReference(type: t, identifier: identifier)
+        var ref = TypeReference(type: t, identifier: identifier)
+        ref.constPointers = typeRef.constPointers
+        ref.isConst = typeRef.isConst
         return ref
     }
 
