@@ -77,8 +77,12 @@ public struct TypeReference: Hashable {
     }
 
     public func embeddedType(named name: String) -> String {
+        let k = constPointers.count - 1
         let prefix = (isArray ? "[" : "") + constPointers.enumerated().map {
-            "Unsafe" + ($0.element || ($0.offset == 0 && isConst) ? "" : "Mutable") + "Pointer<"
+            let i = min(k, $0.offset+1)
+            let elementIsConst = ($0.offset == k && isConst) || constPointers[i]
+            let element = "Unsafe" + (elementIsConst ? "" : "Mutable") + "Pointer<"
+            return element
         }.joined()
         let innerSuffix: String
         if constPointers.count <= 1 {
