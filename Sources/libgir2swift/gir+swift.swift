@@ -1091,9 +1091,18 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
         "@inlinable init(_ p: UnsafeMutablePointer<\(ctype)>) {\n" + doubleIndentation +
             "ptr = UnsafeMutableRawPointer(p)\n" + indentation +
         "}\n\n" + indentation +
+        "/// Designated initialiser from a constant pointer to the underlying `C` data type\n" + indentation +
+        "@inlinable init(_ p: UnsafePointer<\(ctype)>) {\n" + doubleIndentation +
+            "ptr = UnsafeMutableRawPointer(UnsafeMutablePointer(mutating: p))\n" + indentation +
+        "}\n\n" + indentation +
         "/// Conditional initialiser from an optional pointer to the underlying `C` data type\n" + indentation +
         "@inlinable init!(_ maybePointer: UnsafeMutablePointer<\(ctype)>?) {\n" + doubleIndentation +
         "guard let p = maybePointer else { return nil }\n" + doubleIndentation +
+        "ptr = UnsafeMutableRawPointer(p)\n" + indentation +
+        "}\n\n" + indentation +
+        "/// Conditional initialiser from an optional, non-mutable pointer to the underlying `C` data type\n" + indentation +
+        "@inlinable init!(_ maybePointer: UnsafePointer<\(ctype)>?) {\n" + doubleIndentation +
+        "guard let p = UnsafeMutablePointer(mutating: maybePointer) else { return nil }\n" + doubleIndentation +
         "ptr = UnsafeMutableRawPointer(p)\n" + indentation +
         "}\n\n" + indentation +
         "/// Reference intialiser for a related type that implements `\(protocolName)`\n" + indentation +
@@ -1201,6 +1210,29 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "@inlinable public init(_ op: UnsafeMutablePointer<\(ctype)>) {\n" + doubleIndentation +
             (hasParent ? "super.init(cPointer: op)\n" : "ptr = UnsafeMutableRawPointer(op)\n") + indentation +
         "}\n\n" + (indentation +
+        "/// Designated initialiser from a constant pointer to the underlying `C` data type.\n" + indentation +
+        "/// This creates an instance without performing an unbalanced retain\n" + indentation +
+        "/// i.e., ownership is transferred to the `\(className)` instance.\n" + indentation +
+        "/// - Parameter op: pointer to the underlying object\n" + indentation +
+        "@inlinable public init!(_ op: UnsafePointer<\(ctype)>) {\n" + doubleIndentation +
+            (hasParent ? "super.init(constPointer: op)\n" : "ptr = UnsafeMutableRawPointer(UnsafeMutablePointer(mutating: op))\n") + indentation +
+        "}\n\n") + (indentation +
+        "/// Optional initialiser from a constant pointer to the underlying `C` data type.\n" + indentation +
+        "/// This creates an instance without performing an unbalanced retain\n" + indentation +
+        "/// i.e., ownership is transferred to the `\(className)` instance.\n" + indentation +
+        "/// - Parameter op: pointer to the underlying object\n" + indentation +
+        "@inlinable public init!(_ op: UnsafePointer<\(ctype)>?) {\n" + doubleIndentation +
+            "guard let p = UnsafeMutablePointer(mutating: op) else { return nil }\n" + doubleIndentation +
+            (hasParent ? "super.init(cPointer: p)\n" : "ptr = UnsafeMutableRawPointer(p)\n") + indentation +
+        "}\n\n") + (indentation +
+        "/// Optional initialiser from the underlying `C` data type.\n" + indentation +
+        "/// This creates an instance without performing an unbalanced retain\n" + indentation +
+        "/// i.e., ownership is transferred to the `\(className)` instance.\n" + indentation +
+        "/// - Parameter op: pointer to the underlying object\n" + indentation +
+        "@inlinable public init!(_ op: UnsafeMutablePointer<\(ctype)>?) {\n" + doubleIndentation +
+            "guard let p = op else { return nil }\n" + doubleIndentation +
+            (hasParent ? "super.init(cPointer: p)\n" : "ptr = UnsafeMutableRawPointer(p)\n") + indentation +
+        "}\n\n") + (indentation +
 
         "/// Designated initialiser from the underlying `C` data type.\n" + indentation +
         "/// \(e.ref == nil ? "`\(ctype.swift)` does not allow reference counting, so despite the name no actual retaining will occur." : "Will retain `\(ctype.swift)`.")\n" + indentation +
