@@ -29,9 +29,6 @@ public class GIRType: Hashable {
     /// to a pointer, `5` is an immutable pointer to a pointer, etc.
     public var conversions: [GIRType : [TypeConversion]] = [:]
 
-    /// Swift name of the parent type (or the receiver if `parent` is `nil`)
-    public var underlyingSwiftName: String { parent?.fullTypeName ?? swiftName }
-
     /// Swift name to use for casting: replaces trailing `!` with `?`
     @inlinable public var castName: String {
         guard swiftName.hasSuffix("!") else { return typeName }

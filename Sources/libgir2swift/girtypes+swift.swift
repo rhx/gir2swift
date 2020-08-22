@@ -161,7 +161,8 @@ public extension GIR.Argument {
     /// for a `@convention(c)` callback
     @inlinable
     var callbackArgumentTypeName: String {
-        let name = typeRef.fullTypeName
+        let ref = typeRef
+        let name = ref.type.typeName == GIR.errorT ? ref.fullUnderlyingCName : ref.fullUnderlyingTypeName
         guard typeRef.indirectionLevel != 0 && !name.hasSuffix("?") else { return name }
         let optionalName: String
         if name.hasSuffix("!") {
