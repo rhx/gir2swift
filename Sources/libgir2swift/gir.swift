@@ -137,8 +137,6 @@ public final class GIR {
     public static var callbackSuffixes = [String]()
     /// types to turn into force-unwrapped optionals
     public static var forceUnwrapped: Set<String> = ["gpointer", "gconstpointer"]
-    /// Type of `GError`
-    public static var GErrorType = "GLibError"
 
     /// designated constructor
     public init(xmlDocument: XMLDocument, quiet: Bool = false) {

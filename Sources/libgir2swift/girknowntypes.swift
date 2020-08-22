@@ -235,7 +235,7 @@ public extension GIR {
 
     /// All fundamental types prior to GIR parsing
     static var fundamentalTypes: Set<GIRType> = {
-        return numericTypes ∪ boolType ∪ voidType ∪ noneType ∪ stringType ∪ errorTypes ∪ aliases ∪ enums ∪ bitfields
+        return numericTypes ∪ boolType ∪ voidType ∪ noneType ∪ stringType ∪ aliases ∪ enums ∪ bitfields
     }()
 
     /// All numeric conversions
