@@ -1023,9 +1023,17 @@ public func convertSetterArgumentToSwiftFor(_ record: GIR.Record?, ptr: String =
     return { arg in
         let name = arg.nonClashingName
         guard !arg.isScalarArray else { return "&" + name }
-        let varName = arg.instance || arg.isInstanceOf(record) ? ptr : ("newValue")
         let ref = arg.typeRef
-        let param = ref.cast(expression: varName, from: arg.swiftParamRef)
+        let paramRef = arg.swiftParamRef
+        let exp: String
+        if !arg.instance && !arg.isInstanceOf(record) && paramRef.indirectionLevel == 1, let knownRecord = GIR.knownRecords[paramRef.type.name] {
+            exp = "newValue?." + knownRecord.ptrName
+        } else if arg.instance || arg.isInstanceOf(record) {
+            exp = ptr
+        } else {
+            exp = "newValue"
+        }
+        let param = ref.cast(expression: exp, from: paramRef)
         return param
     }
 }
