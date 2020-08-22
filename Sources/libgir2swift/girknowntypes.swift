@@ -258,7 +258,7 @@ public extension TypeReference {
     /// Return the idiomatic Swift type for a given type reference
     var idiomaticType: TypeReference {
         if indirectionLevel == 0, let set = GIR.optionSets[type] { return set }
-        if indirectionLevel <= 1, let ref = GIR.recordRefs[type] { return ref }
+        if indirectionLevel == 1, let ref = GIR.recordRefs[type] { return ref }
         return self
     }
 
