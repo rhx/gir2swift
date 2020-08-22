@@ -11,6 +11,21 @@ To start a project that uses Swift wrappers around low-level libraries that util
 5. Create a script that runs `gir2swift` (see [Usage](#Usage) below) and then builds your project using `swift build`
 6. If the build phase fails (more likely than not), add code that patches the generated Swift source files (e.g. using `awk` or `sed`) to correct the errors the compiler complains about
 
+## What is new?
+
+Version 11 introduces a new type system into `gir2swift`,
+to ensure it has a representation of the underlying types.
+This is necessary for Swift 5.3 onwards, which requires more stringent casts.
+As a consequence, accessors can accept and return idiomatic Swift rather than
+underlying types or pointers.
+This means that a lot of the changes will be source-breaking for code that
+was compiled against libraries built with earlier versions of `gir2swift`.
+
+### Notable changes
+
+ * Requires Swift 5.2 or later
+ * `ErrorType` has been renamed `GLibError` to ensure it neither clashes with `Swift.Error` nor the `GLib.ErrorType`  scanner enum
+ * Parameters or return types for records/classes now use the corresponding, lightweight Swift `Ref` wrapper instead of the underlying pointer
 
 ## Usage
 
@@ -92,7 +107,7 @@ Normally, `gir2swift` tries to translate constants from C to Swift, as per the d
 
 ### Swift
 
-To build, you need at least Swift 4.2 (Swift 5.x should work fine), download from https://swift.org/download/ -- if you are using macOS, make sure you have the command line tools installed as well).  Test that your compiler works using `swift --version`, which should give you something like
+To build, you need at least Swift 5.2 (Swift 5.3 onwards should work fine), download from https://swift.org/download/ -- if you are using macOS, make sure you have the command line tools installed as well).  Test that your compiler works using `swift --version`, which should give you something like
 
 	$ swift --version
 	Apple Swift version 5.2.4 (swiftlang-1103.0.32.9 clang-1103.0.32.53)
