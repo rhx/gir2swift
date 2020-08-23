@@ -28,7 +28,7 @@ extension SwiftLibXML.XMLElement {
         }
         let name = rawName.validSwift
         let cName = ctype ?? name
-        let plainType = typeName ?? (innerName.isEmpty ? nil : innerName)
+        let plainType = (innerName.isEmpty ? nil : innerName) ?? typeName
         let identifier = attribute(named: "identifier")
         let isNullable = attribute(named: "nullable").flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
         let oldN = GIR.namedTypes[name]?.count ?? 0
