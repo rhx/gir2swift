@@ -1278,17 +1278,17 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
 
         "/// Unsafe typed initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "/// - Parameter cPointer: pointer to the underlying object\n" + indentation +
+        "/// - Parameter cPointer: pointer to the underlying object\n" + indentation + "@inlinable " +
         (hasParent ? "override " : "") +
-        "@inlinable public init<T>(cPointer p: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
+        "public init<T>(cPointer p: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
             (hasParent ? "super.init(cPointer: p)\n" : "ptr = UnsafeMutableRawPointer(p)\n") + indentation +
         "}\n\n") + (indentation +
 
         "/// Unsafe typed, retaining initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "/// - Parameter cPointer: pointer to the underlying object\n" + indentation +
+        "/// - Parameter cPointer: pointer to the underlying object\n" + indentation + "@inlinable " +
         (hasParent ? "override " : "") +
-        "@inlinable public init<T>(retainingCPointer cPointer: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
+        "public init<T>(retainingCPointer cPointer: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
             (hasParent ? "super.init(retainingCPointer: cPointer)\n" :
             "ptr = UnsafeMutableRawPointer(cPointer)\n" + doubleIndentation +
             "\(retain)(\(retainPtr))\n") + indentation +
@@ -1296,9 +1296,9 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
 
         "/// Unsafe untyped initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "/// - Parameter p: raw pointer to the underlying object\n" + indentation +
+        "/// - Parameter p: raw pointer to the underlying object\n" + indentation + "@inlinable " +
         (hasParent ? "override " : "") +
-        "@inlinable public init(raw p: UnsafeRawPointer) {\n" + doubleIndentation +
+        "public init(raw p: UnsafeRawPointer) {\n" + doubleIndentation +
             (hasParent ? "super.init(raw: p)\n" : "ptr = UnsafeMutableRawPointer(mutating: p)\n") + indentation +
         "}\n\n") + (indentation +
 
@@ -1313,17 +1313,17 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
 
         "/// Unsafe untyped initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "/// - Parameter p: mutable raw pointer to the underlying object\n" + indentation +
+        "/// - Parameter p: mutable raw pointer to the underlying object\n" + indentation + "@inlinable " +
         (hasParent ? "override " : "") +
-        "@inlinable public init(raw p: UnsafeMutableRawPointer) {\n" + doubleIndentation +
+        "public init(raw p: UnsafeMutableRawPointer) {\n" + doubleIndentation +
             (hasParent ? "super.init(raw: p)\n" : "ptr = p\n") + indentation +
         "}\n\n") + (indentation +
 
         "/// Unsafe untyped, retaining initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "/// - Parameter raw: mutable raw pointer to the underlying object\n" + indentation +
+        "/// - Parameter raw: mutable raw pointer to the underlying object\n" + indentation + "@inlinable " +
         (hasParent ? "override " : "") +
-        "@inlinable public init(retainingRaw raw: UnsafeMutableRawPointer) {\n" + doubleIndentation +
+        "public init(retainingRaw raw: UnsafeMutableRawPointer) {\n" + doubleIndentation +
             (hasParent ? "super.init(retainingRaw: raw)\n" :
             "ptr = raw\n" + doubleIndentation +
             "\(retain)(\(retainPtr))\n") + indentation +
@@ -1331,17 +1331,17 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
 
         "/// Unsafe untyped initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "/// - Parameter p: opaque pointer to the underlying object\n" + indentation +
+        "/// - Parameter p: opaque pointer to the underlying object\n" + indentation + "@inlinable " +
         (hasParent ? "override " : "") +
-        "@inlinable public init(opaquePointer p: OpaquePointer) {\n" + doubleIndentation +
+        "public init(opaquePointer p: OpaquePointer) {\n" + doubleIndentation +
             (hasParent ? "super.init(opaquePointer: p)\n" : "ptr = UnsafeMutableRawPointer(p)\n") + indentation +
         "}\n\n") + (indentation +
 
         "/// Unsafe untyped, retaining initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "/// - Parameter p: opaque pointer to the underlying object\n" + indentation +
+        "/// - Parameter p: opaque pointer to the underlying object\n" + indentation + "@inlinable " +
         (hasParent ? "override " : "") +
-        "@inlinable public init(retainingOpaquePointer p: OpaquePointer) {\n" + doubleIndentation +
+        "public init(retainingOpaquePointer p: OpaquePointer) {\n" + doubleIndentation +
             (hasParent ? "super.init(retainingOpaquePointer: p)\n" :
             "ptr = UnsafeMutableRawPointer(p)\n" + doubleIndentation +
             "\(retain)(\(retainPtr))\n") + indentation +
