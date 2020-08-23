@@ -79,12 +79,18 @@ private let swiftFundamentalsForC = [
     "int64_t" : "Int64", "uint64_t" : "UInt64"
 ]
 /// Swift fundamental, scalar type name replacements
-private let swiftNonPointersForC = swiftFundamentalsForC.merging([
+private let swiftFullTypesForC = swiftFundamentalsForC.merging([
     "va_list" : "CVaListPointer",
+    "UnsafeMutablePointer<Void>" : "UnsafeMutableRawPointer",
+    "UnsafeMutablePointer<Void>!" : "UnsafeMutableRawPointer!",
+    "UnsafeMutablePointer<Void>?" : "UnsafeMutableRawPointer?",
+    "UnsafePointer<Void>" : "UnsafeRawPointer",
+    "UnsafePointer<Void>!" : "UnsafeRawPointer!",
+    "UnsafePointer<Void>?" : "UnsafeRawPointer?",
 ]) { $1 }
 
 /// Swift type equivalents for C types
-private let swiftReplacementsForC = swiftNonPointersForC.merging([
+private let swiftReplacementsForC = swiftFullTypesForC.merging([
     "utf8" : "String", "filename" : "String",
     "Error" : "GLibError"
 ]) { $1 }
@@ -240,7 +246,7 @@ public extension String {
 
     /// return a valid, full Swift type (including pointers) for an underlying C type
     var validFullSwift: String {
-        if let s = swiftNonPointersForC[self] { return s }
+        if let s = swiftFullTypesForC[self] { return s }
         return swiftIdentifier
     }
 
