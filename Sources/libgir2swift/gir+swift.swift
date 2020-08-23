@@ -716,7 +716,7 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
             let templateTypes = arguments.compactMap(\.templateDecl).asSet.joined(separator: ", ")
             let templateDecl = templateTypes.isEmpty ? "" : ("<" + templateTypes + ">")
             let p: String? = consPrefix == firstArgName?.swift ? nil : consPrefix
-            let fact = factory ? "static func \(fname.swift + templateDecl)(" : ("\(isOverride ? ovr : conv)init!" + templateDecl + "(")
+            let fact = factory ? "static func \(fname.swift + templateDecl)(" : ("\(isOverride ? ovr : conv)init" + templateDecl + "(")
             let code = swiftCode(method, indentation + "\(deprecated)@inlinable \(publicDesignation)\(fact)" +
                 constructorParam(method, prefix: p) + ")\(returnDeclaration(method)) {\n" +
                     doubleIndent + call(method) +
@@ -821,7 +821,7 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         let rv = method.returns
         let isVoid = rvVar.isEmpty || rv.isVoid
         let maybeOptional = rv.maybeOptional(for: record)
-        let needsNilGuard = !isVoid && maybeOptional // && !isConstructor
+        let needsNilGuard = !isVoid && maybeOptional && !isConstructor
         let errCode: String
         let throwCode: String
         let invocationTail: String
