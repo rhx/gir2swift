@@ -417,7 +417,7 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
         "@inlinable var " + ptrName + ": " +
         (e.introspectable || !e.disguised ?
             "UnsafeMutablePointer<\(ctype)> { return ptr.assumingMemoryBound(to: \(ctype).self) }\n\n" :
-            "\(ctype) { return unsafeBitCast(ptr, to: \(ctype).self) }\n\n") +
+            "\(ctype) { return \(ctype)(bitPattern: UInt(bitPattern: ptr))! }\n\n") +
         methods.map(mcode).joined(separator: "\n") +
         gsPairs.map(vcode).joined(separator: "\n") + "\n" +
         e.fields.map(fcode).joined(separator: "\n") + "\n" +
