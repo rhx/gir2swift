@@ -1028,8 +1028,6 @@ public func returnCode(for argument: GIR.Argument, prefix: String) -> String {
 
 /// Swift code for passing an argument to a free standing function
 public func toSwift(_ arg: GIR.Argument, ptr: String = "ptr") -> String {
-//    let types = typeCastTuple(arg.ctype, arg.type.swift, varName: arg.instance ? ptr : (arg.nonClashingName + (arg.isKnownRecord ? ".ptr" : "")))
-//    let param = types.toC.hasSuffix("ptr") ? "cast(\(types.toC))" : types.toC
     let t = arg.typeRef.type
     let varName = arg.instance ? ptr : (arg.nonClashingName + (arg.isKnownRecord ? ".ptr" : ""))
     let param = t.cast(expression: varName)
