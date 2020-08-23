@@ -304,7 +304,7 @@ public func bitfieldTypeHead(_ bf: GIR.Bitfield, enumRawType: String = "UInt32",
         "@inlinable public var value: \(ctype) {\n" + doubleIndentation +
           "get {\n" + tripleIndentation +
             "func castTo\(ctype)Int<I: BinaryInteger, J: BinaryInteger>(_ param: I) -> J { J(param) }\n" + tripleIndentation +
-            ctype + "(rawValue: castTo\(ctype)Int(rawValue))\n" + doubleIndentation +
+            "return " + ctype + "(rawValue: castTo\(ctype)Int(rawValue))\n" + doubleIndentation +
           "}\n" + doubleIndentation +
           "set { rawValue = \(enumRawType)(newValue.rawValue) }\n" + indentation +
         "}\n\n" + indentation +
