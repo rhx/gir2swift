@@ -660,6 +660,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
 /// Swift code for convenience constructors
 public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: String, convenience: String = "", override ovr: String = "", publicDesignation: String = "public ", factory: Bool = false, hasParent: Bool = false, convertName: @escaping (String) -> String = { $0.camelCase }) -> (GIR.Record) -> (GIR.Method) -> String {
     let isConv = !convenience.isEmpty
+    let isExtension = publicDesignation.isEmpty
     let conv =  isConv ? "\(convenience) " : ""
     return { (record: GIR.Record) -> (GIR.Method) -> String in
         let doubleIndent = indentation + indentation
@@ -701,6 +702,17 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
                 fname = fullname
             }
             let arguments = method.args
+            var vaList = false
+            for argument in arguments {
+                if !isExtension && argument.typeRef.type.typeName == "va_list" {
+                    vaList = true
+                    break
+                }
+            }
+            guard !vaList else {
+                // FIXME: as of Swift 5.3 beta, generating static class methods with va_list crashes the compiler
+                return "\n\(indentation)// *** \(name)() is currently not available because \(method.cname) takes a va_list pointer!\n\n"
+            }
             let templateTypes = arguments.compactMap(\.templateDecl).asSet.joined(separator: ", ")
             let templateDecl = templateTypes.isEmpty ? "" : ("<" + templateTypes + ">")
             let p: String? = consPrefix == firstArgName?.swift ? nil : consPrefix
