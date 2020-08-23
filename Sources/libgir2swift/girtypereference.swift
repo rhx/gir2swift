@@ -104,7 +104,7 @@ public struct TypeReference: Hashable {
     ///   - source: The source type reference to cast from
     /// - Returns: The expression cast to the receiver type
     @inlinable public func cast(expression e: String, from source: TypeReference) -> String {
-        guard self != source else { return e }
+        guard self != source && (constPointers != source.constPointers || source.type.name != (type.name + "!")) else { return e }
         let p = indirectionLevel == 0 ? 0 : max(1, indirectionLevel - source.indirectionLevel)
         // FIXME: this needs to check if this is a const -> mutating pointer cast
         let cast = type.cast(expression: e, from: source.type, pointerLevel: p, const: isConst)
