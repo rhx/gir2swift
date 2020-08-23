@@ -379,7 +379,9 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
             "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
             "var ptr: UnsafeMutableRawPointer { get }\n\n" + indentation +
             "/// Typed pointer to the underlying `\(ctype)` instance.\n" + indentation +
-            "var \(ptr): UnsafeMutablePointer<\(ctype)> { get }\n" +
+            "var \(ptr): " + (e.introspectable || !e.disguised ?
+                                "UnsafeMutablePointer<\(ctype)> { get }\n\n" :
+                                "\(ctype) { get }\n\n") +
         "}\n\n"
     return code
 }
