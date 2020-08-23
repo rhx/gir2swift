@@ -1303,9 +1303,9 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "}\n\n") + (indentation +
 
         "/// Unsafe untyped, retaining initialiser.\n" + indentation +
-        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
+        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation + "@inlinable " +
         (hasParent ? "override " : "") +
-        "@inlinable public init(retainingRaw raw: UnsafeRawPointer) {\n" + doubleIndentation +
+        "public init(retainingRaw raw: UnsafeRawPointer) {\n" + doubleIndentation +
             (hasParent ? "super.init(retainingRaw: raw)\n" :
             "ptr = UnsafeMutableRawPointer(mutating: raw)\n" + doubleIndentation +
             "\(retain)(\(retainPtr))\n") + indentation +
