@@ -72,14 +72,19 @@ private let swiftFundamentalsForC = [
     "long long" : "CLongLong", "unsigned long long" : "CUnsignedLongLong",
     "short" : "CShort", "unsigned short" : "CUnsignedShort",
     "double" : "CDouble", "float" : "CFloat", "long double" : "CLongDouble",
-    "void" : "Void", "va_list" : "CVaListPointer",
+    "void" : "Void",
     "int8_t" : "Int8", "uint8_t" : "UInt8",
     "int16_t" : "Int16", "uint16_t" : "UInt16",
     "int32_t" : "Int32", "uint32_t" : "UInt32",
     "int64_t" : "Int64", "uint64_t" : "UInt64"
 ]
+/// Swift fundamental, scalar type name replacements
+private let swiftNonPointersForC = swiftFundamentalsForC.merging([
+    "va_list" : "CVaListPointer",
+]) { $1 }
+
 /// Swift type equivalents for C types
-private let swiftReplacementsForC = swiftFundamentalsForC.merging([
+private let swiftReplacementsForC = swiftNonPointersForC.merging([
     "utf8" : "String", "filename" : "String",
     "Error" : "GLibError"
 ]) { $1 }
@@ -230,6 +235,12 @@ public extension String {
     /// return a valid Swift type for an underlying C type
     var validSwift: String {
         if let s = swiftFundamentalsForC[self] { return s }
+        return swiftIdentifier
+    }
+
+    /// return a valid, full Swift type (including pointers) for an underlying C type
+    var validFullSwift: String {
+        if let s = swiftNonPointersForC[self] { return s }
         return swiftIdentifier
     }
 

@@ -48,19 +48,25 @@ public struct TypeReference: Hashable {
     /// returns the full type including pointers and  taking into account `const`
     @inlinable public var fullTypeName: String {
         let typeName = type.typeName.validSwift
-        return embeddedType(named: typeName)
+        let raw = embeddedType(named: typeName)
+        let full = raw.validFullSwift
+        return full
     }
 
     /// returns the full type including pointers and  taking into account `const`
     @inlinable public var fullUnderlyingTypeName: String {
         let typeName = type.typeName.validSwift.optionalWhenCallback
-        return embeddedType(named: typeName)
+        let raw = embeddedType(named: typeName)
+        let full = raw.validFullSwift
+        return full
     }
 
     /// returns the full C type including pointers and  taking into account `const`
     @inlinable public var fullUnderlyingCName: String {
         let typeName = type.ctype.validSwift
-        return embeddedType(named: typeName)
+        let raw = embeddedType(named: typeName)
+        let full = raw.validFullSwift
+        return full
     }
 
     /// returns the force-unwrapped, full type name
@@ -73,7 +79,9 @@ public struct TypeReference: Hashable {
     /// returns the full Swift type (e.g. class) including pointers and  taking into account `const`
     public var fullSwiftTypeName: String {
         let typeName = type.swiftName.validSwift
-        return embeddedType(named: typeName)
+        let raw = embeddedType(named: typeName)
+        let full = raw.validFullSwift
+        return full
     }
 
     public func embeddedType(named name: String) -> String {
