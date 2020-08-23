@@ -402,6 +402,13 @@ public final class GIR {
         public let isWritable: Bool
         /// `true` if this is a private element
         public let isPrivate: Bool
+        /// tuple size if non-`nil`
+        public let tupleSize: Int?
+
+        /// Returns `true` if the data type is `void`
+        public override var isVoid: Bool {
+            return super.isVoid && (tupleSize ?? 0) == 0
+        }
 
         /// Designated initialiser
         /// - Parameters:
@@ -412,12 +419,14 @@ public final class GIR {
         ///   - deprecated: Documentation on deprecation status if non-`nil`
         ///   - isWritable: Set to `true` if this is a writable type
         ///   - contains: Array of C types contained within this type
+        ///   - tupleSize: Size of the given tuple if non-`nil`
         ///   - scope: The scope this type belongs in
-        public init(name: String, type: TypeReference, comment: String, introspectable: Bool = false, deprecated: String? = nil, isPrivate: Bool = false, isReadable: Bool = true, isWritable: Bool = false, contains: [CType] = [], scope: String? = nil) {
+        public init(name: String, type: TypeReference, comment: String, introspectable: Bool = false, deprecated: String? = nil, isPrivate: Bool = false, isReadable: Bool = true, isWritable: Bool = false, contains: [CType] = [], tupleSize: Int? = nil, scope: String? = nil) {
             self.isPrivate  = isPrivate
             self.isReadable = isReadable
             self.isWritable = isWritable
             self.containedTypes = contains
+            self.tupleSize = tupleSize
             self.scope = scope
             super.init(name: name, type: type, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
@@ -436,6 +445,7 @@ public final class GIR {
             isPrivate  = node.attribute(named: privateAttr) .flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
             isReadable = node.attribute(named: readableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? true
             isWritable = node.attribute(named: writableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
+            tupleSize = node.attribute(named: "fixed-size").flatMap(Int.init)
             scope = node.attribute(named: scopeAttr)
             super.init(node: node, at: index, nameAttr: nameAttr)
         }
@@ -455,9 +465,11 @@ public final class GIR {
             scope = node.attribute(named: scopeAttr)
             if let array = node.children.filter({ $0.name == "array" }).first {
                 type = array.alias
+                tupleSize = array.attribute(named: "fixed-size").flatMap(Int.init)
                 containedTypes = array.containedTypes
             } else {
                 containedTypes = []
+                tupleSize = nil
                 type = GIR.typeOf(node: node)
             }
             super.init(node: node, at: index, with: type, nameAttr: nameAttr)
@@ -1030,6 +1042,10 @@ public final class GIR {
     /// a field is a Property
     public class Field: Property {
         public override var kind: String { return "Field" }
+
+        public init(node: XMLElement, at index: Int) {
+            super.init(fromChildrenOf: node, at: index)
+        }
     }
     
     /// data type representing a function/method argument or return type
@@ -1135,7 +1151,13 @@ public extension StringProtocol {
 
     /// Heuristic that returns an optional when the receiver may be a callback
     var optionalWhenCallback: String {
-        guard maybeCallback && !hasSuffix("?") && !hasSuffix("!") else { return String(self) }
+        guard !hasSuffix("?") && !hasSuffix("!") && maybeCallback else { return String(self) }
+        return self + "?"
+    }
+
+    /// Heuristic that returns an optional when the receiver may be a callback
+    var optionalWhenPointer: String {
+        guard !hasSuffix("?") && !hasSuffix("!") && (hasSuffix("pointer") || maybeCallback) else { return String(self) }
         return self + "?"
     }
 

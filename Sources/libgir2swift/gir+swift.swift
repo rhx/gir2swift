@@ -322,7 +322,7 @@ public func swiftCode(_ bf: GIR.Bitfield) -> String {
     let indent = "    "
     let head = bitfieldTypeHead(bf, indentation: indent)
     let bitfields = bf.members
-    let names = Set(bitfields.map(\.name.camelCase.swiftQuoted))
+//    let names = Set(bitfields.map(\.name.camelCase.swiftQuoted))
 //    let deprecated = bitfields.lazy.filter { !names.contains($0.name.swiftName) }
     let fields = bitfields.map(bitfieldValueCode(bf, indent)).joined(separator: "\n") // + "\n\n"
                     // + deprecated.map(bitfieldDeprecated(bf, indent)).joined(separator: "\n")
@@ -612,6 +612,14 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         let typeName: String
         if let callback = fieldType as? GIR.Callback {
             typeName = forceUnwrappedDecl(for: callback)
+        } else if let tupleSize = field.tupleSize {
+            let n = field.containedTypes.count
+            typeName = "(" + (0..<tupleSize).map { (i: Int) -> String in
+                let type: GIR.CType = i < n ? field.containedTypes[i] : (n != 0 ? field.containedTypes[i % n] : field)
+                let ref = type.typeRef
+                let typeName = ref.fullTypeName
+                return typeName.optionalWhenPointer
+            }.joined(separator: ", ") + ")"
         } else {
             typeName = idiomaticRef.fullTypeName
         }
