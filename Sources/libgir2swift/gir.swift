@@ -219,11 +219,11 @@ public final class GIR {
             functions    = enumerate(xml, path: "//gir:function",       inNS: namespaces, quiet: quiet, construct: {
                 isFreeFunction($0) ? Function(node: $0, at: $1) : nil
                 }, check: notKnownFunction)
-            buildClassHierarchy()
-            buildConformanceGraph()
           }
         }
       }
+      buildClassHierarchy()
+      buildConformanceGraph()
     }
 
     /// convenience constructor to read a gir file
