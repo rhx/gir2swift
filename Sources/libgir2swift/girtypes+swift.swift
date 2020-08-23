@@ -148,7 +148,7 @@ public extension GIR.Argument {
     @inlinable
     var argumentTypeName: String {
         let swiftRef = swiftParamRef
-        let name = swiftRef.fullTypeName
+        let name = swiftRef.fullUnderlyingTypeName
         guard typeRef.type === swiftRef.type && (isScalarArray || swiftRef.indirectionLevel > 0) else {
             let optionalName = ((isNullable || isOptional) && !(name.hasSuffix("!") || name.hasSuffix("?"))) ? (name + "!") : name
             return optionalName
