@@ -196,12 +196,14 @@ public func swiftCallbackAliasCode(callback: GIR.Callback) -> String {
 /// Swift code representation of a constant
 public func swiftCode(constant: GIR.Constant) -> String {
     let original = constant.typeRef.type.typeName.swift
-    let parent = constant.typeRef.type.parent?.type.typeName ?? constant.typeRef.type.ctype
+    let parentRef = constant.typeRef.type.parent
+    let parent = parentRef?.type.typeName ?? constant.typeRef.type.ctype
     let comment = " // " + (original == parent ? "" : (parent + " value "))
     let value = "\(constant.value)"
     let name = constant.escapedName.swift
     guard !GIR.verbatimConstants.contains(name) else {
-        let code = swiftCode(constant, "public let \(name): " + parent.swift + " = " + value + comment + original)
+        let code = swiftCode(constant, "public let " + name +
+            (parentRef == nil ? "" : (": " + parent.swift)) + " = " + value + comment + original)
         return code
     }
     let code = swiftCode(constant, "public let \(name) = \(name == original ? value : original)" + comment + (name == original ? "" : value))
