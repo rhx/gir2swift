@@ -284,6 +284,8 @@ public final class GIR {
         public let comment: String
         /// Is this `Thing` introspectable?
         public let introspectable: Bool
+        /// Is this `Thing` disguised?
+        public let disguised: Bool
         /// Alternative to use if deprecated
         public let deprecated: String?
         /// Is this `Thing` explicitly marked as deprecated?
@@ -305,13 +307,15 @@ public final class GIR {
         ///   - name: The name of the `Thing` to initialise
         ///   - comment: Documentation text for the `Thing`
         ///   - introspectable: Set to `true` if introspectable
+        ///   - disguised: Set to `true` if disguised
         ///   - deprecated: Documentation on deprecation status if non-`nil`
         ///   - markedAsDeprecated: Set to `true` if deprecated
         ///   - version: The version this `Thing` is first available in
-        public init(name: String, comment: String, introspectable: Bool = false, deprecated: String? = nil, markedAsDeprecated: Bool = false, version: String? = nil) {
+        public init(name: String, comment: String, introspectable: Bool = true, disguised: Bool = false, deprecated: String? = nil, markedAsDeprecated: Bool = false, version: String? = nil) {
             self.name = name
             self.comment = comment
             self.introspectable = introspectable
+            self.disguised = disguised
             self.deprecated = deprecated
             self.markedAsDeprecated = markedAsDeprecated
             self.version = version
@@ -329,7 +333,8 @@ public final class GIR {
             comment = GIR.docs(children: c)
             markedAsDeprecated = depr
             deprecated = GIR.deprecatedDocumentation(children: c) ?? ( depr ? "This method is deprecated." : nil )
-            introspectable = node.bool(named: "introspectable")
+            introspectable = (node.attribute(named: "introspectable") ?? "1") != "0"
+            disguised = node.bool(named: "disguised")
             version = node.attribute(named: "version")
         }
     }

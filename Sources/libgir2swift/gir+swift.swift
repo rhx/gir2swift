@@ -410,7 +410,10 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
     let code = "// MARK: \(e.name) \(e.kind): \(e.protocolName) extension (methods and fields)\n" +
         "public extension \(e.protocolName) {\n" + indentation +
         "/// Return the stored, untyped pointer as a typed pointer to the `\(ctype)` instance.\n" + indentation +
-        "@inlinable var \(ptrName): UnsafeMutablePointer<\(ctype)> { return ptr.assumingMemoryBound(to: \(ctype).self) }\n\n" +
+        "@inlinable var " + ptrName + ": " +
+        (e.introspectable || !e.disguised ?
+            "UnsafeMutablePointer<\(ctype)> { return ptr.assumingMemoryBound(to: \(ctype).self) }\n\n" :
+            "\(ctype) { return unsafeBitCast(ptr, to: \(ctype).self) }\n\n") +
         methods.map(mcode).joined(separator: "\n") +
         gsPairs.map(vcode).joined(separator: "\n") + "\n" +
         e.fields.map(fcode).joined(separator: "\n") + "\n" +
