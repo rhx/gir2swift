@@ -483,7 +483,10 @@ public final class GIR {
         /// indicates whether the receiver is any known kind of pointer
         @inlinable
         public var isAnyKindOfPointer: Bool {
-            typeRef.indirectionLevel > 0 || typeRef.type.name.hasSuffix("Func")
+            guard typeRef.indirectionLevel == 0 else { return true }
+            let type = typeRef.type
+            let name = type.name
+            return name == GIR.gpointer || name == GIR.gconstpointer || name.maybeCallback
         }
 
         /// indicates whether the receiver is an array of scalar values
