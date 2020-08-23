@@ -1232,7 +1232,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "/// i.e., ownership is transferred to the `\(className)` instance.\n" + indentation +
         "/// - Parameter op: pointer to the underlying object\n" + indentation +
         "@inlinable public init(_ op: UnsafePointer<\(ctype)>) {\n" + doubleIndentation +
-            (hasParent ? "super.init(constPointer: op)\n" : "ptr = UnsafeMutableRawPointer(UnsafeMutablePointer(mutating: op))\n") + indentation +
+            (hasParent ? "super.init(raw: UnsafeMutableRawPointer(UnsafeMutablePointer(mutating: op)))\n" : "ptr = UnsafeMutableRawPointer(UnsafeMutablePointer(mutating: op))\n") + indentation +
         "}\n\n") + (indentation +
         "/// Optional initialiser from a constant pointer to the underlying `C` data type.\n" + indentation +
         "/// This creates an instance without performing an unbalanced retain\n" + indentation +
