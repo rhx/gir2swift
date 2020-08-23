@@ -1266,7 +1266,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "/// \(e.ref == nil ? "`\(ctype.swift)` does not allow reference counting." : "Will retain `\(ctype.swift)`.")\n" + indentation +
         "/// - Parameter other: an instance of a related type that implements `\(protocolName)`\n" + indentation +
         "@inlinable public init<T: \(protocolName)>(\(hasParent ? instance : "_") other: T) {\n" + doubleIndentation +
-            (hasParent ? "super.init(retainingRaw: other.ptr))\n" :
+            (hasParent ? "super.init(retainingRaw: other.ptr)\n" :
             "ptr = other.ptr\n" + doubleIndentation +
             "\(retain)(\(retainPtr))\n") + indentation +
         "}\n\n") + (hasParent ? "" : (indentation +
