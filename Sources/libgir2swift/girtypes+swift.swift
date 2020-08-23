@@ -50,7 +50,12 @@ public extension GIR.CType {
     /// Type reference to an idiomatic Swift type used for a Swift function return value
     @inlinable
     var swiftReturnRef: TypeReference {
-        guard var replacement = GIR.swiftReturnTypeReplacements[typeRef] else { return typeRef }
+        guard var replacement = GIR.swiftReturnTypeReplacements[typeRef] else {
+            if typeRef.indirectionLevel == 1 && typeRef.type.typeName.hasSuffix("char") && !typeRef.type.typeName.hasSuffix("unichar") {
+                return GIR.stringRef
+            }
+            return typeRef
+        }
         replacement.isConst = typeRef.isConst
         replacement.isOptional = typeRef.isOptional
         return replacement
