@@ -379,11 +379,11 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
         "public protocol \(e.protocolName)\(p) {\n" + indentation +
             subTypeAliases + indentation +
             "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
-            "var ptr: UnsafeMutableRawPointer { get }\n\n" + indentation +
+            "var ptr: UnsafeMutableRawPointer! { get }\n\n" + indentation +
             "/// Typed pointer to the underlying `\(ctype)` instance.\n" + indentation +
             "var \(ptr): " + (e.introspectable || !e.disguised ?
-                                "UnsafeMutablePointer<\(ctype)> { get }\n\n" :
-                                "\(ctype) { get }\n\n") +
+                                "UnsafeMutablePointer<\(ctype)>! { get }\n\n" :
+                                "\(ctype)! { get }\n\n") +
         "}\n\n"
     return code
 }
@@ -416,8 +416,8 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
         "/// Return the stored, untyped pointer as a typed pointer to the `\(ctype)` instance.\n" + indentation +
         "@inlinable var " + ptrName + ": " +
         (e.introspectable || !e.disguised ?
-            "UnsafeMutablePointer<\(ctype)> { return ptr.assumingMemoryBound(to: \(ctype).self) }\n\n" :
-            "\(ctype) { return \(ctype)(bitPattern: UInt(bitPattern: ptr))! }\n\n") +
+            "UnsafeMutablePointer<\(ctype)>! { return ptr?.assumingMemoryBound(to: \(ctype).self) }\n\n" :
+            "\(ctype)! { return \(ctype)(bitPattern: UInt(bitPattern: ptr)) }\n\n") +
         methods.map(mcode).joined(separator: "\n") +
         gsPairs.map(vcode).joined(separator: "\n") + "\n" +
         e.fields.map(fcode).joined(separator: "\n") + "\n" +
