@@ -1411,7 +1411,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "/// - Parameter handler: signal handler to use\n" + indentation +
         "/// - Returns: positive handler ID, or a value less than or equal to `0` in case of an error\n" + indentation +
         "@inlinable @discardableResult func connect(signal kind: \(className)SignalName, flags f: ConnectFlags = ConnectFlags(0), to handler: @escaping GLibObject.SignalHandler) -> Int {\n" + doubleIndentation +
-            "@inlinable func _connect(signal name: UnsafePointer<gchar>, flags: ConnectFlags, data: GLibObject.SignalHandlerClosureHolder, handler: @convention(c) @escaping (gpointer, gpointer) -> Void) -> Int {\n" + tripleIndentation +
+            "func _connect(signal name: UnsafePointer<gchar>, flags: ConnectFlags, data: GLibObject.SignalHandlerClosureHolder, handler: @convention(c) @escaping (gpointer, gpointer) -> Void) -> Int {\n" + tripleIndentation +
                 "let holder = UnsafeMutableRawPointer(Unmanaged.passRetained(data).toOpaque())\n" + tripleIndentation +
                 "let callback = unsafeBitCast(handler, to: GLibObject.Callback.self)\n" + tripleIndentation +
                 "let rv = GLibObject.ObjectRef(raw: ptr).signalConnectData(detailedSignal: name, cHandler: callback, data: holder, destroyData: {\n" + tripleIndentation + indentation +
