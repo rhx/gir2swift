@@ -393,11 +393,15 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
 public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: GIR.Record, indentation: String = "    ", ptr ptrName: String = "ptr") -> String {
     let vcode = computedPropertyCode(indentation, record: e, publicDesignation: "", ptr: ptrName)
     let allFunctions = e.functions + globalFunctions
+    if e.name == "Object" {
+        print("Got object")
+    }
     let instanceMethods: [GIR.Method] = allFunctions.filter {
         let fun = $0
-        return fun.args.lazy.filter({ (arg: GIR.Argument) -> Bool in
+        let args = fun.args
+        return args.lazy.filter { (arg: GIR.Argument) -> Bool in
             arg.isInstanceOf(e)
-        }).first != nil
+        }.first != nil
     }
     let allMethods: [GIR.Method] = e.methods + instanceMethods
     let gsPairs = getterSetterPairs(for: allMethods)

@@ -480,15 +480,27 @@ public final class GIR {
         public var isArray: Bool { return !containedTypes.isEmpty }
 
         /// return whether the receiver is an instance of the given record (class)
+        /// - Parameter record: The record to test for
+        /// - Returns: `true` if `self` points to `record`
         @inlinable
         public func isInstanceOf(_ record: GIR.Record?) -> Bool {
-            if let r = record?.typeRef, typeRef.isDirectPointer(to: r) {
+            if let r = record?.typeRef, (isGPointer && typeRef.type.name == record?.name) || typeRef.isDirectPointer(to: r) {
                 return true
             } else {
                 return false
             }
         }
-        
+
+        /// return whether the type is a magical `gpointer` or related
+        /// - Note: This returns `false` if the indirection level is non-zero (e.g. for a `gpointer *`)
+        @inlinable
+        public var isGPointer: Bool {
+            guard typeRef.indirectionLevel == 0 else { return false }
+            let type = typeRef.type
+            let name = type.typeName
+            return name == GIR.gpointer || name == GIR.gconstpointer
+        }
+
         /// return whether the receiver is an instance of the given record (class) or any of its ancestors
         @inlinable
         public func isInstanceOfHierarchy(_ record: GIR.Record) -> Bool {
@@ -503,7 +515,7 @@ public final class GIR {
             guard typeRef.indirectionLevel == 0 else { return true }
             let type = typeRef.type
             let name = type.name
-            return name == GIR.gpointer || name == GIR.gconstpointer || name.maybeCallback
+            return isGPointer || name.maybeCallback
         }
 
         /// indicates whether the receiver is an array of scalar values
