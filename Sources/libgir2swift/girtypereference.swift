@@ -31,13 +31,13 @@ public struct TypeReference: Hashable {
     /// with `0` indicating the referenced type itself,
     /// `1` representing a pointer to an instance of the referenced type,
     /// `2` representing an array of pointers (or a pointer to a pointer), etc.
-    public var indirectionLevel: Int { constPointers.count }
+    @inlinable public var indirectionLevel: Int { constPointers.count }
 
     /// Returns `true` if the receiver is a reference to `void`
-    public var isVoid: Bool { return isAlias(of: .void) }
+    @inlinable public var isVoid: Bool { return isAlias(of: .void) }
 
     /// returns the full C type including pointers and `const`
-    public var fullCType: String {
+    @inlinable public var fullCType: String {
         var ct = type.ctype + (constPointers.isEmpty ? "" : " ")
         for e in constPointers.enumerated() {
             ct = ct + (e.element || (e.offset == 0 && isConst) ? "const*" : "*")

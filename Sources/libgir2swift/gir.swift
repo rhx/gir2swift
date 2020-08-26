@@ -547,7 +547,9 @@ public final class GIR {
         
         //// return the known class/record of the argument (nil if not known)
         @inlinable
-        public var knownRecord: GIR.Record? { return typeRef.indirectionLevel == 1 ? GIR.knownRecords[typeRef.type.name] : nil }
+        public var knownRecord: GIR.Record? {
+            typeRef.knownIndirectionLevel == 1 ? GIR.knownRecords[typeRef.type.name] : nil
+        }
         
         //// return the known bitfield the argument represents (nil if not known)
         @inlinable

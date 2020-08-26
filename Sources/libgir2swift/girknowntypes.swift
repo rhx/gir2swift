@@ -267,4 +267,19 @@ public extension TypeReference {
         if indirectionLevel == 1, let ref = GIR.refRecords[type] { return ref }
         return self
     }
+
+    /// The level of indirection, taking into account known types such as `gpointer`
+    /// with `0` indicating the referenced type itself,
+    /// `1` representing a pointer to an instance of the referenced type,
+    /// `2` representing an array of pointers (or a pointer to a pointer), etc.
+    @inlinable var knownIndirectionLevel: Int { indirectionLevel + knownPointerOffset }
+
+    /// Return an `indirectionLevel` offset if the type in question is a known pointer
+    @inlinable var knownPointerOffset: Int {
+        let typeName = type.typeName
+        guard typeName == GIR.gpointer || typeName == GIR.gconstpointer else {
+            return 0
+        }
+        return 1
+    }
 }
