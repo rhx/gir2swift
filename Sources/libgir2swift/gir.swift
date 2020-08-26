@@ -817,21 +817,27 @@ public final class GIR {
         @inlinable
         public var structName: String { typeRef.type.swiftName + "Ref" }
 
+        /// Type of the Class for this record
+        @inlinable public var classType: GIRType {
+            let n = typeRef.type.swiftName.swift
+            return GIRType(name: n, typeName: n, ctype: "")
+        }
+
         /// Type of the Protocol for this record
-        @inlinable
-        public var protocolType: GIRType { GIRType(name: protocolName, typeName: protocolName, ctype: "") }
+        @inlinable public var protocolType: GIRType { GIRType(name: protocolName, typeName: protocolName, ctype: "") }
 
         /// Protocol reference for this record
-        @inlinable
-        public var protocolRef: TypeReference { TypeReference(type: protocolType) }
+        @inlinable public var protocolRef: TypeReference { TypeReference(type: protocolType) }
 
         /// Type of the `Ref` struct for this record
         @inlinable
         public var structType: GIRType { GIRType(name: structName, typeName: structName, ctype: "", superType: protocolRef) }
 
-        /// Protocol reference for this record
-        @inlinable
-        public var structRef: TypeReference { TypeReference(type: structType) }
+        /// Struct reference for this record
+        @inlinable public var structRef: TypeReference { TypeReference(type: structType) }
+
+        /// Class reference for this record
+        @inlinable public var classRef: TypeReference { TypeReference(type: classType) }
 
         /// return the first method where the passed predicate closure returns `true`
         public func methodMatching(_ predictate: (Method) -> Bool) -> Method? {

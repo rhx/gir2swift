@@ -83,15 +83,32 @@ public extension GIR.CType {
 
     /// explicit, idiomatic type reference (struct if pointer to record)
     @inlinable var idiomaticWrappedRef: TypeReference {
-        guard typeRef.indirectionLevel == 1, let record = knownRecord else {
+        guard typeRef.knownIndirectionLevel == 1, let record = knownRecord else {
             return swiftReturnRef
         }
         return record.structRef
     }
 
+    /// explicit, idiomatic type reference (class if pointer to record)
+    @inlinable var idiomaticClassRef: TypeReference {
+        guard typeRef.knownIndirectionLevel == 1, let record = knownRecord else {
+            return swiftReturnRef
+        }
+        return record.classRef
+    }
+
     /// explicit, idiomatic type name (empty if same as the underlying C type)
     @inlinable var idiomaticWrappedTypeName: String {
         let ref = idiomaticWrappedRef
+        guard ref == swiftReturnRef else { return ref.type.swiftName }
+        guard ref != typeRef else { return "" }
+        let typeName = swiftReturnRef.fullTypeName
+        return typeName
+    }
+
+    /// explicit, idiomatic class type name (empty if same as the underlying C type)
+    @inlinable var idiomaticClassTypeName: String {
+        let ref = idiomaticClassRef
         guard ref == swiftReturnRef else { return ref.type.swiftName }
         guard ref != typeRef else { return "" }
         let typeName = swiftReturnRef.fullTypeName
@@ -112,8 +129,8 @@ public extension GIR.CType {
         let ref = typeRef
         let name: String
         if ref.knownIndirectionLevel == 1, let knownRecord = GIR.knownRecords[ref.type.name] {
-            let ref = useStruct ? knownRecord.structRef : knownRecord.typeRef
-            name = ref.forceUnwrappedName
+            let knownRef = useStruct ? knownRecord.structRef : (beingIdiomatic ? knownRecord.classRef : knownRecord.typeRef)
+            name = knownRef.forceUnwrappedName
         } else {
             name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : ref.fullTypeName
         }

@@ -667,7 +667,7 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
     let useRef = factory && publicDesignation == "" // Only use Ref type for structs/protocols
     return { (record: GIR.Record) -> (GIR.Method) -> String in
         let doubleIndent = indentation + indentation
-        let call = callCode(doubleIndent, isConstructor: !factory)
+        let call = callCode(doubleIndent, isConstructor: !factory, useStruct: useRef)
         let returnDeclaration = returnDeclarationCode((typeRef: typeRef, record: record, isConstructor: !factory), useStruct: useRef)
         let ret = returnCode(indentation, (typeRef: typeRef, record: record, isConstructor: !factory, isConvenience: isConv), hasParent: hasParent)
         return { (method: GIR.Method) -> String in
@@ -804,7 +804,7 @@ public func returnCode<T>(_ indentation: String, _ tr: (typeRef: TypeReference, 
 
 
 /// Swift code for calling the underlying function and assigning the raw return value
-public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: String = "ptr", rvVar: String = "rv", doThrow: Bool = true, useIdiomaticSwift: Bool = true, isConstructor: Bool = false) -> (GIR.Method) -> String {
+public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: String = "ptr", rvVar: String = "rv", doThrow: Bool = true, useIdiomaticSwift: Bool = true, isConstructor: Bool = false, useStruct useRef: Bool = true) -> (GIR.Method) -> String {
     var hadInstance = false
     let toSwift: (GIR.Argument) -> String = { arg in
         let name = arg.argumentName
@@ -857,11 +857,11 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
             suffix = needsNilGuard ? " else { return nil }" : ""
         }
         let rvRef = rv.typeRef
-        let rvSwiftRef = useIdiomaticSwift && !isConstructor ? rv.idiomaticWrappedRef : rvRef
+        let rvSwiftRef = useIdiomaticSwift && !isConstructor ? (useRef ? rv.idiomaticWrappedRef : rv.idiomaticClassRef ) : rvRef
         let invocationStart = method.cname.swift + "(\(args.map(toSwift).joined(separator: ", "))"
         let call = invocationStart + invocationTail
         let callCode = rvSwiftRef.cast(expression: call, from: rvRef)
-        let rvTypeName = isConstructor ? "" : rv.idiomaticWrappedTypeName
+        let rvTypeName = isConstructor || !useRef ? "" : rv.idiomaticWrappedTypeName
         let varCode: String
         if isVoid {
             varCode = ""
