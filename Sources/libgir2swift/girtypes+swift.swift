@@ -65,7 +65,7 @@ public extension GIR.CType {
     /// or `nil` otherwise
     @inlinable
     var templateDecl: String? {
-        guard typeRef.indirectionLevel == 1, let record = knownRecord else {
+        guard typeRef.knownIndirectionLevel == 1, let record = knownRecord else {
             return nil
         }
         return record.className + "T: " + record.protocolName
@@ -107,12 +107,13 @@ public extension GIR.CType {
     }
 
     /// return the idiomatic/non-idiomatic return type name
-    @inlinable func returnTypeName(for record: GIR.Record? = nil, beingIdiomatic: Bool = true) -> String {
+    @inlinable func returnTypeName(for record: GIR.Record? = nil, beingIdiomatic: Bool = true, useStruct: Bool = true) -> String {
         let idiomaticName = idiomaticWrappedTypeName
         let ref = typeRef
         let name: String
-        if ref.indirectionLevel == 1, let structRef = GIR.knownRecords[ref.type.name]?.structRef {
-            name = structRef.forceUnwrappedName
+        if ref.knownIndirectionLevel == 1, let knownRecord = GIR.knownRecords[ref.type.name] {
+            let ref = useStruct ? knownRecord.structRef : knownRecord.typeRef
+            name = ref.forceUnwrappedName
         } else {
             name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : ref.fullTypeName
         }
@@ -184,7 +185,7 @@ public extension GIR.Argument {
     /// Returns a template name in case of a known record
     @inlinable
     var templateTypeName: String {
-        guard typeRef.indirectionLevel == 1, let record = knownRecord else {
+        guard typeRef.knownIndirectionLevel == 1, let record = knownRecord else {
             return argumentTypeName
         }
         let templateName = record.className + "T"
