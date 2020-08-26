@@ -1422,7 +1422,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
                         "holder.release()\n" + tripleIndentation + indentation +
                     "}\n" + tripleIndentation + indentation +
                     "let _ = $1\n" + tripleIndentation +
-                "}, connectFlags: flags)\n" + tripleIndentation +
+                "}, connectFlags: flags.value)\n" + tripleIndentation +
                 "return rv\n" + doubleIndentation +
             "}\n" + doubleIndentation +
             "let rv = _connect(signal: kind.name, flags: f, data: ClosureHolder(handler)) {\n" + tripleIndentation +
