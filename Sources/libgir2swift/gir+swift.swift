@@ -604,7 +604,8 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         }
         guard !field.isPrivate else { return indentation + "// var \(swname) is unavailable because \(name) is private\n" }
         let fieldType = field.containedTypes.first
-        let containedTypeRef = fieldType?.typeRef ?? field.typeRef
+        let fieldTypeRef = field.typeRef
+        let containedTypeRef = fieldType?.typeRef ?? fieldTypeRef
         let pointee = ptr + ".pointee." + name
         guard field.isReadable || field.isWritable else { return indentation + "// var \(name) is unavailable because it is neigher readable nor writable\n" }
         guard !field.isVoid else { return indentation + "// var \(swname) is unavailable because \(name) is void\n" }
@@ -621,6 +622,8 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
                 let typeName = ref.fullTypeName
                 return typeName.optionalWhenPointer
             }.joined(separator: ", ") + ")"
+        } else if field.isArray && fieldTypeRef.indirectionLevel != 0 {
+            typeName = fieldTypeRef.fullTypeName
         } else {
             typeName = idiomaticRef.fullTypeName
         }
