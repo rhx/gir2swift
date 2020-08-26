@@ -664,10 +664,11 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
     let isConv = !convenience.isEmpty
     let isExtension = publicDesignation.isEmpty
     let conv =  isConv ? "\(convenience) " : ""
+    let useRef = factory && publicDesignation == "" // Only use Ref type for structs/protocols
     return { (record: GIR.Record) -> (GIR.Method) -> String in
         let doubleIndent = indentation + indentation
         let call = callCode(doubleIndent, isConstructor: !factory)
-        let returnDeclaration = returnDeclarationCode((typeRef: typeRef, record: record, isConstructor: !factory))
+        let returnDeclaration = returnDeclarationCode((typeRef: typeRef, record: record, isConstructor: !factory), useStruct: useRef)
         let ret = returnCode(indentation, (typeRef: typeRef, record: record, isConstructor: !factory, isConvenience: isConv), hasParent: hasParent)
         return { (method: GIR.Method) -> String in
             let rawName = method.name.isEmpty ? method.cname : method.name
@@ -730,21 +731,27 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
 }
 
 
-/// Return the return type of a method, 
-public func returnTypeCode(for method: GIR.Method, _ tr: (typeRef: TypeReference, record: GIR.Record, isConstructor: Bool)? = nil, useIdiomaticSwift beIdiomatic: Bool = true) -> String? {
+/// Return the return type of a method,
+/// - Parameters:
+///   - method: The method to define the return type for
+///   - tr: Tuple containing information of an enclosing record
+///   - beIdiomatic: Set to `true` to ensure idiomeatic Swift types are used rather than the underlying C type
+///   - useRef: Set to `false` to avoid replacing the underlying typeRef with a struct reference
+/// - Returns: A string containing the return type of the given method
+public func returnTypeCode(for method: GIR.Method, _ tr: (typeRef: TypeReference, record: GIR.Record, isConstructor: Bool)? = nil, useIdiomaticSwift beIdiomatic: Bool = true, useStruct useRef: Bool = true) -> String? {
     let rv = method.returns
     guard !rv.isVoid, !(tr?.isConstructor ?? false) else { return nil }
-    let returnTypeName = rv.returnTypeName(for: tr?.record, beingIdiomatic: beIdiomatic)
+    let returnTypeName = rv.returnTypeName(for: tr?.record, beingIdiomatic: beIdiomatic, useStruct: useRef)
     return returnTypeName
 }
 
 
 
 /// Return code declaration for functions/methods/convenience constructors
-public func returnDeclarationCode(_ tr: (typeRef: TypeReference, record: GIR.Record, isConstructor: Bool)? = nil) -> (GIR.Method) -> String {
+public func returnDeclarationCode(_ tr: (typeRef: TypeReference, record: GIR.Record, isConstructor: Bool)? = nil, useStruct useRef: Bool = true) -> (GIR.Method) -> String {
     return { method in
         let throwCode = method.throwsError ? " throws" : ""
-        guard let returnType = returnTypeCode(for: method, tr) else { return throwCode }
+        guard let returnType = returnTypeCode(for: method, tr, useStruct: useRef) else { return throwCode }
         return throwCode + " -> \(returnType)"
     }
 }
