@@ -792,22 +792,27 @@ public final class GIR {
         @inlinable
         override public func registerKnownType() {
             let type = typeRef.type
+            let clsType = classType
             let proType = protocolType
             let refType = structType
             let protocolRef = self.protocolRef
+            let clsRef = classRef
             if type.parent == nil { type.parent = protocolRef }
             if !GIR.recordTypes.contains(type) {
                 GIR.recordTypes.insert(type)
             }
             let ref = structRef
-            if GIR.protocols[type] == nil     { GIR.protocols[type] = protocolRef }
-            if GIR.protocols[refType] == nil  { GIR.protocols[refType] = protocolRef }
-            if GIR.recordRefs[type] == nil    { GIR.recordRefs[type] = ref }
-            if GIR.recordRefs[refType] == nil { GIR.recordRefs[type] = ref }
+            if GIR.protocols[type] == nil     { GIR.protocols[type]     = protocolRef }
+            if GIR.protocols[clsType] == nil  { GIR.protocols[clsType]  = clsRef }
+            if GIR.protocols[refType] == nil  { GIR.protocols[refType]  = protocolRef }
+            if GIR.recordRefs[type] == nil    { GIR.recordRefs[type]    = ref }
+            if GIR.recordRefs[clsType] == nil { GIR.recordRefs[clsType] = ref }
+            if GIR.recordRefs[refType] == nil { GIR.recordRefs[refType] = ref }
             if GIR.recordRefs[proType] == nil { GIR.recordRefs[proType] = ref }
             if GIR.refRecords[proType] == nil { GIR.refRecords[proType] = typeRef }
+            if GIR.refRecords[clsType] == nil { GIR.refRecords[clsType] = typeRef }
             if GIR.refRecords[refType] == nil { GIR.refRecords[refType] = typeRef }
-            if GIR.refRecords[type] == nil    { GIR.refRecords[type] = typeRef }
+            if GIR.refRecords[type] == nil    { GIR.refRecords[type]    = typeRef }
         }
 
         /// Name of the Protocol for this record
@@ -820,7 +825,7 @@ public final class GIR {
         /// Type of the Class for this record
         @inlinable public var classType: GIRType {
             let n = typeRef.type.swiftName.swift
-            return GIRType(name: n, typeName: n, ctype: "")
+            return GIRType(name: n, typeName: n, ctype: typeRef.type.ctype)
         }
 
         /// Type of the Protocol for this record

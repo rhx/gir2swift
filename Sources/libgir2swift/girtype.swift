@@ -135,6 +135,12 @@ public class GIRType: Hashable {
                     conversions[source] = [c, c]
                     return c.castFromTarget(expression: e)
                 }
+                let sourceC = source.ctype
+                if sourceC == GIR.gpointer || sourceC == GIR.gconstpointer {
+                    if GIR.refRecords[self] != nil {
+                        return name + "(" + sourceC + ": " + e + ")"
+                    }
+                }
             }
             return nil
         }

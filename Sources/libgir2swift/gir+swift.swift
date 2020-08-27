@@ -1131,6 +1131,16 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
         "guard let p = UnsafeMutablePointer(mutating: maybePointer) else { return nil }\n" + doubleIndentation +
         "ptr = UnsafeMutableRawPointer(p)\n" + indentation +
         "}\n\n" + indentation +
+        "/// Conditional initialiser from an optional `gpointer`\n" + indentation +
+        "@inlinable init!(" + GIR.gpointer + " g: " + GIR.gpointer + "?) {\n" + doubleIndentation +
+        "guard let p = g else { return nil }\n" + doubleIndentation +
+        "ptr = UnsafeMutableRawPointer(p)\n" + indentation +
+        "}\n\n" + indentation +
+        "/// Conditional initialiser from an optional, non-mutable `gconstpointer`\n" + indentation +
+        "@inlinable init!(" + GIR.gconstpointer + " g: " + GIR.gconstpointer + "?) {\n" + doubleIndentation +
+        "guard let p = UnsafeMutableRawPointer(mutating: g) else { return nil }\n" + doubleIndentation +
+        "ptr = p\n" + indentation +
+        "}\n\n" + indentation +
         "/// Reference intialiser for a related type that implements `\(protocolName)`\n" + indentation +
         "@inlinable init<T: \(protocolName)>(_ other: T) {\n" + doubleIndentation +
             "ptr = other.ptr\n" + indentation +
@@ -1243,6 +1253,27 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "@inlinable public init(_ op: UnsafePointer<\(ctype)>) {\n" + doubleIndentation +
             (hasParent ? "super.init(raw: UnsafeMutableRawPointer(UnsafeMutablePointer(mutating: op)))\n" : "ptr = UnsafeMutableRawPointer(UnsafeMutablePointer(mutating: op))\n") + indentation +
         "}\n\n") + (indentation +
+        "/// Optional initialiser from a non-mutating `" + GIR.gpointer + "` to\n" + indentation +
+        "/// the underlying `C` data type.\n" + indentation +
+        "/// This creates an instance without performing an unbalanced retain\n" + indentation +
+        "/// i.e., ownership is transferred to the `\(className)` instance.\n" + indentation +
+        "/// - Parameter op: gpointer to the underlying object\n" + indentation + "@inlinable " +
+        (hasParent ? "override " : "") +
+        "public init!(" + GIR.gpointer + " op: " + GIR.gpointer + "?) {\n" + doubleIndentation +
+            "guard let p = UnsafeMutableRawPointer(op) else { return nil }\n" + doubleIndentation +
+            (hasParent ? "super.init(raw: p)\n" : "ptr = p\n") + indentation +
+        "}\n\n") + (indentation +
+        "/// Optional initialiser from a non-mutating `" + GIR.gconstpointer + "` to\n" + indentation +
+        "/// the underlying `C` data type.\n" + indentation +
+        "/// This creates an instance without performing an unbalanced retain\n" + indentation +
+        "/// i.e., ownership is transferred to the `\(className)` instance.\n" + indentation +
+        "/// - Parameter op: pointer to the underlying object\n" + indentation + "@inlinable " +
+        (hasParent ? "override " : "") +
+        "public init!(" + GIR.gconstpointer + " op: " + GIR.gconstpointer + "?) {\n" + doubleIndentation +
+            "guard let p = op else { return nil }\n" + doubleIndentation +
+            (hasParent ? "super.init(raw: p)\n" : "ptr = UnsafeMutableRawPointer(mutating: p)\n") + indentation +
+        "}\n\n") + (indentation +
+
         "/// Optional initialiser from a constant pointer to the underlying `C` data type.\n" + indentation +
         "/// This creates an instance without performing an unbalanced retain\n" + indentation +
         "/// i.e., ownership is transferred to the `\(className)` instance.\n" + indentation +
