@@ -166,7 +166,7 @@ public class GIRType: Hashable {
             prefix = target.castName
         } else {
             let ptr = const ? "UnsafePointer" : "UnsafeMutablePointer"
-            prefix = ptr + "<" + target.castName + ">?"
+            prefix = ptr + "<" + target.castName + ">"
         }
         return prefix + "(" + expression + ")"
     }
@@ -203,7 +203,7 @@ public class GIRType: Hashable {
             return RawPointerConversion(source: self, target: self).castFromTarget(expression: e)
         } else {
             let ptr = const ? "UnsafePointer" : "UnsafeMutablePointer"
-            prefix = ptr + "<" + castName + ">?"
+            prefix = ptr + "<" + castName + ">"
         }
         return prefix + "(" + e + ")"
     }
