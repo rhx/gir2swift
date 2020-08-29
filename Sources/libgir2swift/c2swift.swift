@@ -499,16 +499,6 @@ public extension String {
 
     /// return the Swift type common for a given C type
     var swiftRepresentationOfCType: String { return unwrappedCTypeWithCount().swift }
-
-    /// return the string (value) cast to Swift
-    func cast_as_swift(_ type: String) -> String {
-        return cast_to_swift(self, forCType: type)
-    }
-
-    /// return the string (value) cast to Swift
-    func cast_as_c(_ cType: String) -> String {
-        return cast_from_swift(self, forCType: cType)
-    }
 }
 
 extension Substring {
@@ -539,17 +529,4 @@ extension Substring {
 /// convert the given C type to a Swift type
 func toSwift(_ ctype: String) -> String {
     return ctype.swiftRepresentationOfCType
-}
-
-
-/// C type cast to swift
-func cast_to_swift(_ value: String, forCType t: String, useIdiomaticSwift: Bool = true) -> String {
-    if let s = castableScalars[t] { return "\(useIdiomaticSwift ? s.idiomatic : s)(\(s == "Bool" ? value + " != 0" : value))" }
-    return "cast(" + value + ")"
-}
-
-/// C type cast from swift
-func cast_from_swift(_ value: String, forCType t: String) -> String {
-    if let s = castableScalars[t] { return "\(t)(\(s == "Bool" ? value + " ? 1 : 0": value))"  }
-    return value
 }
