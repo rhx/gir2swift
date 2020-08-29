@@ -609,7 +609,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         let pointee = ptr + ".pointee." + name
         guard field.isReadable || field.isWritable else { return indentation + "// var \(name) is unavailable because it is neigher readable nor writable\n" }
         guard !field.isVoid else { return indentation + "// var \(swname) is unavailable because \(name) is void\n" }
-        let ptrLevel = fieldTypeRef.indirectionLevel
+        let ptrLevel = fieldTypeRef.knownIndirectionLevel
         let typeName: String
         if let tupleSize = field.tupleSize {
             let n = field.containedTypes.count
@@ -622,7 +622,6 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         } else {
             typeName = field.returnTypeName(for: record, beingIdiomatic: false, useStruct: true)
         }
-        let knownRecord = ptrLevel == 1 ? GIR.knownRecords[containedTypeRef.type.name] : nil
         let idiomaticTypeName: String
         let varRef: TypeReference
         let fieldRef: TypeReference
@@ -632,7 +631,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
             fieldRef = varRef
             idiomaticTypeName = typeName
             setterExpression = "newValue.value"
-        } else if ptrLevel == 1, let knownRecord = knownRecord {
+        } else if ptrLevel == 1, let knownRecord = field.knownRecord {
             varRef = knownRecord.structRef
             fieldRef = fieldTypeRef
             idiomaticTypeName = varRef.forceUnwrappedName
