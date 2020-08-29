@@ -609,7 +609,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         let pointee = ptr + ".pointee." + name
         guard field.isReadable || field.isWritable else { return indentation + "// var \(name) is unavailable because it is neigher readable nor writable\n" }
         guard !field.isVoid else { return indentation + "// var \(swname) is unavailable because \(name) is void\n" }
-        let ptrLevel = containedTypeRef.indirectionLevel
+        let ptrLevel = fieldTypeRef.indirectionLevel
         let idiomaticRef = containedTypeRef.idiomaticType
         let typeName: String
         if let tupleSize = field.tupleSize {
@@ -624,24 +624,32 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
             typeName = field.returnTypeName(for: record, beingIdiomatic: false, useStruct: true)
         }
         let knownRecord = ptrLevel == 1 ? GIR.knownRecords[containedTypeRef.type.name] : nil
-        let structRef = knownRecord?.structRef
         let idiomaticTypeName: String
-        let underlyingRef: TypeReference
+        let varRef: TypeReference
+        let fieldRef: TypeReference
+        let setterExpression: String
         if ptrLevel == 0, let optionSet = field.knownBitfield {
-            underlyingRef = optionSet.underlyingCRef
+            varRef = optionSet.underlyingCRef
+            fieldRef = varRef
             idiomaticTypeName = typeName
-        } else if ptrLevel == 1, let structRef = structRef {
-            underlyingRef = idiomaticRef
+            setterExpression = "newValue.value"
+        } else if ptrLevel == 1, let knownRecord = knownRecord {
+            let structRef = knownRecord.structRef
+            varRef = idiomaticRef
+            fieldRef = fieldTypeRef
             idiomaticTypeName = structRef.forceUnwrappedName
+            setterExpression = "newValue." + knownRecord.ptrName
         } else {
-            underlyingRef = fieldTypeRef.isVoid ? containedTypeRef : fieldTypeRef
+            varRef = containedTypeRef
+            fieldRef = varRef
             idiomaticTypeName = typeName.doForceOptional ? (typeName + "!") : typeName
+            setterExpression = "newValue"
         }
         let varDecl = swiftCode(field, indentation + "@inlinable \(publicDesignation)var \(swname): \(idiomaticTypeName) {\n", indentation: indentation)
         let deprecated = field.deprecated != nil ? "@available(*, deprecated) " : ""
         let getterCode: String
         if field.isReadable {
-            let cast = underlyingRef.cast(expression: pointee, from: containedTypeRef)
+            let cast = varRef.cast(expression: pointee, from: containedTypeRef)
             let head = doubleIndent + "\(deprecated)get {\n" + doubleIndent +
                 indentation + "let rv = "
             let tail = "\n"
@@ -653,7 +661,8 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         }
         let setterCode: String
         if field.isWritable {
-            let setterBody = instanceSetter(for: field, ref: idiomaticRef, knownRecord: knownRecord, indentation: doubleIndent, record, target: pointee, ptr: "newValue")
+            let cast = fieldRef.isVoid ? setterExpression : fieldRef.cast(expression: setterExpression, from: varRef)
+            let setterBody = pointee + " = " + cast
             setterCode = swiftCode(field, doubleIndent + "\(deprecated) set {\n" +
                 doubleIndent + indentation + setterBody + "\n" +
                 doubleIndent + "}\n", indentation: doubleIndent)
@@ -902,25 +911,6 @@ public func callSetter(_ indentation: String, _ record: GIR.Record? = nil, ptr p
         return code
     }
 }
-
-/// Swift code for assigning the raw return value
-public func instanceSetter(for field: GIR.CType, ref: TypeReference, knownRecord: GIR.Record?, indentation: String, _ record: GIR.Record? = nil, target: String = "ptr", ptr parameterName: String = "newValue", castVar: String = "newValue", convertToSwiftTypes doConvert: Bool = false) -> String {
-    guard !field.isVoid else { return "// \(field.name) is Void\n" }
-    let ref = field.containedTypes.first?.typeRef ?? field.typeRef
-    let argPtrName: String
-    if ref.indirectionLevel == 1, let knownRecord = knownRecord {
-        argPtrName = "." + knownRecord.ptrName
-    } else if ref.indirectionLevel == 0 && field.isKnownBitfield {
-        argPtrName = ".value"
-    } else {
-        argPtrName = ""
-    }
-    let e = parameterName + argPtrName
-    let code = ref.cast(expression: e, from: ref.idiomaticType)
-    return "\(target) = \(code)"
-}
-
-
 
 /// Swift code for the parameters of a constructor
 public func constructorParam(_ method: GIR.Method, prefix: String?) -> String {
