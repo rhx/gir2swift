@@ -24,6 +24,9 @@ was compiled against libraries built with earlier versions of `gir2swift`.
 ### Notable changes
 
  * Requires Swift 5.2 or later
+ * Wrapper code is now `@inlinable` to enable the compiler to optimise away most of the wrappers
+ * Parameters and return types use more idiomatic Swift (e.g. `Ref` wrappers instead of pointers, `Int` instead of `gint`, etc.)
+ * Functions that take or return records now are templated instead of using the type-erased Protocol
  * `ErrorType` has been renamed `GLibError` to ensure it neither clashes with `Swift.Error` nor the `GLib.ErrorType`  scanner enum
  * Parameters or return types for records/classes now use the corresponding, lightweight Swift `Ref` wrapper instead of the underlying pointer
 
