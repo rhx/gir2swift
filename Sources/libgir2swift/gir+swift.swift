@@ -612,9 +612,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         let ptrLevel = containedTypeRef.indirectionLevel
         let idiomaticRef = containedTypeRef.idiomaticType
         let typeName: String
-        if let callback = fieldType as? GIR.Callback {
-            typeName = forceUnwrappedDecl(for: callback)
-        } else if let tupleSize = field.tupleSize {
+        if let tupleSize = field.tupleSize {
             let n = field.containedTypes.count
             typeName = "(" + (0..<tupleSize).map { (i: Int) -> String in
                 let type: GIR.CType = i < n ? field.containedTypes[i] : (n != 0 ? field.containedTypes[i % n] : field)
@@ -622,10 +620,8 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
                 let typeName = ref.fullTypeName
                 return typeName.optionalWhenPointer
             }.joined(separator: ", ") + ")"
-        } else if field.isArray && fieldTypeRef.indirectionLevel != 0 {
-            typeName = fieldTypeRef.fullTypeName
         } else {
-            typeName = idiomaticRef.fullTypeName
+            typeName = field.returnTypeName(for: record, beingIdiomatic: false, useStruct: true)
         }
         let knownRecord = ptrLevel == 1 ? GIR.knownRecords[containedTypeRef.type.name] : nil
         let structRef = knownRecord?.structRef
@@ -633,10 +629,13 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         let underlyingRef: TypeReference
         if ptrLevel == 0, let optionSet = field.knownBitfield {
             underlyingRef = optionSet.underlyingCRef
-            idiomaticTypeName = field.returnTypeName(for: record)
-        } else {
+            idiomaticTypeName = typeName
+        } else if ptrLevel == 1, let structRef = structRef {
             underlyingRef = idiomaticRef
-            idiomaticTypeName = structRef?.forceUnwrappedName ?? (typeName.doForceOptional ? (typeName + "!") : typeName)
+            idiomaticTypeName = structRef.forceUnwrappedName
+        } else {
+            underlyingRef = fieldTypeRef.isVoid ? containedTypeRef : fieldTypeRef
+            idiomaticTypeName = typeName.doForceOptional ? (typeName + "!") : typeName
         }
         let varDecl = swiftCode(field, indentation + "@inlinable \(publicDesignation)var \(swname): \(idiomaticTypeName) {\n", indentation: indentation)
         let deprecated = field.deprecated != nil ? "@available(*, deprecated) " : ""
