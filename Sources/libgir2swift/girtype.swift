@@ -270,6 +270,23 @@ public final class GIRRawPointerType: GIRType {
     }
 }
 
+/// Representation of a record type (struct or class), its relationship to other types,
+/// and casting operations
+public final class GIRRecordType: GIRType {
+    /// Return the default cast to convert the given expression to an opaque pointer
+    /// - Parameters:
+    ///   - expression: The expression to cast
+    ///   - source: The source type to cast from
+    ///   - pointerLevel: The number of indirection levels (pointers)
+    ///   - const: An indicator whether the cast is to a `const` value
+    /// - Returns: The cast expression string
+    @inlinable
+    public override func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false) -> String {
+        let expression = castName + "(" + GIR.gconstpointer + ": " + GIR.gconstpointer + "(" + e + "))"
+        return expression
+    }
+}
+
 /// Representation of a opaque pointer type, its relationship to other types,
 /// and casting operations
 public final class GIROpaquePointerType: GIRType {

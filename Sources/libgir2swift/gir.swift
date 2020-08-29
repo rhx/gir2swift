@@ -832,9 +832,9 @@ public final class GIR {
         public var structName: String { typeRef.type.swiftName + "Ref" }
 
         /// Type of the Class for this record
-        @inlinable public var classType: GIRType {
+        @inlinable public var classType: GIRRecordType {
             let n = typeRef.type.swiftName.swift
-            return GIRType(name: n, typeName: n, ctype: typeRef.type.ctype)
+            return GIRRecordType(name: n, typeName: n, ctype: typeRef.type.ctype)
         }
 
         /// Type of the Protocol for this record
@@ -845,7 +845,7 @@ public final class GIR {
 
         /// Type of the `Ref` struct for this record
         @inlinable
-        public var structType: GIRType { GIRType(name: structName, typeName: structName, ctype: "", superType: protocolRef) }
+        public var structType: GIRRecordType { GIRRecordType(name: structName, typeName: structName, ctype: "", superType: protocolRef) }
 
         /// Struct reference for this record
         @inlinable public var structRef: TypeReference { TypeReference(type: structType) }

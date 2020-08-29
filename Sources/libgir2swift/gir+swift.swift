@@ -794,9 +794,10 @@ public func returnCode<T>(_ indentation: String, _ tr: (typeRef: TypeReference, 
         guard isInstance, let tr = tr else { return indentation + "return rv\n" }
         let typeRef = tr.typeRef
         guard !tr.isConstructor else {
-            let cons = tr.isConvenience ? "self.init" : (hasParent ? "super.init" : "\(ptr) = UnsafeMutableRawPointer")
+            let cons = tr.isConvenience ? "self.init" : (hasParent ? "super.init(gpointer: " : "\(ptr) = UnsafeMutableRawPointer")
             let cast = "(" + rv + ")"
-            let ret = indentation + cons + cast + "\n"
+            let tail = tr.isConvenience || !hasParent ? "\n" : ")\n"
+            let ret = indentation + cons + cast + tail
             return ret
         }
         guard !(beIdiomatic && field.idiomaticWrappedRef != swiftRef) else {
@@ -875,7 +876,7 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         let rvSwiftRef = useIdiomaticSwift && !isConstructor ? (useRef ? rv.idiomaticWrappedRef : rv.idiomaticClassRef ) : rvRef
         let invocationStart = method.cname.swift + "(\(args.map(toSwift).joined(separator: ", "))"
         let call = invocationStart + invocationTail
-        let callCode: String = rvSwiftRef.cast(expression: call, from: rvRef)
+        let callCode = rvSwiftRef.cast(expression: call, from: rvRef)
         let rvTypeName = isConstructor || !useRef ? "" : rv.idiomaticWrappedTypeName
         let varCode: String
         if isVoid {
