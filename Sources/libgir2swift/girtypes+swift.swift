@@ -83,16 +83,24 @@ public extension GIR.CType {
 
     /// explicit, idiomatic type reference (struct if pointer to record)
     @inlinable var idiomaticWrappedRef: TypeReference {
-        guard typeRef.knownIndirectionLevel == 1, let record = knownRecord else {
-            return swiftReturnRef
+        let pointers = typeRef.knownIndirectionLevel
+        guard pointers == 1, let record = knownRecord else {
+            guard pointers == 0, let optionSet = knownBitfield else {
+                return swiftReturnRef
+            }
+            return optionSet.typeRef
         }
         return record.structRef
     }
 
     /// explicit, idiomatic type reference (class if pointer to record)
     @inlinable var idiomaticClassRef: TypeReference {
-        guard typeRef.knownIndirectionLevel == 1, let record = knownRecord else {
-            return swiftReturnRef
+        let pointers = typeRef.knownIndirectionLevel
+        guard pointers == 1, let record = knownRecord else {
+            guard pointers == 0, let optionSet = knownBitfield else {
+                return swiftReturnRef
+            }
+            return optionSet.typeRef
         }
         return record.classRef
     }
@@ -127,10 +135,13 @@ public extension GIR.CType {
     @inlinable func returnTypeName(for record: GIR.Record? = nil, beingIdiomatic: Bool = true, useStruct: Bool = true) -> String {
         let idiomaticName = idiomaticWrappedTypeName
         let ref = typeRef
+        let pointers = ref.knownIndirectionLevel
         let name: String
-        if ref.knownIndirectionLevel == 1, let knownRecord = GIR.knownRecords[ref.type.name] {
+        if pointers == 1, let knownRecord = GIR.knownRecords[ref.type.name] {
             let knownRef = useStruct ? knownRecord.structRef : (beingIdiomatic ? knownRecord.classRef : knownRecord.typeRef)
             name = knownRef.forceUnwrappedName
+        } else if pointers == 0, let optionSet = knownBitfield {
+            name = optionSet.typeRef.fullSwiftTypeName
         } else {
             name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : ref.fullTypeName
         }
@@ -202,8 +213,12 @@ public extension GIR.Argument {
     /// Returns a template name in case of a known record
     @inlinable
     var templateTypeName: String {
-        guard typeRef.knownIndirectionLevel == 1, let record = knownRecord else {
-            return argumentTypeName
+        let pointers = typeRef.knownIndirectionLevel
+        guard pointers == 1, let record = knownRecord else {
+            guard pointers == 0, let optionSet = knownBitfield else {
+                return argumentTypeName
+            }
+            return optionSet.escapedName.swift
         }
         let templateName = record.className + "T"
         let typeName = isNullable ? (templateName + "?") : templateName

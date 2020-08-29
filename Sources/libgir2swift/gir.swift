@@ -347,7 +347,16 @@ public final class GIR {
         /// The underlying type
         public var typeRef: TypeReference
         /// The identifier of this instance (e.g. C enum value type)
-        public var identifier: String? { typeRef.identifier }
+        @inlinable public var identifier: String? { typeRef.identifier }
+
+        /// A reference to the underlying C type
+        @inlinable public var underlyingCRef: TypeReference {
+            let type = typeRef.type
+            let nm = typeRef.fullCType
+            let tp = GIRType(name: nm, ctype: type.ctype, superType: type.parent, isAlias: type.isAlias, conversions: type.conversions)
+            let ref = TypeReference(type: tp, identifier: typeRef.identifier, isConst: typeRef.isConst, isOptional: typeRef.isOptional, isArray: typeRef.isArray, constPointers: typeRef.constPointers)
+            return ref
+        }
 
         /// Memberwise initialiser
         /// - Parameters:

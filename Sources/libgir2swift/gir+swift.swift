@@ -629,12 +629,20 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         }
         let knownRecord = ptrLevel == 1 ? GIR.knownRecords[containedTypeRef.type.name] : nil
         let structRef = knownRecord?.structRef
-        let idiomaticTypeName = structRef?.forceUnwrappedName ?? (typeName.doForceOptional ? (typeName + "!") : typeName)
+        let idiomaticTypeName: String
+        let underlyingRef: TypeReference
+        if ptrLevel == 0, let optionSet = field.knownBitfield {
+            underlyingRef = optionSet.underlyingCRef
+            idiomaticTypeName = field.returnTypeName(for: record)
+        } else {
+            underlyingRef = idiomaticRef
+            idiomaticTypeName = structRef?.forceUnwrappedName ?? (typeName.doForceOptional ? (typeName + "!") : typeName)
+        }
         let varDecl = swiftCode(field, indentation + "@inlinable \(publicDesignation)var \(swname): \(idiomaticTypeName) {\n", indentation: indentation)
         let deprecated = field.deprecated != nil ? "@available(*, deprecated) " : ""
         let getterCode: String
         if field.isReadable {
-            let cast = idiomaticRef.cast(expression: pointee, from: containedTypeRef)
+            let cast = underlyingRef.cast(expression: pointee, from: containedTypeRef)
             let head = doubleIndent + "\(deprecated)get {\n" + doubleIndent +
                 indentation + "let rv = "
             let tail = "\n"
@@ -814,6 +822,8 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         let argPtrName: String
         if let knownRecord = arg.knownRecord {
             argPtrName = (arg.isNullable ? "?." : ".") + knownRecord.ptrName
+        } else if arg.typeRef.indirectionLevel == 0 && arg.isKnownBitfield {
+            argPtrName = arg.isNullable || arg.isOptional ? ".value ?? 0" : ".value"
         } else {
             argPtrName = ""
         }
@@ -856,11 +866,16 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
             conditional = needsNilGuard ? "guard " : ""
             suffix = needsNilGuard ? " else { return nil }" : ""
         }
-        let rvRef = rv.typeRef
+        let rvRef: TypeReference
+        if rv.typeRef.indirectionLevel == 0 && rv.isKnownBitfield {
+            rvRef = rv.underlyingCRef
+        } else {
+            rvRef = rv.typeRef
+        }
         let rvSwiftRef = useIdiomaticSwift && !isConstructor ? (useRef ? rv.idiomaticWrappedRef : rv.idiomaticClassRef ) : rvRef
         let invocationStart = method.cname.swift + "(\(args.map(toSwift).joined(separator: ", "))"
         let call = invocationStart + invocationTail
-        let callCode = rvSwiftRef.cast(expression: call, from: rvRef)
+        let callCode: String = rvSwiftRef.cast(expression: call, from: rvRef)
         let rvTypeName = isConstructor || !useRef ? "" : rv.idiomaticWrappedTypeName
         let varCode: String
         if isVoid {
@@ -895,6 +910,8 @@ public func instanceSetter(for field: GIR.CType, ref: TypeReference, knownRecord
     let argPtrName: String
     if ref.indirectionLevel == 1, let knownRecord = knownRecord {
         argPtrName = "." + knownRecord.ptrName
+    } else if ref.indirectionLevel == 0 && field.isKnownBitfield {
+        argPtrName = ".value"
     } else {
         argPtrName = ""
     }
@@ -1057,6 +1074,9 @@ public func convertSetterArgumentToSwiftFor(_ record: GIR.Record?, ptr: String =
             sourceRef = knownRecord.structRef
         } else if arg.instance || arg.isInstanceOf(record) {
             exp = ptr
+            sourceRef = paramRef
+        } else if paramRef.indirectionLevel == 0 && arg.isKnownBitfield {
+            exp = arg.isNullable || arg.isOptional ? "newValue?.value ?? 0" : "newValue.value"
             sourceRef = paramRef
         } else {
             exp = "newValue"
@@ -1409,7 +1429,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
                 "let holder = UnsafeMutableRawPointer(Unmanaged.passRetained(holder).toOpaque())\n" + tripleIndentation +
                 "let from = unsafeBitCast(transform_from, to: BindingTransformFunc.self)\n" + tripleIndentation +
                 "let to   = unsafeBitCast(transform_to,   to: BindingTransformFunc.self)\n" + tripleIndentation +
-                "let rv = GLibObject.ObjectRef(raw: ptr).bindPropertyFull(sourceProperty: source, target: t, targetProperty: target_property, flags: f.value, transformTo: to, transformFrom: from, userData: holder) {\n" + tripleIndentation + indentation +
+                "let rv = GLibObject.ObjectRef(raw: ptr).bindPropertyFull(sourceProperty: source, target: t, targetProperty: target_property, flags: f, transformTo: to, transformFrom: from, userData: holder) {\n" + tripleIndentation + indentation +
                     "if let swift = UnsafeRawPointer($0) {\n" + tripleIndentation + doubleIndentation +
                         "let holder = Unmanaged<GLibObject.SignalHandlerClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
                         "holder.release()\n" + tripleIndentation + indentation +
@@ -1463,7 +1483,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
                         "holder.release()\n" + tripleIndentation + indentation +
                     "}\n" + tripleIndentation + indentation +
                     "let _ = $1\n" + tripleIndentation +
-                "}, connectFlags: flags.value)\n" + tripleIndentation +
+                "}, connectFlags: flags)\n" + tripleIndentation +
                 "return rv\n" + doubleIndentation +
             "}\n" + doubleIndentation +
             "let rv = _connect(signal: kind.name, flags: f, data: ClosureHolder(handler)) {\n" + tripleIndentation +
