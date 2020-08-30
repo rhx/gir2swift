@@ -326,7 +326,7 @@ func typeReference(named identifier: String? = nil, for name: String, swiftName:
 /// - Returns: An existing type matching the new type, or the passed in type if new
 @inlinable
 func addType(_ type: GIRType) -> GIRType {
-    if let i = GIR.knownTypes.index(of: type) {
+    if let i = GIR.knownTypes.firstIndex(of: type) {
         return GIR.knownTypes[i]
     }
     GIR.knownTypes.insert(type)
