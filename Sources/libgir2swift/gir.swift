@@ -892,14 +892,14 @@ public final class GIR {
         public var allProperties: [Property] {
             guard let parent = parentType else { return properties }
             let all = properties.asSet.union(parent.allProperties.asSet)
-            return Array(all).sorted()
+            return all.sorted()
         }
 
         /// return all signals, including the ones derived from ancestors
         public var allSignals: [Signal] {
             guard let parent = parentType else { return signals }
             let all = signals.asSet.union(parent.allSignals.asSet)
-            return Array(all).sorted()
+            return all.sorted()
         }
     }
     

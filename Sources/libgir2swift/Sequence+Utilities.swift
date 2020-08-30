@@ -19,7 +19,7 @@ extension Sequence {
 
 extension Sequence where Iterator.Element: Hashable {
     /// return a set containing the elements from the given sequence
-    public var asSet: Set<Iterator.Element> {
+    @inlinable public var asSet: Set<Iterator.Element> {
         var set = Set<Iterator.Element>()
         self.forEach { set.insert($0) }
         return set

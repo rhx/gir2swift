@@ -490,7 +490,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
             if instance { hadInstance = true }
             return !instance
         }
-        let templateTypes = arguments.compactMap(\.templateDecl).asSet.joined(separator: ", ")
+        let templateTypes = arguments.compactMap(\.templateDecl).asSet.sorted().joined(separator: ", ")
         let templateDecl = templateTypes.isEmpty ? "" : ("<" + templateTypes + ">")
         let params = arguments.map(parameterCode)
         let funcParam = params.joined(separator: ", ")
@@ -729,7 +729,7 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
                 // FIXME: as of Swift 5.3 beta, generating static class methods with va_list crashes the compiler
                 return "\n\(indentation)// *** \(name)() is currently not available because \(method.cname) takes a va_list pointer!\n\n"
             }
-            let templateTypes = arguments.compactMap(\.templateDecl).asSet.joined(separator: ", ")
+            let templateTypes = arguments.compactMap(\.templateDecl).asSet.sorted().joined(separator: ", ")
             let templateDecl = templateTypes.isEmpty ? "" : ("<" + templateTypes + ">")
             let p: String? = consPrefix == firstArgName?.swift ? nil : consPrefix
             let fact = factory ? "static func \(fname.swift + templateDecl)(" : ("\(isOverride ? ovr : conv)init" + templateDecl + "(")
