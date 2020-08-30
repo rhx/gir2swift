@@ -611,7 +611,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         guard !field.isVoid else { return indentation + "// var \(swname) is unavailable because \(name) is void\n" }
         let ptrLevel = fieldTypeRef.knownIndirectionLevel
         let typeName: String
-        if let tupleSize = field.tupleSize {
+        if let tupleSize = field.tupleSize, tupleSize > 0 {
             let n = field.containedTypes.count
             typeName = "(" + (0..<tupleSize).map { (i: Int) -> String in
                 let type: GIR.CType = i < n ? field.containedTypes[i] : (n != 0 ? field.containedTypes[i % n] : field)
