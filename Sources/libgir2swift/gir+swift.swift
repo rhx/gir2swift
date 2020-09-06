@@ -1167,7 +1167,7 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
         "}\n\n" + indentation +
         "/// Unsafe untyped initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "@inlinable init(raw: UnsafeRawPointer) {\n" + doubleIndentation +
+        "@inlinable init(mutating raw: UnsafeRawPointer) {\n" + doubleIndentation +
             "ptr = UnsafeMutableRawPointer(mutating: raw)\n" + indentation +
         "}\n\n" + indentation +
         "/// Unsafe untyped initialiser.\n" + indentation +
