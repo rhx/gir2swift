@@ -136,6 +136,25 @@ public extension String {
         }
         return self
     }
+
+    /// Full type name with namespace prefix normalised
+    @inlinable var withNormalisedPrefix: String {
+        guard let d = firstIndex(of: ".") else { return self }
+        let p = self[startIndex...d]
+        guard !p.isEmpty, let prefix = GIR.namespaceReplacements[p] else { return self }
+        let s = index(after: d)
+        let e = endIndex
+        return String(prefix + self[s..<e])
+    }
+
+    /// Dotted prefix with namespace replacements
+    @inlinable var girDottedPrefix: Substring {
+        let prefix = dottedPrefix
+        guard let replacement = GIR.namespaceReplacements[prefix] else {
+            return prefix
+        }
+        return replacement
+    }
 }
 
 

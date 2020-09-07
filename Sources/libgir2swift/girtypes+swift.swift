@@ -71,7 +71,7 @@ public extension GIR.CType {
         let className = record.className
         let protocolName = record.protocolName
         let typeName = typeRef.type.name
-        let prefix = typeName.dottedPrefix
+        let prefix = typeName.girDottedPrefix
         let name: String
         if GIR.dottedPrefix != prefix && typeName.hasSuffix(className) {
             name = prefix + protocolName
@@ -266,7 +266,7 @@ public extension GIR.Argument {
             let className = record.className
             let protocolName = record.structName
             let typeName = typeRef.type.name
-            let prefix = typeName.dottedPrefix
+            let prefix = typeName.girDottedPrefix
             if GIR.dottedPrefix != prefix && typeName.hasSuffix(className) {
                 templateName = prefix + protocolName
             } else {

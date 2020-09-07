@@ -88,7 +88,7 @@ public final class GIR {
     /// Namespace prefix defined by the receiver
     public var prefix = "" { didSet { GIR.dottedPrefix = prefix + "." } }
     /// Namespace prefix defined by the receiver with a trailing "."
-    static public var dottedPrefix = ""
+    public static var dottedPrefix = ""
     /// Collection of identifier prefixes
     public var identifierPrefixes = Array<String>()
     /// Collection of symbol prefixes
@@ -137,6 +137,9 @@ public final class GIR {
     public static var callbackSuffixes = [String]()
     /// types to turn into force-unwrapped optionals
     public static var forceUnwrapped: Set<String> = ["gpointer", "gconstpointer"]
+
+    /// Dotted namespace replacements
+    public static var namespaceReplacements: [ Substring : Substring ] = [ "GObject." : "GLibObject." ]
 
     /// designated constructor
     public init(xmlDocument: XMLDocument, quiet: Bool = false) {

@@ -14,9 +14,9 @@ extension SwiftLibXML.XMLElement {
     /// Return a type reference for an XML node counting the level of indirection
     /// through `const` and non-`const` pointers
     var alias: TypeReference {
-        let typeName = attribute(named: "type-name")?.withoutDottedPrefix
-        let ctype = attribute(named: "type")?.withoutDottedPrefix ?? typeName
-        let nameAttr = attribute(named: "name")?.withoutDottedPrefix
+        let typeName = attribute(named: "type-name")?.withNormalisedPrefix
+        let ctype = attribute(named: "type")?.withNormalisedPrefix ?? typeName
+        let nameAttr = attribute(named: "name")?.withNormalisedPrefix
         guard let cAttr = ctype ?? nameAttr else { return .void }
         let cReference = decodeIndirection(for: cAttr)
         let innerType = cReference.innerType
