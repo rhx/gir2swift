@@ -153,6 +153,7 @@ public final class GIR {
         if let ns = xml.xpath("//gir:namespace", namespaces: namespaces, defaultPrefix: "gir")?.makeIterator().next() {
             if let name = ns.attribute(named: "name") {
                 prefix = name
+                GIR.dottedPrefix = name + "."
             }
             identifierPrefixes = ns.sortedSubAttributesFor(attr: "identifier-prefixes")
             symbolPrefixes     = ns.sortedSubAttributesFor(attr: "symbol-prefixes")

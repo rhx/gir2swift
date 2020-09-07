@@ -22,8 +22,9 @@ extension SwiftLibXML.XMLElement {
         let innerType = cReference.innerType
         let innerName = innerType.isEmpty ? type.type.name : innerType
         let rawName: String
-        if let n = nameAttr { rawName = n }
-        else {
+        if let n = nameAttr {
+            rawName = n
+        } else {
             rawName = innerName
         }
         let name = rawName.validSwift
