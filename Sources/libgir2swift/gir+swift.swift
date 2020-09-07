@@ -491,8 +491,38 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
             return !instance
         }
         let templateTypes = arguments.compactMap(\.templateDecl).asSet.sorted().joined(separator: ", ")
+        let nonNullableTemplates = arguments.compactMap(\.nonNullableTemplateDecl).asSet.sorted().joined(separator: ", ")
+        let defaultArgsCode: String
+        if templateTypes.isEmpty || nonNullableTemplates == templateTypes {
+            // no need to create default arguments method
+            defaultArgsCode = ""
+        } else {    // Create a default-nil arguments method that uses Ref instead of templates
+            let templateDecl = nonNullableTemplates.isEmpty ? "" : ("<" + nonNullableTemplates + ">")
+            let params = arguments.map(nullableRefParameterCode)
+            let funcParam = params.joined(separator: ", ")
+            let fname: String
+            if let firstParamName = params.first?.split(separator: " ").first?.split(separator: ":").first?.capitalised {
+                fname = name.stringByRemoving(suffix: firstParamName) ?? name
+            } else {
+                fname = name
+            }
+            let deprecated = method.deprecated != nil ? "@available(*, deprecated) " : ""
+            let discardable = record?.ref?.cname == method.cname && !method.returns.isVoid ? "@discardableResult " : ""
+            let inlinable = "@inlinable "
+            let funcDecl = deprecated + discardable + inlinable + publicDesignation + "func " + fname.swift + templateDecl
+            let paramDecl = "(" + funcParam + ")"
+            let returnDecl = returnDeclaration(method)
+            let callCode = call(method)
+            let returnCode = ret(method)
+            let bodyCode = " {\n" +
+                doubleIndent + callCode +
+                indent       + returnCode  + indent +
+                "}\n"
+            let fullFunction = indent + funcDecl + paramDecl + returnDecl + bodyCode
+            defaultArgsCode = swiftCode(method, fullFunction, indentation: indent)
+        }
         let templateDecl = templateTypes.isEmpty ? "" : ("<" + templateTypes + ">")
-        let params = arguments.map(parameterCode)
+        let params = arguments.map(templatedParameterCode)
         let funcParam = params.joined(separator: ", ")
         let fname: String
         if let firstParamName = params.first?.split(separator: " ").first?.split(separator: ":").first?.capitalised {
@@ -513,7 +543,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
                 indent       + returnCode  + indent +
             "}\n"
         let fullFunction = indent + funcDecl + paramDecl + returnDecl + bodyCode
-        let code = swiftCode(method, fullFunction, indentation: indent)
+        let code = defaultArgsCode + swiftCode(method, fullFunction, indentation: indent)
         return code
     }
 }
@@ -914,12 +944,12 @@ public func constructorParam(_ method: GIR.Method, prefix: String?) -> String {
     let comma = ", "
     let args = method.args
     guard let first = args.first else { return "" }
-    guard let p = prefix else { return args.map(parameterCode).joined(separator: comma) }
-    let firstParam = parameterCode(for: first, prefix: p)
+    guard let p = prefix else { return args.map(templatedParameterCode).joined(separator: comma) }
+    let firstParam = prefixedTemplatedParameterCode(for: first, prefix: p)
     let n = args.count
     guard n > 1 else { return firstParam }
     let tail = args[1..<n]
-    return firstParam + comma + tail.map(parameterCode).joined(separator: comma)
+    return firstParam + comma + tail.map(templatedParameterCode).joined(separator: comma)
 }
 
 
@@ -997,11 +1027,51 @@ public func callbackParameterCode(for argument: GIR.Argument) -> String {
 }
 
 /// Swift code for auto-prefixed arguments
+/// This version will use template types where possible,
+/// ignoring default values for those templates
 /// - Parameter argument: The argument to generate type code for
 /// - Returns: The Swift type for the parameter
-public func parameterCode(for argument: GIR.Argument) -> String {
+@inlinable public func templatedParameterCode(for argument: GIR.Argument) -> String {
     let prefixedName = argument.prefixedArgumentName
+    let isTemplate = argument.isKnownRecordReference
     let type = argument.templateTypeName
+    let escaping = type.maybeCallback ? "@escaping " : ""
+    let defaultValue = !isTemplate && argument.isNullable && argument.allowNone ? " = nil" : ""
+    let code = prefixedName + ": " + escaping + type + defaultValue
+    return code
+}
+
+/// Swift code for method parameters
+@inlinable public func prefixedTemplatedParameterCode(for argument: GIR.Argument, prefix: String) -> String {
+    let name = argument.argumentName
+    let prefixedName = prefix + " " + name
+    let isTemplate = argument.isKnownRecordReference
+    let type = argument.templateTypeName
+    let escaping = type.maybeCallback ? "@escaping " : ""
+    let defaultValue = !isTemplate && argument.isNullable && argument.allowNone ? " = nil" : ""
+    let code = prefixedName + ": " + escaping + type + defaultValue
+    return code
+}
+
+/// Swift code for auto-prefixed arguments.
+/// This version will use `Ref` (struct) types instead of templats
+/// for nullable reference arguments with a default value of `nil`
+/// - Parameter argument: The argument to generate type code for
+/// - Returns: The Swift type for the parameter
+@inlinable public func nullableRefParameterCode(for argument: GIR.Argument) -> String {
+    let prefixedName = argument.prefixedArgumentName
+    let type = argument.defaultRefTemplateTypeName
+    let escaping = type.maybeCallback ? "@escaping " : ""
+    let defaultValue = argument.isNullable && argument.allowNone ? " = nil" : ""
+    let code = prefixedName + ": " + escaping + type + defaultValue
+    return code
+}
+
+/// Swift code for method parameters
+@inlinable public func prefixedNullableRefParameterCode(for argument: GIR.Argument, prefix: String) -> String {
+    let name = argument.argumentName
+    let prefixedName = prefix + " " + name
+    let type = argument.defaultRefTemplateTypeName
     let escaping = type.maybeCallback ? "@escaping " : ""
     let defaultValue = argument.isNullable && argument.allowNone ? " = nil" : ""
     let code = prefixedName + ": " + escaping + type + defaultValue
@@ -1013,18 +1083,6 @@ public func returnCode(for argument: GIR.Argument) -> String {
     let prefixedname = argument.prefixedArgumentName
     let type = argument.argumentTypeName
     let code = "\(prefixedname): \(type)"
-    return code
-}
-
-
-/// Swift code for method parameters
-public func parameterCode(for argument: GIR.Argument, prefix: String) -> String {
-    let name = argument.argumentName
-    let prefixedName = prefix + " " + name
-    let type = argument.templateTypeName
-    let escaping = type.maybeCallback ? "@escaping " : ""
-    let defaultValue = argument.isNullable && argument.allowNone ? " = nil" : ""
-    let code = prefixedName + ": " + escaping + type + defaultValue
     return code
 }
 

@@ -241,6 +241,21 @@ public extension GIR.Argument {
         let typeName = isNullable ? (templateName + "?") : templateName
         return typeName
     }
+
+    /// return the swift (known) type of the receiver when passed as an argument
+    /// Returns a reference name in case of a known record with a default value
+    @inlinable
+    var defaultRefTemplateTypeName: String {
+        guard let record = knownRecordReference else {
+            guard typeRef.knownIndirectionLevel == 0, let optionSet = knownBitfield else {
+                return argumentTypeName
+            }
+            return optionSet.escapedName.swift
+        }
+        let templateName = allowNone ? record.structName : (record.className + "T")
+        let typeName = isNullable ? (templateName + "?") : templateName
+        return typeName
+    }
 }
 
 
