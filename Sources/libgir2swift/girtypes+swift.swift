@@ -65,11 +65,20 @@ public extension GIR.CType {
     /// or `nil` otherwise
     @inlinable
     var templateDecl: String? {
-        guard typeRef.knownIndirectionLevel == 1, let record = knownRecord else {
+        guard let record = knownRecordReference else {
             return nil
         }
         return record.className + "T: " + record.protocolName
     }
+
+    /// return a directly referenced known record, `nil` otherwise
+    @inlinable var knownRecordReference: GIR.Record? {
+        guard typeRef.knownIndirectionLevel == 1 else { return nil }
+        return knownRecord
+    }
+
+    /// return whether the receiver is a direct reference to a known record
+    @inlinable var isKnownRecordReference: Bool { knownRecordReference != nil }
 
     /// return the swift (known) type of the receiver when used as a return value
     @inlinable
@@ -83,9 +92,8 @@ public extension GIR.CType {
 
     /// explicit, idiomatic type reference (struct if pointer to record)
     @inlinable var idiomaticWrappedRef: TypeReference {
-        let pointers = typeRef.knownIndirectionLevel
-        guard pointers == 1, let record = knownRecord else {
-            guard pointers == 0, let optionSet = knownBitfield else {
+        guard let record = knownRecordReference else {
+            guard typeRef.knownIndirectionLevel == 0, let optionSet = knownBitfield else {
                 return swiftReturnRef
             }
             return optionSet.typeRef
@@ -95,9 +103,8 @@ public extension GIR.CType {
 
     /// explicit, idiomatic type reference (class if pointer to record)
     @inlinable var idiomaticClassRef: TypeReference {
-        let pointers = typeRef.knownIndirectionLevel
-        guard pointers == 1, let record = knownRecord else {
-            guard pointers == 0, let optionSet = knownBitfield else {
+        guard let record = knownRecordReference else {
+            guard typeRef.knownIndirectionLevel == 0, let optionSet = knownBitfield else {
                 return swiftReturnRef
             }
             return optionSet.typeRef
@@ -209,13 +216,23 @@ public extension GIR.Argument {
         return optionalName
     }
 
+    /// Return a Swift template declaration for a known record that is non-nullable,
+    /// or `nil` otherwise
+    @inlinable
+    var nonNullableTemplateDecl: String? {
+        guard !isNullable || !allowNone, let record = knownRecordReference else {
+            return nil
+        }
+
+        return record.className + "T: " + record.protocolName
+    }
+
     /// return the swift (known) type of the receiver when passed as an argument
     /// Returns a template name in case of a known record
     @inlinable
     var templateTypeName: String {
-        let pointers = typeRef.knownIndirectionLevel
-        guard pointers == 1, let record = knownRecord else {
-            guard pointers == 0, let optionSet = knownBitfield else {
+        guard let record = knownRecordReference else {
+            guard typeRef.knownIndirectionLevel == 0, let optionSet = knownBitfield else {
                 return argumentTypeName
             }
             return optionSet.escapedName.swift
