@@ -162,10 +162,11 @@ public extension GIR.CType {
         } else {
             name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : ref.fullTypeName
         }
+        let normalisedName = name.withNormalisedPrefix
         if (typeRef.isOptional || maybeOptional(for: record) || name.maybeCallback) && !name.hasSuffix("?") && !name.hasSuffix("!") {
-            return name + "!"
+            return normalisedName + "!"
         } else {
-            return name
+            return normalisedName
         }
     }
 }
@@ -199,7 +200,7 @@ public extension GIR.Argument {
     @inlinable
     var argumentTypeName: String {
         let swiftRef = swiftParamRef
-        let name = swiftRef.fullUnderlyingTypeName
+        let name = swiftRef.fullUnderlyingTypeName.withNormalisedPrefix
         guard typeRef.type === swiftRef.type && (isScalarArray || swiftRef.indirectionLevel > 0) else {
             let optionalName = ((isNullable || isOptional) && !(name.hasSuffix("!") || name.hasSuffix("?"))) ? (name + "!") : name
             return optionalName
@@ -213,7 +214,8 @@ public extension GIR.Argument {
     @inlinable
     var callbackArgumentTypeName: String {
         let ref = typeRef
-        let name = ref.type.typeName == GIR.errorT ? ref.fullUnderlyingCName : ref.fullUnderlyingTypeName
+        let rawName = ref.type.typeName == GIR.errorT ? ref.fullUnderlyingCName : ref.fullUnderlyingTypeName
+        let name = rawName.withNormalisedPrefix
         guard typeRef.indirectionLevel != 0 && !name.hasSuffix("?") else { return name }
         let optionalName: String
         if name.hasSuffix("!") {
@@ -259,7 +261,7 @@ public extension GIR.Argument {
             guard typeRef.knownIndirectionLevel == 0, let optionSet = knownBitfield else {
                 return argumentTypeName
             }
-            return optionSet.escapedName.swift
+            return optionSet.escapedName.withNormalisedPrefix.swift
         }
         let templateName: String
         if allowNone {

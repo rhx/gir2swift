@@ -139,7 +139,9 @@ public final class GIR {
     public static var forceUnwrapped: Set<String> = ["gpointer", "gconstpointer"]
 
     /// Dotted namespace replacements
-    public static var namespaceReplacements: [ Substring : Substring ] = [ "GObject." : "GLibObject." ]
+    public static var namespaceReplacements: [ Substring : Substring ] = [
+        "GObject." : "GLibObject.", "Gio." : "GIO.", "GdkPixbuf." : "", "cairo." : "Cairo."
+    ]
 
     /// designated constructor
     public init(xmlDocument: XMLDocument, quiet: Bool = false) {
