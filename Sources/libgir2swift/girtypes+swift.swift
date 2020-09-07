@@ -68,7 +68,17 @@ public extension GIR.CType {
         guard let record = knownRecordReference else {
             return nil
         }
-        return record.className + "T: " + record.protocolName
+        let className = record.className
+        let protocolName = record.protocolName
+        let typeName = typeRef.type.name
+        let prefix = typeName.dottedPrefix
+        let name: String
+        if GIR.dottedPrefix != prefix && typeName.hasSuffix(className) {
+            name = prefix + protocolName
+        } else {
+            name = protocolName
+        }
+        return className + "T: " + name
     }
 
     /// return a directly referenced known record, `nil` otherwise
@@ -220,11 +230,10 @@ public extension GIR.Argument {
     /// or `nil` otherwise
     @inlinable
     var nonNullableTemplateDecl: String? {
-        guard !isNullable || !allowNone, let record = knownRecordReference else {
+        guard !(isNullable && allowNone) && isKnownRecordReference else {
             return nil
         }
-
-        return record.className + "T: " + record.protocolName
+        return templateDecl
     }
 
     /// return the swift (known) type of the receiver when passed as an argument
@@ -252,7 +261,20 @@ public extension GIR.Argument {
             }
             return optionSet.escapedName.swift
         }
-        let templateName = allowNone ? record.structName : (record.className + "T")
+        let templateName: String
+        if allowNone {
+            let className = record.className
+            let protocolName = record.structName
+            let typeName = typeRef.type.name
+            let prefix = typeName.dottedPrefix
+            if GIR.dottedPrefix != prefix && typeName.hasSuffix(className) {
+                templateName = prefix + protocolName
+            } else {
+                templateName = protocolName
+            }
+        } else {
+            templateName = record.className + "T"
+        }
         let typeName = isNullable ? (templateName + "?") : templateName
         return typeName
     }

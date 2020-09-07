@@ -13,27 +13,34 @@
 #endif
 
 /// UTF8 representation of an underscore
-private let underscore = "_".utf8.first!
+@usableFromInline let underscore = "_".utf8.first!
 
 /// UTF8 representation of a minus sign
-private let minus = "-".utf8.first!
+@usableFromInline let minus = "-".utf8.first!
 
 public extension String {
+    /// Dotted prefix for the string (empty if none)
+    @inlinable var dottedPrefix: Substring {
+        guard let e = firstIndex(of: ".") else { return "" }
+        let s = startIndex
+        return self[s...e]
+    }
+
     /// return the unprefixed version of the string
     /// (e.g. type without namespace)
-    var unprefixed: String {
+    @inlinable var unprefixed: String {
         guard let suffix = split(separator: ".").last else { return self }
         return suffix
     }
 
     /// return a prefixed version of the string
-    func prefixed(with prefix: String) -> String {
+    @inlinable func prefixed(with prefix: String) -> String {
         guard !prefix.isEmpty else { return self }
         return prefix + "." + self
     }
 
     /// return the string resulting from removing the given suffix
-    func stringByRemoving(suffix s: String) -> String? {
+    @inlinable func stringByRemoving(suffix s: String) -> String? {
         let len = s.count
         return hasSuffix(s) ? String(self[startIndex..<index(endIndex, offsetBy: -len)]) : nil
     }
@@ -42,13 +49,13 @@ public extension String {
     /// characters as the given substring.  This will crash if the
     /// receiver is not long enough to have the corresponding number of
     /// characters removed
-    func stringByRemovingAnEquivalentNumberOfCharactersAs(suffix s: String) -> String {
+    @inlinable func stringByRemovingAnEquivalentNumberOfCharactersAs(suffix s: String) -> String {
         let len = s.count
         return String(self[startIndex..<index(endIndex, offsetBy: -len)])
     }
 
     /// return the substring after the first occurrence of the given character
-    func afterFirst(separator s: Character = "_") -> String? {
+    @inlinable func afterFirst(separator s: Character = "_") -> String? {
         let components = split(separator: s)
         guard components.count > 1 else { return nil }
         return components[components.index(after: components.startIndex)..<components.endIndex].joined(separator: String(s))
@@ -57,19 +64,19 @@ public extension String {
     /// return the capidalised name of the receiver,
     /// without changing the case of subsequent letters
     /// Note: this is different from `capitalized` in the Swift standard library
-    var capitalised: String {
+    @inlinable var capitalised: String {
         guard let c = first, c.isLowercase else { return self }
         return c.uppercased() + self[index(after: startIndex)...]
     }
 
     /// return the de-capidalised (lower-case first character) name of the receiver
-    var deCapitalised: String {
+    @inlinable var deCapitalised: String {
         guard let c = first, c.isUppercase else { return self }
         return c.lowercased() + self[index(after: startIndex)...]
     }
 
     /// convert a string with separators to camel case
-    func camelise(_ isSeparator: (String.UTF8View.Element) -> Bool) -> String {
+    @inlinable func camelise(_ isSeparator: (String.UTF8View.Element) -> Bool) -> String {
         let u = utf8
         var s = u.startIndex
         let e = u.endIndex
@@ -106,20 +113,20 @@ public extension String {
     }
 
     /// convert the receiver to camel case
-    var camelCase: String { return camelise { $0 == underscore } }
+    @inlinable var camelCase: String { return camelise { $0 == underscore } }
 
     /// convert a signal name with '-' to camel case
-    var camelSignal: String {
+    @inlinable var camelSignal: String {
         return camelise { $0 == minus || $0 == underscore }.deCapitalised
     }
 
     /// convert a signal name component with '-' to camel case
-    var camelSignalComponent: String {
+    @inlinable var camelSignalComponent: String {
         return camelise { $0 == minus || $0 == underscore }.capitalised
     }
 
     /// Return the number of trailing asterisks to count, ignoring white space
-    var trailingAsteriskCountIgnoringWhitespace: Int { countTrailing(character: "*", in: self, ignoringWhiteSpace: true) }
+    @inlinable var trailingAsteriskCountIgnoringWhitespace: Int { countTrailing(character: "*", in: self, ignoringWhiteSpace: true) }
 }
 
 /// Count the number of specific trailing characters
@@ -127,7 +134,7 @@ public extension String {
 ///   - character: The trailing character to match
 ///   - string: The String (or SubString) to examine
 /// - Returns: The numbber of trailing characters matching the given character
-func countTrailing<S: StringProtocol>(character: Character, in string: S, ignoringWhiteSpace: Bool = false) -> Int {
+@inlinable func countTrailing<S: StringProtocol>(character: Character, in string: S, ignoringWhiteSpace: Bool = false) -> Int {
     let c = string.last
     let isWhiteSpace = c?.isWhitespace ?? false
     guard c == character || ignoringWhiteSpace && isWhiteSpace else { return 0 }
