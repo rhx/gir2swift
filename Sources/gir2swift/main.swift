@@ -60,6 +60,22 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
     GIR.callbackSuffixes = String(contentsOfFile: escfile, quiet: true)?.lines ?? [
         "Notify", "Func", "Marshaller", "Callback"
     ]
+    let nsfile = node + ".namespaceReplacements"
+    if let ns = String(contentsOfFile: nsfile, quiet: true)?.lines.asSet {
+        for line in ns {
+            let keyValues: [Substring]
+            let tabbedKeyValues: [Substring] = line.split(separator: "\t")
+            if tabbedKeyValues.count >= 2 {
+                keyValues = tabbedKeyValues
+            } else {
+                keyValues = line.split(separator: " ")
+                guard keyValues.count >= 2 else { continue }
+            }
+            let key = keyValues[0]
+            let value = keyValues[1]
+            GIR.namespaceReplacements[key] = value
+        }
+    }
     load_gir(file) { gir in
         processSpecialCases(gir, forFile: node)
         let blacklist = GIR.blacklist
