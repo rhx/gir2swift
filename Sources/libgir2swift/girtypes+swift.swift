@@ -154,23 +154,26 @@ public extension GIR.CType {
         let ref = typeRef
         let pointers = ref.knownIndirectionLevel
         let typeName = ref.type.name
-        let dottedPrefix = typeName.dottedPrefix
         let name: String
         if pointers == 1, let knownRecord = GIR.knownRecords[typeName] {
             let knownRef = useStruct ? knownRecord.structRef : (beingIdiomatic ? knownRecord.classRef : knownRecord.typeRef)
-            name = knownRef.forceUnwrappedName
+            let unprefixedName = knownRef.forceUnwrappedName
+            if useStruct || beingIdiomatic {
+                let dottedPrefix = typeName.dottedPrefix
+                if dottedPrefix.isEmpty || unprefixedName.firstIndex(of: ".") != nil {
+                    name = unprefixedName
+                } else {
+                    name = dottedPrefix + unprefixedName
+                }
+            } else {
+                name = unprefixedName
+            }
         } else if pointers == 0, let optionSet = knownBitfield {
             name = optionSet.typeRef.fullSwiftTypeName
         } else {
             name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : ref.fullTypeName
         }
-        let prefixedName: String
-        if dottedPrefix.isEmpty || name.firstIndex(of: ".") != nil {
-            prefixedName = name
-        } else {
-            prefixedName = dottedPrefix + name
-        }
-        let normalisedName = prefixedName.withNormalisedPrefix
+        let normalisedName = name.withNormalisedPrefix
         if (typeRef.isOptional || maybeOptional(for: record) || name.maybeCallback) && !name.hasSuffix("?") && !name.hasSuffix("!") {
             return normalisedName + "!"
         } else {
