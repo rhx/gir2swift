@@ -111,6 +111,24 @@ public extension GIR.CType {
         return record.structRef
     }
 
+    /// Return a prefixed version of the wrapped type reference
+    @inlinable var prefixedIdiomaticWrappedRef: TypeReference {
+        prefixed(ref: idiomaticWrappedRef)
+    }
+
+    /// return a prefixed ref for a given TypeReference
+    @inlinable func prefixed(ref: TypeReference) -> TypeReference {
+        let type = ref.type
+        let name = type.name
+        guard name.firstIndex(of: ".") == nil else { return ref }
+        let dottedPrefix = typeRef.type.name.dottedPrefix
+        let prefixedName = (dottedPrefix + name).withNormalisedPrefix
+        let swName = (dottedPrefix + type.swiftName).withNormalisedPrefix
+        let prefixedType = GIRType(name: prefixedName, swiftName: swName, typeName: type.typeName, ctype: type.ctype, superType: type.parent, isAlias: type.isAlias, conversions: type.conversions)
+        let prefixedRef = TypeReference(type: prefixedType, identifier: ref.identifier, isConst: ref.isConst, isOptional: ref.isOptional, isArray: ref.isArray, constPointers: ref.constPointers)
+        return prefixedRef
+    }
+
     /// explicit, idiomatic type reference (class if pointer to record)
     @inlinable var idiomaticClassRef: TypeReference {
         guard let record = knownRecordReference else {
@@ -122,6 +140,11 @@ public extension GIR.CType {
         return record.classRef
     }
 
+    /// Return a prefixed version of the idiomatic class type reference
+    @inlinable var prefixedIdiomaticClassRef: TypeReference {
+        prefixed(ref: idiomaticWrappedRef)
+    }
+
     /// explicit, idiomatic type name (empty if same as the underlying C type)
     @inlinable var idiomaticWrappedTypeName: String {
         let ref = idiomaticWrappedRef
@@ -131,9 +154,27 @@ public extension GIR.CType {
         return typeName
     }
 
+    /// explicit, idiomatic type name (empty if same as the underlying C type)
+    @inlinable var prefixedIdiomaticWrappedTypeName: String {
+        let ref = prefixedIdiomaticWrappedRef
+        guard ref == swiftReturnRef else { return ref.type.swiftName }
+        guard ref != typeRef else { return "" }
+        let typeName = swiftReturnRef.fullTypeName
+        return typeName
+    }
+
     /// explicit, idiomatic class type name (empty if same as the underlying C type)
     @inlinable var idiomaticClassTypeName: String {
         let ref = idiomaticClassRef
+        guard ref == swiftReturnRef else { return ref.type.swiftName }
+        guard ref != typeRef else { return "" }
+        let typeName = swiftReturnRef.fullTypeName
+        return typeName
+    }
+
+    /// explicit, idiomatic class type name (empty if same as the underlying C type)
+    @inlinable var prefixedIdiomaticClassTypeName: String {
+        let ref = prefixedIdiomaticClassRef
         guard ref == swiftReturnRef else { return ref.type.swiftName }
         guard ref != typeRef else { return "" }
         let typeName = swiftReturnRef.fullTypeName

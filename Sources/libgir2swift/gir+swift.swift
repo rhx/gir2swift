@@ -927,11 +927,11 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         } else {
             rvRef = rv.typeRef
         }
-        let rvSwiftRef = useIdiomaticSwift && !isConstructor ? (useRef ? rv.idiomaticWrappedRef : rv.idiomaticClassRef ) : rvRef
+        let rvSwiftRef = useIdiomaticSwift && !isConstructor ? (useRef ? rv.prefixedIdiomaticWrappedRef : rv.prefixedIdiomaticClassRef ) : rvRef
         let invocationStart = method.cname.swift + "(\(args.map(toSwift).joined(separator: ", "))"
         let call = invocationStart + invocationTail
         let callCode = rvSwiftRef.cast(expression: call, from: rvRef)
-        let rvTypeName = isConstructor || !useRef ? "" : rv.idiomaticWrappedTypeName
+        let rvTypeName = isConstructor || !useRef ? "" : rv.prefixedIdiomaticWrappedTypeName
         let varCode: String
         if isVoid {
             varCode = ""
