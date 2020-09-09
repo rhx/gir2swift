@@ -142,7 +142,7 @@ public extension GIR.CType {
 
     /// Return a prefixed version of the idiomatic class type reference
     @inlinable var prefixedIdiomaticClassRef: TypeReference {
-        prefixed(ref: idiomaticWrappedRef)
+        prefixed(ref: idiomaticClassRef)
     }
 
     /// explicit, idiomatic type name (empty if same as the underlying C type)
