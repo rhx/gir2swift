@@ -122,6 +122,7 @@ public extension GIR.CType {
         let name = type.name
         guard name.firstIndex(of: ".") == nil else { return ref }
         let dottedPrefix = typeRef.type.name.dottedPrefix
+        guard !dottedPrefix.isEmpty else { return ref }
         let prefixedName = (dottedPrefix + name).withNormalisedPrefix
         let swName = (dottedPrefix + type.swiftName).withNormalisedPrefix
         let prefixedType = GIRType(name: prefixedName, swiftName: swName, typeName: type.typeName, ctype: type.ctype, superType: type.parent, isAlias: type.isAlias, conversions: type.conversions)
