@@ -39,6 +39,14 @@ public class GIRType: Hashable {
         return swiftName[s..<e] + "?"
     }
 
+    /// Return an equivalent type from the current namespace
+    @inlinable public var prefixed: GIRType {
+        guard !GIR.dottedPrefix.isEmpty && name.firstIndex(of: ".") == nil else { return self }
+        let prefixed = GIR.dottedPrefix.withNormalisedPrefix + name
+        let swPrefixed = swiftName.firstIndex(of: ".") == nil ? (GIR.dottedPrefix.withNormalisedPrefix + swiftName) : swiftName
+        return GIRType(name: prefixed, swiftName: swPrefixed, typeName: typeName, ctype: ctype, superType: parent, isAlias: isAlias, conversions: conversions)
+    }
+
     /// Designated initialiser for a GIR type
     /// - Parameters:
     ///   - name: The name of the type

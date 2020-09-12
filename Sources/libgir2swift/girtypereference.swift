@@ -27,6 +27,13 @@ public struct TypeReference: Hashable {
     /// Array of pointers (`true` if they are const, `false` if they are mutable)
     public var constPointers = [Bool]()
 
+    /// Return an equivalent type reference from the current namespace
+    @inlinable public var prefixed: TypeReference {
+        let prefixedType = type.prefixed
+        guard prefixedType !== type else { return self }
+        return TypeReference(type: prefixedType, identifier: identifier, isConst: isConst, isOptional: isOptional, isArray: isArray, constPointers: constPointers)
+    }
+
     /// The level of indirection,
     /// with `0` indicating the referenced type itself,
     /// `1` representing a pointer to an instance of the referenced type,
