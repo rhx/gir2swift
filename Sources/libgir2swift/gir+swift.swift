@@ -867,7 +867,7 @@ public func returnCode<T>(_ indentation: String, _ tr: (typeRef: TypeReference, 
 
 
 /// Swift code for calling the underlying function and assigning the raw return value
-public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: String = "ptr", rvVar: String = "rv", doThrow: Bool = true, useIdiomaticSwift: Bool = true, isConstructor: Bool = false, useStruct useRef: Bool = true) -> (GIR.Method) -> String {
+public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: String = "ptr", rvVar: String = "rv", doThrow: Bool = true, isConstructor: Bool = false, useStruct useRef: Bool = true) -> (GIR.Method) -> String {
     var hadInstance = false
     let toSwift: (GIR.Argument) -> String = { arg in
         let name = arg.argumentName
@@ -928,7 +928,7 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
             rvSwiftRef = rv.typeRef
         } else {
             rvRef = rv.typeRef
-            rvSwiftRef = useIdiomaticSwift && !isConstructor ? (useRef ? rv.prefixedIdiomaticWrappedRef : rv.prefixedIdiomaticClassRef ) : rvRef
+            rvSwiftRef = !isConstructor ? (useRef ? rv.prefixedIdiomaticWrappedRef : rv.prefixedIdiomaticClassRef ) : rvRef
         }
         let invocationStart = method.cname.swift + "(\(args.map(toSwift).joined(separator: ", "))"
         let call = invocationStart + invocationTail
