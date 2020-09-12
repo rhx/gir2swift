@@ -171,8 +171,13 @@ public final class GIR {
             func setKnown<T>(_ d: UnsafeMutablePointer<[ String : T]>) -> (String, T) -> Bool {
                 return { (name: String, type: T) -> Bool in
                     guard d.pointee[name] == nil || d.pointee[prefixed(name)] == nil else { return false }
+                    let prefixedName = prefixed(name)
                     d.pointee[name] = type
-                    d.pointee[prefixed(name)] = type
+                    d.pointee[prefixedName] = type
+                    if GIR.namespaceReplacements[prefixedName.dottedPrefix] != nil {
+                        let alternativelyPrefixed = prefixedName.withNormalisedPrefix
+                        d.pointee[alternativelyPrefixed] = type
+                    }
                     return true
                 }
             }
