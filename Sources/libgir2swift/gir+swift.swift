@@ -1313,8 +1313,8 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         release = "// no reference counting for \(ctype.swift), cannot unref"
         releasePtr = ptr
     }
-    let parentName = hasParent ? parentType!.name.withNormalisedPrefix.swift : ""
-    let p = parent.isEmpty ? (hasParent ? "\(parentName), " : "") : "\(parent), "
+    let parentName = parent.isEmpty ? parentType?.name.withNormalisedPrefix.swift ?? "" : parent
+    let p = parentName.isEmpty ? "" : (parentName + ", ")
     let documentation = commentCode(e)
     let subTypeAliases = e.records.map { subTypeAlias(e, $0) }.joined()
     let code1 = "/// The `\(className)` type acts as a\(e.ref == nil ? "n" : " reference-counted") owner of an underlying `\(ctype)` instance.\n" +
