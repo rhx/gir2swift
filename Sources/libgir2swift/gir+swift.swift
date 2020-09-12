@@ -1283,7 +1283,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let cGIRType = GIRType(name: ctype, ctype: ctype)
 //    let ctypeRef = TypeReference.pointer(to: cGIRType)
     let parentType = e.parentType
-    let hasParent = parentType != nil
+    let hasParent = parentType != nil || !parent.isEmpty
     let scode = signalNameCode(indentation: indentation)
     let ncode = signalNameCode(indentation: indentation, prefixes: ("notify", "notify::"))
     let ccode = convenienceConstructorCode(typeRef, indentation: indentation, override: "override ", hasParent: hasParent)(e)
@@ -1313,7 +1313,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         release = "// no reference counting for \(ctype.swift), cannot unref"
         releasePtr = ptr
     }
-    let parentName = hasParent ? parentType!.name.swift : ""
+    let parentName = hasParent ? parentType!.name.withNormalisedPrefix.swift : ""
     let p = parent.isEmpty ? (hasParent ? "\(parentName), " : "") : "\(parent), "
     let documentation = commentCode(e)
     let subTypeAliases = e.records.map { subTypeAlias(e, $0) }.joined()
@@ -1581,7 +1581,7 @@ public func swiftCode(_ funcs: [GIR.Function]) -> (String) -> (GIR.Record) -> St
             }.map { $0.protocolName.withNormalisedPrefix }
             let p = recordProtocolCode(r, parent: parents.joined(separator: ", "), ptr: ptrName)
             let s = recordStructCode(r, ptr: ptrName)
-            let c = recordClassCode(r, parent: cl?.parent ?? "", ptr: ptrName)
+            let c = recordClassCode(r, parent: cl?.parent.withNormalisedPrefix ?? "", ptr: ptrName)
             let e = recordProtocolExtensionCode(funcs, r, ptr: ptrName)
             let code = p + s + c + e
             return code
