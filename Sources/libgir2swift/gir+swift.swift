@@ -126,7 +126,7 @@ public extension String {
     /// swift protocol name for a given string
     /// Name of the Protocol for this record
     @inlinable
-    var protocolName: String { return self + "Protocol" }
+    var protocolName: String { return isEmpty ? self : (self + "Protocol") }
 
     /// Type name without namespace prefix
     @inlinable
@@ -1568,14 +1568,19 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
 /// Swift code representation of a record
 public func swiftCode(_ funcs: [GIR.Function]) -> (String) -> (GIR.Record) -> String {
     return { ptrName in
-        { (e: GIR.Record) -> String in
-            let ctype = e.typeRef.type.ctype
-            let parents = [ e.parentType?.protocolName ?? "", ctype == GIR.gerror ? GIR.errorProtocol.name : "" ].filter { !$0.isEmpty } +
-                e.implements.filter { !(e.parentType?.implements.contains($0) ?? false) }.map { $0.protocolName }
-            let p = recordProtocolCode(e, parent: parents.joined(separator: ", "), ptr: ptrName)
-            let s = recordStructCode(e, ptr: ptrName)
-            let c = recordClassCode(e, parent: "", ptr: ptrName)
-            let e = recordProtocolExtensionCode(funcs, e, ptr: ptrName)
+        { (r: GIR.Record) -> String in
+            let cl = r as? GIR.Class
+            let ctype = r.typeRef.type.ctype
+            let parents = [
+                cl?.parent.protocolName.withNormalisedPrefix ?? r.parentType?.protocolName.withNormalisedPrefix ?? "",
+                ctype == GIR.gerror ? GIR.errorProtocol.name : ""
+            ].filter { !$0.isEmpty } + r.implements.filter {
+                !(r.parentType?.implements.contains($0) ?? false)
+            }.map { $0.protocolName.withNormalisedPrefix }
+            let p = recordProtocolCode(r, parent: parents.joined(separator: ", "), ptr: ptrName)
+            let s = recordStructCode(r, ptr: ptrName)
+            let c = recordClassCode(r, parent: cl?.parent ?? "", ptr: ptrName)
+            let e = recordProtocolExtensionCode(funcs, r, ptr: ptrName)
             let code = p + s + c + e
             return code
         }
