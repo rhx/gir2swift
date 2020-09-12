@@ -922,12 +922,14 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
             suffix = needsNilGuard ? " else { return nil }" : ""
         }
         let rvRef: TypeReference
+        let rvSwiftRef: TypeReference
         if rv.typeRef.indirectionLevel == 0 && rv.isKnownBitfield {
             rvRef = rv.underlyingCRef
+            rvSwiftRef = rv.typeRef
         } else {
             rvRef = rv.typeRef
+            rvSwiftRef = useIdiomaticSwift && !isConstructor ? (useRef ? rv.prefixedIdiomaticWrappedRef : rv.prefixedIdiomaticClassRef ) : rvRef
         }
-        let rvSwiftRef = useIdiomaticSwift && !isConstructor ? (useRef ? rv.prefixedIdiomaticWrappedRef : rv.prefixedIdiomaticClassRef ) : rvRef
         let invocationStart = method.cname.swift + "(\(args.map(toSwift).joined(separator: ", "))"
         let call = invocationStart + invocationTail
         let callCode = rvSwiftRef.cast(expression: call, from: rvRef)

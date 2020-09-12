@@ -31,7 +31,9 @@ public class GIRType: Hashable {
 
     /// Swift name to use for casting: replaces trailing `!` with `?`
     @inlinable public var castName: String {
-        guard swiftName.hasSuffix("!") else { return swiftName.hasSuffix("Ref") ? swiftName : typeName }
+        guard swiftName.hasSuffix("!") else {
+            return swiftName.hasSuffix("Ref") || GIR.knownBitfields[swiftName] != nil ? swiftName : typeName
+        }
         let s = swiftName.startIndex
         let e = swiftName.index(before: swiftName.endIndex)
         return swiftName[s..<e] + "?"

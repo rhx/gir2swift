@@ -103,10 +103,7 @@ public extension GIR.CType {
     /// explicit, idiomatic type reference (struct if pointer to record)
     @inlinable var idiomaticWrappedRef: TypeReference {
         guard let record = knownRecordReference else {
-            guard typeRef.knownIndirectionLevel == 0, let optionSet = knownBitfield else {
-                return swiftReturnRef
-            }
-            return optionSet.typeRef
+            return swiftReturnRef
         }
         return record.structRef
     }
@@ -133,10 +130,7 @@ public extension GIR.CType {
     /// explicit, idiomatic type reference (class if pointer to record)
     @inlinable var idiomaticClassRef: TypeReference {
         guard let record = knownRecordReference else {
-            guard typeRef.knownIndirectionLevel == 0, let optionSet = knownBitfield else {
-                return swiftReturnRef
-            }
-            return optionSet.typeRef
+            return swiftReturnRef
         }
         return record.classRef
     }
@@ -210,8 +204,8 @@ public extension GIR.CType {
             } else {
                 name = unprefixedName
             }
-        } else if pointers == 0, let optionSet = knownBitfield {
-            name = optionSet.typeRef.fullSwiftTypeName
+        } else if pointers == 0 && isKnownBitfield {
+            name = typeName
         } else {
             name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : ref.fullTypeName
         }
@@ -255,6 +249,9 @@ public extension GIR.Argument {
         let swiftRef = swiftParamRef
         let name = swiftRef.fullUnderlyingTypeName.withNormalisedPrefix
         guard typeRef.type === swiftRef.type && (isScalarArray || swiftRef.indirectionLevel > 0) else {
+            guard typeRef.knownIndirectionLevel != 0 || !isKnownBitfield else {
+                return typeRef.type.name.withNormalisedPrefix.swift
+            }
             let optionalName = ((isNullable || isOptional) && !(name.hasSuffix("!") || name.hasSuffix("?"))) ? (name + "!") : name
             return optionalName
         }
@@ -296,10 +293,7 @@ public extension GIR.Argument {
     @inlinable
     var templateTypeName: String {
         guard let record = knownRecordReference else {
-            guard typeRef.knownIndirectionLevel == 0, let optionSet = knownBitfield else {
-                return argumentTypeName
-            }
-            return optionSet.escapedName.swift
+            return argumentTypeName
         }
         let templateName = record.className + "T"
         let typeName = isNullable ? (templateName + "?") : templateName
@@ -311,10 +305,7 @@ public extension GIR.Argument {
     @inlinable
     var defaultRefTemplateTypeName: String {
         guard let record = knownRecordReference else {
-            guard typeRef.knownIndirectionLevel == 0, let optionSet = knownBitfield else {
-                return argumentTypeName
-            }
-            return optionSet.escapedName.withNormalisedPrefix.swift
+            return argumentTypeName
         }
         let templateName: String
         if allowNone {
