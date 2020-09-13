@@ -589,7 +589,7 @@ public final class GIR {
         
         /// return the non-prefixed argument name
         @inlinable
-        public var argumentName: String { return name.swiftQuoted }
+        public var argumentName: String { return name.argumentSplit.arg.camelQuoted }
     }
 
     /// a type alias is just a type with an underlying C type

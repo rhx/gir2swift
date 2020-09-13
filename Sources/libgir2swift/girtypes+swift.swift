@@ -23,9 +23,11 @@ public extension GIR.CType {
     /// return the, potentially prefixed argument name to use in a method declaration
     @inlinable
     var prefixedArgumentName: String {
-        let argName = argumentName
-        let swname = camelQuoted
-        let prefixedname = argName == swname ? argName : (swname + " " + argName)
+        let (prefix, arg) = name.argumentSplit
+        let noPrefix = prefix.isEmpty
+        let argName = arg.camelQuoted
+        let swname = prefix.camelQuoted
+        let prefixedname = noPrefix ? argName : (swname + " " + argName)
         return prefixedname
     }
 

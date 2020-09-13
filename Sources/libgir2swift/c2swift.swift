@@ -499,7 +499,28 @@ public extension String {
 
     /// return the Swift type common for a given C type
     var swiftRepresentationOfCType: String { return unwrappedCTypeWithCount().swift }
+
+    /// return a split argument name based on splittable prefixes such as "for", "from", "in"
+    @inlinable var argumentSplit: (prefix: Substring, arg: Substring) {
+        guard let i = splittablePrefixIndex(from: splittablePrefixes), i != endIndex else { return ("", self[startIndex..<endIndex]) }
+        let e = index(before: i)
+        return (prefix: self[startIndex..<e], arg: self[i..<endIndex])
+    }
+
+    /// Return the splittable prefix
+    /// - Parameter prefixes: the prefixes to check for
+    /// - Returns: The splittable substring index
+    @inlinable func splittablePrefixIndex<S: StringProtocol>(from prefixes: [S]) -> Index? {
+        for prefix in prefixes {
+            if hasPrefix(prefix) {
+                return index(startIndex, offsetBy: prefix.count)
+            }
+        }
+        return nil
+    }
 }
+
+@usableFromInline let splittablePrefixes = [ "after_", "before_", "for_", "from_", "in_", "of_", "with_", "within_" ]
 
 extension Substring {
     /// recursively remove all occurrences of the given substring
@@ -524,6 +545,16 @@ extension Substring {
         }
         return self
     }
+
+    /// return a valid Swift name by quoting a reserved name
+    @usableFromInline var swiftQuoted: String {
+        let s = String(self)
+        guard !reservedNames.contains(s) else { return "`" + self + "`" }
+        return s.swiftIdentifier
+    }
+
+    /// return the Swift camel case name, quoted if necessary
+    @usableFromInline var camelQuoted: String { self.camelCase.swiftQuoted }
 }
 
 /// convert the given C type to a Swift type

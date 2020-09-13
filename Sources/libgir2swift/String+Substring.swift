@@ -129,6 +129,48 @@ public extension String {
     @inlinable var trailingAsteriskCountIgnoringWhitespace: Int { countTrailing(character: "*", in: self, ignoringWhiteSpace: true) }
 }
 
+public extension Substring {
+    /// convert a substring with separators to camel case
+    @inlinable func camelise(_ isSeparator: (String.UTF8View.Element) -> Bool) -> String {
+        let u = utf8
+        var s = u.startIndex
+        let e = u.endIndex
+        var result = String()
+        var i = s
+        while i < e {
+            var j = u.index(after: i)
+            let char = u[i]
+            if isSeparator(char) {
+                if let str = String(u[s..<i]) {
+                    result += str
+                    s = i
+                }
+                i = j
+                guard i < e else { break }
+                j = u.index(after: i)
+                if let u = String(u[i..<j])?.unicodeScalars.first, u.isASCII {
+                    let c = Int32(u.value)
+                    if islower(c) != 0 {
+                        let upper = UnicodeScalar(UInt8(toupper(c)))
+                        result += String(Character(upper))
+                        s = j
+                    } else {
+                        s = i
+                    }
+                } else {
+                    s = i
+                }
+            }
+            i = j
+        }
+        if let str = String(u[s..<e]) { result += str }
+        return result
+    }
+
+    /// convert the receiver to camel case
+    @inlinable var camelCase: String { return camelise { $0 == underscore } }
+}
+
 /// Count the number of specific trailing characters
 /// - Parameters:
 ///   - character: The trailing character to match
