@@ -14,6 +14,6 @@ if [ -e /usr/lib/libxml${XML_VER}.dylib ]; then
 	CCFLAGS="-Xcc -I${TOOLCHAIN}/usr/include -Xcc -I${TOOLCHAIN}/usr/include/libxml2"
 else
 	export PKG_CONFIG_PATH=`echo /usr/local/Cellar/libxml2/*/lib/pkgconfig | tr ' ' '\n' | tail -n1`:${PKG_CONFIG_PATH}
-	LINKFLAGS=`pkg-config --libs libxml-$MAJOR_VER | sed -e 's/  */ /g' -e 's/ *$//' | tr ' ' '\n' | sed -e 's/^/-Xlinker /' -e 's/-Wl,//' | tr '\n' ' '`
-	CCFLAGS=`pkg-config --cflags libxml-$MAJOR_VER | sed -e 's/  */ /g' -e 's/ *$//' | tr ' ' '\n' | sed 's/^/-Xcc /' | tr '\n' ' ' `
+	LINKFLAGS="`pkg-config --libs libxml-$MAJOR_VER | tr ' ' '\n' | sed -e 's/^/-Xlinker /' -e 's/-Wl,//' | tr '\n' ' ' | sed -e 's/-Xcc[ 	]*-Xlinker/-Xlinker/g' -e 's/-Xcc *$//' -e 's/-Xlinker *$//'`"
+	CCFLAGS="`pkg-config --cflags libxml-$MAJOR_VER | tr ' ' '\n' | sed 's/^/-Xcc /' | tr '\n' ' ' | sed -e 's/-Xcc[ 	]*-Xlinker/-Xlinker/g' -e 's/-Xcc *$//' -e 's/-Xlinker *$//'`"
 fi
