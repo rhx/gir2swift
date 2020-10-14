@@ -73,11 +73,10 @@ jobs:
       - name: Test export success
         run: gir2swift
 
-      - name: Build and test gtk
+      - name: Build gtk
         run: |
           cd swiftGtk
           ./build.sh
-          ./test.sh
           cd ..
       
       - name: Archive artifacts
