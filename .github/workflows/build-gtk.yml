@@ -53,11 +53,13 @@ jobs:
 
       - name: Checkout gir2swift
         uses: actions/checkout@v2
-        path: gir2swift
+        with:
+          path: gir2swift
       - name: Checkout testing repo
         uses: actions/checkout@v2
-        repository: rhx/SwiftGtk
-        path: swiftGtk
+        with:
+          repository: rhx/SwiftGtk
+          path: swiftGtk
 
       - name: Build current gir2swift
         run: |
