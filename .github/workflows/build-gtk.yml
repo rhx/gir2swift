@@ -1,0 +1,133 @@
+name: Build Glib
+
+# Dependencies of Glib package
+env:
+  MACOS_BREW: ${{ 'glib glib-networking gobject-introspection pkg-config libxml2' }}
+  UBUNTU_APT: ${{ 'libglib2.0-dev glib-networking gobject-introspection libgirepository1.0-dev libxml2-dev' }}
+
+on:
+  pull_request:
+    branches: [ master ]
+
+# There are multiple jobs. We want to test build on macOS, two latest LTS releases of Ubuntu and on Swift 5.3 and 5.2.
+jobs:
+
+  # # macOS tasks
+  # build-mac-swift-latest:
+  #   runs-on: macos-latest
+  #   steps:
+  #   - name: Checkout
+  #     uses: actions/checkout@v2
+  #   - uses: maxim-lobanov/setup-xcode@v1
+  #     with:
+  #       xcode-version: '12.0'
+  #   - name: Print Swift version to confirm
+  #     run: swift --version
+  #   - name: Fetch dependencies for general repository
+  #     run: brew install $MACOS_BREW
+  #   - name: Build using scripts
+  #     run: ./build.sh
+  # build-mac-swift-5_2:
+  #   runs-on: macos-latest
+  #   steps:
+  #   - name: Checkout
+  #     uses: actions/checkout@v2
+  #   - uses: maxim-lobanov/setup-xcode@v1
+  #     with:
+  #       xcode-version: '11.4'
+  #   - name: Print Swift version to confirm
+  #     run: swift --version
+  #   - name: Fetch dependencies for general repository
+  #     run: brew install $MACOS_BREW
+  #   - name: Build using scripts
+  #     run: ./build.sh
+
+  # Ubuntu 20.04 tasks
+  build-ubuntu-20_04-swift-latest:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Print Swift version to confirm
+        run: swift --version
+      - name: Fetch dependencies for general repository
+        run: sudo apt-get install $UBUNTU_APT
+
+      - name: Checkout gir2swift
+        uses: actions/checkout@v2
+        path: gir2swift
+      - name: Checkout testing repo
+        uses: actions/checkout@v2
+        repository: rhx/SwiftGtk
+        path: swiftGtk
+
+      - name: Build current gir2swift
+        run: |
+          cd gir2swift
+          ./build.sh
+          cd ..
+      - name: Export executable
+        run: |
+          export GIR2SWIFT_PATH=${PWD}/gir2swift/.build/release/
+          export PATH=${PATH}:${GIR2SWIFT_PATH}
+      - name: Test export success
+        run: gir2swift
+
+      - name: Build and test gtk
+        run: |
+          cd swiftGtk
+          ./build.sh
+          ./test.sh
+          cd ..
+      
+      - name: Archive artifacts
+        run: zip -r build.zip gir2swift swiftGtk
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-artifact
+          path: build.zip
+          retention-days: 1
+        
+
+  # build-ubuntu-20_04-swift-5_2:
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - uses: sersoft-gmbh/SwiftyActions@v1
+  #       with:
+  #           platform: ubuntu20.04
+  #           release-version: 5.2.4
+  #     - name: Print Swift version to confirm
+  #       run: swift --version
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Fetch dependencies for general repository
+  #       run: sudo apt-get install $UBUNTU_APT
+  #     - name: Build using scripts
+  #       run: ./build.sh
+
+  # # Ubuntu 18.04 tasks
+  # build-ubuntu-18_04-swift-latest:
+  #   runs-on: ubuntu-18.04
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Print Swift version to confirm
+  #       run: swift --version
+  #     - name: Fetch dependencies for general repository
+  #       run: sudo apt-get install $UBUNTU_APT
+  #     - name: Build using scripts
+  #       run: ./build.sh
+  # build-ubuntu-18_04-swift-5_2:
+  #   runs-on: ubuntu-18.04
+  #   steps:
+  #     - uses: sersoft-gmbh/SwiftyActions@v1
+  #       with:
+  #           platform: ubuntu18.04
+  #           release-version: 5.2.2
+  #     - name: Print Swift version to confirm
+  #       run: swift --version
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Fetch dependencies for general repository
+  #       run: sudo apt-get install $UBUNTU_APT
+  #     - name: Build using scripts
+  #       run: ./build.sh
