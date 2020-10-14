@@ -79,31 +79,76 @@ jobs:
           ./build.sh
           cd ..
       
-      - name: Archive artifacts
-        run: zip -r build.zip gir2swift swiftGtk
+      - name: Remove unneeded files and archive artifacts
+        run: | 
+          cd gir2swift
+          swift package clean
+          cd ../swiftGtk
+          swift package clean
+          cd ..
+          zip -r build.zip gir2swift swiftGtk
       - name: 'Upload Artifact'
         uses: actions/upload-artifact@v2
         with:
-          name: build-artifact
+          name: build-artifact-20.04-5.3
           path: build.zip
           retention-days: 1
         
 
-  # build-ubuntu-20_04-swift-5_2:
-  #   runs-on: ubuntu-20.04
-  #   steps:
-  #     - uses: sersoft-gmbh/SwiftyActions@v1
-  #       with:
-  #           platform: ubuntu20.04
-  #           release-version: 5.2.4
-  #     - name: Print Swift version to confirm
-  #       run: swift --version
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
-  #     - name: Fetch dependencies for general repository
-  #       run: sudo apt-get install $UBUNTU_APT
-  #     - name: Build using scripts
-  #       run: ./build.sh
+  build-ubuntu-20_04-swift-5_2:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: sersoft-gmbh/SwiftyActions@v1
+        with:
+          platform: ubuntu20.04
+          release-version: 5.2.2
+      - name: Print Swift version to confirm
+        run: swift --version
+      - name: Fetch dependencies for general repository
+        run: sudo apt-get install $UBUNTU_APT
+
+      - name: Checkout gir2swift
+        uses: actions/checkout@v2
+        with:
+          path: gir2swift
+      - name: Checkout testing repo
+        uses: actions/checkout@v2
+        with:
+          repository: rhx/SwiftGtk
+          path: swiftGtk
+
+      - name: Build current gir2swift
+        run: |
+          cd gir2swift
+          ./build.sh
+          cd ..
+      - name: Export executable
+        run: |
+          echo "GIR2SWIFT_PATH=${PWD}/gir2swift/.build/release/" >> $GITHUB_ENV
+          echo "${PWD}/gir2swift/.build/release/" >> $GITHUB_PATH
+      - name: Test export success
+        run: gir2swift
+
+      - name: Build gtk
+        run: |
+          cd swiftGtk
+          ./build.sh
+          cd ..
+      
+      - name: Remove unneeded files and archive artifacts
+        run: | 
+          cd gir2swift
+          swift package clean
+          cd ../swiftGtk
+          swift package clean
+          cd ..
+          zip -r build.zip gir2swift swiftGtk
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-artifact-20.04-5.2
+          path: build.zip
+          retention-days: 1
 
   # # Ubuntu 18.04 tasks
   # build-ubuntu-18_04-swift-latest:
