@@ -101,7 +101,7 @@ jobs:
       - uses: sersoft-gmbh/SwiftyActions@v1
         with:
           platform: ubuntu20.04
-          release-version: 5.2.2
+          release-version: 5.2.4
       - name: Print Swift version to confirm
         run: swift --version
       - name: Fetch dependencies for general repository
