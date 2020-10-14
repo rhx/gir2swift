@@ -68,8 +68,8 @@ jobs:
           cd ..
       - name: Export executable
         run: |
-          export GIR2SWIFT_PATH=${PWD}/gir2swift/.build/release/
-          export PATH=${PATH}:${GIR2SWIFT_PATH}
+          echo "${PWD}/gir2swift/.build/release/" >> $GIR2SWIFT_PATH
+          echo "${GIR2SWIFT_PATH}" >> $GITHUB_PATH
       - name: Test export success
         run: gir2swift
 
