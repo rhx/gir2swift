@@ -1,4 +1,4 @@
-name: Build Glib
+name: Build gir2swift and build SwiftGtk
 
 # Dependencies of Glib package
 env:
@@ -83,8 +83,10 @@ jobs:
         run: | 
           cd gir2swift
           swift package clean
+          rm -rf .build/repositories
           cd ../swiftGtk
           swift package clean
+          rm -rf .build/repositories
           cd ..
           zip -r build.zip gir2swift swiftGtk
       - name: 'Upload Artifact'
@@ -135,12 +137,14 @@ jobs:
           ./build.sh
           cd ..
       
-      - name: Remove unneeded files and archive artifacts
+      - name: Remove unneeded files, left over only source codes
         run: | 
           cd gir2swift
           swift package clean
+          rm -rf .build/repositories
           cd ../swiftGtk
           swift package clean
+          rm -rf .build/repositories
           cd ..
           zip -r build.zip gir2swift swiftGtk
       - name: 'Upload Artifact'
