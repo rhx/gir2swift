@@ -1565,7 +1565,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
                                 "gpointer, "
                             }
                             "gpointer"
-                            ") -> Void { "
+                            ") -> Void = { "
                         }
                         String.buildCode {
                             "let holder = Unmanaged<SwiftHandler>.fromOpaque($\(signal.args.count + 1)).takeUnretainedValue()"
