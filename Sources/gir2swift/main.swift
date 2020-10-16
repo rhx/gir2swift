@@ -107,6 +107,7 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
                 for type in types {
                     let convert = ptrconvert(type.ptrName)
                     let code = convert(type)
+                    
                     output += code + "\n\n"
                     name = type.className
                     guard let firstChar = name.first else { continue }

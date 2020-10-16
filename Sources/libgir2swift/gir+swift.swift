@@ -10,29 +10,92 @@ import Foundation
 public extension GIR {
     /// code boiler plate
     var boilerPlate: String {
-        return """
+"""
 
-               extension gboolean {
-                   private init(_ b: Bool) { self = b ? gboolean(1) : gboolean(0) }
-               }
+final class Tmp__ClosureHolder<S,T> {
+    public let call: (S) -> T
+    
+    @inlinable public init(_ closure: @escaping (S) -> T) {
+        self.call = closure
+    }
+}
 
-               func asStringArray(_ param: UnsafePointer<UnsafePointer<CChar>?>) -> [String] {
-                   var ptr = param
-                   var rv = [String]()
-                   while ptr.pointee != nil {
-                       rv.append(String(cString: ptr.pointee!))
-                       ptr = ptr.successor()
-                   }
-                   return rv
-               }
+final class Tmp__DualClosureHolder<S, T, U> {
+    
+    public let call: (S, T) -> U
+    
+    public init(_ closure: @escaping (S, T) -> U) {
+        self.call = closure
+    }
+}
 
-               func asStringArray<T>(_ param: UnsafePointer<UnsafePointer<CChar>?>, release: ((UnsafePointer<T>?) -> Void)) -> [String] {
-                   let rv = asStringArray(param)
-                   param.withMemoryRebound(to: T.self, capacity: rv.count) { release(UnsafePointer<T>($0)) }
-                   return rv
-               }
+final class Tmp__Closure3Holder<S, T, U, V> {
 
-               """
+    public let call: (S, T, U) -> V
+
+    public init(_ closure: @escaping (S, T, U) -> V) {
+        self.call = closure
+    }
+}
+
+final class Tmp__Closure4Holder<S, T, U, V, W> {
+
+    public let call: (S, T, U, V) -> W
+
+    public init(_ closure: @escaping (S, T, U, V) -> W) {
+        self.call = closure
+    }
+}
+
+final class Tmp__Closure5Holder<S, T, U, V, W, X> {
+
+    public let call: (S, T, U, V, W) -> X
+
+    public init(_ closure: @escaping (S, T, U, V, W) -> X) {
+        self.call = closure
+    }
+}
+
+final class Tmp__Closure6Holder<S, T, U, V, W, X, Y> {
+
+    public let call: (S, T, U, V, W, X) -> Y
+
+    public init(_ closure: @escaping (S, T, U, V, W, X) -> Y) {
+        self.call = closure
+    }
+}
+
+final class Tmp__Closure7Holder<S, T, U, V, W, X, Y, Z> {
+
+    public let call: (S, T, U, V, W, X, Y) -> Z
+
+    public init(_ closure: @escaping (S, T, U, V, W, X, Y) -> Z) {
+        self.call = closure
+    }
+}
+
+
+extension gboolean {
+   private init(_ b: Bool) { self = b ? gboolean(1) : gboolean(0) }
+}
+
+func asStringArray(_ param: UnsafePointer<UnsafePointer<CChar>?>) -> [String] {
+   var ptr = param
+   var rv = [String]()
+   while ptr.pointee != nil {
+       rv.append(String(cString: ptr.pointee!))
+       ptr = ptr.successor()
+   }
+   return rv
+}
+
+func asStringArray<T>(_ param: UnsafePointer<UnsafePointer<CChar>?>, release: ((UnsafePointer<T>?) -> Void)) -> [String] {
+   let rv = asStringArray(param)
+   param.withMemoryRebound(to: T.self, capacity: rv.count) { release(UnsafePointer<T>($0)) }
+   return rv
+}
+
+"""
     }
 }
 
@@ -1529,41 +1592,209 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     "@inlinable func set(property: \(className)PropertyName, value v: GLibObject.Value) {\n" + doubleIndentation +
         "g_object_set_property(ptr.assumingMemoryBound(to: GObject.self), property.rawValue, v.value_ptr)\n" + indentation +
     "}\n}\n\n"))
-    let code = code1 + code2 + code3 + (noSignals ? "// MARK: no \(className) signals\n" : "public enum \(className)SignalName: String, SignalNameProtocol {\n") +
-//        "public typealias Class = \(protocolName)\n") +
-        signals.map(scode).joined(separator: "\n") + "\n" +
-        properties.map(ncode).joined(separator: "\n") + "\n" +
-    (noSignals ? "" : ("}\n\npublic extension \(protocolName) {\n" + indentation +
-        "/// Connect a `\(className)SignalName` signal to a given signal handler.\n" + indentation +
-        "/// - Parameter signal: the signal to connect\n" + indentation +
-        "/// - Parameter flags: signal connection flags\n" + indentation +
-        "/// - Parameter handler: signal handler to use\n" + indentation +
-        "/// - Returns: positive handler ID, or a value less than or equal to `0` in case of an error\n" + indentation +
-        "@inlinable @discardableResult func connect(signal kind: \(className)SignalName, flags f: ConnectFlags = ConnectFlags(0), to handler: @escaping GLibObject.SignalHandler) -> Int {\n" + doubleIndentation +
-            "func _connect(signal name: UnsafePointer<gchar>, flags: ConnectFlags, data: GLibObject.SignalHandlerClosureHolder, handler: @convention(c) @escaping (gpointer, gpointer) -> Void) -> Int {\n" + tripleIndentation +
-                "let holder = UnsafeMutableRawPointer(Unmanaged.passRetained(data).toOpaque())\n" + tripleIndentation +
-                "let callback = unsafeBitCast(handler, to: GLibObject.Callback.self)\n" + tripleIndentation +
-                "let rv = GLibObject.ObjectRef(raw: ptr).signalConnectData(detailedSignal: name, cHandler: callback, data: holder, destroyData: {\n" + tripleIndentation + indentation +
-                    "if let swift = UnsafeRawPointer($0) {\n" + tripleIndentation + doubleIndentation +
-                        "let holder = Unmanaged<GLibObject.SignalHandlerClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
-                        "holder.release()\n" + tripleIndentation + indentation +
-                    "}\n" + tripleIndentation + indentation +
-                    "let _ = $1\n" + tripleIndentation +
-                "}, connectFlags: flags)\n" + tripleIndentation +
-                "return rv\n" + doubleIndentation +
-            "}\n" + doubleIndentation +
-            "let rv = _connect(signal: kind.name, flags: f, data: ClosureHolder(handler)) {\n" + tripleIndentation +
-                "let ptr = UnsafeRawPointer($1)\n" + tripleIndentation +
-                "let holder = Unmanaged<GLibObject.SignalHandlerClosureHolder>.fromOpaque(ptr).takeUnretainedValue()\n" + tripleIndentation +
-                "holder.call(())\n" + doubleIndentation +
-            "}\n" + doubleIndentation +
-            "return rv\n" + indentation +
-        "}\n" +
-    "}\n\n"))
-    return code
+    let legacySignals: String
+    var legacySignalExt: String = ""
+    if noSignals {
+        legacySignals = "// MARK: no \(className) signals\n"
+    } else {
+        legacySignals = "public enum \(className)SignalName: String, SignalNameProtocol {\n" +
+                signals.map(scode).joined(separator: "\n") + "\n" +
+                properties.map(ncode).joined(separator: "\n") + "\n"
+        
+        legacySignalExt = ("}\n\npublic extension \(protocolName) {\n" + indentation +
+                "/// Connect a `\(className)SignalName` signal to a given signal handler.\n" + indentation +
+                "/// - Parameter signal: the signal to connect\n" + indentation +
+                "/// - Parameter flags: signal connection flags\n" + indentation +
+                "/// - Parameter handler: signal handler to use\n" + indentation +
+                "/// - Returns: positive handler ID, or a value less than or equal to `0` in case of an error\n" + indentation +
+                "@inlinable @discardableResult func connect(signal kind: \(className)SignalName, flags f: ConnectFlags = ConnectFlags(0), to handler: @escaping GLibObject.SignalHandler) -> Int {\n" + doubleIndentation +
+                    "func _connect(signal name: UnsafePointer<gchar>, flags: ConnectFlags, data: GLibObject.SignalHandlerClosureHolder, handler: @convention(c) @escaping (gpointer, gpointer) -> Void) -> Int {\n" + tripleIndentation +
+                        "let holder = UnsafeMutableRawPointer(Unmanaged.passRetained(data).toOpaque())\n" + tripleIndentation +
+                        "let callback = unsafeBitCast(handler, to: GLibObject.Callback.self)\n" + tripleIndentation +
+                        "let rv = GLibObject.ObjectRef(raw: ptr).signalConnectData(detailedSignal: name, cHandler: callback, data: holder, destroyData: {\n" + tripleIndentation + indentation +
+                            "if let swift = UnsafeRawPointer($0) {\n" + tripleIndentation + doubleIndentation +
+                                "let holder = Unmanaged<GLibObject.SignalHandlerClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
+                                "holder.release()\n" + tripleIndentation + indentation +
+                            "}\n" + tripleIndentation + indentation +
+                            "let _ = $1\n" + tripleIndentation +
+                        "}, connectFlags: flags)\n" + tripleIndentation +
+                        "return rv\n" + doubleIndentation +
+                    "}\n" + doubleIndentation +
+                    "let rv = _connect(signal: kind.name, flags: f, data: ClosureHolder(handler)) {\n" + tripleIndentation +
+                        "let ptr = UnsafeRawPointer($1)\n" + tripleIndentation +
+                        "let holder = Unmanaged<GLibObject.SignalHandlerClosureHolder>.fromOpaque(ptr).takeUnretainedValue()\n" + tripleIndentation +
+                        "holder.call(())\n" + doubleIndentation +
+                    "}\n" + doubleIndentation +
+                    "return rv\n" + indentation +
+                "}\n" +
+        "}\n\n")
+    }
+    let code = code1 + code2 + code3 + legacySignals + legacySignalExt
+    return code + buildSignalExtension(for: e)
 }
 
+func buildSignalExtension(for record: GIR.Record) -> String {
+    if record.kind == "Interface" {
+        return "// MARK: Signals of \(record.kind) named \(record.name.swift) are dropped"
+    }
+    return Code.block(indentation: nil) {
+        if record.signals.isEmpty {
+            "// MARK: no \(record.name.swift) signals"
+        } else {
+            "// MARK: Signals of \(record.kind) named \(record.name.swift)"
+            "public extension \(record.name.swift) {"
+            Code.block {
+                Code.loop(over: record.signals) { signal in
+                    if signal.args.contains(where: { $0.swiftClosureTypeName == "Void" }) { 
+                        "/// Warning: signal \(signal.name) is ignored because of Void argument" 
+                    } else {
 
+                    commentCode(signal)
+                    "/// - Note: This function represents signal `\(signal.name)`"
+                    "/// - Parameter flags: Flags"
+
+                    let returnComment = gtkDoc2SwiftDoc(signal.returns.comment, linePrefix: "").replacingOccurrences(of: "\n", with: " ")
+                    if !returnComment.isEmpty {
+                        "/// - Parameter handler: \(returnComment)"
+                    }
+
+                    "/// - Parameter unownedSelf: Reference to instance of self"
+                    Code.loop(over: signal.args) { argument in
+                        let comment = gtkDoc2SwiftDoc(argument.comment, linePrefix: "").replacingOccurrences(of: "\n", with: " ")
+                        "/// - Parameter \(argument.prefixedArgumentName): \(comment.isEmpty ? "none" : comment)"
+                    }
+
+                    Code.line {
+                        "public func _on\(signal.name.camelSignal.capitalised)("
+                        "flags: ConnectFlags = ConnectFlags(0), "
+                        "handler: @escaping ( _ unownedSelf: \(record.structRef.type.swiftName)"
+                        Code.loop(over: signal.args) { argument in
+                            ", _ \(argument.prefixedArgumentName): \(argument.swiftClosureTypeName)"
+                        }
+                        ") -> "
+                        signal.returns.name.hasPrefix("Unknown") ? "Void" : signal.returns.name
+                        ") -> Int {"
+                    }
+                    Code.block {
+                        "typealias SwiftHandler = \(signalClosureHolderDecl(type: record.structRef.type.swiftName, args: signal.args.map { $0.swiftClosureTypeName }, returnType: signal.returns.name.hasPrefix("Unknown") ? "Void" : signal.returns.name))"
+                        "let swiftHandlerBoxed = Unmanaged.passRetained(SwiftHandler(handler)).toOpaque()"
+                        Code.line {
+                            "let cCallback: @convention(c) ("
+                            "gpointer, "
+                            Code.loop(over: signal.args) { argument in
+                                "\(argument.swiftSignalCClosureName), "
+                            }
+                            "gpointer"
+                            ") -> "
+                            signal.returns.name.hasPrefix("Unknown") ? "Void" : signal.returns.name
+                            " = { "
+                        }
+                        Code.block {
+                            "let holder = Unmanaged<SwiftHandler>.fromOpaque($\(signal.args.count + 1)).takeUnretainedValue()"
+                            Code.line {
+                                "return holder.call(\(record.structRef.type.swiftName)(raw: $0)"
+                                Code.loopEnumerated(over: signal.args) { index, argument in
+                                    ", \(argument.swiftSignalArgumentConversion(at: index + 1))"
+                                }
+                                ")"
+                            }
+                        }
+                        "}"
+                        "let __gCallback__ = unsafeBitCast(cCallback, to: GCallback.self)"
+                        "let rv = signalConnectData("
+                        Code.block {
+                            #"detailedSignal: "\#(signal.name)", "#
+                            "cHandler: __gCallback__, "
+                            "data: swiftHandlerBoxed, "
+                            "destroyData: {"
+                            Code.block {
+                                "if let swift = $0 {"
+                                Code.block {
+                                    "let holder = Unmanaged<SwiftHandler>.fromOpaque(swift)"
+                                    "holder.release()"
+                                }
+                                "}"
+                                "let _ = $1"
+                            }
+                            "}, "
+                            "connectFlags: flags"
+                        }
+                        ")"
+                        "return rv"
+                    }
+                    "}"
+                    "\n"
+                    }
+                }
+            }
+            "}"
+        }
+        "\n\n"
+    }
+}
+
+extension GIR.Argument {
+    var swiftClosureTypeName: String {
+        switch self.knownType {
+        case is GIR.Record, is GIR.Class, is GIR.Interface:
+            return self.typeRef.type.swiftName + "Ref"
+        case is GIR.Bitfield:
+            return "UInt64"
+        default /* GIR.Bitfield, GIR.Enumeration */:
+            return self.callbackArgumentTypeName
+        }
+    }
+    
+    var swiftSignalCClosureName: String {
+        switch self.knownType {
+        case is GIR.Record, is GIR.Class, is GIR.Interface:
+            return "gpointer"
+        case is GIR.Bitfield:
+            return "UInt64"
+        default /* GIR.Bitfield, GIR.Enumeration */:
+            return self.callbackArgumentTypeName
+        }
+    }
+    
+    
+    func swiftSignalArgumentConversion(at index: Int) -> String {
+        switch self.knownType {
+        case is GIR.Record, is GIR.Class, is GIR.Interface:
+            return swiftClosureTypeName + "(raw: $\(index))"
+        default /* GIR.Bitfield, GIR.Enumeration */:
+            return "$\(index)"
+        }
+    }
+}
+
+func signalClosureHolderDecl(type: String, args: [String], returnType: String = "Void") -> String {
+    let holderType: String
+    switch args.count {
+    case 0:
+        holderType = "Tmp__ClosureHolder"
+    case 1:
+        holderType = "Tmp__DualClosureHolder"
+    case 2:
+        holderType = "Tmp__Closure3Holder"
+    case 3:
+        holderType = "Tmp__Closure4Holder"
+    case 4:
+        holderType = "Tmp__Closure5Holder"
+    case 5:
+        holderType = "Tmp__Closure6Holder"
+    case 6:
+        holderType = "Tmp__Closure7Holder"
+    default:
+        fatalError("Argument count \(args.count) exceeds number of allowed arguments (6)")
+    }
+    
+    return holderType
+        + "<\(type), "
+        + args.joined(separator: ", ")
+        + (args.isEmpty ? "" : ", ")
+        + returnType
+        + ">"
+}
 
 // MARK: - Swift code for Record/Class methods
 
