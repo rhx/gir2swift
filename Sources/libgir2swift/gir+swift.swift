@@ -1621,7 +1621,7 @@ func buildSignalExtension(for record: GIR.Record) -> String {
 
                     Code.line {
                         "public func on\(signal.name.camelSignal.capitalised)("
-                        "flags f: ConnectFlags = ConnectFlags(0), "
+                        "flags: ConnectFlags = ConnectFlags(0), "
                         "handler: @escaping ( _ unownedSelf: \(record.structRef.type.swiftName)"
                         Code.loop(over: signal.args) { argument in
                             ", _ \(argument.prefixedArgumentName): \(argument.swiftClosureTypeName)"
