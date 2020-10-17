@@ -12,7 +12,7 @@ public extension GIR {
     var boilerPlate: String {
 """
 
-private final class Tmp__ClosureHolder<S,T> {
+final class Tmp__ClosureHolder<S,T> {
     public let call: (S) -> T
     
     @inlinable public init(_ closure: @escaping (S) -> T) {
@@ -20,7 +20,7 @@ private final class Tmp__ClosureHolder<S,T> {
     }
 }
 
-private final class Tmp__DualClosureHolder<S, T, U> {
+final class Tmp__DualClosureHolder<S, T, U> {
     
     public let call: (S, T) -> U
     
@@ -29,7 +29,7 @@ private final class Tmp__DualClosureHolder<S, T, U> {
     }
 }
 
-private final class Tmp__Closure3Holder<S, T, U, V> {
+final class Tmp__Closure3Holder<S, T, U, V> {
 
     public let call: (S, T, U) -> V
 
@@ -38,7 +38,7 @@ private final class Tmp__Closure3Holder<S, T, U, V> {
     }
 }
 
-private final class Tmp__Closure4Holder<S, T, U, V, W> {
+final class Tmp__Closure4Holder<S, T, U, V, W> {
 
     public let call: (S, T, U, V) -> W
 
@@ -47,7 +47,7 @@ private final class Tmp__Closure4Holder<S, T, U, V, W> {
     }
 }
 
-private final class Tmp__Closure5Holder<S, T, U, V, W, X> {
+final class Tmp__Closure5Holder<S, T, U, V, W, X> {
 
     public let call: (S, T, U, V, W) -> X
 
@@ -56,7 +56,7 @@ private final class Tmp__Closure5Holder<S, T, U, V, W, X> {
     }
 }
 
-private final class Tmp__Closure6Holder<S, T, U, V, W, X, Y> {
+final class Tmp__Closure6Holder<S, T, U, V, W, X, Y> {
 
     public let call: (S, T, U, V, W, X) -> Y
 
@@ -65,7 +65,7 @@ private final class Tmp__Closure6Holder<S, T, U, V, W, X, Y> {
     }
 }
 
-private final class Tmp__Closure7Holder<S, T, U, V, W, X, Y, Z> {
+final class Tmp__Closure7Holder<S, T, U, V, W, X, Y, Z> {
 
     public let call: (S, T, U, V, W, X, Y) -> Z
 
