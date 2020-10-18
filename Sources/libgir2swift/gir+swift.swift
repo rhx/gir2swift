@@ -1355,7 +1355,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let allmethods = e.allMethods
     let factories = allmethods.filter { $0.isFactoryOf(e) }
     let properties = e.allProperties
-    let signals = e.signals
+    let signals = e.allSignals
     let noProperties = properties.isEmpty
     let noSignals = noProperties && signals.isEmpty
     let retain: String
