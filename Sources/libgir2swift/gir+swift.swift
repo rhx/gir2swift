@@ -1592,7 +1592,44 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     "@inlinable func set(property: \(className)PropertyName, value v: GLibObject.Value) {\n" + doubleIndentation +
         "g_object_set_property(ptr.assumingMemoryBound(to: GObject.self), property.rawValue, v.value_ptr)\n" + indentation +
     "}\n}\n\n"))
-    let code = code1 + code2 + code3
+    let legacySignals: String
+    var legacySignalExt: String = ""
+    if noSignals {
+        legacySignals = "// MARK: no \(className) signals\n"
+    } else {
+        legacySignals = "public enum \(className)SignalName: String, SignalNameProtocol {\n" +
+                signals.map(scode).joined(separator: "\n") + "\n" +
+                properties.map(ncode).joined(separator: "\n") + "\n"
+        
+        legacySignalExt = ("}\n\npublic extension \(protocolName) {\n" + indentation +
+                "/// Connect a `\(className)SignalName` signal to a given signal handler.\n" + indentation +
+                "/// - Parameter signal: the signal to connect\n" + indentation +
+                "/// - Parameter flags: signal connection flags\n" + indentation +
+                "/// - Parameter handler: signal handler to use\n" + indentation +
+                "/// - Returns: positive handler ID, or a value less than or equal to `0` in case of an error\n" + indentation +
+                "@inlinable @discardableResult func connect(signal kind: \(className)SignalName, flags f: ConnectFlags = ConnectFlags(0), to handler: @escaping GLibObject.SignalHandler) -> Int {\n" + doubleIndentation +
+                    "func _connect(signal name: UnsafePointer<gchar>, flags: ConnectFlags, data: GLibObject.SignalHandlerClosureHolder, handler: @convention(c) @escaping (gpointer, gpointer) -> Void) -> Int {\n" + tripleIndentation +
+                        "let holder = UnsafeMutableRawPointer(Unmanaged.passRetained(data).toOpaque())\n" + tripleIndentation +
+                        "let callback = unsafeBitCast(handler, to: GLibObject.Callback.self)\n" + tripleIndentation +
+                        "let rv = GLibObject.ObjectRef(raw: ptr).signalConnectData(detailedSignal: name, cHandler: callback, data: holder, destroyData: {\n" + tripleIndentation + indentation +
+                            "if let swift = UnsafeRawPointer($0) {\n" + tripleIndentation + doubleIndentation +
+                                "let holder = Unmanaged<GLibObject.SignalHandlerClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
+                                "holder.release()\n" + tripleIndentation + indentation +
+                            "}\n" + tripleIndentation + indentation +
+                            "let _ = $1\n" + tripleIndentation +
+                        "}, connectFlags: flags)\n" + tripleIndentation +
+                        "return rv\n" + doubleIndentation +
+                    "}\n" + doubleIndentation +
+                    "let rv = _connect(signal: kind.name, flags: f, data: ClosureHolder(handler)) {\n" + tripleIndentation +
+                        "let ptr = UnsafeRawPointer($1)\n" + tripleIndentation +
+                        "let holder = Unmanaged<GLibObject.SignalHandlerClosureHolder>.fromOpaque(ptr).takeUnretainedValue()\n" + tripleIndentation +
+                        "holder.call(())\n" + doubleIndentation +
+                    "}\n" + doubleIndentation +
+                    "return rv\n" + indentation +
+                "}\n" +
+        "}\n\n")
+    }
+    let code = code1 + code2 + code3 + legacySignals + legacySignalExt
     return code + buildSignalExtension(for: e)
 }
 
@@ -1628,7 +1665,7 @@ func buildSignalExtension(for record: GIR.Record) -> String {
                     }
 
                     Code.line {
-                        "public func on\(signal.name.camelSignal.capitalised)("
+                        "public func _on\(signal.name.camelSignal.capitalised)("
                         "flags: ConnectFlags = ConnectFlags(0), "
                         "handler: @escaping ( _ unownedSelf: \(record.structRef.type.swiftName)"
                         Code.loop(over: signal.args) { argument in
@@ -1699,12 +1736,8 @@ func buildSignalExtension(for record: GIR.Record) -> String {
 extension GIR.Argument {
     var swiftClosureTypeName: String {
         switch self.knownType {
-        case let type as GIR.Record:
-            return type.structRef.type.swiftName
-        case let type as GIR.Class:
-            return type.structRef.type.swiftName
-        case let type as GIR.Interface:
-            return type.structRef.type.swiftName
+        case is GIR.Record, is GIR.Class, is GIR.Interface:
+            return self.typeRef.type.swiftName + "Ref"
         case is GIR.Bitfield:
             return "UInt64"
         default /* GIR.Bitfield, GIR.Enumeration */:
