@@ -1597,13 +1597,21 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
 }
 
 func buildSignalExtension(for record: GIR.Record) -> String {
+    if record.kind == "Interface" {
+        return "// MARK: Signals of \(record.kind) named \(record.name.swift) are dropped"
+    }
     return Code.block(indentation: nil) {
         if record.signals.isEmpty {
             "// MARK: no \(record.name.swift) signals"
         } else {
+            "// MARK: Signals of \(record.kind) named \(record.name.swift)"
             "public extension \(record.name.swift) {"
             Code.block {
                 Code.loop(over: record.signals) { signal in
+                    if signal.args.contains(where: { $0.swiftClosureTypeName == "Void" }) { 
+                        "/// Warning: signal \(signal.name) is ignored because of Void argument" 
+                    } else {
+
                     commentCode(signal)
                     "/// - Note: This function represents signal `\(signal.name)`"
                     "/// - Parameter flags: Flags"
@@ -1655,11 +1663,11 @@ func buildSignalExtension(for record: GIR.Record) -> String {
                             }
                         }
                         "}"
-                        "let gCallback = unsafeBitCast(cCallback, to: GCallback.self)"
+                        "let __gCallback__ = unsafeBitCast(cCallback, to: GCallback.self)"
                         "let rv = signalConnectData("
                         Code.block {
                             #"detailedSignal: "\#(signal.name)", "#
-                            "cHandler: gCallback, "
+                            "cHandler: __gCallback__, "
                             "data: swiftHandlerBoxed, "
                             "destroyData: {"
                             Code.block {
@@ -1679,6 +1687,7 @@ func buildSignalExtension(for record: GIR.Record) -> String {
                     }
                     "}"
                     "\n"
+                    }
                 }
             }
             "}"
@@ -1696,8 +1705,10 @@ extension GIR.Argument {
             return type.structRef.type.swiftName
         case let type as GIR.Interface:
             return type.structRef.type.swiftName
+        case is GIR.Bitfield:
+            return "UInt64"
         default /* GIR.Bitfield, GIR.Enumeration */:
-            return self.swiftType
+            return self.callbackArgumentTypeName
         }
     }
     
@@ -1705,8 +1716,10 @@ extension GIR.Argument {
         switch self.knownType {
         case is GIR.Record, is GIR.Class, is GIR.Interface:
             return "gpointer"
+        case is GIR.Bitfield:
+            return "UInt64"
         default /* GIR.Bitfield, GIR.Enumeration */:
-            return self.swiftType
+            return self.callbackArgumentTypeName
         }
     }
     
