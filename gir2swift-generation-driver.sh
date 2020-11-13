@@ -100,13 +100,18 @@ function package_name_arg-path {
 
 # Building process
 TOP_LEVEL_PACKAGE_PATH=$1
+OPTIONAL_ALTERNATIVE_G2S_PATH=$2
 
 cd $TOP_LEVEL_PACKAGE_PATH
 DEPENDENCIES=`swift package show-dependencies --format json`
 GIR_PATH=$(gir_path)
 PROCESSABLE=$(get_processable_dependencies_arg-deps_arg-name "$DEPENDENCIES" "$(package_name)")
-G2S_PATH=$(gir_2_swift_executable_arg-deps "$DEPENDENCIES")
-
+if [ -z "$OPTIONAL_ALTERNATIVE_G2S_PATH" ]
+then
+    G2S_PATH=$(gir_2_swift_executable_arg-deps "$DEPENDENCIES")
+else
+    G2S_PATH=$OPTIONAL_ALTERNATIVE_G2S_PATH=
+fi
 
 for PACKAGE in $PROCESSABLE
 do
