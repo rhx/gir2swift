@@ -25,27 +25,23 @@ jobs:
       - name: Checkout testing repo
         uses: actions/checkout@v2
         with:
-          repository: rhx/SwiftGtk
+          repository: mikolasstuchlik/SwiftGtk
           path: swiftGtk
 
       - name: Build current gir2swift
         run: |
           cd gir2swift
           ./build.sh
+          echo "GIR2SWIFT_PATH=${PWD}/.build/release/gir2swift" >> $GITHUB_ENV
           cd ..
-      - name: Export executable
-        run: |
-          echo "GIR2SWIFT_PATH=${PWD}/gir2swift/.build/release/" >> $GITHUB_ENV
-          echo "${PWD}/gir2swift/.build/release/" >> $GITHUB_PATH
-      - name: Test export success
-        run: gir2swift
 
       - name: Build gtk
         run: |
-          cd swiftGtk
-          ./build.sh
+          cd SwiftGtk
+          swift package update
+          ../gir2swift/gir2swift-generation-driver.sh "$PWD" "$GIR2SWIFT_PATH"
           cd ..
-      
+
       - name: Remove unneeded files and archive artifacts
         run: | 
           cd gir2swift
