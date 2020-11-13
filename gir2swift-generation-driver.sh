@@ -110,7 +110,8 @@ if [ -z "$OPTIONAL_ALTERNATIVE_G2S_PATH" ]
 then
     G2S_PATH=$(gir_2_swift_executable_arg-deps "$DEPENDENCIES")
 else
-    G2S_PATH=$OPTIONAL_ALTERNATIVE_G2S_PATH=
+    G2S_PATH=$OPTIONAL_ALTERNATIVE_G2S_PATH
+    echo "Using custom gir2swift executable at: $G2S_PATH"
 fi
 
 for PACKAGE in $PROCESSABLE
