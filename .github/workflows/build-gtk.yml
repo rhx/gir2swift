@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: mikolasstuchlik/SwiftGtk
-          path: swiftGtk
+          path: SwiftGtk
 
       - name: Build current gir2swift
         run: |
@@ -47,7 +47,7 @@ jobs:
           cd gir2swift
           swift package clean
           rm -rf .build/repositories
-          cd ../swiftGtk
+          cd ../SwiftGtk
           swift package clean
           rm -rf .build/repositories
           cd ..
