@@ -1,0 +1,26 @@
+{
+  "warnings": [
+    {
+      "file": "/Users/s254227/Dropbox/Developer/src/swift/rh/gtk/gir2swift/Sources/libgir2swift/basename.swift",
+      "line": 37,
+      "symbol": "String.baseName",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/s254227/Dropbox/Developer/src/swift/rh/gtk/gir2swift/Sources/libgir2swift/gir+swift.swift",
+      "line": 176,
+      "symbol": "GIR.Method.isDesignatedConstructor",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/s254227/Dropbox/Developer/src/swift/rh/gtk/gir2swift/Sources/libgir2swift/gir.swift",
+      "line": 822,
+      "symbol": "GIR.Argument.instance",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    }
+  ],
+  "source_directory": "/Users/s254227/Dropbox/Developer/src/swift/rh/gtk/gir2swift"
+}
