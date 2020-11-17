@@ -121,7 +121,7 @@ private let typeNames: Set = reservedTypes.union(reversecast.keys)
 /// UnicodeScalars representing whitespaces and newlines
 private let wsnlScalars: Set<UnicodeScalar> = [ " ", "\t", "\n"]
 /// Set of whitespace and newline ASCII/UTF8 codes
-private let wsnl = wsnlScalars.map { UInt8($0.value) }.asSet
+private let wsnl = Set(wsnlScalars.map { UInt8($0.value) })
 
 /// Swift keyword for `true` Boolean values
 private let trueS  = "true"

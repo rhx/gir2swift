@@ -195,7 +195,7 @@ public extension String {
     @inlinable
     var withoutDottedPrefix: String {
         guard !hasPrefix(GIR.dottedPrefix) else {
-            return split(separator: ".").last ?? self
+            return components(separatedBy: ".").last ?? self
         }
         return self
     }
@@ -572,8 +572,8 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
             if instance { hadInstance = true }
             return !instance
         }
-        let templateTypes = arguments.compactMap(\.templateDecl).asSet.sorted().joined(separator: ", ")
-        let nonNullableTemplates = arguments.compactMap(\.nonNullableTemplateDecl).asSet.sorted().joined(separator: ", ")
+        let templateTypes = Set(arguments.compactMap(\.templateDecl)).sorted().joined(separator: ", ")
+        let nonNullableTemplates = Set(arguments.compactMap(\.nonNullableTemplateDecl)).sorted().joined(separator: ", ")
         let defaultArgsCode: String
         if templateTypes.isEmpty || nonNullableTemplates == templateTypes {
             // no need to create default arguments method
@@ -583,7 +583,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
             let params = arguments.map(nullableRefParameterCode)
             let funcParam = params.joined(separator: ", ")
             let fname: String
-            if let firstParamName = params.first?.split(separator: " ").first?.split(separator: ":").first?.capitalised {
+            if let firstParamName = params.first?.components(separatedBy: " ").first?.components(separatedBy: ":").first?.capitalised {
                 fname = name.stringByRemoving(suffix: firstParamName) ?? name
             } else {
                 fname = name
@@ -607,7 +607,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
         let params = arguments.map(templatedParameterCode)
         let funcParam = params.joined(separator: ", ")
         let fname: String
-        if let firstParamName = params.first?.split(separator: " ").first?.split(separator: ":").first?.capitalised {
+        if let firstParamName = params.first?.components(separatedBy: " ").first?.components(separatedBy: ":").first?.capitalised {
             fname = name.stringByRemoving(suffix: firstParamName) ?? name
         } else {
             fname = name
@@ -841,7 +841,7 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
                 // FIXME: as of Swift 5.3 beta, generating static class methods with va_list crashes the compiler
                 return "\n\(indentation)// *** \(name)() is currently not available because \(method.cname) takes a va_list pointer!\n\n"
             }
-            let templateTypes = arguments.compactMap(\.templateDecl).asSet.sorted().joined(separator: ", ")
+            let templateTypes = Set(arguments.compactMap(\.templateDecl)).sorted().joined(separator: ", ")
             let templateDecl = templateTypes.isEmpty ? "" : ("<" + templateTypes + ">")
             let p: String? = consPrefix == firstArgName?.swift ? nil : consPrefix
             let fact = factory ? "static func \(fname.swift + templateDecl)(" : ("\(isOverride ? ovr : conv)init" + templateDecl + "(")
@@ -1631,169 +1631,6 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     }
     let code = code1 + code2 + code3 + legacySignals + legacySignalExt
     return code + buildSignalExtension(for: e)
-}
-
-func buildSignalExtension(for record: GIR.Record) -> String {
-    if record.kind == "Interface" {
-        return "// MARK: Signals of \(record.kind) named \(record.name.swift) are dropped"
-    }
-    return Code.block(indentation: nil) {
-        if record.signals.isEmpty {
-            "// MARK: no \(record.name.swift) signals"
-        } else {
-            "// MARK: Signals of \(record.kind) named \(record.name.swift)"
-            "public extension \(record.name.swift) {"
-            Code.block {
-                Code.loop(over: record.signals) { signal in
-                    if signal.args.contains(where: { $0.swiftClosureTypeName == "Void" }) { 
-                        "/// Warning: signal \(signal.name) is ignored because of Void argument" 
-                    } else {
-
-                    commentCode(signal)
-                    "/// - Note: This function represents signal `\(signal.name)`"
-                    "/// - Parameter flags: Flags"
-
-                    let returnComment = gtkDoc2SwiftDoc(signal.returns.comment, linePrefix: "").replacingOccurrences(of: "\n", with: " ")
-                    if !returnComment.isEmpty {
-                        "/// - Parameter handler: \(returnComment)"
-                    }
-
-                    "/// - Parameter unownedSelf: Reference to instance of self"
-                    Code.loop(over: signal.args) { argument in
-                        let comment = gtkDoc2SwiftDoc(argument.comment, linePrefix: "").replacingOccurrences(of: "\n", with: " ")
-                        "/// - Parameter \(argument.prefixedArgumentName): \(comment.isEmpty ? "none" : comment)"
-                    }
-
-                    Code.line {
-                        "public func _on\(signal.name.camelSignal.capitalised)("
-                        "flags: ConnectFlags = ConnectFlags(0), "
-                        "handler: @escaping ( _ unownedSelf: \(record.structRef.type.swiftName)"
-                        Code.loop(over: signal.args) { argument in
-                            ", _ \(argument.prefixedArgumentName): \(argument.swiftClosureTypeName)"
-                        }
-                        ") -> "
-                        signal.returns.name.hasPrefix("Unknown") ? "Void" : signal.returns.name
-                        ") -> Int {"
-                    }
-                    Code.block {
-                        "typealias SwiftHandler = \(signalClosureHolderDecl(type: record.structRef.type.swiftName, args: signal.args.map { $0.swiftClosureTypeName }, returnType: signal.returns.name.hasPrefix("Unknown") ? "Void" : signal.returns.name))"
-                        "let swiftHandlerBoxed = Unmanaged.passRetained(SwiftHandler(handler)).toOpaque()"
-                        Code.line {
-                            "let cCallback: @convention(c) ("
-                            "gpointer, "
-                            Code.loop(over: signal.args) { argument in
-                                "\(argument.swiftSignalCClosureName), "
-                            }
-                            "gpointer"
-                            ") -> "
-                            signal.returns.name.hasPrefix("Unknown") ? "Void" : signal.returns.name
-                            " = { "
-                        }
-                        Code.block {
-                            "let holder = Unmanaged<SwiftHandler>.fromOpaque($\(signal.args.count + 1)).takeUnretainedValue()"
-                            Code.line {
-                                "return holder.call(\(record.structRef.type.swiftName)(raw: $0)"
-                                Code.loopEnumerated(over: signal.args) { index, argument in
-                                    ", \(argument.swiftSignalArgumentConversion(at: index + 1))"
-                                }
-                                ")"
-                            }
-                        }
-                        "}"
-                        "let __gCallback__ = unsafeBitCast(cCallback, to: GCallback.self)"
-                        "let rv = signalConnectData("
-                        Code.block {
-                            #"detailedSignal: "\#(signal.name)", "#
-                            "cHandler: __gCallback__, "
-                            "data: swiftHandlerBoxed, "
-                            "destroyData: {"
-                            Code.block {
-                                "if let swift = $0 {"
-                                Code.block {
-                                    "let holder = Unmanaged<SwiftHandler>.fromOpaque(swift)"
-                                    "holder.release()"
-                                }
-                                "}"
-                                "let _ = $1"
-                            }
-                            "}, "
-                            "connectFlags: flags"
-                        }
-                        ")"
-                        "return rv"
-                    }
-                    "}"
-                    "\n"
-                    }
-                }
-            }
-            "}"
-        }
-        "\n\n"
-    }
-}
-
-extension GIR.Argument {
-    var swiftClosureTypeName: String {
-        switch self.knownType {
-        case is GIR.Record, is GIR.Class, is GIR.Interface:
-            return self.typeRef.type.swiftName + "Ref"
-        case is GIR.Bitfield:
-            return "UInt64"
-        default /* GIR.Bitfield, GIR.Enumeration */:
-            return self.callbackArgumentTypeName
-        }
-    }
-    
-    var swiftSignalCClosureName: String {
-        switch self.knownType {
-        case is GIR.Record, is GIR.Class, is GIR.Interface:
-            return "gpointer"
-        case is GIR.Bitfield:
-            return "UInt64"
-        default /* GIR.Bitfield, GIR.Enumeration */:
-            return self.callbackArgumentTypeName
-        }
-    }
-    
-    
-    func swiftSignalArgumentConversion(at index: Int) -> String {
-        switch self.knownType {
-        case is GIR.Record, is GIR.Class, is GIR.Interface:
-            return swiftClosureTypeName + "(raw: $\(index))"
-        default /* GIR.Bitfield, GIR.Enumeration */:
-            return "$\(index)"
-        }
-    }
-}
-
-func signalClosureHolderDecl(type: String, args: [String], returnType: String = "Void") -> String {
-    let holderType: String
-    switch args.count {
-    case 0:
-        holderType = "Tmp__ClosureHolder"
-    case 1:
-        holderType = "Tmp__DualClosureHolder"
-    case 2:
-        holderType = "Tmp__Closure3Holder"
-    case 3:
-        holderType = "Tmp__Closure4Holder"
-    case 4:
-        holderType = "Tmp__Closure5Holder"
-    case 5:
-        holderType = "Tmp__Closure6Holder"
-    case 6:
-        holderType = "Tmp__Closure7Holder"
-    default:
-        fatalError("Argument count \(args.count) exceeds number of allowed arguments (6)")
-    }
-    
-    return holderType
-        + "<\(type), "
-        + args.joined(separator: ", ")
-        + (args.isEmpty ? "" : ", ")
-        + returnType
-        + ">"
 }
 
 // MARK: - Swift code for Record/Class methods

@@ -49,7 +49,7 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
     let base = file.baseName
     let node = base.stringByRemoving(suffix: ".gir") ?? base
     let wlfile = node + ".whitelist"
-    if let whitelist = String(contentsOfFile: wlfile, quiet: true)?.lines.asSet {
+    if let whitelist = String(contentsOfFile: wlfile, quiet: true).flatMap({ Set($0.components(separatedBy: "\n")) }) {
         for name in whitelist {
             GIR.knownDataTypes.removeValue(forKey: name)
             GIR.knownRecords.removeValue(forKey: name)
@@ -57,11 +57,11 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
         }
     }
     let escfile = node + ".callbackSuffixes"
-    GIR.callbackSuffixes = String(contentsOfFile: escfile, quiet: true)?.lines ?? [
+    GIR.callbackSuffixes = String(contentsOfFile: escfile, quiet: true)?.components(separatedBy: "\n") ?? [
         "Notify", "Func", "Marshaller", "Callback"
     ]
     let nsfile = node + ".namespaceReplacements"
-    if let ns = String(contentsOfFile: nsfile, quiet: true)?.lines.asSet {
+    if let ns = String(contentsOfFile: nsfile, quiet: true).flatMap({Set($0.components(separatedBy: "\n"))}) {
         for line in ns {
             let keyValues: [Substring]
             let tabbedKeyValues: [Substring] = line.split(separator: "\t")
@@ -223,11 +223,11 @@ func processSpecialCases(_ gir: GIR, forFile node: String) {
     let preamble = node + ".preamble"
     gir.preamble = preamble.contents ?? ""
     let blacklist = node + ".blacklist"
-    GIR.blacklist = blacklist.contents?.lines.asSet ?? []
+    GIR.blacklist = blacklist.contents.flatMap { Set($0.components(separatedBy: "\n")) } ?? []
     let verbatimConstants = node + ".verbatim"
-    GIR.verbatimConstants = verbatimConstants.contents?.lines.asSet ?? []
+    GIR.verbatimConstants = verbatimConstants.contents.flatMap { Set($0.components(separatedBy: "\n")) } ?? []
     let overrideFile = node + ".override"
-    GIR.overrides = overrideFile.contents?.lines.asSet ?? []
+    GIR.overrides = overrideFile.contents.flatMap { Set($0.components(separatedBy: "\n")) } ?? []
 }
 
 let nTypesPrior = GIR.knownTypes.count
