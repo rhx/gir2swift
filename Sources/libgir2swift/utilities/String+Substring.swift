@@ -29,7 +29,7 @@ public extension String {
     /// return the unprefixed version of the string
     /// (e.g. type without namespace)
     @inlinable var unprefixed: String {
-        guard let suffix = components(separatedBy: ".").last else { return self }
+        guard let suffix = split(separator: ".").last else { return self }
         return suffix
     }
 

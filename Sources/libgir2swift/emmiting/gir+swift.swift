@@ -195,7 +195,7 @@ public extension String {
     @inlinable
     var withoutDottedPrefix: String {
         guard !hasPrefix(GIR.dottedPrefix) else {
-            return components(separatedBy: ".").last ?? self
+            return split(separator: ".").last ?? self
         }
         return self
     }
@@ -583,7 +583,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
             let params = arguments.map(nullableRefParameterCode)
             let funcParam = params.joined(separator: ", ")
             let fname: String
-            if let firstParamName = params.first?.components(separatedBy: " ").first?.components(separatedBy: ":").first?.capitalised {
+            if let firstParamName = params.first?.split(separator: " ").first?.split(separator: ":").first?.capitalised {
                 fname = name.stringByRemoving(suffix: firstParamName) ?? name
             } else {
                 fname = name
@@ -607,7 +607,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
         let params = arguments.map(templatedParameterCode)
         let funcParam = params.joined(separator: ", ")
         let fname: String
-        if let firstParamName = params.first?.components(separatedBy: " ").first?.components(separatedBy: ":").first?.capitalised {
+        if let firstParamName = params.first?.split(separator: " ").first?.split(separator: ":").first?.capitalised {
             fname = name.stringByRemoving(suffix: firstParamName) ?? name
         } else {
             fname = name
