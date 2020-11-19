@@ -40,6 +40,7 @@ jobs:
           cd SwiftGtk
           swift package update
           ../gir2swift/gir2swift-generation-driver.sh "$PWD" "$GIR2SWIFT_PATH"
+          swift build
           cd ..
 
       - name: Remove unneeded files and archive artifacts
