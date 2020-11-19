@@ -52,10 +52,11 @@ jobs:
           swift package clean
           rm -rf .build/repositories
           cd ..
-          zip -r build.zip gir2swift swiftGtk
       - name: 'Upload Artifact'
         uses: actions/upload-artifact@v2
         with:
           name: build-artifact-20.04-5.3
-          path: build.zip
+          path: |
+            gir2swift/
+            SwiftGtk/
           retention-days: 1
