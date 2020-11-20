@@ -14,8 +14,10 @@ public extension GIR {
         .map { ($0, constCharPtr) }
     static private let rawStrings = [ utf8Ref, constUTF8Ref, fileRef, constFileRef ]
         .map { ($0, stringRef) }
-    static private let ints = [cintType, clongType, cshortType, cuintType, culongType, cushortType, gintType, gintAlias, glongType, glongAlias, gshortType, gshortAlias, guintType, guintAlias, gulongType, gulongAlias, gushortType, gushortAlias, gsizeType]
+    static private let ints = [cintType, clongType, cshortType, gintType, gintAlias, glongType, glongAlias, gshortType, gshortAlias, gsizeType]
         .map { (TypeReference(type: $0), intRef) }
+    static private let uints = [cuintType, culongType, cushortType, guintType, guintAlias, gulongType, gulongAlias, gushortType, gushortAlias]
+        .map { (TypeReference(type: $0), uintRef) }
     static private let floats = [floatType, doubleType, gfloatType, gdoubleType]
         .map { (TypeReference(type: $0), doubleRef) }
     static private let bools = [gbooleanType, cboolType].map { (TypeReference(type: $0), boolRef) }
@@ -31,7 +33,7 @@ public extension GIR {
     static let swiftFundamentalReplacements = Dictionary(uniqueKeysWithValues: gpointerPointers)
 
     /// Idiomatic swift type replacements for return types
-    static let swiftReturnTypeReplacements = Dictionary(uniqueKeysWithValues: strings + rawStrings + ints + floats + bools + gpointers + gpointerPointers)
+    static let swiftReturnTypeReplacements = Dictionary(uniqueKeysWithValues: strings + rawStrings + ints + uints + floats + bools + gpointers + gpointerPointers)
 
     /// Idiomatic swift type replacements for parameters
     static let swiftParameterTypeReplacements = Dictionary(uniqueKeysWithValues: ints + floats + bools + rawCharPtrs + gpointers + gpointerPointers)

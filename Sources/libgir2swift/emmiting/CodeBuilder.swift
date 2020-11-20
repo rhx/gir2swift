@@ -9,7 +9,7 @@ import Foundation
 
 @_functionBuilder
 class CodeBuilder {
-    private static let ignoringEspace: String = "<%IGNORED%>"
+    static let ignoringEspace: String = "<%IGNORED%>"
     
     static func buildBlock( _ segments: String...) -> String {
         segments.filter { $0 != CodeBuilder.ignoringEspace } .joined(separator: "\n")
@@ -40,10 +40,10 @@ class Code {
     }
     
     static func loop<T>(over items: [T], @CodeBuilder builder: (T)->String) -> String {
-        items.map(builder).joined(separator: "\n")
+        !items.isEmpty ? items.map(builder).joined(separator: "\n") : CodeBuilder.ignoringEspace
     }
     
     static func loopEnumerated<T>(over items: [T], @CodeBuilder builder: (Int, T)->String) -> String {
-        items.enumerated().map(builder).joined(separator: "\n")
+        !items.isEmpty ? items.enumerated().map(builder).joined(separator: "\n") : CodeBuilder.ignoringEspace
     }
 }
