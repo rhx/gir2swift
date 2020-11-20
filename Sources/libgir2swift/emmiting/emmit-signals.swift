@@ -9,39 +9,45 @@ import Foundation
 
 func signalSanityCheck(_ signal: GIR.Signal) -> String? {
 
+    var errors: String?
+    
     if !signal.args.allSatisfy({ $0.ownershipTransfer == .none }) {
-        return "// Warning: signal \(signal.name) is ignored because of argument with owner transfership is not allowed"
+        errors = (errors ?? "") + " (1) argument with owner transfership is not allowed;"
     }
     
     if !signal.args.allSatisfy({ $0.direction == .in }) {
-        return "// Warning: signal \(signal.name) is ignored because of argument out or inout direction is not allowed"
+        errors = (errors ?? "") + " (2)  argument out or inout direction is not allowed;"
     }
 
     if !signal.args.allSatisfy({ $0.typeRef.type.name != "Void" }) {
-        return "// Warning: signal \(signal.name) is ignored because of Void argument is not yet supported"
+        errors = (errors ?? "") + " (3)  Void argument is not yet supported;"
+    }
+    
+    if !signal.args.allSatisfy({ $0.typeRef.type.name != "gpointer" }) {
+        errors = (errors ?? "") + " (3.1)  gpointer argument is not yet supported;"
     }
     
     if !signal.args.allSatisfy({ !($0.knownType is GIR.Alias) }) || (signal.returns.knownType is GIR.Alias) {
-        return "// Warning: signal \(signal.name) is ignored because of Alias argument or return is not yet supported"
+        errors = (errors ?? "") + " (4)  Alias argument or return is not yet supported;"
     }
 
-    if !signal.args.allSatisfy({ !$0.isOptional }) || signal.returns.isOptional {
-        return "// Warning: signal \(signal.name) is ignored because of argument or return optional is not allowed"
+    if signal.returns.isOptional {
+        errors = (errors ?? "") + " (5)  argument or return optional is not allowed;"
     }
 
     if !signal.args.allSatisfy({ !$0.isArray }) || signal.returns.isArray {
-        return "// Warning: signal \(signal.name) is ignored because of argument or return array is not allowed"
+        errors = (errors ?? "") + " (6)  argument or return array is not allowed;"
     }
 
-    if !signal.args.allSatisfy({ $0.isNullable == false }) || signal.returns.isNullable == true {
-        return "// Warning: signal \(signal.name) is ignored because of argument or return nullability is not allowed"
+    if signal.returns.isNullable == true {
+        errors = (errors ?? "") + " (7)  argument or return nullability is not allowed;"
     }
 
     if signal.returns.knownType is GIR.Record {
-        return "// Warning: signal \(signal.name) is ignored because of Record return is not yet supported"
+        errors = (errors ?? "") + " (8)  Record return is not yet supported;"
     }
 
-    return nil
+    return errors.flatMap { "// Warning: signal \(signal.name) is ignored because of" + $0 }
 }
 
 func buildSignalExtension(for record: GIR.Record) -> String {
@@ -52,7 +58,7 @@ func buildSignalExtension(for record: GIR.Record) -> String {
     
     return Code.block(indentation: nil) {
         
-        "// MARK: Signals of \(record.kind) named \(record.name.swift)"
+        "// MARK: Signals of \(record.name.swift)"
 
         Code.block {
             Code.loop(over: record.signals.compactMap({ signalSanityCheck($0) })) { error in
@@ -60,10 +66,10 @@ func buildSignalExtension(for record: GIR.Record) -> String {
             }
         }
 
-        "public extension \(record.name.swift) {"
+        "public extension \(record.protocolName) {"
         Code.block {
             Code.loop(over: record.signals.filter { signalSanityCheck($0) == nil }) { signal in
-                
+
                 commentCode(signal)
                 "/// - Note: This function represents signal `\(signal.name)`"
                 "/// - Parameter flags: Flags"
@@ -194,7 +200,7 @@ private func generateReturnStatement(record: GIR.Record, signal: GIR.Signal) -> 
     switch signal.returns.knownType {
     case is GIR.Record:
         return "return \(signal.returns.typeRef.cast(expression: "output", from: signal.returns.swiftReturnRef))"
-    case let type as GIR.Alias: // use containedTypes
+    case is GIR.Alias: // use containedTypes
         return ""
     case is GIR.Bitfield:
         return "return output.rawValue"
@@ -207,7 +213,6 @@ private func generateReturnStatement(record: GIR.Record, signal: GIR.Signal) -> 
             "buffer.initialize(from: output, count: length)"
             "return buffer"
         }
-        return "return UnsafeMutablePointer<UInt8>(mutating: output)"
     default: // Treat as fundamental (if not a fundamental, report error)
         return "return \(signal.returns.typeRef.cast(expression: "output", from: signal.returns.swiftReturnRef))"
     }
@@ -218,28 +223,28 @@ private extension GIR.Argument {
     func swiftIdiomaticType() -> String {
         switch knownType {
         case is GIR.Record:
-            return typeRef.type.swiftName + "Ref"
-        case let type as GIR.Alias: // use containedTypes
+            return typeRef.type.swiftName + "Ref" + (isNullable ? "?" : "")
+        case is GIR.Alias: // use containedTypes
             return ""
         case is GIR.Bitfield:
-            return self.argumentTypeName
+            return self.argumentTypeName + (isNullable ? "?" : "")
         case is GIR.Enumeration:
-            return self.argumentTypeName
+            return self.argumentTypeName + (isNullable ? "?" : "")
         default: // Treat as fundamental (if not a fundamental, report error)
-            return self.swiftReturnRef.fullSwiftTypeName
+            return self.swiftReturnRef.fullSwiftTypeName + (isNullable ? "?" : "")
         }
     }
     
     func swiftCCompatibleType() -> String {
         switch knownType {
         case is GIR.Record:
-            return GIR.gpointerType.typeName
-        case let type as GIR.Alias: // use containedTypes
+            return GIR.gpointerType.typeName + (isNullable ? "?" : "")
+        case is GIR.Alias: // use containedTypes
             return ""
         case is GIR.Bitfield:
-            return GIR.uint32Type.typeName
+            return GIR.uint32Type.typeName + (isNullable ? "?" : "")
         case is GIR.Enumeration:
-            return GIR.uint32Type.typeName
+            return GIR.uint32Type.typeName + (isNullable ? "?" : "")
         default: // Treat as fundamental (if not a fundamental, report error)
             return self.callbackArgumentTypeName
         }
@@ -248,15 +253,24 @@ private extension GIR.Argument {
     func swiftSignalArgumentConversion(at index: Int) -> String {
         switch knownType {
         case is GIR.Record:
+            if isNullable {
+                return "arg\(index).flatMap(\(typeRef.type.swiftName)Ref.init(raw:))"
+            }
             return typeRef.type.swiftName + "Ref" + "(raw: arg\(index))"
-        case let type as GIR.Alias: // use containedTypes
+        case is GIR.Alias: // use containedTypes
             return ""
         case is GIR.Bitfield:
+            if isNullable {
+                return "arg\(index).flatMap(\(self.argumentTypeName).init(_:))"
+            }
             return self.argumentTypeName + "(arg\(index))"
         case is GIR.Enumeration:
+            if isNullable {
+                return "arg\(index).flatMap(\(self.argumentTypeName).init(_:))"
+            }
             return self.argumentTypeName + "(arg\(index))"
         case nil where swiftReturnRef == GIR.stringRef:
-            return swiftReturnRef.cast(expression: "arg\(index)", from: typeRef) + "!"
+            return swiftReturnRef.cast(expression: "arg\(index)", from: typeRef) + (isNullable ? "" : "!")
         default: // Treat as fundamental (if not a fundamental, report error)
             return swiftReturnRef.cast(expression: "arg\(index)", from: typeRef)
         }
