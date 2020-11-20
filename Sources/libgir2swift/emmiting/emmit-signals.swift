@@ -8,6 +8,15 @@
 import Foundation
 
 func signalSanityCheck(_ signal: GIR.Signal) -> String? {
+
+    if !signal.args.allSatisfy({ $0.ownershipTransfer == .none }) {
+        return "// Warning: signal \(signal.name) is ignored because of argument with owner transfership is not allowed"
+    }
+    
+    if !signal.args.allSatisfy({ $0.direction == .in }) {
+        return "// Warning: signal \(signal.name) is ignored because of argument out or inout direction is not allowed"
+    }
+
     if !signal.args.allSatisfy({ $0.typeRef.type.name != "Void" }) {
         return "// Warning: signal \(signal.name) is ignored because of Void argument is not yet supported"
     }
@@ -15,19 +24,15 @@ func signalSanityCheck(_ signal: GIR.Signal) -> String? {
     if !signal.args.allSatisfy({ !($0.knownType is GIR.Alias) }) || (signal.returns.knownType is GIR.Alias) {
         return "// Warning: signal \(signal.name) is ignored because of Alias argument or return is not yet supported"
     }
-    
-    if !signal.args.allSatisfy({ $0.ownershipTransfer == .none }) || signal.returns.ownershipTransfer != .none {
-        return "// Warning: signal \(signal.name) is ignored because of argument or return with owner transfership is not allowed"
-    }
 
     if !signal.args.allSatisfy({ !$0.isOptional }) || signal.returns.isOptional {
         return "// Warning: signal \(signal.name) is ignored because of argument or return optional is not allowed"
     }
 
-    if !signal.args.allSatisfy({ $0.typeRef.type.name != "utf8" }) || signal.returns.typeRef.type.name == "utf8" {
-        return "// Warning: signal \(signal.name) is ignored because of argument or return String is not allowed"
+    if !signal.args.allSatisfy({ !$0.isArray }) || signal.returns.isArray {
+        return "// Warning: signal \(signal.name) is ignored because of argument or return array is not allowed"
     }
-    
+
     if !signal.args.allSatisfy({ $0.isNullable == false }) || signal.returns.isNullable == true {
         return "// Warning: signal \(signal.name) is ignored because of argument or return nullability is not allowed"
     }
@@ -58,6 +63,7 @@ func buildSignalExtension(for record: GIR.Record) -> String {
         "public extension \(record.name.swift) {"
         Code.block {
             Code.loop(over: record.signals.filter { signalSanityCheck($0) == nil }) { signal in
+                
                 commentCode(signal)
                 "/// - Note: This function represents signal `\(signal.name)`"
                 "/// - Parameter flags: Flags"
@@ -81,45 +87,28 @@ func buildSignalExtension(for record: GIR.Record) -> String {
                 }
                 Code.block {
                     "typealias SwiftHandler = \(signalClosureHolderDecl(record: record, signal: signal))"
-                    "let swiftHandlerBoxed = Unmanaged.passRetained(SwiftHandler(handler)).toOpaque()"
                     Code.line {
                         "let cCallback: "
                         cCallbackDecl(record: record, signal: signal)
                         " = { "
+                        cCallbackArgumentsDecl(record: record, signal: signal)
+                        " in"
                     }
                     Code.block {
-                        "let holder = Unmanaged<SwiftHandler>.fromOpaque($\(signal.args.count + 1)).takeUnretainedValue()"
+                        "let holder = Unmanaged<SwiftHandler>.fromOpaque(userData).takeUnretainedValue()"
                         "let output = holder.\(generaceCCallbackCall(record: record, signal: signal))"
                         generateReturnStatement(record: record, signal: signal)
                     }
                     "}"
-                    "let __gCallback__ = unsafeBitCast(cCallback, to: GCallback.self)"
-                    Code.line {
-                        "let rv = "
-                        if record is GIR.Interface {
-                            "GLibObject.ObjectRef(raw: ptr)."
-                        }
-                        "signalConnectData("
-                    }
+                    "return \(record is GIR.Interface ? "GLibObject.ObjectRef(raw: ptr)." : "" )signalConnectData("
                     Code.block {
                         #"detailedSignal: "\#(signal.name)", "#
-                        "cHandler: __gCallback__, "
-                        "data: swiftHandlerBoxed, "
-                        "destroyData: {"
-                        Code.block {
-                            "if let swift = $0 {"
-                            Code.block {
-                                "let holder = Unmanaged<SwiftHandler>.fromOpaque(swift)"
-                                "holder.release()"
-                            }
-                            "}"
-                            "let _ = $1"
-                        }
-                        "}, "
+                        "cHandler: unsafeBitCast(cCallback, to: GCallback.self), "
+                        "data: Unmanaged.passRetained(SwiftHandler(handler)).toOpaque(), "
+                        "destroyData: { userData, _ in UnsafeRawPointer(userData).flatMap(Unmanaged<SwiftHandler>.fromOpaque(_:))?.release() },"
                         "connectFlags: flags"
                     }
                     ")"
-                    "return rv"
                 }
                 "}"
                 "\n"
@@ -181,9 +170,19 @@ private func cCallbackDecl(record: GIR.Record, signal: GIR.Signal) -> String {
     signal.returns.swiftCCompatibleType()
 }
 
+private func cCallbackArgumentsDecl(record: GIR.Record, signal: GIR.Signal) -> String {
+    Code.line {
+        "unownedSelf"
+        Code.loopEnumerated(over: signal.args) { index, _ in
+            ", arg\(index + 1)"
+        }
+        ", userData"
+    }
+}
+
 private func generaceCCallbackCall(record: GIR.Record, signal: GIR.Signal) -> String {
     Code.line {
-        "call(\(record.structRef.type.swiftName)(raw: $0)"
+        "call(\(record.structRef.type.swiftName)(raw: unownedSelf)"
         Code.loopEnumerated(over: signal.args) { index, argument in
             ", \(argument.swiftSignalArgumentConversion(at: index + 1))"
         }
@@ -201,6 +200,14 @@ private func generateReturnStatement(record: GIR.Record, signal: GIR.Signal) -> 
         return "return output.rawValue"
     case is GIR.Enumeration:
         return "return output.rawValue"
+    case nil where signal.returns.swiftReturnRef == GIR.stringRef && signal.returns.ownershipTransfer == .full:
+        return Code.block {
+            "let length = output.utf8CString.count"
+            "let buffer = UnsafeMutablePointer<gchar>.allocate(capacity: length)"
+            "buffer.initialize(from: output, count: length)"
+            "return buffer"
+        }
+        return "return UnsafeMutablePointer<UInt8>(mutating: output)"
     default: // Treat as fundamental (if not a fundamental, report error)
         return "return \(signal.returns.typeRef.cast(expression: "output", from: signal.returns.swiftReturnRef))"
     }
@@ -219,7 +226,7 @@ private extension GIR.Argument {
         case is GIR.Enumeration:
             return self.argumentTypeName
         default: // Treat as fundamental (if not a fundamental, report error)
-            return self.argumentTypeName
+            return self.swiftReturnRef.fullSwiftTypeName
         }
     }
     
@@ -234,22 +241,24 @@ private extension GIR.Argument {
         case is GIR.Enumeration:
             return GIR.uint32Type.typeName
         default: // Treat as fundamental (if not a fundamental, report error)
-            return self.typeRef.fullTypeName
+            return self.callbackArgumentTypeName
         }
     }
     
     func swiftSignalArgumentConversion(at index: Int) -> String {
         switch knownType {
         case is GIR.Record:
-            return typeRef.type.swiftName + "Ref" + "(raw: $\(index))"
+            return typeRef.type.swiftName + "Ref" + "(raw: arg\(index))"
         case let type as GIR.Alias: // use containedTypes
             return ""
         case is GIR.Bitfield:
-            return self.argumentTypeName + "($\(index))"
+            return self.argumentTypeName + "(arg\(index))"
         case is GIR.Enumeration:
-            return self.argumentTypeName + "($\(index))"
+            return self.argumentTypeName + "(arg\(index))"
+        case nil where swiftReturnRef == GIR.stringRef:
+            return swiftReturnRef.cast(expression: "arg\(index)", from: typeRef) + "!"
         default: // Treat as fundamental (if not a fundamental, report error)
-            return swiftReturnRef.cast(expression: "$\(index)", from: typeRef)
+            return swiftReturnRef.cast(expression: "arg\(index)", from: typeRef)
         }
     }
 }
