@@ -63,6 +63,20 @@ public extension GIR.CType {
         return replacement
     }
 
+    /// Type reference to an idiomatic Swift type used for a Swift signals
+    @inlinable
+    var swiftSignalRef: TypeReference {
+        guard var replacement = GIR.swiftSignalTypeReplacements[typeRef] else {
+            if typeRef.indirectionLevel == 1 && typeRef.type.typeName.hasSuffix("char") && !typeRef.type.typeName.hasSuffix("unichar") {
+                return GIR.stringRef
+            }
+            return typeRef
+        }
+        replacement.isConst = typeRef.isConst
+        replacement.isOptional = typeRef.isOptional
+        return replacement
+    }
+
     /// Return a Swift template declaration for a known record,
     /// or `nil` otherwise
     @inlinable
