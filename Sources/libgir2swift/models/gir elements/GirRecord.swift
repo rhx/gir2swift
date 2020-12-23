@@ -20,7 +20,7 @@ extension GIR {
         /// C language symbol prefix
         public let cprefix: String
         /// C type getter function
-        public let typegetter: String
+        public let typegetter: String?
         /// Methods associated with this record
         public let methods: [Method]
         /// Functions associated with this record
@@ -35,6 +35,8 @@ extension GIR {
         public let signals: [Signal]
         /// Type struct (e.g. class definition), typically nil for records
         public var typeStruct: String?
+        /// Name of type which is defined by this record
+        public var isGTypeStructForType: String?
         /// Name of the function that returns the GType for this record (`nil` if unspecified)
         public var parentType: Record? { return nil }
         /// Root class (`nil` for plain records)
@@ -75,9 +77,10 @@ extension GIR {
         ///   - comment: Documentation text for the constant
         ///   - introspectable: Set to `true` if introspectable
         ///   - deprecated: Documentation on deprecation status if non-`nil`
-        public init(name: String, type: TypeReference, cprefix: String, typegetter: String, methods: [Method] = [], functions: [Function] = [], constructors: [Method] = [], properties: [Property] = [], fields: [Field] = [], signals: [Signal] = [], interfaces: [String] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
+        public init(name: String, type: TypeReference, cprefix: String, typegetter: String? = nil, isGTypeStructForType: String? = nil, methods: [Method] = [], functions: [Function] = [], constructors: [Method] = [], properties: [Property] = [], fields: [Field] = [], signals: [Signal] = [], interfaces: [String] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
             self.cprefix = cprefix
             self.typegetter = typegetter
+            self.isGTypeStructForType = isGTypeStructForType
             self.methods = methods
             self.functions = functions
             self.constructors = constructors
@@ -94,8 +97,16 @@ extension GIR {
         ///   - index: Index within the siblings of the `node`
         public init(node: XMLElement, at index: Int) {
             cprefix = node.attribute(named: "symbol-prefix") ?? ""
-            typegetter = node.attribute(named: "get-type") ?? ""
+
+            // Regarding "intern": https://gitlab.gnome.org/GNOME/gobject-introspection/-/blob/gnome-3-36/girepository/giregisteredtypeinfo.c
+            if let typegetter = node.attribute(named: "get-type"), typegetter != "intern" {
+                self.typegetter = typegetter
+            } else {
+                self.typegetter = nil
+            }
+
             typeStruct = node.attribute(named: "type-struct")
+            isGTypeStructForType = node.attribute(named: "is-gtype-struct-for")
             let children = node.children.lazy
             let funcs = children.filter { $0.name == "function" }
             functions = funcs.enumerated().map { Function(node: $0.1, at: $0.0) }
@@ -236,6 +247,10 @@ extension GIR {
             guard let parent = parentType else { return signals }
             let all = Set(signals).union(Set(parent.allSignals))
             return all.sorted()
+        }
+
+        var classInstanceType: GIR.Record? {
+            self.isGTypeStructForType.flatMap { GIR.knownRecords[$0] }
         }
     }
     

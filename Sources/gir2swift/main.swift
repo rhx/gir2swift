@@ -19,7 +19,7 @@ var verbose = false
 
 /// Print command line usage and exit
 func usage() -> Never  {
-    fputs("Usage: \(CommandLine.arguments[0]) [-v][-s][-m module_boilerplate.swift][-o output_directory]{-p file.gir}[file.gir ...]\n", stderr)
+    fputs("Usage: \(CommandLine.arguments[0]) [-v][-s][-a][-m module_boilerplate.swift][-o output_directory]{-p file.gir}[file.gir ...]\n", stderr)
     exit(EXIT_FAILURE)
 }
 
@@ -45,7 +45,7 @@ func preload_gir(file: String) {
 
 
 /// process a GIR file
-func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirectory: String? = nil, split singleFilePerClass: Bool = false) {
+func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirectory: String? = nil, split singleFilePerClass: Bool = false, generateAll: Bool = false) {
     let base = file.baseName
     let node = base.stringByRemoving(suffix: ".gir") ?? base
     let wlfile = node + ".whitelist"
@@ -76,6 +76,7 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
             GIR.namespaceReplacements[key] = value
         }
     }
+
     load_gir(file) { gir in
         processSpecialCases(gir, forFile: node)
         let blacklist = GIR.blacklist
@@ -193,7 +194,16 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
         }
         background.async(group: queues) {
             let convert = swiftCode(gir.functions)
-            let types = gir.records.filter {!blacklist.contains($0.name)}
+            var types = gir.records.filter {!blacklist.contains($0.name)}
+            if !generateAll {
+                let classes: [String: GIR.Class] = Dictionary(gir.classes.map { ($0.name, $0) }) { lhs, _ in lhs}
+                types.removeAll { record in 
+                        record.name.hasSuffix("Private") &&
+                        record.name.stringByRemoving(suffix: "Private")
+                        .flatMap { classes[$0] }
+                        .flatMap { $0.fields.allSatisfy { field in field.typeRef.type.name != record.name || field.isPrivate } } == true
+                }
+            }
             write(types, using: convert)
         }
         background.async(group: queues) {
@@ -218,6 +228,7 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
 }
 
 
+
 /// process blacklist and verbatim constants information
 func processSpecialCases(_ gir: GIR, forFile node: String) {
     let preamble = node + ".preamble"
@@ -240,7 +251,9 @@ var moduleBoilerPlate: String = ""
 var outputDirectory: String?
 /// `true` to create a single file per type
 var singleFilePerClass = false
-while let (opt, param) = get_opt("m:o:p:sv") {
+/// `true` gir2swift w
+var generateAll = false
+while let (opt, param) = get_opt("m:o:p:sv:a") {
     switch opt {
         case "m":
             guard let bpfile = param,
@@ -256,13 +269,15 @@ while let (opt, param) = get_opt("m:o:p:sv") {
             singleFilePerClass = true
         case "v":
             verbose = true
+        case "a":
+            generateAll = true
         default:
             usage()
     }
 }
 
 for argument in CommandLine.arguments[Int(optind)..<CommandLine.arguments.count] {
-    process_gir(file: argument, boilerPlate: moduleBoilerPlate, to: outputDirectory, split: singleFilePerClass)
+    process_gir(file: argument, boilerPlate: moduleBoilerPlate, to: outputDirectory, split: singleFilePerClass, generateAll: generateAll)
 }
 
 if verbose {

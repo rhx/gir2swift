@@ -1,0 +1,16 @@
+// .vscode/tasks.json
+
+{
+    "version" : "2.0.0",
+    "tasks": [
+        {
+            "label": "Swift Build",
+            "type": "shell",
+            "command": "swift build -Xswiftc -Xfrontend -Xswiftc -serialize-debugging-options",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

@@ -722,7 +722,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
 
 
 /// Swift code for convenience constructors
-public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: String, convenience: String = "", override ovr: String = "", publicDesignation: String = "public ", factory: Bool = false, hasParent: Bool = false, convertName: @escaping (String) -> String = { $0.camelCase }) -> (GIR.Record) -> (GIR.Method) -> String {
+public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: String, convenience: String = "", override ovr: String = "", publicDesignation: String = "public ", factory: Bool = false, hasParent: Bool = false, shouldSink: Bool = false, convertName: @escaping (String) -> String = { $0.camelCase }) -> (GIR.Record) -> (GIR.Method) -> String {
     let isConv = !convenience.isEmpty
     let isExtension = publicDesignation.isEmpty
     let conv =  isConv ? "\(convenience) " : ""
@@ -732,6 +732,7 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
         let call = callCode(doubleIndent, isConstructor: !factory, useStruct: useRef)
         let returnDeclaration = returnDeclarationCode((typeRef: typeRef, record: record, isConstructor: !factory), useStruct: useRef)
         let ret = returnCode(indentation, (typeRef: typeRef, record: record, isConstructor: !factory, isConvenience: isConv), hasParent: hasParent)
+        let isGObject = record.rootType.name == "Object" && record.ref != nil && shouldSink
         return { (method: GIR.Method) -> String in
             let rawName = method.name.isEmpty ? method.cname : method.name
             let rawUTF = rawName.utf8
@@ -782,11 +783,19 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
             let templateDecl = templateTypes.isEmpty ? "" : ("<" + templateTypes + ">")
             let p: String? = consPrefix == firstArgName?.swift ? nil : consPrefix
             let fact = factory ? "static func \(fname.swift + templateDecl)(" : ("\(isOverride ? ovr : conv)init" + templateDecl + "(")
+
+            // https://developer.gnome.org/gobject/stable/gobject-The-Base-Object-Type.html
+            let retainBlock = isGObject == true 
+                ? doubleIndent + "if typeIsA(type: \(factory ? "rv" : "self").type, isAType: InitiallyUnownedClassRef.metatypeReference) { _ = \(factory ? "rv" : "self").refSink() } \n" 
+                : "" 
+
             let code = swiftCode(method, indentation + "\(deprecated)@inlinable \(publicDesignation)\(fact)" +
                 constructorParam(method, prefix: p) + ")\(returnDeclaration(method)) {\n" +
                     doubleIndent + call(method) +
-                    indentation  + ret(method)  + indentation +
-                "}\n", indentation: indentation)
+                    (factory ? retainBlock : "") +
+                    indentation  + ret(method) +
+                    (!factory ? retainBlock : "") +
+                indentation + "}\n", indentation: indentation)
             return code
         }
     }
@@ -1191,11 +1200,13 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
     let factories: [GIR.Method] = (e.constructors + allFunctions).filter { $0.isFactoryOf(e) }
     let subTypeAliases = e.records.map { subTypeAlias(e, $0, publicDesignation: "") }.joined()
     let documentation = commentCode(e)
+    let weakReferencable = e.rootType.name == "Object" && e.ref != nil
+    let weakReferencingProtocol = weakReferencable ? ", GWeakCapturing" : ""
     let code = "/// The `\(structName)` type acts as a lightweight Swift reference to an underlying `\(ctype)` instance.\n" +
     "/// It exposes methods that can operate on this data type through `\(protocolName)` conformance.\n" +
     "/// Use `\(structName)` only as an `unowned` reference to an existing `\(ctype)` instance.\n///\n" +
         documentation + "\n" +
-    "public struct \(structName): \(protocolName) {\n" + indentation +
+    "public struct \(structName): \(protocolName)\(weakReferencingProtocol) {\n" + indentation +
         subTypeAliases + indentation +
         "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
         "/// For type-safe access, use the generated, typed pointer `\(ptr)` property instead.\n" + indentation +
@@ -1234,6 +1245,14 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
         "@inlinable init<T: \(protocolName)>(_ other: T) {\n" + doubleIndentation +
             "ptr = other.ptr\n" + indentation +
         "}\n\n" + indentation +
+        (weakReferencable 
+            ? 
+            (
+                "/// This factory is syntactic sugar for setting weak pointers wrapped in `GWeak<T>`\n" + indentation +
+                "@inlinable static func ref<T: \(protocolName)>(_ other: T) -> \(structName) { \(structName)(other) }\n\n" + indentation
+            )
+            : ""
+        ) +
         "/// Unsafe typed initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
         "@inlinable init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
@@ -1262,7 +1281,6 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
         constructors.map(ccode).joined(separator: "\n") +
         factories.map(fcode).joined(separator: "\n") +
     "}\n\n"
-
     return code
 }
 
@@ -1285,8 +1303,8 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let parentType = e.parentType
     let hasParent = parentType != nil || !parent.isEmpty
     let scode = signalNameCode(indentation: indentation)
-    let ccode = convenienceConstructorCode(typeRef, indentation: indentation, override: "override ", hasParent: hasParent)(e)
-    let fcode = convenienceConstructorCode(typeRef, indentation: indentation, factory: true)(e)
+    let ccode = convenienceConstructorCode(typeRef, indentation: indentation, override: "override ", hasParent: hasParent, shouldSink: true)(e)
+    let fcode = convenienceConstructorCode(typeRef, indentation: indentation, factory: true, shouldSink: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
     let allmethods = e.allMethods
     let factories = allmethods.filter { $0.isFactoryOf(e) }
@@ -1545,9 +1563,18 @@ public func swiftCode(_ funcs: [GIR.Function]) -> (String) -> (GIR.Record) -> St
             }.map { $0.protocolName.withNormalisedPrefix }
             let p = recordProtocolCode(r, parent: parents.joined(separator: ", "), ptr: ptrName)
             let s = recordStructCode(r, ptr: ptrName)
-            let c = recordClassCode(r, parent: cl?.parent.withNormalisedPrefix ?? "", ptr: ptrName)
+
+            // In case we are sure this record represents Class Metatype, return uninstantiable type
+            var instanceTypeDescriptor = ""
+            var classDefinition = ""
+            if let instantiable = r.classInstanceType, instantiable.typegetter != nil {
+                instanceTypeDescriptor = buildClassTypeDeclaration(for: r, classInstance: instantiable) + "\n\n"
+            } else {
+                classDefinition = recordClassCode(r, parent: cl?.parent.withNormalisedPrefix ?? "", ptr: ptrName)
+            }
+            
             let e = recordProtocolExtensionCode(funcs, r, ptr: ptrName)
-            let code = p + s + c + e
+            let code = instanceTypeDescriptor + p + s + classDefinition + e
             return code
         }
     }

@@ -1,10 +1,3 @@
-//
-//  File.swift
-//  
-//
-//  Created by Mikoláš Stuchlík on 14.11.2020.
-//
-
 import Foundation
 
 func signalSanityCheck(_ signal: GIR.Signal) -> [String] {
