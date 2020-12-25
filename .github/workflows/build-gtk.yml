@@ -39,7 +39,7 @@ jobs:
         run: |
           cd SwiftGtk
           swift package update
-          ../gir2swift/gir2swift-generation-driver.sh "$PWD" "$GIR2SWIFT_PATH"
+          ../gir2swift/gir2swift-generation-driver.sh generate "$PWD" "$GIR2SWIFT_PATH"
           swift build -Xswiftc -suppress-warnings
           cd ..
 
