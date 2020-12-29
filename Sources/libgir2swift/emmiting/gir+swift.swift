@@ -1249,7 +1249,7 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
             ? 
             (
                 "/// This factory is syntactic sugar for setting weak pointers wrapped in `GWeak<T>`\n" + indentation +
-                "@inlinable static func ref<T: \(protocolName)>(_ other: T) -> \(structName) { \(structName)(other) }\n\n" + indentation
+                "@inlinable static func unowned<T: \(protocolName)>(_ other: T) -> \(structName) { \(structName)(other) }\n\n" + indentation
             )
             : ""
         ) +

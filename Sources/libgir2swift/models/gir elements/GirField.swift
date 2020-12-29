@@ -17,7 +17,14 @@ extension GIR {
     public class Field: Property {
         public override var kind: String { return "Field" }
 
+        /// This is temporary variable introduced to aid signal generation.
+        public var containedCallback: GIR.Callback?
+
         public init(node: XMLElement, at index: Int) {
+            if let callback = node.children.filter({ $0.name == "callback" }).first {
+                containedCallback = Callback.init(node: callback, at: index)
+            } 
+
             super.init(fromChildrenOf: node, at: index)
         }
     }
