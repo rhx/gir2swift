@@ -195,6 +195,9 @@ func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirect
         background.async(group: queues) {
             let convert = swiftCode(gir.functions)
             var types = gir.records.filter {!blacklist.contains($0.name)}
+            // If `generate all` option was not passed, the driver will not generate records wich are deemed as private.
+            // Currently only Private records are ommited. Private record is a record, which has suffic Record and, class with it's name without work "Private" exists and contains only private references to this type or none at all. 
+            // Since not all private attributes of classes are marked as private in .gir, only those records with non-private attributed references will be generated.
             if !generateAll {
                 let classes: [String: GIR.Class] = Dictionary(gir.classes.map { ($0.name, $0) }) { lhs, _ in lhs}
                 types.removeAll { record in 
@@ -251,7 +254,7 @@ var moduleBoilerPlate: String = ""
 var outputDirectory: String?
 /// `true` to create a single file per type
 var singleFilePerClass = false
-/// `true` gir2swift w
+/// `true` gir2swift will generate wrappers for all types, despite being private or unreachable
 var generateAll = false
 while let (opt, param) = get_opt("m:o:p:sv:a") {
     switch opt {

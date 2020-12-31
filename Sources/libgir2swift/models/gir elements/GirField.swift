@@ -17,7 +17,7 @@ extension GIR {
     public class Field: Property {
         public override var kind: String { return "Field" }
 
-        /// This is temporary variable introduced to aid signal generation.
+        /// Since fileds can constain callbacks, this property was introduced to parse it. Such variable should be stored in `CType.containedType` property. This will result in a lot of logic breaking behavior. Thus this property was introduced, since no code is generated using this property and as for now, servers for experimenting.
         public var containedCallback: GIR.Callback?
 
         public init(node: XMLElement, at index: Int) {

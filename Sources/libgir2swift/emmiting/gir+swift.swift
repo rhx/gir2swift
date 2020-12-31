@@ -784,6 +784,7 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
             let p: String? = consPrefix == firstArgName?.swift ? nil : consPrefix
             let fact = factory ? "static func \(fname.swift + templateDecl)(" : ("\(isOverride ? ovr : conv)init" + templateDecl + "(")
 
+            // This code will consume floating references upon instantiation. This is suggested by the GObject documentation since Floating references are C-specific syntactic sugar.
             // https://developer.gnome.org/gobject/stable/gobject-The-Base-Object-Type.html
             let retainBlock = isGObject == true 
                 ? doubleIndent + "if typeIsA(type: \(factory ? "rv" : "self").type, isAType: InitiallyUnownedClassRef.metatypeReference) { _ = \(factory ? "rv" : "self").refSink() } \n" 
@@ -1200,8 +1201,11 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
     let factories: [GIR.Method] = (e.constructors + allFunctions).filter { $0.isFactoryOf(e) }
     let subTypeAliases = e.records.map { subTypeAlias(e, $0, publicDesignation: "") }.joined()
     let documentation = commentCode(e)
+    
+    // In case wrapped value supports GObject reference countin, add GWeakCapturing protocol conformance to support GWeak<T> requirements.
     let weakReferencable = e.rootType.name == "Object" && e.ref != nil
     let weakReferencingProtocol = weakReferencable ? ", GWeakCapturing" : ""
+    
     let code = "/// The `\(structName)` type acts as a lightweight Swift reference to an underlying `\(ctype)` instance.\n" +
     "/// It exposes methods that can operate on this data type through `\(protocolName)` conformance.\n" +
     "/// Use `\(structName)` only as an `unowned` reference to an existing `\(ctype)` instance.\n///\n" +
@@ -1245,6 +1249,7 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
         "@inlinable init<T: \(protocolName)>(_ other: T) {\n" + doubleIndentation +
             "ptr = other.ptr\n" + indentation +
         "}\n\n" + indentation +
+        // This factory is syntactic sugar for conversion owning class wrapers to unowning structs. This feature was added to introduce better syntax for working with GWeak<T> class.
         (weakReferencable 
             ? 
             (

@@ -63,7 +63,7 @@ public extension GIR.CType {
         return replacement
     }
 
-    /// Type reference to an idiomatic Swift type used for a Swift signals
+    /// Type reference to an idiomatic Swift type used for a Swift signals. This property is copy of `swiftReturnRef` with a different domain. The domain for this property was modified to include support for unsigned ints.
     @inlinable
     var swiftSignalRef: TypeReference {
         guard var replacement = GIR.swiftSignalTypeReplacements[typeRef] else {

@@ -1,5 +1,10 @@
 import Foundation
 
+/// This file contains support for signal generation. Since signals are described differently than other function types in .gir files, custom behavior for type generation and casting is implemented.
+/// Since the custom generation was already needed, focus of this implementation is safety. If a argument lacks a implementation of safe interface generation, whole signal is ommited. All signals are checked before generation and the decision process was summarized into 9 conditions. The future aim is to lift those limitation progressively. Such feature will require better support from the rest of gir2swift.
+
+/// This method verifies, whether signal is fit to be generated.
+/// - Returns: Array of string which contains all the reasons why signal could not be generated. Empty array implies signal is fit to be generated.
 func signalSanityCheck(_ signal: GIR.Signal) -> [String] {
 
     var errors = [String]()
@@ -54,12 +59,15 @@ func buildSignalExtension(for record: GIR.Record) -> String {
         "// MARK: Signals of \(record.name.swift)"
         "public extension \(record.protocolName) {"
         Code.block {
+            // Generation of unavailable signals
             Code.loop(over: record.signals.filter( {!signalSanityCheck($0).isEmpty} )) { signal in
                 buildUnavailable(signal: signal)
             }
+            // Generation of available signals
             Code.loop(over: record.signals.filter( {signalSanityCheck($0).isEmpty } )) { signal in
                 buildAvailableSignal(record: record, signal: signal)
             }
+            // Generation of property obsevers. Property observers have the same delcaration as GObject signal `notify`. This sinal should be available at all times.
             if let notifySignal = GIR.knownRecords["Object"]?.signals.first(where: { $0.name == "notify"}) {
                 Code.loop(over: record.properties) { property in
                     buildSignalForProperty(record: record, property: property, notify: notifySignal)
@@ -73,6 +81,10 @@ func buildSignalExtension(for record: GIR.Record) -> String {
     }
 }
 
+/// Modifies provided signal model to notify about property change.
+/// - Parameter record: Record of the property
+/// - Parameter property: Property which observer will be genrated
+/// - Parameter notify: GObject signal "notify" which is basis for the signal generation.
 private func buildSignalForProperty(record: GIR.Record, property: GIR.Property, notify: GIR.Signal) -> String {
     let propertyNotify = GIR.Signal(
         name: notify.name + "::" + property.name,
@@ -128,6 +140,7 @@ private func buildAvailableSignal(record: GIR.Record, signal: GIR.Signal) -> Str
     "}\n"
 }
 
+/// This function build documentation and name for unavailable signal.
 @CodeBuilder
 private func buildUnavailable(signal: GIR.Signal) -> String {
     addDocumentation(signal: signal)
@@ -136,6 +149,7 @@ private func buildUnavailable(signal: GIR.Signal) -> String {
     #"static var on\#(signal.name.camelSignal.capitalised): String { "\#(signal.name)" }"#
 }
 
+/// This function build Swift closure handler declaration.
 @CodeBuilder
 private func handlerType(record: GIR.Record, signal: GIR.Signal) -> String {
     "@escaping ( _ unownedSelf: \(record.structName)"
@@ -146,6 +160,7 @@ private func handlerType(record: GIR.Record, signal: GIR.Signal) -> String {
     signal.returns.swiftIdiomaticType()
 }
 
+/// This function builds declaration for the typealias holding the reference to the Swift closure handler
 private func signalClosureHolderDecl(record: GIR.Record, signal: GIR.Signal) -> String {
     if signal.args.count > 6 {
         fatalError("Argument count \(signal.args.count) exceeds number of allowed arguments (6)")
@@ -160,6 +175,7 @@ private func signalClosureHolderDecl(record: GIR.Record, signal: GIR.Signal) -> 
     }
 }
 
+/// This function adds Parameter documentation to the signal on top of existing documentation generation.
 @CodeBuilder
 private func addDocumentation(signal: GIR.Signal) -> String {
     { str -> String in str.isEmpty ? CodeBuilder.ignoringEspace : str}(commentCode(signal))
@@ -177,6 +193,7 @@ private func addDocumentation(signal: GIR.Signal) -> String {
     }
 }
 
+/// Returns declaration for c callback.
 @CodeBuilder
 private func cCallbackDecl(record: GIR.Record, signal: GIR.Signal) -> String {
     "@convention(c) ("
@@ -189,6 +206,7 @@ private func cCallbackDecl(record: GIR.Record, signal: GIR.Signal) -> String {
     signal.returns.swiftCCompatibleType()
 }
 
+/// list of names of arguments of c callback
 private func cCallbackArgumentsDecl(record: GIR.Record, signal: GIR.Signal) -> String {
     Code.line {
         "unownedSelf"
@@ -199,6 +217,7 @@ private func cCallbackArgumentsDecl(record: GIR.Record, signal: GIR.Signal) -> S
     }
 }
 
+/// Returns correct call of Swift handler from c callback scope with correct casting.
 private func generaceCCallbackCall(record: GIR.Record, signal: GIR.Signal) -> String {
     Code.line {
         "call(\(record.structRef.type.swiftName)(raw: unownedSelf)"
@@ -209,6 +228,7 @@ private func generaceCCallbackCall(record: GIR.Record, signal: GIR.Signal) -> St
     }
 }
 
+/// Generates correct return statement. This method currently contains implementation of ownership-transfer ability for String.
 private func generateReturnStatement(record: GIR.Record, signal: GIR.Signal) -> String {
     switch signal.returns.knownType {
     case is GIR.Record:
@@ -233,6 +253,7 @@ private func generateReturnStatement(record: GIR.Record, signal: GIR.Signal) -> 
 
 private extension GIR.Argument {
     
+    /// Returns type names for Swift adjusted for the needs of signal generation
     func swiftIdiomaticType() -> String {
         switch knownType {
         case is GIR.Record:
@@ -247,7 +268,8 @@ private extension GIR.Argument {
             return self.swiftSignalRef.fullSwiftTypeName + ((isNullable || isOptional) ? "?" : "")
         }
     }
-    
+
+    /// Returns names name for C adjusted for the needs of signal generation
     func swiftCCompatibleType() -> String {
         switch knownType {
         case is GIR.Record:
@@ -262,7 +284,8 @@ private extension GIR.Argument {
             return self.callbackArgumentTypeName
         }
     }
-    
+
+    /// Generates correct cast from C type/argument to Swift type. This method currently supports optionals.
     func swiftSignalArgumentConversion(at index: Int) -> String {
         switch knownType {
         case is GIR.Record:
