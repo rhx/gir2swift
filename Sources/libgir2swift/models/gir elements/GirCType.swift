@@ -68,7 +68,12 @@ extension GIR {
         ///   - scopeAttr: Key for the attribute to extract the  scope string from
         public init(node: XMLElement, at index: Int, nameAttr: String = "name", privateAttr: String = "private", readableAttr: String = "readable", writableAttr: String = "writable", scopeAttr: String = "scope") {
             containedTypes = node.containedTypes
-            isPrivate  = node.attribute(named: privateAttr) .flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
+            
+            // Since not all "priv" values are marked as private by gi, all properties names "priv" which type has suffic "Private" are deemed as private.
+            let isAttributedPrivate = node.attribute(named: privateAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
+            let isPresumedPrivate = node.attribute(named: nameAttr) == "priv"
+            
+            isPrivate  = isAttributedPrivate || isPresumedPrivate
             isReadable = node.attribute(named: readableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? true
             isWritable = node.attribute(named: writableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
             tupleSize = node.attribute(named: "fixed-size").flatMap(Int.init)
@@ -85,7 +90,12 @@ extension GIR {
         ///   - scopeAttr: Key for the attribute to extract the  scope string from
         public init(fromChildrenOf node: XMLElement, at index: Int, nameAttr: String = "name", privateAttr: String = "private", readableAttr: String = "readable", writableAttr: String = "writable", scopeAttr: String = "scope") {
             let type: TypeReference
-            isPrivate  = node.attribute(named: privateAttr) .flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
+
+            // Since not all "priv" values are marked as private by gi, all properties names "priv" which type has suffic "Private" are deemed as private.
+            let isAttributedPrivate = node.attribute(named: privateAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
+            let isPresumedPrivate = node.attribute(named: nameAttr) == "priv"
+            
+            isPrivate  = isAttributedPrivate || isPresumedPrivate
             isReadable = node.attribute(named: readableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? true
             isWritable = node.attribute(named: writableAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
             scope = node.attribute(named: scopeAttr)
@@ -98,6 +108,7 @@ extension GIR {
                 tupleSize = nil
                 type = GIR.typeOf(node: node)
             }
+                
             super.init(node: node, at: index, with: type, nameAttr: nameAttr)
         }
 
