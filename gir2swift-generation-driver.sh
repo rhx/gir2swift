@@ -221,14 +221,24 @@ c-flags)
         ALL_PROCESSABLE="$TOP_LEVEL_PACKAGE_PATH $PROCESSABLE"
     fi
 
-    FLAGS=""
-    for PACKAGE in $ALL_PROCESSABLE 
+    PKGS=""
+    for PACKAGE in $ALL_PROCESSABLE
     do
         cd $PACKAGE
-        FLAGS="$FLAGS $(package_pkg_config_arguments)"
-    done 
+        PKGS="$PKGS $(package_pkg_config_arguments)"
+    done
 
-    echo `pkg-config --cflags $FLAGS`
+    C=`pkg-config --cflags $PKGS`
+    LINKER=`pkg-config --libs $PKGS`
+
+    # Decorating flags returned from pkg-config with -Xcc and -Xlinker flags
+    DECORC=`for FLAG in ${C}; do echo -n "-Xcc ${FLAG} "; done`
+    DECORL=`for FLAG in ${LINKER}; do echo -n "-Xlinker ${FLAG} "; done`
+
+    # pkg-config on mac generates sequences like "-Wl,-framework,Cocoa" - those sequences are not desirable and refactored into "-framework -Xlinker Cocoa" which with previous decoration results in sequences of "-Xlinker -framework -Xlinker Cocoa"
+    MAC_LINKER_FIXES=`echo "${DECORL}" | sed -e 's/ *-Wl, */ /g' -e 's/,/ -Xlinker /g'`    
+
+    echo "${DECORC} ${MAC_LINKER_FIXES}"
     ;;
 *)
     echo "Gir 2 swift code generation tool"
