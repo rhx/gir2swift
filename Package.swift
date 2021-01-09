@@ -11,7 +11,7 @@ let package = Package(
         .executable(name: pkgName, targets: [pkgName]),
         .library(name: libTarget, targets: [libTarget]),
     ],
-    dependencies: [ .package(url: "https://github.com/rhx/SwiftLibXML.git", .branch("master")) ],
+    dependencies: [ .package(url: "https://github.com/rhx/SwiftLibXML.git", .branch("main")) ],
     targets: [
         .target(name: pkgName, dependencies: [.init(stringLiteral: libTarget)]),
         .target(name: libTarget, dependencies: ["SwiftLibXML"]),
