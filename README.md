@@ -185,3 +185,8 @@ this probably means that your Swift toolchain is too old.  Make sure the latest 
 
 	sudo xcode-select -s /Applications/Xcode.app
 	xcode-select --install
+
+### Known Issues
+
+ * The current build system does not support directory paths with spaces (e.g. the `My Drive` directory used by Google Drive File Stream).  As a workaround, use the old build scripts, e.g. `./build.sh` instead of `run-gir2swift.sh` and `swift build` to build a package.
+ * BUILD_DIR is not suported in the current build system.
