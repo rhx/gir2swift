@@ -1,0 +1,59 @@
+name: macOS 11 build
+
+# Dependencies of this package
+env:
+  MACOS_BREW: ${{ 'libxml2 gobject-introspection' }}
+
+on:
+  push:
+    branches:
+      - main
+      - development
+  pull_request:
+    branches:
+      - main
+      - development
+
+jobs:
+  # macOS tasks
+  build-mac-swift-latest:
+    runs-on: macos-11.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '12.3'
+
+      - name: Print Swift version to confirm
+        run: swift --version
+
+      - name: Fetch dependencies for general repository
+        run: brew install $MACOS_BREW
+
+      - name: Checkout gir2swift
+        uses: actions/checkout@v2
+        with:
+          path: gir2swift
+
+      - name: Build current gir2swift
+        run: |
+          cd gir2swift
+          ./build.sh
+          echo "GIR2SWIFT_PATH=${PWD}/.build/release/gir2swift" >> $GITHUB_ENV
+          cd ..
+
+      - name: Remove unneeded files and archive artifacts
+        run: | 
+          cd gir2swift
+          swift package clean
+          rm -rf .build/repositories
+          cd ..
+
+      - name: 'Upload Artefact'
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-artifact-macos
+          path: |
+            gir2swift/
+          retention-days: 1

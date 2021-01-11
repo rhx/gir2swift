@@ -1,0 +1,53 @@
+name: Ubuntu 18.04 build
+
+# Dependencies of this package
+env:
+  UBUNTU_APT: ${{ 'libxml2-dev gobject-introspection libgirepository1.0-dev' }}
+
+on:
+  push:
+    branches:
+      - main
+      - development
+  pull_request:
+    branches:
+      - main
+      - development
+
+jobs:
+  # Ubuntu 18.04 tasks
+  build-ubuntu-18_04-swift-latest:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Print Swift version to confirm
+        run: swift --version
+
+      - name: Fetch dependencies for general repository
+        run: sudo apt-get install $UBUNTU_APT
+
+      - name: Checkout gir2swift
+        uses: actions/checkout@v2
+        with:
+          path: gir2swift
+
+      - name: Build current gir2swift
+        run: |
+          cd gir2swift
+          ./build.sh
+          echo "GIR2SWIFT_PATH=${PWD}/.build/release/gir2swift" >> $GITHUB_ENV
+          cd ..
+
+      - name: Remove unneeded files and archive artifacts
+        run: |
+          cd gir2swift
+          swift package clean
+          rm -rf .build/repositories
+          cd ..
+
+      - name: 'Upload Artefact'
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-artifact-18.04-5.3
+          path: |
+            gir2swift/
+          retention-days: 1
