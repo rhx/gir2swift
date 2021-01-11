@@ -13,6 +13,24 @@ To start a project that uses Swift wrappers around low-level libraries that util
 
 ## What is new?
 
+Version 12 pulls in [PR#10](https://github.com/rhx/gir2swift/pull/10), addressing several issues:
+
+- Improvements to the Build experience and LSP [rhx/SwiftGtk#34](https://github.com/rhx/SwiftGtk/issues/34)
+- Fix issues with LLDB [rhx/SwiftGtk#39](https://github.com/rhx/SwiftGtk/issues/39)
+- **Controversial:** Implicitly marks all declarations named "priv" as if they had attribute `private=1`
+- Prevents all "Private" records from generating unless generated in their instance record
+  - `-a` option generates all records
+- Introduces CI
+- For Class metadata types no longer generates class wrappers. Ref structs now contain static method which returnes the GType of the class and instance of the Class metatype wrapped in the Ref struct.
+- Adds final class GWeak<T> where T could be any Ref struct of a type which supports ARC. This class is a property wrapper which contains weak reference to any instance of T. This is especially beneficial for capture lists.
+- Adds support for weak observation.
+- Constructors and factories of GObjectInitiallyUnowned classes now consume floating reference upon initialisation as advised by [the GObject documentation](https://developer.gnome.org/gobject/stable/gobject-The-Base-Object-Type.html)
+
+Partially implemented:
+- Typed signal generation. Issues shown in [rhx/SwiftGtk#35](https://github.com/rhx/SwiftGtk/issues/35) hat remain to be addressed are listed here: [mikolasstuchlik/gir2swift#2](https://github.com/mikolasstuchlik/gir2swift/pull/2).
+
+### Other Notable changes
+
 Version 11 introduces a new type system into `gir2swift`,
 to ensure it has a representation of the underlying types.
 This is necessary for Swift 5.3 onwards, which requires more stringent casts.
@@ -20,8 +38,6 @@ As a consequence, accessors can accept and return idiomatic Swift rather than
 underlying types or pointers.
 This means that a lot of the changes will be source-breaking for code that
 was compiled against libraries built with earlier versions of `gir2swift`.
-
-### Notable changes
 
  * Parameters use idiomatic Swift names (e.g. camel case instead of snake case, splitting out of "for", "from", etc.)
  * Requires Swift 5.2 or later
@@ -115,13 +131,13 @@ Normally, `gir2swift` tries to translate constants from C to Swift, as per the d
 To build, you need at least Swift 5.2 (Swift 5.3 onwards should work fine), download from https://swift.org/download/ -- if you are using macOS, make sure you have the command line tools installed as well).  Test that your compiler works using `swift --version`, which should give you something like
 
 	$ swift --version
-	Apple Swift version 5.2.4 (swiftlang-1103.0.32.9 clang-1103.0.32.53)
-      Target: x86_64-apple-darwin19.6.0
+	Apple Swift version 5.3.2 (swiftlang-1200.0.45 clang-1200.0.32.28)
+    Target: x86_64-apple-darwin20.3.0
 
 on macOS, or on Linux you should get something like:
 
 	$ swift --version
-	Swift version 5.2.4 (swift-5.2.4-RELEASE)
+	Swift version 5.3.2 (swift-5.3.2-RELEASE)
 	Target: x86_64-unknown-linux-gnu
 
 ### LibXML 2.9.4 or higher
@@ -140,7 +156,7 @@ On current versions of macOS, you need to install `libxml2` using HomeBrew (the 
 
 ##### Ubuntu
 
-On Ubuntu 16.04 and 18.04, you can use the gtk that comes with the distribution.  Just install with the `apt` package manager:
+On Ubuntu 16.04, 18.04 and 20.04, you can use the gtk that comes with the distribution.  Just install with the `apt` package manager:
 
 	sudo apt update
 	sudo apt install libxml2-dev gobject-introspection libgirepository1.0-dev
@@ -185,3 +201,8 @@ this probably means that your Swift toolchain is too old.  Make sure the latest 
 
 	sudo xcode-select -s /Applications/Xcode.app
 	xcode-select --install
+
+### Known Issues
+
+ * The new build system scripts do not support directory paths with spaces (e.g. the `My Drive` directory used by Google Drive File Stream).  As a workaround, use the old build scripts, e.g. `./build.sh` instead of `run-gir2swift.sh` and `swift build` to build a package.
+ * BUILD_DIR is not suported in the new build system.

@@ -10,29 +10,29 @@ import Foundation
 public extension GIR {
     /// code boiler plate
     var boilerPlate: String {
-        return """
+"""
 
-               extension gboolean {
-                   private init(_ b: Bool) { self = b ? gboolean(1) : gboolean(0) }
-               }
+extension gboolean {
+   private init(_ b: Bool) { self = b ? gboolean(1) : gboolean(0) }
+}
 
-               func asStringArray(_ param: UnsafePointer<UnsafePointer<CChar>?>) -> [String] {
-                   var ptr = param
-                   var rv = [String]()
-                   while ptr.pointee != nil {
-                       rv.append(String(cString: ptr.pointee!))
-                       ptr = ptr.successor()
-                   }
-                   return rv
-               }
+func asStringArray(_ param: UnsafePointer<UnsafePointer<CChar>?>) -> [String] {
+   var ptr = param
+   var rv = [String]()
+   while ptr.pointee != nil {
+       rv.append(String(cString: ptr.pointee!))
+       ptr = ptr.successor()
+   }
+   return rv
+}
 
-               func asStringArray<T>(_ param: UnsafePointer<UnsafePointer<CChar>?>, release: ((UnsafePointer<T>?) -> Void)) -> [String] {
-                   let rv = asStringArray(param)
-                   param.withMemoryRebound(to: T.self, capacity: rv.count) { release(UnsafePointer<T>($0)) }
-                   return rv
-               }
+func asStringArray<T>(_ param: UnsafePointer<UnsafePointer<CChar>?>, release: ((UnsafePointer<T>?) -> Void)) -> [String] {
+   let rv = asStringArray(param)
+   param.withMemoryRebound(to: T.self, capacity: rv.count) { release(UnsafePointer<T>($0)) }
+   return rv
+}
 
-               """
+"""
     }
 }
 
@@ -509,8 +509,8 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
             if instance { hadInstance = true }
             return !instance
         }
-        let templateTypes = arguments.compactMap(\.templateDecl).asSet.sorted().joined(separator: ", ")
-        let nonNullableTemplates = arguments.compactMap(\.nonNullableTemplateDecl).asSet.sorted().joined(separator: ", ")
+        let templateTypes = Set(arguments.compactMap(\.templateDecl)).sorted().joined(separator: ", ")
+        let nonNullableTemplates = Set(arguments.compactMap(\.nonNullableTemplateDecl)).sorted().joined(separator: ", ")
         let defaultArgsCode: String
         if templateTypes.isEmpty || nonNullableTemplates == templateTypes {
             // no need to create default arguments method
@@ -722,7 +722,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
 
 
 /// Swift code for convenience constructors
-public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: String, convenience: String = "", override ovr: String = "", publicDesignation: String = "public ", factory: Bool = false, hasParent: Bool = false, convertName: @escaping (String) -> String = { $0.camelCase }) -> (GIR.Record) -> (GIR.Method) -> String {
+public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: String, convenience: String = "", override ovr: String = "", publicDesignation: String = "public ", factory: Bool = false, hasParent: Bool = false, shouldSink: Bool = false, convertName: @escaping (String) -> String = { $0.camelCase }) -> (GIR.Record) -> (GIR.Method) -> String {
     let isConv = !convenience.isEmpty
     let isExtension = publicDesignation.isEmpty
     let conv =  isConv ? "\(convenience) " : ""
@@ -732,6 +732,7 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
         let call = callCode(doubleIndent, isConstructor: !factory, useStruct: useRef)
         let returnDeclaration = returnDeclarationCode((typeRef: typeRef, record: record, isConstructor: !factory), useStruct: useRef)
         let ret = returnCode(indentation, (typeRef: typeRef, record: record, isConstructor: !factory, isConvenience: isConv), hasParent: hasParent)
+        let isGObject = record.rootType.name == "Object" && record.ref != nil && shouldSink
         return { (method: GIR.Method) -> String in
             let rawName = method.name.isEmpty ? method.cname : method.name
             let rawUTF = rawName.utf8
@@ -778,15 +779,24 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
                 // FIXME: as of Swift 5.3 beta, generating static class methods with va_list crashes the compiler
                 return "\n\(indentation)// *** \(name)() is currently not available because \(method.cname) takes a va_list pointer!\n\n"
             }
-            let templateTypes = arguments.compactMap(\.templateDecl).asSet.sorted().joined(separator: ", ")
+            let templateTypes = Set(arguments.compactMap(\.templateDecl)).sorted().joined(separator: ", ")
             let templateDecl = templateTypes.isEmpty ? "" : ("<" + templateTypes + ">")
             let p: String? = consPrefix == firstArgName?.swift ? nil : consPrefix
             let fact = factory ? "static func \(fname.swift + templateDecl)(" : ("\(isOverride ? ovr : conv)init" + templateDecl + "(")
+
+            // This code will consume floating references upon instantiation. This is suggested by the GObject documentation since Floating references are C-specific syntactic sugar.
+            // https://developer.gnome.org/gobject/stable/gobject-The-Base-Object-Type.html
+            let retainBlock = isGObject == true 
+                ? doubleIndent + "if typeIsA(type: \(factory ? "rv" : "self").type, isAType: InitiallyUnownedClassRef.metatypeReference) { _ = \(factory ? "rv" : "self").refSink() } \n" 
+                : "" 
+
             let code = swiftCode(method, indentation + "\(deprecated)@inlinable \(publicDesignation)\(fact)" +
                 constructorParam(method, prefix: p) + ")\(returnDeclaration(method)) {\n" +
                     doubleIndent + call(method) +
-                    indentation  + ret(method)  + indentation +
-                "}\n", indentation: indentation)
+                    (factory ? retainBlock : "") +
+                    indentation  + ret(method) +
+                    (!factory ? retainBlock : "") +
+                indentation + "}\n", indentation: indentation)
             return code
         }
     }
@@ -1191,11 +1201,16 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
     let factories: [GIR.Method] = (e.constructors + allFunctions).filter { $0.isFactoryOf(e) }
     let subTypeAliases = e.records.map { subTypeAlias(e, $0, publicDesignation: "") }.joined()
     let documentation = commentCode(e)
+    
+    // In case wrapped value supports GObject reference countin, add GWeakCapturing protocol conformance to support GWeak<T> requirements.
+    let weakReferencable = e.rootType.name == "Object" && e.ref != nil
+    let weakReferencingProtocol = weakReferencable ? ", GWeakCapturing" : ""
+    
     let code = "/// The `\(structName)` type acts as a lightweight Swift reference to an underlying `\(ctype)` instance.\n" +
     "/// It exposes methods that can operate on this data type through `\(protocolName)` conformance.\n" +
     "/// Use `\(structName)` only as an `unowned` reference to an existing `\(ctype)` instance.\n///\n" +
         documentation + "\n" +
-    "public struct \(structName): \(protocolName) {\n" + indentation +
+    "public struct \(structName): \(protocolName)\(weakReferencingProtocol) {\n" + indentation +
         subTypeAliases + indentation +
         "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
         "/// For type-safe access, use the generated, typed pointer `\(ptr)` property instead.\n" + indentation +
@@ -1234,6 +1249,15 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
         "@inlinable init<T: \(protocolName)>(_ other: T) {\n" + doubleIndentation +
             "ptr = other.ptr\n" + indentation +
         "}\n\n" + indentation +
+        // This factory is syntactic sugar for conversion owning class wrapers to unowning structs. This feature was added to introduce better syntax for working with GWeak<T> class.
+        (weakReferencable 
+            ? 
+            (
+                "/// This factory is syntactic sugar for setting weak pointers wrapped in `GWeak<T>`\n" + indentation +
+                "@inlinable static func unowned<T: \(protocolName)>(_ other: T) -> \(structName) { \(structName)(other) }\n\n" + indentation
+            )
+            : ""
+        ) +
         "/// Unsafe typed initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
         "@inlinable init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
@@ -1262,7 +1286,6 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
         constructors.map(ccode).joined(separator: "\n") +
         factories.map(fcode).joined(separator: "\n") +
     "}\n\n"
-
     return code
 }
 
@@ -1285,16 +1308,13 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let parentType = e.parentType
     let hasParent = parentType != nil || !parent.isEmpty
     let scode = signalNameCode(indentation: indentation)
-    let ncode = signalNameCode(indentation: indentation, prefixes: ("notify", "notify::"))
-    let ccode = convenienceConstructorCode(typeRef, indentation: indentation, override: "override ", hasParent: hasParent)(e)
-    let fcode = convenienceConstructorCode(typeRef, indentation: indentation, factory: true)(e)
+    let ccode = convenienceConstructorCode(typeRef, indentation: indentation, override: "override ", hasParent: hasParent, shouldSink: true)(e)
+    let fcode = convenienceConstructorCode(typeRef, indentation: indentation, factory: true, shouldSink: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
     let allmethods = e.allMethods
     let factories = allmethods.filter { $0.isFactoryOf(e) }
     let properties = e.allProperties
-    let signals = e.allSignals
     let noProperties = properties.isEmpty
-    let noSignals = noProperties && signals.isEmpty
     let retain: String
     let retainPtr: String
     if let ref = e.ref, ref.args.count == 1 {
@@ -1529,41 +1549,8 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     "@inlinable func set(property: \(className)PropertyName, value v: GLibObject.Value) {\n" + doubleIndentation +
         "g_object_set_property(ptr.assumingMemoryBound(to: GObject.self), property.rawValue, v.value_ptr)\n" + indentation +
     "}\n}\n\n"))
-    let code = code1 + code2 + code3 + (noSignals ? "// MARK: no \(className) signals\n" : "public enum \(className)SignalName: String, SignalNameProtocol {\n") +
-//        "public typealias Class = \(protocolName)\n") +
-        signals.map(scode).joined(separator: "\n") + "\n" +
-        properties.map(ncode).joined(separator: "\n") + "\n" +
-    (noSignals ? "" : ("}\n\npublic extension \(protocolName) {\n" + indentation +
-        "/// Connect a `\(className)SignalName` signal to a given signal handler.\n" + indentation +
-        "/// - Parameter signal: the signal to connect\n" + indentation +
-        "/// - Parameter flags: signal connection flags\n" + indentation +
-        "/// - Parameter handler: signal handler to use\n" + indentation +
-        "/// - Returns: positive handler ID, or a value less than or equal to `0` in case of an error\n" + indentation +
-        "@inlinable @discardableResult func connect(signal kind: \(className)SignalName, flags f: ConnectFlags = ConnectFlags(0), to handler: @escaping GLibObject.SignalHandler) -> Int {\n" + doubleIndentation +
-            "func _connect(signal name: UnsafePointer<gchar>, flags: ConnectFlags, data: GLibObject.SignalHandlerClosureHolder, handler: @convention(c) @escaping (gpointer, gpointer) -> Void) -> Int {\n" + tripleIndentation +
-                "let holder = UnsafeMutableRawPointer(Unmanaged.passRetained(data).toOpaque())\n" + tripleIndentation +
-                "let callback = unsafeBitCast(handler, to: GLibObject.Callback.self)\n" + tripleIndentation +
-                "let rv = GLibObject.ObjectRef(raw: ptr).signalConnectData(detailedSignal: name, cHandler: callback, data: holder, destroyData: {\n" + tripleIndentation + indentation +
-                    "if let swift = UnsafeRawPointer($0) {\n" + tripleIndentation + doubleIndentation +
-                        "let holder = Unmanaged<GLibObject.SignalHandlerClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
-                        "holder.release()\n" + tripleIndentation + indentation +
-                    "}\n" + tripleIndentation + indentation +
-                    "let _ = $1\n" + tripleIndentation +
-                "}, connectFlags: flags)\n" + tripleIndentation +
-                "return rv\n" + doubleIndentation +
-            "}\n" + doubleIndentation +
-            "let rv = _connect(signal: kind.name, flags: f, data: ClosureHolder(handler)) {\n" + tripleIndentation +
-                "let ptr = UnsafeRawPointer($1)\n" + tripleIndentation +
-                "let holder = Unmanaged<GLibObject.SignalHandlerClosureHolder>.fromOpaque(ptr).takeUnretainedValue()\n" + tripleIndentation +
-                "holder.call(())\n" + doubleIndentation +
-            "}\n" + doubleIndentation +
-            "return rv\n" + indentation +
-        "}\n" +
-    "}\n\n"))
-    return code
+    return code1 + code2 + code3 + buildSignalExtension(for: e)
 }
-
-
 
 // MARK: - Swift code for Record/Class methods
 
@@ -1581,9 +1568,18 @@ public func swiftCode(_ funcs: [GIR.Function]) -> (String) -> (GIR.Record) -> St
             }.map { $0.protocolName.withNormalisedPrefix }
             let p = recordProtocolCode(r, parent: parents.joined(separator: ", "), ptr: ptrName)
             let s = recordStructCode(r, ptr: ptrName)
-            let c = recordClassCode(r, parent: cl?.parent.withNormalisedPrefix ?? "", ptr: ptrName)
+
+            // In case we are sure this record represents Class Metatype, return uninstantiable type
+            var instanceTypeDescriptor = ""
+            var classDefinition = ""
+            if let instantiable = r.classInstanceType, instantiable.typegetter != nil {
+                instanceTypeDescriptor = buildClassTypeDeclaration(for: r, classInstance: instantiable) + "\n\n"
+            } else {
+                classDefinition = recordClassCode(r, parent: cl?.parent.withNormalisedPrefix ?? "", ptr: ptrName)
+            }
+            
             let e = recordProtocolExtensionCode(funcs, r, ptr: ptrName)
-            let code = p + s + c + e
+            let code = instanceTypeDescriptor + p + s + classDefinition + e
             return code
         }
     }

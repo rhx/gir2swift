@@ -27,6 +27,7 @@ public extension GIR {
     static let uint64Type  = GIRType(name: "UInt64", ctype: "u_int64_t")
     static let swiftNumericTypes: Set<GIRType> = [floatType, doubleType, float80Type, intType, uintType, int8Type, int16Type, int32Type, int64Type, uint8Type, uint16Type, uint32Type, uint64Type]
     static let intRef = TypeReference(type: intType)
+    static let uintRef = TypeReference(type: uintType)
     static let doubleRef = TypeReference(type: doubleType)
 
     static let Bool = "Bool"

@@ -1,2 +1,7 @@
+ * reinstate strongly typed signal names
+ * add customisation points:
+   - Required initialiser (gir2swift pull request #6)
+ * create typed onXXX signal handlers for subclass protocols
+ * typed, computed Swift properties for named glib properties
  * support for namespaces in types
  * better support for multi-level pointers
