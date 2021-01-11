@@ -1,4 +1,4 @@
-name: macOS 11 build
+name: macOS 11
 
 # Dependencies of this package
 env:
