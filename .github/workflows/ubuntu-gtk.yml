@@ -1,4 +1,4 @@
-name: Build gir2swift and build SwiftGtk
+name: gtk Ubuntu
 
 # Dependencies of Glib package
 env:

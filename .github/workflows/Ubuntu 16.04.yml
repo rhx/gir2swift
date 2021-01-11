@@ -1,4 +1,4 @@
-name: Ubuntu 16.04 build
+name: Ubuntu 16.04
 
 # Dependencies of this package
 env:
