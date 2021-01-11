@@ -6,4 +6,4 @@
 . ./config.sh
 xmlpkg=`echo "$BUILD_DIR/checkouts/SwiftLibXML.git-*/Package.swift"`
 [ -e "$xmlpkg" ] || ./generate-wrapper.sh
-exec swift build --build-path "$BUILD_DIR" $CCFLAGS $LINKFLAGS "$@"
+exec swift build -c release --build-path "$BUILD_DIR" $CCFLAGS $LINKFLAGS "$@"
