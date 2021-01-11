@@ -4,7 +4,14 @@ Mod=gir2swift
 XML_VER=2.2
 MAJOR_VER=2.0
 JAZZY_VER=6.0.0
-export PATH="${BUILD_DIR}/gir2swift/.build/release:${BUILD_DIR}/gir2swift/.build/debug:${PATH}:/usr/local/opt/ruby/bin:`echo /usr/local/lib/ruby/gems/*/bin | tr ' ' '\n' | tail -n1`:${PATH}:`echo /var/lib/gems/*/gems/jazzy-*/bin/ | tr ' ' '\n' | tail -n1`:/usr/local/bin"
+if [ -z "$BUILD_DIR" ]; then
+  if `pwd -P | grep -q Dropbox` ; then
+    export BUILD_DIR="/tmp/.build-$Module"
+  else
+    export BUILD_DIR="$PWD/.build"
+  fi
+fi
+export PATH="${BUILD_DIR}/gir2swift/.build/release:${BUILD_DIR}/gir2swift/.build/debug:${PATH}:$PWD/.build/gir2swift/.build/release:$PWD/.build/gir2swift/.build/debug:${PATH}:/usr/local/opt/ruby/bin:`echo /usr/local/lib/ruby/gems/*/bin | tr ' ' '\n' | tail -n1`:${PATH}:`echo /var/lib/gems/*/gems/jazzy-*/bin/ | tr ' ' '\n' | tail -n1`:/usr/local/bin"
 if [ -e /usr/lib/libxml${XML_VER}.dylib ]; then
 	TOOLCHAIN=`xcode-select -p`/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
 	if ! [ -e ${TOOLCHAIN} ]; then

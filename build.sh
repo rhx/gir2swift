@@ -4,6 +4,6 @@
 # to determine compiler and linker flags
 #
 . ./config.sh
-xmlpkg=`echo .build/checkouts/SwiftLibXML.git-*/Package.swift`
-[ -e $xmlpkg ] || ./generate-wrapper.sh
-exec swift build -c release $CCFLAGS $LINKFLAGS "$@"
+xmlpkg=`echo "$BUILD_DIR/checkouts/SwiftLibXML.git-*/Package.swift"`
+[ -e "$xmlpkg" ] || ./generate-wrapper.sh
+exec swift build --build-path "$BUILD_DIR" $CCFLAGS $LINKFLAGS "$@"

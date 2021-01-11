@@ -2,4 +2,4 @@
 #
 # Remove the .build folder
 #
-exec rm -rf .build
+exec rm -rf .build "$BUILD_DIR"
