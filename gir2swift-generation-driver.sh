@@ -176,6 +176,7 @@ generate)
         PACKAGE_NAME=$(package_name_arg-path "$PACKAGE")
         PACKAGE_DEPS=$(get_processable_dependencies_arg-deps_arg-name "$DEPENDENCIES" "$PACKAGE_NAME")
         GIR_NAMES=$(get_gir_names_arg-packages "$PACKAGE_DEPS")
+	echo -n "$PACKAGE ..."
         bash -c "$PACKAGE/gir2swift-manifest.sh generate \"$PACKAGE\" \"$G2S_PATH\" \"$GIR_NAMES\" \"$GIR_PATH\" "
     done
 
