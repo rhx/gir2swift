@@ -68,8 +68,8 @@ func buildSignalExtension(for record: GIR.Record) -> String {
         "///   - destroyData: A `GClosureNotify` C function to destroy the data pointed to by `userData`"
         "///   - handler: The Swift signal handler (function or callback) to invoke on the given signal"
         "/// - Returns: The signal handler ID (always greater than 0 for successful connections)"
-        "@inlinable @discardableResult func connect(signal s: \(signalType), flags f: ConnectFlags = ConnectFlags(0), handler signalHandler: @escaping SignalHandler) -> Int {"
-        "    connect(s, flags: f, handler: signalHandler)"
+        "@inlinable @discardableResult func connect(signal s: \(signalType), flags f: ConnectFlags = ConnectFlags(0), handler swiftHandler: @escaping SignalHandler) -> Int {"
+        "    connect(s, flags: f, handler: swiftHandler)"
         "}\n\n"
 
         "/// Connect a C signal handler to the given, typed `\(signalType)` signal"
@@ -80,8 +80,8 @@ func buildSignalExtension(for record: GIR.Record) -> String {
         "///   - destroyData: A `GClosureNotify` C function to destroy the data pointed to by `userData`"
         "///   - signalHandler: The C function to be called on the given signal"
         "/// - Returns: The signal handler ID (always greater than 0 for successful connections)"
-        "@inlinable @discardableResult func connect(signal s: \(signalType), flags f: ConnectFlags = ConnectFlags(0), data userData: gpointer!, destroyData destructor: GClosureNotify? = nil, signalHandler: @escaping GCallback) -> Int {"
-        "    connectSignal(s, flags: f, data: userData, destroyData: destructor, handler: signalHandler)"
+        "@inlinable @discardableResult func connect(signal s: \(signalType), flags f: ConnectFlags = ConnectFlags(0), data userData: gpointer!, destroyData destructor: GClosureNotify? = nil, signalHandler cHandler: @escaping GCallback) -> Int {"
+        "    connectSignal(s, flags: f, data: userData, destroyData: destructor, handler: cHandler)"
         "}\n\n"
 
         Code.block {
@@ -157,11 +157,11 @@ private func buildAvailableSignal(record: GIR.Record, signal: GIR.Signal) -> Str
         "}"
         "return \(record is GIR.Interface ? "GLibObject.ObjectRef(raw: ptr)." : "" )connect("
         Code.block {
-            "signal: .\(swiftSignal), "
-            "flags: flags"
-            "data: Unmanaged.passRetained(SwiftHandler(handler)).toOpaque(), "
+            "signal: .\(swiftSignal),"
+            "flags: flags,"
+            "data: Unmanaged.passRetained(SwiftHandler(handler)).toOpaque(),"
             "destroyData: { userData, _ in UnsafeRawPointer(userData).flatMap(Unmanaged<SwiftHandler>.fromOpaque(_:))?.release() },"
-            "signalHandler: unsafeBitCast(cCallback, to: GCallback.self), "
+            "signalHandler: unsafeBitCast(cCallback, to: GCallback.self),"
         }
         ")"
     }
