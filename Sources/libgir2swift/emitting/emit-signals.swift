@@ -163,7 +163,7 @@ private func buildAvailableSignal(record: GIR.Record, signal: GIR.Signal) -> Str
             generateReturnStatement(record: record, signal: signal)
         }
         "}"
-        "return \(record is GIR.Interface ? "GLibObject.ObjectRef(raw: ptr)." : "" )connect("
+        "return connect("
         Code.block {
             "signal: .\(swiftSignal),"
             "flags: flags,"
@@ -175,7 +175,7 @@ private func buildAvailableSignal(record: GIR.Record, signal: GIR.Signal) -> Str
     }
     "}\n"
     "/// Typed `\(signal.name)` signal for using the `connect(signal:)` methods"
-    "static var \(swiftSignal)Signal: \(signalType) { .\(swiftSignal) }"
+    "static var \(swiftSignal)Signal: \(signalType) { .\(swiftSignal) }\n"
 }
 
 /// This function build documentation and name for unavailable signal.
