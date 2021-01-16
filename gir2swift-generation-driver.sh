@@ -146,8 +146,9 @@ generate)
 
     # Fetch and retain dependency graph, since this operation takes a lot of time.
     cd $TOP_LEVEL_PACKAGE_PATH
+    TOP_LEVEL_PACKAGE_NAME=$(package_name)
     DEPENDENCIES=`swift package show-dependencies --format json`
-    PROCESSABLE=$(get_processable_dependencies_arg-deps_arg-name "$DEPENDENCIES" "$(package_name)")
+    PROCESSABLE=$(get_processable_dependencies_arg-deps_arg-name "$DEPENDENCIES" "$TOP_LEVEL_PACKAGE_NAME")
 
     ALL_PROCESSABLE="$PROCESSABLE"
     if $(is_processable_arg-path "$TOP_LEVEL_PACKAGE_PATH")
@@ -175,13 +176,14 @@ generate)
         PACKAGE_NAME=$(package_name_arg-path "$PACKAGE")
         PACKAGE_DEPS=$(get_processable_dependencies_arg-deps_arg-name "$DEPENDENCIES" "$PACKAGE_NAME")
         GIR_NAMES=$(get_gir_names_arg-packages "$PACKAGE_DEPS")
-	echo -n "Generate Swift Wrapper for $PACKAGE_NAME ... "
+	echo -n "Generating Swift Wrapper for $PACKAGE_NAME ... "
         bash -c "$PACKAGE/gir2swift-manifest.sh generate \"$PACKAGE\" \"$G2S_PATH\" \"$GIR_NAMES\" \"$GIR_PATH\" "
     done
 
     if $(is_processable_arg-path "$TOP_LEVEL_PACKAGE_PATH")
     then
         GIR_NAMES=$(get_gir_names_arg-packages "$PROCESSABLE")
+	echo -n "Generating Swift Wrapper for $TOP_LEVEL_PACKAGE_NAME ... "
         bash -c "$TOP_LEVEL_PACKAGE_PATH/gir2swift-manifest.sh generate \"$TOP_LEVEL_PACKAGE_PATH\" \"$G2S_PATH\" \"$GIR_NAMES\" \"$GIR_PATH\" "
     fi
 
