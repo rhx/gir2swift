@@ -106,7 +106,7 @@ private func buildAvailableSignal(record: GIR.Record, signal: GIR.Signal) -> Str
     
     "@discardableResult"
     Code.line {
-        "func on\(signal.name.replacingOccurrences(of: "::", with: "_").camelSignal.capitalised)("
+        "@inlinable func on\(signal.name.replacingOccurrences(of: "::", with: "_").camelSignal.capitalised)("
         "flags: ConnectFlags = ConnectFlags(0), "
         "handler: "
         handlerType(record: record, signal: signal)
