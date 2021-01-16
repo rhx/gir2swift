@@ -161,7 +161,7 @@ private func buildAvailableSignal(record: GIR.Record, signal: GIR.Signal) -> Str
             "flags: flags,"
             "data: Unmanaged.passRetained(SwiftHandler(handler)).toOpaque(),"
             "destroyData: { userData, _ in UnsafeRawPointer(userData).flatMap(Unmanaged<SwiftHandler>.fromOpaque(_:))?.release() },"
-            "signalHandler: unsafeBitCast(cCallback, to: GCallback.self),"
+            "signalHandler: unsafeBitCast(cCallback, to: GCallback.self)"
         }
         ")"
     }
