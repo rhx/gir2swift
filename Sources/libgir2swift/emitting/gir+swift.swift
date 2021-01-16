@@ -1174,7 +1174,8 @@ public func signalNameCode(indentation indent: String, convertName: @escaping (S
 public func signalNameCode(indentation indent: String, prefixes: (String, String), convertName: @escaping (String) -> String = { $0.camelSignalComponent }) -> (GIR.CType) -> String {
     return { signal in
         let name = signal.name
-        let declaration = indent + "case \(prefixes.0)\(convertName(name).swift) = \"\(prefixes.1)\(name)\""
+        let prefixedName = prefixes.0 + convertName(name)
+        let declaration = indent + "case \(prefixedName.swift) = \"\(prefixes.1)\(name)\""
         let code = swiftCode(signal, declaration, indentation: indent)
         return code
     }
