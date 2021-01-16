@@ -49,6 +49,8 @@ func signalSanityCheck(_ signal: GIR.Signal) -> [String] {
 }
 
 func buildSignalExtension(for record: GIR.Record) -> String {
+    let recordName = record.name.swift
+    let signalType = recordName + "SignalName"
 
     if record.signals.isEmpty {
         return "// MARK: \(record.name.swift) has no signals\n"
@@ -56,12 +58,46 @@ func buildSignalExtension(for record: GIR.Record) -> String {
     
     return Code.block(indentation: nil) {
         
+<<<<<<< HEAD
         "// MARK: \(record.name.swift) signals"
+=======
+        "// MARK: \(recordName) signals"
+>>>>>>> development
         "public extension \(record.protocolName) {"
+
         Code.block {
+            "/// Connect a Swift signal handler to the given, typed `\(signalType)` signal"
+            "/// - Parameters:"
+            "///   - signal: The signal to connect"
+            "///   - flags: The connection flags to use"
+            "///   - data: A pointer to user data to provide to the callback"
+            "///   - destroyData: A `GClosureNotify` C function to destroy the data pointed to by `userData`"
+            "///   - handler: The Swift signal handler (function or callback) to invoke on the given signal"
+            "/// - Returns: The signal handler ID (always greater than 0 for successful connections)"
+            "@inlinable @discardableResult func connect(signal s: \(signalType), flags f: ConnectFlags = ConnectFlags(0), handler h: @escaping SignalHandler) -> Int {"
+            Code.block {
+                "\(record is GIR.Interface ? "GLibObject.ObjectRef(raw: ptr)." : "" )connect(s, flags: f, handler: h)"
+            }
+            "}\n\n"
+
+            "/// Connect a C signal handler to the given, typed `\(signalType)` signal"
+            "/// - Parameters:"
+            "///   - signal: The signal to connect"
+            "///   - flags: The connection flags to use"
+            "///   - data: A pointer to user data to provide to the callback"
+            "///   - destroyData: A `GClosureNotify` C function to destroy the data pointed to by `userData`"
+            "///   - signalHandler: The C function to be called on the given signal"
+            "/// - Returns: The signal handler ID (always greater than 0 for successful connections)"
+            "@inlinable @discardableResult func connect(signal s: \(signalType), flags f: ConnectFlags = ConnectFlags(0), data userData: gpointer!, destroyData destructor: GClosureNotify? = nil, signalHandler h: @escaping GCallback) -> Int {"
+            Code.block {
+                (record is GIR.Interface ? "GLibObject.ObjectRef(raw: ptr)." : "") +
+                "connectSignal(s, flags: f, data: userData, destroyData: destructor, handler: h)"
+            }
+            "}\n\n"
+
             // Generation of unavailable signals
             Code.loop(over: record.signals.filter( {!signalSanityCheck($0).isEmpty} )) { signal in
-                buildUnavailable(signal: signal)
+                buildUnavailableSignal(record: record, signal: signal)
             }
             // Generation of available signals
             Code.loop(over: record.signals.filter( {signalSanityCheck($0).isEmpty } )) { signal in
@@ -73,7 +109,11 @@ func buildSignalExtension(for record: GIR.Record) -> String {
                     buildSignalForProperty(record: record, property: property, notify: notifySignal)
                 }
             } else {
+<<<<<<< HEAD
                 "// \(record.name.swift) signals were not generated due to unavailability of GObject during generation time"
+=======
+                "// \(recordName) property signals were not generated due to unavailability of GObject during generation time"
+>>>>>>> development
             }
             
         }
@@ -103,10 +143,14 @@ private func buildSignalForProperty(record: GIR.Record, property: GIR.Property, 
 @CodeBuilder
 private func buildAvailableSignal(record: GIR.Record, signal: GIR.Signal) -> String {
     addDocumentation(signal: signal)
-    
-    "@discardableResult"
+
+    let recordName = record.name.swift
+    let signalType = recordName + "SignalName"
+    let swiftSignal = signal.name.replacingOccurrences(of: "::", with: "_").camelSignal
+
+    "/// Run the given callback whenever the `\(swiftSignal)` signal is emitted"
     Code.line {
-        "func on\(signal.name.replacingOccurrences(of: "::", with: "_").camelSignal.capitalised)("
+        "@discardableResult @inlinable func on\(swiftSignal.capitalised)("
         "flags: ConnectFlags = ConnectFlags(0), "
         "handler: "
         handlerType(record: record, signal: signal)
@@ -127,26 +171,33 @@ private func buildAvailableSignal(record: GIR.Record, signal: GIR.Signal) -> Str
             generateReturnStatement(record: record, signal: signal)
         }
         "}"
-        "return \(record is GIR.Interface ? "GLibObject.ObjectRef(raw: ptr)." : "" )signalConnectData("
+        "return connect("
         Code.block {
-            #"detailedSignal: "\#(signal.name)", "#
-            "cHandler: unsafeBitCast(cCallback, to: GCallback.self), "
-            "data: Unmanaged.passRetained(SwiftHandler(handler)).toOpaque(), "
+            "signal: .\(swiftSignal),"
+            "flags: flags,"
+            "data: Unmanaged.passRetained(SwiftHandler(handler)).toOpaque(),"
             "destroyData: { userData, _ in UnsafeRawPointer(userData).flatMap(Unmanaged<SwiftHandler>.fromOpaque(_:))?.release() },"
-            "connectFlags: flags"
+            "signalHandler: unsafeBitCast(cCallback, to: GCallback.self)"
         }
         ")"
     }
     "}\n"
+    "/// Typed `\(signal.name)` signal for using the `connect(signal:)` methods"
+    "static var \(swiftSignal)Signal: \(signalType) { .\(swiftSignal) }\n"
 }
 
 /// This function build documentation and name for unavailable signal.
 @CodeBuilder
-private func buildUnavailable(signal: GIR.Signal) -> String {
+private func buildUnavailableSignal(record: GIR.Record, signal: GIR.Signal) -> String {
     addDocumentation(signal: signal)
-    "/// - Warning: a wrapper for this signal could not be generated because it contains unimplemented features: { \( signalSanityCheck(signal).joined(separator: ", ") ) }"
-    "/// - Note: Instead, you can use the following string for the `signalConnectData` method"
-    #"static var on\#(signal.name.camelSignal.capitalised): String { "\#(signal.name)" }"#
+
+    let recordName = record.name.swift
+    let signalType = recordName + "SignalName"
+    let swiftSignal = signal.name.replacingOccurrences(of: "::", with: "_").camelSignal
+
+    "/// - Warning: a `on\(swiftSignal.capitalised)` wrapper for this signal could not be generated because it contains unimplemented features: { \( signalSanityCheck(signal).joined(separator: ", ") ) }"
+    "/// - Note: Instead, you can connect `\(swiftSignal)Signal` using the `connect(signal:)` methods"
+    "static var \(swiftSignal)Signal: \(signalType) { .\(swiftSignal) }"
 }
 
 /// This function build Swift closure handler declaration.
@@ -179,18 +230,15 @@ private func signalClosureHolderDecl(record: GIR.Record, signal: GIR.Signal) -> 
 @CodeBuilder
 private func addDocumentation(signal: GIR.Signal) -> String {
     { str -> String in str.isEmpty ? CodeBuilder.ignoringEspace : str}(commentCode(signal))
-    "/// - Note: This represents the `\(signal.name)` signal"
+    "/// - Note: This represents the underlying `\(signal.name)` signal"
     "/// - Parameter flags: Flags"
-    let returnComment = gtkDoc2SwiftDoc(signal.returns.comment, linePrefix: "").replacingOccurrences(of: "\n", with: " ")
-    if !returnComment.isEmpty {
-        "/// - Parameter handler: \(returnComment)"
-    }
-
     "/// - Parameter unownedSelf: Reference to instance of self"
     Code.loop(over: signal.args) { argument in
         let comment = gtkDoc2SwiftDoc(argument.comment, linePrefix: "").replacingOccurrences(of: "\n", with: " ")
         "/// - Parameter \(argument.prefixedArgumentName): \(comment.isEmpty ? "none" : comment)"
     }
+    let returnComment = gtkDoc2SwiftDoc(signal.returns.comment, linePrefix: "").replacingOccurrences(of: "\n", with: " ")
+    "/// - Parameter handler: \(returnComment.isEmpty ? "The signal handler to call" : returnComment)"
 }
 
 /// Returns declaration for c callback.

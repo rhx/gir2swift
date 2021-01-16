@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 2/04/2016.
-//  Copyright © 2016, 2017, 2018, 2019, 2020 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018, 2019, 2020, 2021 Rene Hexel. All rights reserved.
 //
 import Foundation
 
@@ -786,8 +786,8 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
 
             // This code will consume floating references upon instantiation. This is suggested by the GObject documentation since Floating references are C-specific syntactic sugar.
             // https://developer.gnome.org/gobject/stable/gobject-The-Base-Object-Type.html
-            let retainBlock = isGObject == true 
-                ? doubleIndent + "if typeIsA(type: \(factory ? "rv" : "self").type, isAType: InitiallyUnownedClassRef.metatypeReference) { _ = \(factory ? "rv" : "self").refSink() } \n" 
+            let retainBlock = isGObject ?
+                doubleIndent + "if typeIsA(type: \(factory ? "rv" : "self").type, isAType: InitiallyUnownedClassRef.metatypeReference) { _ = \(factory ? "rv" : "self").refSink() } \n"
                 : "" 
 
             let code = swiftCode(method, indentation + "\(deprecated)@inlinable \(publicDesignation)\(fact)" +
@@ -1174,7 +1174,8 @@ public func signalNameCode(indentation indent: String, convertName: @escaping (S
 public func signalNameCode(indentation indent: String, prefixes: (String, String), convertName: @escaping (String) -> String = { $0.camelSignalComponent }) -> (GIR.CType) -> String {
     return { signal in
         let name = signal.name
-        let declaration = indent + "case \(prefixes.0)\(convertName(name).swift) = \"\(prefixes.1)\(name)\""
+        let prefixedName = prefixes.0 + convertName(name)
+        let declaration = indent + "case \(prefixedName.swift) = \"\(prefixes.1)\(name)\""
         let code = swiftCode(signal, declaration, indentation: indent)
         return code
     }
@@ -1308,13 +1309,16 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let parentType = e.parentType
     let hasParent = parentType != nil || !parent.isEmpty
     let scode = signalNameCode(indentation: indentation)
+    let ncode = signalNameCode(indentation: indentation, prefixes: ("notify", "notify::"))
     let ccode = convenienceConstructorCode(typeRef, indentation: indentation, override: "override ", hasParent: hasParent, shouldSink: true)(e)
     let fcode = convenienceConstructorCode(typeRef, indentation: indentation, factory: true, shouldSink: true)(e)
     let constructors = e.constructors.filter { $0.isConstructorOf(e) && !$0.isBareFactory }
     let allmethods = e.allMethods
     let factories = allmethods.filter { $0.isFactoryOf(e) }
     let properties = e.allProperties
+    let signals = e.allSignals
     let noProperties = properties.isEmpty
+    let noSignals = noProperties && signals.isEmpty
     let retain: String
     let retainPtr: String
     if let ref = e.ref, ref.args.count == 1 {
@@ -1549,7 +1553,11 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     "@inlinable func set(property: \(className)PropertyName, value v: GLibObject.Value) {\n" + doubleIndentation +
         "g_object_set_property(ptr.assumingMemoryBound(to: GObject.self), property.rawValue, v.value_ptr)\n" + indentation +
     "}\n}\n\n"))
-    return code1 + code2 + code3 + buildSignalExtension(for: e)
+    let signalEnumCode = (noSignals ? "// MARK: no \(className) signals\n\n" : "public enum \(className)SignalName: String, SignalNameProtocol {\n" +
+    //        "public typealias Class = \(protocolName)\n") +
+        signals.map(scode).joined(separator: "\n") + "\n" +
+        properties.map(ncode).joined(separator: "\n") + "\n}\n\n")
+    return code1 + code2 + code3 + signalEnumCode + buildSignalExtension(for: e)
 }
 
 // MARK: - Swift code for Record/Class methods
