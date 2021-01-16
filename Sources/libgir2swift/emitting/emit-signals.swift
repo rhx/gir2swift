@@ -71,7 +71,9 @@ func buildSignalExtension(for record: GIR.Record) -> String {
             "///   - handler: The Swift signal handler (function or callback) to invoke on the given signal"
             "/// - Returns: The signal handler ID (always greater than 0 for successful connections)"
             "@inlinable @discardableResult func connect(signal s: \(signalType), flags f: ConnectFlags = ConnectFlags(0), handler h: @escaping SignalHandler) -> Int {"
-            "    connect(s, flags: f, handler: h)"
+            Code.block {
+                "\(record is GIR.Interface ? "GLibObject.ObjectRef(raw: ptr)." : "" )connect(s, flags: f, handler: h)"
+            }
             "}\n\n"
 
             "/// Connect a C signal handler to the given, typed `\(signalType)` signal"
@@ -83,7 +85,10 @@ func buildSignalExtension(for record: GIR.Record) -> String {
             "///   - signalHandler: The C function to be called on the given signal"
             "/// - Returns: The signal handler ID (always greater than 0 for successful connections)"
             "@inlinable @discardableResult func connect(signal s: \(signalType), flags f: ConnectFlags = ConnectFlags(0), data userData: gpointer!, destroyData destructor: GClosureNotify? = nil, signalHandler h: @escaping GCallback) -> Int {"
-            "    connectSignal(s, flags: f, data: userData, destroyData: destructor, handler: h)"
+            Code.block {
+                (record is GIR.Interface ? "GLibObject.ObjectRef(raw: ptr)." : "") +
+                "connectSignal(s, flags: f, data: userData, destroyData: destructor, handler: h)"
+            }
             "}\n\n"
 
             // Generation of unavailable signals
