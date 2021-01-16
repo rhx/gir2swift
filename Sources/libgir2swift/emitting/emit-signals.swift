@@ -87,7 +87,7 @@ func buildSignalExtension(for record: GIR.Record) -> String {
         Code.block {
             // Generation of unavailable signals
             Code.loop(over: record.signals.filter( {!signalSanityCheck($0).isEmpty} )) { signal in
-                buildUnavailable(signal: signal)
+                buildUnavailableSignal(record: record, signal: signal)
             }
             // Generation of available signals
             Code.loop(over: record.signals.filter( {signalSanityCheck($0).isEmpty } )) { signal in
@@ -130,6 +130,8 @@ private func buildSignalForProperty(record: GIR.Record, property: GIR.Property, 
 private func buildAvailableSignal(record: GIR.Record, signal: GIR.Signal) -> String {
     addDocumentation(signal: signal)
 
+    let recordName = record.name.swift
+    let signalType = recordName + "SignalName"
     let swiftSignal = signal.name.replacingOccurrences(of: "::", with: "_").camelSignal
 
     "/// Run the given callback whenever the `\(swiftSignal)` signal is emitted"
@@ -166,17 +168,22 @@ private func buildAvailableSignal(record: GIR.Record, signal: GIR.Signal) -> Str
         ")"
     }
     "}\n"
+    "/// Typed `\(signal.name)` signal for using the `connect(signal:)` methods"
+    "static var \(swiftSignal)Signal: \(signalType) { .\(swiftSignal) }"
 }
 
 /// This function build documentation and name for unavailable signal.
 @CodeBuilder
-private func buildUnavailable(signal: GIR.Signal) -> String {
+private func buildUnavailableSignal(record: GIR.Record, signal: GIR.Signal) -> String {
     addDocumentation(signal: signal)
 
+    let recordName = record.name.swift
+    let signalType = recordName + "SignalName"
     let swiftSignal = signal.name.replacingOccurrences(of: "::", with: "_").camelSignal
 
     "/// - Warning: a `on\(swiftSignal.capitalised)` wrapper for this signal could not be generated because it contains unimplemented features: { \( signalSanityCheck(signal).joined(separator: ", ") ) }"
-    "/// - Note: Instead, you can connect the `.\(swiftSignal)` signal using the `connect(signal:)` methods"
+    "/// - Note: Instead, you can connect `\(swiftSignal)Signal` using the `connect(signal:)` methods"
+    "static var \(swiftSignal)Signal: \(signalType) { .\(swiftSignal) }"
 }
 
 /// This function build Swift closure handler declaration.
