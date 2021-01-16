@@ -7,7 +7,7 @@ func buildClassTypeDeclaration(for record: GIR.Record, classInstance: GIR.Record
         Code.block {
             ""
             if let getTypeId = classInstance.typegetter {
-                "/// This getter returns type identifier in the GLib type system registry"
+                "/// This getter returns the GLib type identifier registered for `\(classInstance.name)`"
                 "static var metatypeReference: GType { \(getTypeId)() }"
                 ""
                 "private static var metatypePointer: UnsafeMutablePointer<\(record.typeRef.type.ctype)>? { g_type_class_peek_static(metatypeReference)?.assumingMemoryBound(to: \(record.typeRef.type.ctype).self) }"
@@ -17,7 +17,7 @@ func buildClassTypeDeclaration(for record: GIR.Record, classInstance: GIR.Record
                 "static var wrapper: \(record.structRef.type.swiftName)? { \(record.structRef.type.swiftName)(metatypePointer) }"
                 ""
             } else {
-                "/// Type getter was not found in instance record associated with this class"
+                "/// A Type getter could not be found for this class"
             }
             ""
         }

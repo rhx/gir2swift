@@ -10,11 +10,11 @@ func signalSanityCheck(_ signal: GIR.Signal) -> [String] {
     var errors = [String]()
     
     if !signal.args.allSatisfy({ $0.ownershipTransfer == .none }) {
-        errors.append("(1) argument with owner transfership is not allowed")
+        errors.append("(1) argument with ownership transfer is not allowed")
     }
     
     if !signal.args.allSatisfy({ $0.direction == .in }) {
-        errors.append("(2)  argument out or inout direction is not allowed")
+        errors.append("(2)  `out` or `inout` argument direction is not allowed")
     }
 
     if !signal.args.allSatisfy({ $0.typeRef.type.name != "Void" }) {
@@ -30,19 +30,19 @@ func signalSanityCheck(_ signal: GIR.Signal) -> [String] {
     }
 
     if signal.returns.isOptional {
-        errors.append("(6)  argument or return optional is not allowed")
+        errors.append("(6)  optional argument or return type is not allowed")
     }
 
     if !signal.args.allSatisfy({ !$0.isArray }) || signal.returns.isArray {
-        errors.append("(7)  argument or return array is not allowed")
+        errors.append("(7)  array argument or return type is not allowed")
     }
 
     if signal.returns.isNullable == true {
-        errors.append("(8)  argument or return nullability is not allowed")
+        errors.append("(8)  nullable argument or return type is not allowed")
     }
 
     if signal.returns.knownType is GIR.Record {
-        errors.append("(9)  Record return is not yet supported")
+        errors.append("(9)  Record return type is not yet supported")
     }
 
     return errors
@@ -51,12 +51,12 @@ func signalSanityCheck(_ signal: GIR.Signal) -> [String] {
 func buildSignalExtension(for record: GIR.Record) -> String {
 
     if record.signals.isEmpty {
-        return "// MARK: \(record.name.swift) has no signals"
+        return "// MARK: \(record.name.swift) has no signals\n"
     }
     
     return Code.block(indentation: nil) {
         
-        "// MARK: Signals of \(record.name.swift)"
+        "// MARK: \(record.name.swift) signals"
         "public extension \(record.protocolName) {"
         Code.block {
             // Generation of unavailable signals
@@ -73,7 +73,7 @@ func buildSignalExtension(for record: GIR.Record) -> String {
                     buildSignalForProperty(record: record, property: property, notify: notifySignal)
                 }
             } else {
-                "// Signals of properites were not generated due to unavailability of GObject during generation time"
+                "// \(record.name.swift) signals were not generated due to unavailability of GObject during generation time"
             }
             
         }
@@ -144,8 +144,8 @@ private func buildAvailableSignal(record: GIR.Record, signal: GIR.Signal) -> Str
 @CodeBuilder
 private func buildUnavailable(signal: GIR.Signal) -> String {
     addDocumentation(signal: signal)
-    "/// - Warning: Wrapper of this signal could not be generated because it contains unimplemented features: { \( signalSanityCheck(signal).joined(separator: ", ") ) }"
-    "/// - Note: Use this string for `signalConnectData` method"
+    "/// - Warning: a wrapper for this signal could not be generated because it contains unimplemented features: { \( signalSanityCheck(signal).joined(separator: ", ") ) }"
+    "/// - Note: Instead, you can use the following string for the `signalConnectData` method"
     #"static var on\#(signal.name.camelSignal.capitalised): String { "\#(signal.name)" }"#
 }
 
@@ -163,7 +163,7 @@ private func handlerType(record: GIR.Record, signal: GIR.Signal) -> String {
 /// This function builds declaration for the typealias holding the reference to the Swift closure handler
 private func signalClosureHolderDecl(record: GIR.Record, signal: GIR.Signal) -> String {
     if signal.args.count > 6 {
-        fatalError("Argument count \(signal.args.count) exceeds number of allowed arguments (6)")
+        fatalError("Argument count \(signal.args.count) exceeds the maximum number of allowed arguments (6)")
     }
     return Code.line {
         "GLib.ClosureHolder" + (signal.args.count > 0 ? "\(signal.args.count + 1)" : "")
@@ -179,7 +179,7 @@ private func signalClosureHolderDecl(record: GIR.Record, signal: GIR.Signal) -> 
 @CodeBuilder
 private func addDocumentation(signal: GIR.Signal) -> String {
     { str -> String in str.isEmpty ? CodeBuilder.ignoringEspace : str}(commentCode(signal))
-    "/// - Note: Representation of signal named `\(signal.name)`"
+    "/// - Note: This represents the `\(signal.name)` signal"
     "/// - Parameter flags: Flags"
     let returnComment = gtkDoc2SwiftDoc(signal.returns.comment, linePrefix: "").replacingOccurrences(of: "\n", with: " ")
     if !returnComment.isEmpty {
