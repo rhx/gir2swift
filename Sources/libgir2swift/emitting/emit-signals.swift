@@ -58,11 +58,7 @@ func buildSignalExtension(for record: GIR.Record) -> String {
     
     return Code.block(indentation: nil) {
         
-<<<<<<< HEAD
-        "// MARK: \(record.name.swift) signals"
-=======
         "// MARK: \(recordName) signals"
->>>>>>> development
         "public extension \(record.protocolName) {"
 
         Code.block {
@@ -109,11 +105,7 @@ func buildSignalExtension(for record: GIR.Record) -> String {
                     buildSignalForProperty(record: record, property: property, notify: notifySignal)
                 }
             } else {
-<<<<<<< HEAD
-                "// \(record.name.swift) signals were not generated due to unavailability of GObject during generation time"
-=======
                 "// \(recordName) property signals were not generated due to unavailability of GObject during generation time"
->>>>>>> development
             }
             
         }
