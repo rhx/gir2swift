@@ -402,7 +402,9 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
             "/// Typed pointer to the underlying `\(ctype)` instance.\n" + indentation +
             "var \(ptr): " + (e.introspectable || !e.disguised ?
                                 "UnsafeMutablePointer<\(ctype)>! { get }\n\n" :
-                                "\(ctype)! { get }\n\n") +
+                                "\(ctype)! { get }\n\n") + indentation +
+            "/// Required Initialiser for types conforming to `\(e.protocolName)`\n" + indentation +
+            "init(raw: UnsafeMutableRawPointer)\n" +
         "}\n\n"
     return code
 }
@@ -1321,6 +1323,8 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let noSignals = noProperties && signals.isEmpty
     let retain: String
     let retainPtr: String
+    // Disable required initalisers for Value wrappers. AppLaunchContext is hardcoded because of a bug that causes it to report a wrong base when generating gdk wrappers.
+    let isObject = e.rootType.name == "Object" || e.rootType.name == "AppLaunchContext";
     if let ref = e.ref, ref.args.count == 1 {
         retain = ref.cname
         retainPtr = RawPointerConversion(source: cGIRType, target: GIR.rawPointerType).castFromTarget(expression: "ptr")
@@ -1467,15 +1471,15 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         "/// Unsafe untyped initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
         "/// - Parameter p: mutable raw pointer to the underlying object\n" + indentation + "@inlinable " +
-        (hasParent ? "override " : "") +
-        "public init(raw p: UnsafeMutableRawPointer) {\n" + doubleIndentation +
+        "public required init(raw p: UnsafeMutableRawPointer) {\n" + doubleIndentation +
             (hasParent ? "super.init(raw: p)\n" : "ptr = p\n") + indentation +
         "}\n\n") + (indentation +
 
         "/// Unsafe untyped, retaining initialiser.\n" + indentation +
         "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
         "/// - Parameter raw: mutable raw pointer to the underlying object\n" + indentation + "@inlinable " +
-        (hasParent ? "override " : "") +
+        // We add required to this initialiser on objects so that it can be used to instantiate generic types constrained to a subclass of object.
+        (isObject ? "required ": hasParent ? "override ": "") +
         "public init(retainingRaw raw: UnsafeMutableRawPointer) {\n" + doubleIndentation +
             (hasParent ? "super.init(retainingRaw: raw)\n" :
             "ptr = raw\n" + doubleIndentation +
