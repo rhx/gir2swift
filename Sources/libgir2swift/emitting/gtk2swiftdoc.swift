@@ -155,7 +155,7 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
                 break
             }
         case .backtickedIdentifier:
-            if c == "_" || c == ":" || c.isLetter || c.isNumber { break }
+            if c == "_" || c == "-" || c == ":" || c.isLetter || c.isNumber { break }
             if c == "." {
                 guard j == e else { break }
                 p = i
