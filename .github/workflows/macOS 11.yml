@@ -43,7 +43,13 @@ jobs:
           echo "GIR2SWIFT_PATH=${PWD}/.build/release/gir2swift" >> $GITHUB_ENV
           cd ..
 
-      - name: Remove unneeded files and archive artifacts
+      - name: Test gir2swift
+        run: |
+          cd gir2swift
+          ./test.sh
+          cd ..
+
+      - name: Remove unneeded files and archive artefacts
         run: | 
           cd gir2swift
           swift package clean

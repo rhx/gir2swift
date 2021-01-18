@@ -16,6 +16,33 @@ final class gir2swiftTests: XCTestCase {
         XCTAssertEqual(output, expected)
     }
 
+    func testGtkDoc2SwiftDocHTMLNewline() throws {
+        let input = "1<example>\n<example>2\n"
+        let expected = "/// 1&lt;example&gt;\n/// &lt;example&gt;2\n"
+        let output = gtkDoc2SwiftDoc(input)
+        XCTAssertEqual(output, expected)
+    }
+
+    func testGtkDoc2SwiftDocHTMLlines() throws {
+        let input =
+            """
+            A some_function() will
+            expect a <template> tag inheriting from the <interface>
+            tag. The <template> tag must specify “class” which
+            has some other criteria
+            """
+        let expected =
+            """
+            /// A `some_function()` will
+            /// expect a &lt;template&gt; tag inheriting from the &lt;interface&gt;
+            /// tag. The &lt;template&gt; tag must specify “class” which
+            /// has some other criteria
+            """
+        let output = gtkDoc2SwiftDoc(input)
+        XCTAssertEqual(output, expected)
+    }
+
+
     func testGtkDoc2SwiftDocFunction() throws {
         let input = "Test function() example"
         let expected = "Test `function()` example"
@@ -68,6 +95,13 @@ final class gir2swiftTests: XCTestCase {
     func testGtkDoc2SwiftDocSignal() throws {
         let input = "Test ::SIGNAL example"
         let expected = "Test `SIGNAL` example"
+        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        XCTAssertEqual(output, expected)
+    }
+
+    func testGtkDoc2SwiftDocDashedSignal() throws {
+        let input = "Test ::DASHED-SIGNAL example"
+        let expected = "Test `DASHED-SIGNAL` example"
         let output = gtkDoc2SwiftDoc(input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
@@ -203,12 +237,12 @@ final class gir2swiftTests: XCTestCase {
     }
 
     func testGIRTypes() {
-        XCTAssertTrue(GIR.knownTypes.count >= 53)
+        XCTAssertTrue(GIR.knownTypes.count >= 51)
         XCTAssertTrue(GIR.namedTypes.count >= 49)
         let ct = GIR.cintType
         let cint = GIR.namedTypes[ct.name]
         XCTAssertNotNil(cint)
-        let ci = cint?.index(of: ct)
+        let ci = cint?.firstIndex(of: ct)
         XCTAssertNotNil(ci)
         let t = cint?[ci!]
         XCTAssertNotNil(t)
@@ -216,7 +250,7 @@ final class gir2swiftTests: XCTestCase {
         let ut = GIR.guintType
         let guints = GIR.namedTypes[ut.name]
         XCTAssertNotNil(guints)
-        XCTAssertTrue(guints!.count > 1)
+        XCTAssertTrue(guints!.count >= 1)
         XCTAssertTrue(guints!.contains(ut))
         XCTAssertTrue(GIR.numericConversions.count >= 2116)
         let e = "some_expression"
@@ -371,6 +405,8 @@ final class gir2swiftTests: XCTestCase {
         ("testGIRTypes", testGIRTypes),
         ("testGtkDoc2SwiftDoc", testGtkDoc2SwiftDoc),
         ("testGtkDoc2SwiftDocNewline", testGtkDoc2SwiftDocNewline),
+        ("testGtkDoc2SwiftDocHTMLNewline", testGtkDoc2SwiftDocHTMLNewline),
+        ("testGtkDoc2SwiftDocHTMLlines", testGtkDoc2SwiftDocHTMLlines),
         ("testGtkDoc2SwiftDocFunction", testGtkDoc2SwiftDocFunction),
         ("testGtkDoc2SwiftDocFunctionParameters", testGtkDoc2SwiftDocFunctionParameters),
         ("testGtkDoc2SwiftDocParam", testGtkDoc2SwiftDocParam),
@@ -379,6 +415,7 @@ final class gir2swiftTests: XCTestCase {
         ("testGtkDoc2SwiftDocTrueConstant", testGtkDoc2SwiftDocTrueConstant),
         ("testGtkDoc2SwiftDocFalseConstant", testGtkDoc2SwiftDocFalseConstant),
         ("testGtkDoc2SwiftDocSignal", testGtkDoc2SwiftDocSignal),
+        ("testGtkDoc2SwiftDocDashedSignal", testGtkDoc2SwiftDocDashedSignal),
         ("testGtkDoc2SwiftDocObjectSignal", testGtkDoc2SwiftDocObjectSignal),
         ("testGtkDoc2SwiftDocObjectProperty", testGtkDoc2SwiftDocObjectProperty),
         ("testGtkDoc2SwiftDocStructField", testGtkDoc2SwiftDocStructField),

@@ -151,11 +151,21 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
                 idStart = j
                 output.append("(#")
                 state = .href
+            case "<":
+                i = p
+                flush()
+                output.append("&lt;")
+                continue
+            case ">":
+                i = p
+                flush()
+                output.append("&gt;")
+                continue
             default:
                 break
             }
         case .backtickedIdentifier:
-            if c == "_" || c == ":" || c.isLetter || c.isNumber { break }
+            if c == "_" || c == "-" || c == ":" || c.isLetter || c.isNumber { break }
             if c == "." {
                 guard j == e else { break }
                 p = i
