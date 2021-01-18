@@ -155,10 +155,12 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
                 i = p
                 flush()
                 output.append("&lt;")
+                continue
             case ">":
                 i = p
                 flush()
                 output.append("&gt;")
+                continue
             default:
                 break
             }
