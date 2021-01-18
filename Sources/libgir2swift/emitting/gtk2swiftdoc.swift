@@ -151,6 +151,14 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
                 idStart = j
                 output.append("(#")
                 state = .href
+            case "<":
+                i = p
+                flush()
+                output.append("&lt;")
+            case ">":
+                i = p
+                flush()
+                output.append("&gt;")
             default:
                 break
             }
