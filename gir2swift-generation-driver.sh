@@ -31,7 +31,7 @@ function gir_path_arg-gir-names {
 
     local GIR_FILES=`for NAME in ${GIR_NAMES}; do echo -n "${NAME}.gir "; done`
 
-    for DIR in "/usr/local/share/gir-1.0" "/usr/share/gir-1.0" ; do
+    for DIR in "/opt/homebrew/share/gir-1.0" "/usr/local/share/gir-1.0" "/usr/share/gir-1.0" ; do
         CURRENT=$DIR
         for GIR in $GIR_FILES; do
 	        if ! [ -f "${DIR}/${GIR}" ] ; then
