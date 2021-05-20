@@ -2,6 +2,65 @@ import XCTest
 @testable import libgir2swift
 
 final class gir2swiftTests: XCTestCase {
+    let contentOf = "Content of "
+    var moduleBoilerPlate: String = ""
+    /// Directory to output files to
+    var outputDirectory: String?
+    /// `true` to create a single file per type
+    var singleFilePerClass = false
+    /// `true` gir2swift will generate wrappers for all types, despite being private or unreachable
+    var generateAll = false
+    /// preloaded gir files
+    var preloaded = [String]()
+    /// verbosity
+    var verbose = false
+
+    func getOpt(_ options: String, _ args: [String]) -> (Character, String?)? {
+        let ch = getopt(Int32(args.count), args.map { UnsafeMutablePointer(mutating: strdup($0)) }, options)
+        guard ch != -1 else { return nil }
+        guard let u = UnicodeScalar(UInt32(ch)) else { return nil }
+        let option = Character(u)
+        let argument: String? = optarg != nil ? String(cString: optarg) : nil
+        return (option, argument)
+    }
+
+    func parseArguments(args: [String]) {
+        while let (opt, param) = getOpt("m:o:p:sv:a", args) {
+            switch opt {
+                case "m":
+                    guard let bpfile = param else { XCTFail("invalid -m option") ; continue }
+                    moduleBoilerPlate = contentOf + bpfile
+                case "o":
+                    outputDirectory = param
+                    guard outputDirectory != nil else { XCTFail("invalid -o option") ; continue }
+                case "p":
+                    guard let f = param else { XCTFail("invalid -p option") ; continue }
+                    preloaded.append(f)
+                case "s":
+                    singleFilePerClass = true
+                case "v":
+                    verbose = true
+                case "a":
+                    generateAll = true
+                default:
+                    XCTAssert(opt != "\0", "Invalid option \(opt)")
+            }
+        }
+    }
+
+    func testArgumentParser() throws {
+        let args1 = ["gir2swift", "-o", "OutputDir", "-m", "ModuleName.module", "-p", "p1.gir", "-p", "p2.gir", "main.gir"]
+        parseArguments(args: args1)
+        XCTAssertEqual(outputDirectory, args1[2])
+        XCTAssertEqual(moduleBoilerPlate, contentOf + args1[4])
+        XCTAssertEqual(preloaded, [args1[6], args1[8]])
+        let args2 = ["gir2swift", "-oOutputDir", "-mModuleName.module", "-pp1.gir", "-pp2.gir", "main.gir"]
+        parseArguments(args: args2)
+        XCTAssertEqual(outputDirectory, String(args2[1][args2[1].index(args2[1].startIndex, offsetBy: 2)...]))
+        XCTAssertEqual(moduleBoilerPlate, contentOf + String(args2[2][args2[2].index(args2[2].startIndex, offsetBy: 2)...]))
+        XCTAssertEqual(preloaded, [String(args2[3][args2[3].index(args2[3].startIndex, offsetBy: 2)...]), String(args2[4][args2[4].index(args2[4].startIndex, offsetBy: 2)...])])
+    }
+
     func testGtkDoc2SwiftDoc() throws {
         let input = "Test"
         let expected = "/// \(input)"
