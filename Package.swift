@@ -20,10 +20,15 @@ let package = Package(
             name: pkgName, 
             dependencies: [
                 .init(stringLiteral: libTarget),
-                .product(name: "ArgumentParser", package: "swift-argument-parser")
             ]
         ),
-        .target(name: libTarget, dependencies: ["SwiftLibXML"]),
+        .target(
+            name: libTarget,
+            dependencies: [
+                .init(stringLiteral: "SwiftLibXML"),
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ]
+        ),
         .testTarget(name: "\(pkgName)Tests", dependencies: [.init(stringLiteral: libTarget)]),
     ]
 )
