@@ -28,8 +28,8 @@ public struct Gir2Swift: ParsableCommand {
 
     /// Name of the output directory to write generated files to.
     /// - Note: Writes generated code to `standardOutput` if `nil`
-    @Option(name: .short, help: "Specify the output directory to put the generated files into.", transform: String.init(nonEmpty:))
-    var outputDirectory: String? = nil
+    @Option(name: .short, help: "Specify the output directory to put the generated files into.")
+    var outputDirectory: String = ""
 
     /// File containing one-off boilerplate code for your module
     @Option(name: .short, help: "Add the given .swift file as the main (hand-crafted) Swift file for your library target.")
@@ -61,8 +61,9 @@ public struct Gir2Swift: ParsableCommand {
             preload_gir(file: girFile)
         }
 
+        let target = outputDirectory.isEmpty ? nil : outputDirectory
         for girFile in girFiles {
-            process_gir(file: girFile, boilerPlate: moduleBoilerPlate, to: outputDirectory, split: singleFilePerClass, generateAll: allFilesGenerate)
+            process_gir(file: girFile, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate)
         }
 
         if verbose {

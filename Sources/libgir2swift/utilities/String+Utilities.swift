@@ -16,14 +16,6 @@ extension String {
         }
         return String(self[index(startIndex, offsetBy: dot.offset+1)..<endIndex])
     }
-
-    init?(nonEmpty: String) {
-        if nonEmpty.isEmpty {
-            return nil
-        }
-
-        self = nonEmpty
-    }
 }
 
 public extension StringProtocol {
