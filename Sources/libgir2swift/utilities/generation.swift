@@ -1,3 +1,10 @@
+//
+//  generation.swift
+//  gir2swift
+//
+//  Created by Rene Hexel on 20/5/2021.
+//  Copyright © 2016, 2017, 2018, 2019, 2020, 2021 Rene Hexel. All rights reserved.
+//
 #if os(Linux)
     import Glibc
 #else
@@ -5,10 +12,8 @@
 #endif
 import Foundation
 import Dispatch
-import libgir2swift
 
 extension Gir2Swift {
-
     /// load a GIR file, then invoke the processing closure
     func load_gir(_ file: String, quiet q: Bool = false, process: (GIR) -> Void =  { _ in }) {
         with_mmap(file) { (content: UnsafeBufferPointer<CChar>) in
