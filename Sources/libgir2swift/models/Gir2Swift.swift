@@ -46,6 +46,11 @@ public struct Gir2Swift: ParsableCommand {
     mutating public func run() throws {
         let nTypesPrior = GIR.knownTypes.count
 
+        // pre-load gir files to ensure pre-requisite types are known
+        for girFile in prerequisiteGir {
+            preload_gir(file: girFile)
+        }
+
         for girFile in girFiles {
             process_gir(file: girFile, boilerPlate: moduleBoilerPlate, to: outputDirectory, split: singleFilePerClass, generateAll: allFilesGenerate)
         }
