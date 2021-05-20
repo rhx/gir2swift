@@ -2,7 +2,7 @@ import XCTest
 import ArgumentParser
 @testable import libgir2swift
 
-final class gir2swiftTests: XCTestCase, ParsableCommand {
+final class gir2swiftTests: XCTestCase {
     var g2sArgs: Gir2Swift!
 
     func parseArguments(args: [String]) {
