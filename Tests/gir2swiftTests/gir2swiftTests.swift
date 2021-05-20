@@ -14,7 +14,7 @@ final class gir2swiftTests: XCTestCase, ParsableCommand {
         let args1 = ["gir2swift", "-o", "OutputDir", "-m", "ModuleName.module", "-p", "p1.gir", "-p", "p2.gir", "main.gir"]
         parseArguments(args: args1)
         XCTAssertEqual(g2sArgs.outputDirectory, args1[2])
-        XCTAssertEqual(g2sArgs.moduleBoilerPlate, args1[4])
+        XCTAssertEqual(g2sArgs.moduleBoilerPlateFile, args1[4])
         XCTAssertEqual(g2sArgs.prerequisiteGir, [args1[6], args1[8]])
     }
 
