@@ -32,8 +32,8 @@ public struct Gir2Swift: ParsableCommand {
     var outputDirectory: String? = nil
 
     /// File containing one-off boilerplate code for your module
-    @Option(name: .short, help: "Add .swift as the main (hand-crafted) Swift file for your library target.")
-    var moduleBoilerPlate: String = ""
+    @Option(name: .short, help: "Add the given .swift file as the main (hand-crafted) Swift file for your library target.")
+    var moduleBoilerPlateFile: String = ""
 
     /// The actual, main `.gir` file(s) to process
     @Argument(help: "The .gir metadata files to process.")
@@ -45,6 +45,16 @@ public struct Gir2Swift: ParsableCommand {
     /// Main function to run the `gir2swift command`
     mutating public func run() throws {
         let nTypesPrior = GIR.knownTypes.count
+
+        let moduleBoilerPlate: String
+        if moduleBoilerPlateFile.isEmpty {
+            moduleBoilerPlate = moduleBoilerPlateFile
+        } else {
+            guard let contents = moduleBoilerPlateFile.contents else {
+                fatalError("Cannot read contents of '\(moduleBoilerPlateFile)'")
+            }
+            moduleBoilerPlate = contents
+        }
 
         // pre-load gir files to ensure pre-requisite types are known
         for girFile in prerequisiteGir {
