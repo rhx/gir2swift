@@ -4,8 +4,6 @@ import ArgumentParser
 
 final class gir2swiftTests: XCTestCase, ParsableCommand {
     var g2sArgs: Gir2Swift!
-//    /// preloaded gir files
-//    var preloaded = [String]()
 
     func parseArguments(args: [String]) {
         g2sArgs = try? Gir2Swift.parseAsRoot(args) as? Gir2Swift
@@ -17,7 +15,7 @@ final class gir2swiftTests: XCTestCase, ParsableCommand {
         parseArguments(args: args1)
         XCTAssertEqual(g2sArgs.outputDirectory, args1[2])
         XCTAssertEqual(g2sArgs.moduleBoilerPlate, args1[4])
-//        XCTAssertEqual(g2sArgs.preloaded, [args1[6], args1[8]])
+        XCTAssertEqual(g2sArgs.prerequisiteGir, [args1[6], args1[8]])
     }
 
     func testGtkDoc2SwiftDoc() throws {
