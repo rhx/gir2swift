@@ -7,7 +7,7 @@
 
 import Foundation
 
-public extension String {
+extension String {
     /// Remove the name space and return the base name of the receiver
     /// representing a fully qualified Swift type
     var withoutNameSpace: String {
@@ -15,6 +15,14 @@ public extension String {
             return self
         }
         return String(self[index(startIndex, offsetBy: dot.offset+1)..<endIndex])
+    }
+
+    init?(nonEmpty: String) {
+        if nonEmpty.isEmpty {
+            return nil
+        }
+
+        self = nonEmpty
     }
 }
 
