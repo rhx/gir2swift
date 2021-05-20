@@ -21,6 +21,8 @@ To start a project that uses Swift wrappers around low-level libraries that util
 
 ## What is new?
 
+Version 13 uses [swift-argument-parser](https://github.com/apple/swift-argument-parser) instead of `getopt()`.
+
 As of version 12.2, `init(raw:)` is now required by the protocol and `init(retainingRaw:)` is required for classes, closing [PR#6](https://github.com/rhx/gir2swift/pull/6).
 
 Version 12 pulls in [PR#10](https://github.com/rhx/gir2swift/pull/10), addressing several issues:
