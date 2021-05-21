@@ -5,11 +5,6 @@
 //  Created by Rene Hexel on 25/03/2016.
 //  Copyright © 2016, 2017, 2018, 2019, 2020 Rene Hexel. All rights reserved.
 //
-#if os(Linux)
-    import Glibc
-#else
-    import Darwin
-#endif
 import SwiftLibXML
 
 /// Designated containers for types that can have associated methods
@@ -132,7 +127,7 @@ public final class GIR {
                 aliases = entries.enumerated().map { Alias(node: $0.1, at: $0.0) }.filter {
                     let name = $0.name
                     guard setKnownType(name, $0) else {
-                        if !quiet { fputs("Warning: duplicate type '\(name)' for alias ignored!\n", stderr) }
+                        if !quiet { print("Warning: duplicate type '\(name)' for alias ignored!", to: &Streams.stdErr) }
                         return false
                     }
                     return true

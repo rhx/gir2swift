@@ -4,11 +4,6 @@
 //
 //  Created by Mikoláš Stuchlík on 17.11.2020.
 //
-#if os(Linux)
-    import Glibc
-#else
-    import Darwin
-#endif
 import SwiftLibXML
 
 /// Enumerate a subtree of an XML document designated by an XPath expression
@@ -26,7 +21,7 @@ func enumerate<T>(_ xml: XMLDocument, path: String, inNS namespaces: AnySequence
             guard let node = $0 else { return false }
             guard check(node) else {
                 if !quiet {
-                    fputs("Warning: duplicate type '\(node.name)' for \(path) ignored!\n", stderr)
+                    print("Warning: duplicate type '\(node.name)' for \(path) ignored!", to: &Streams.stdErr)
                 }
                 return false
             }
