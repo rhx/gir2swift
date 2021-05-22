@@ -200,6 +200,6 @@ extension GIR {
         
         /// return the non-prefixed argument name
         @inlinable
-        public var argumentName: String { return name.argumentSplit.arg.camelQuoted }
+        public var argumentName: String { return name.argumentSplit.arg.snakeCase2camelCase.swiftQuoted }
     }
 }

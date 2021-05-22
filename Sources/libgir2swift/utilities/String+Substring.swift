@@ -7,6 +7,8 @@
 //
 //
 
+import Foundation
+
 public extension StringProtocol {
 
     /// Dotted prefix for the string (empty if none)
@@ -169,5 +171,91 @@ public extension StringProtocol {
 
         return counted
     }
+
+    /// Returns string without leading and trailing whitespaces and newlines
+    var trimmed: String { return trimmingCharacters(in: CharacterSet.whitespacesAndNewlines) }
+
+    /// Return the splittable prefix
+    /// - Parameter prefixes: the prefixes to check for
+    /// - Returns: The splittable substring index
+    @inlinable func splittablePrefixIndex<S: StringProtocol>(from prefixes: [S]) -> Index? {
+        for prefix in prefixes {
+            if hasPrefix(prefix) {
+                return index(startIndex, offsetBy: prefix.count)
+            }
+        }
+        return nil
+    }
+
+    /// Replaces all occurances with given substring by empty string
+    ///
+    /// ```
+    /// " the meaning of life ".without("the meaning") // "of life"
+    /// ```
+    ///
+    func without(_ substring: String) -> String {
+        self.replacingOccurrences(of: substring, with: "").trimmed
+    }
+
+    /// Trims whitespaces and new lines and then returns string without given prefix, called recursively
+    ///
+    /// ```
+    /// "  well, well, well! ".without(prefix: "well,") // "well!"
+    /// ```
+    ///
+    func without(prefix: String) -> String {
+        let ns = trimmed
+        guard ns.hasPrefix(prefix) else { return ns }
+        let len = prefix.count
+        let s = ns.index(ns.startIndex, offsetBy: len)
+        let e = ns.endIndex
+        return String(ns[s..<e]).without(prefix: prefix)
+    }
+
+    /// Trims whitespaces and new lines and then returns string without any of provided prefixes, called recursively
+    ///
+    /// ```
+    /// "  all your base ".without(prefixes: ["all", "your"]) // "base"
+    /// ```
+    ///
+    func without(prefixes: [String]) -> String {
+        let ns = trimmed
+        return prefixes
+            .first { ns.hasPrefix($0) }
+            .flatMap {
+                ns.without(prefix: $0)
+            }?.without(prefixes: prefixes) ?? ns
+    }
+
+    /// Trims whitespaces and new lines and then returns string without given suffix, called recursively
+    ///
+    /// ```
+    /// "  hello there ".without(suffix: "there") // "hello"
+    /// ```
+    ///
+    func without(suffix: String) -> String {
+        let ns = trimmed
+        guard ns.hasSuffix(suffix) else { return ns }
+        let len = suffix.count
+        let s = ns.startIndex
+        let e = ns.index(s, offsetBy: ns.count - len)
+        return String(ns[s..<e]).without(suffix: suffix)
+    }
+
+    /// Trims whitespaces and new lines and then returns string without any of provided suffiex, called recursively
+    ///
+    /// ```
+    /// "  you are a bold one ".without(suffixes: ["bond", "one"]) // "you are"
+    /// ```
+    ///
+    func without(suffixes: [String]) -> String {
+        let ns = trimmed
+        return suffixes
+            .first { ns.hasSuffix($0) }
+            .flatMap {
+                ns.without(suffix: $0)
+            }?.without(suffixes: suffixes) ?? ns
+    }
+
 }
 
