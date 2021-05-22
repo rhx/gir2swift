@@ -9,6 +9,13 @@
 
 import Foundation
 
+extension Character {
+    @usableFromInline var isNewline: Bool { CharacterSet(charactersIn: String(self)).isSubset(of: CharacterSet.newlines) }
+    @usableFromInline var isWhitespace: Bool { CharacterSet(charactersIn: String(self)).isSubset(of: CharacterSet.whitespacesAndNewlines) }
+    @usableFromInline var isLetter: Bool { CharacterSet(charactersIn: String(self)).isSubset(of: CharacterSet.letters)  }
+    @usableFromInline var isNumber: Bool { CharacterSet(charactersIn: String(self)).isSubset(of: CharacterSet.decimalDigits)  }
+}
+
 public extension StringProtocol {
 
     /// Dotted prefix for the string (empty if none)

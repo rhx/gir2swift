@@ -146,7 +146,7 @@ public extension String {
 
     /// Return a string that starts with an alpha or underscore character
     var swiftIdentifier: String {
-        self.unicodeScalars.first.flatMap { CharacterSet.letters.union(["_"]).contains($0) } == false
+        self.first?.isLetter == false && self.first != "_"
             ? "_" + self
             : self
     }
