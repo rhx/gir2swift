@@ -554,7 +554,7 @@ extension Substring {
     }
 
     /// return the Swift camel case name, quoted if necessary
-    @usableFromInline var camelQuoted: String { self.camelCase.swiftQuoted }
+    @usableFromInline var camelQuoted: String { self.snakeCase2camelCase.swiftQuoted }
 }
 
 /// convert the given C type to a Swift type
