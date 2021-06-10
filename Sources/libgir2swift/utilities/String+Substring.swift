@@ -31,13 +31,9 @@ public extension StringProtocol {
 
     /// return the unprefixed version of the string
     /// (e.g. type without namespace)
-    ///
-    /// ```
-    /// "gtk.is.neat".unprefixed() // "neat"
-    /// ```
-    ///
-    @inlinable func unprefixed(separator: String = ".") -> String {
-        components(separatedBy: separator).last ?? String(self)
+    @inlinable var unprefixed: String {
+        guard let suffix = components(separatedBy: ".").last else { return self }
+        return suffix
     }
 
     /// return a prefixed version of the string

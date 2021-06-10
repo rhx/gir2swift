@@ -13,20 +13,20 @@ let package = Package(
     ],
     dependencies: [ 
         .package(url: "https://github.com/rhx/SwiftLibXML.git", .branch("main")),
-        .package(url: "https://github.com/apple/swift-argument-parser", from: "0.4.0"),
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "0.4.0")
     ],
     targets: [
         .target(
             name: pkgName, 
             dependencies: [
-                .init(stringLiteral: libTarget),
+                .init(stringLiteral: libTarget)
             ]
         ),
         .target(
             name: libTarget,
             dependencies: [
                 .init(stringLiteral: "SwiftLibXML"),
-                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+                .product(name: "ArgumentParser", package: "swift-argument-parser")
             ]
         ),
         .testTarget(name: "\(pkgName)Tests", dependencies: [.init(stringLiteral: libTarget)]),

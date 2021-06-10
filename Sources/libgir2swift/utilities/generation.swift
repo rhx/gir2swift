@@ -5,28 +5,46 @@
 //  Created by Rene Hexel on 20/5/2021.
 //  Copyright © 2016, 2017, 2018, 2019, 2020, 2021 Rene Hexel. All rights reserved.
 //
-#if os(Linux)
-    import Glibc
-#else
-    import Darwin
-#endif
 import Foundation
 import Dispatch
 
-extension Gir2Swift {
-    /// load a GIR file, then invoke the processing closure
-    func load_gir(_ file: String, quiet q: Bool = false, process: (GIR) -> Void =  { _ in }) {
-        with_mmap(file) { (content: UnsafeBufferPointer<CChar>) in
-            guard let gir = GIR(buffer: content, quiet: q) else {
-                perror("Cannot parse GIR file '\(file)'")
+private extension String {
+    func nonEmptyComponents<S: StringProtocol>(separatedBy separator: S) -> [String] {
+        components(separatedBy: separator).filter { !$0.isEmpty }
+    }
+}
+
+/// load a GIR file, then invoke the processing closure
+private func load_gir(_ file: String, quiet q: Bool = false, process: (GIR) -> Void =  { _ in }) {
+    do {
+        try Data(contentsOf: URL(fileURLWithPath: file), options: .alwaysMapped).withUnsafeBytes { bytes in
+            guard let gir = GIR(buffer: bytes.bindMemory(to: CChar.self), quiet: q) else {
+                print("Error: Cannot parse GIR file '\(file)'", to: &Streams.stdErr)
                 return
             }
             if gir.prefix.isEmpty {
-                fputs("Warning: no namespace in GIR file '\(file)'\n", stderr)
+                print("Warning: no namespace in GIR file '\(file)'", to: &Streams.stdErr)
             }
             process(gir);
         }
+    } catch {
+        print("Error: Failed to open '\(file)' \(error)", to: &Streams.stdErr)
     }
+}
+
+/// process blacklist and verbatim constants information
+private func processSpecialCases(_ gir: GIR, forFile node: String) {
+    let preamble = node + ".preamble"
+    gir.preamble = (try? String(contentsOfFile: preamble)) ?? ""
+    let blacklist = node + ".blacklist"
+    GIR.blacklist = (try? String(contentsOfFile: blacklist)).flatMap { Set($0.nonEmptyComponents(separatedBy: "\n")) } ?? []
+    let verbatimConstants = node + ".verbatim"
+    GIR.verbatimConstants = (try? String(contentsOfFile: verbatimConstants)).flatMap { Set($0.nonEmptyComponents(separatedBy: "\n")) } ?? []
+    let overrideFile = node + ".override"
+    GIR.overrides = (try? String(contentsOfFile: overrideFile)).flatMap { Set($0.nonEmptyComponents(separatedBy: "\n")) } ?? []
+}
+
+extension Gir2Swift {
 
     /// pre-load a GIR without processing, but adding to known types / records
     func preload_gir(file: String) {
@@ -35,10 +53,9 @@ extension Gir2Swift {
 
     /// process a GIR file
     func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirectory: String? = nil, split singleFilePerClass: Bool = false, generateAll: Bool = false) {
-        let base = file.baseName
-        let node = base.stringByRemoving(suffix: ".gir") ?? base
+        let node = file.components(separatedBy: "/").last?.stringByRemoving(suffix: ".gir") ?? file
         let wlfile = node + ".whitelist"
-        if let whitelist = String(contentsOfFile: wlfile, quiet: true).flatMap({ Set($0.lines) }) {
+        if let whitelist = (try? String(contentsOfFile: wlfile)).flatMap({ Set($0.nonEmptyComponents(separatedBy: "\n")) }) {
             for name in whitelist {
                 GIR.knownDataTypes.removeValue(forKey: name)
                 GIR.knownRecords.removeValue(forKey: name)
@@ -46,11 +63,11 @@ extension Gir2Swift {
             }
         }
         let escfile = node + ".callbackSuffixes"
-        GIR.callbackSuffixes = String(contentsOfFile: escfile, quiet: true)?.lines ?? [
+        GIR.callbackSuffixes = (try? String(contentsOfFile: escfile))?.nonEmptyComponents(separatedBy: "\n") ?? [
             "Notify", "Func", "Marshaller", "Callback"
         ]
         let nsfile = node + ".namespaceReplacements"
-        if let ns = String(contentsOfFile: nsfile, quiet: true).flatMap({Set($0.lines)}) {
+        if let ns = (try? String(contentsOfFile: nsfile)).flatMap({Set($0.nonEmptyComponents(separatedBy: "\n"))}) {
             for line in ns {
                 let keyValues: [Substring]
                 let tabbedKeyValues: [Substring] = line.split(separator: "\t")
@@ -79,9 +96,9 @@ extension Gir2Swift {
 
             func write(_ string: String, to fileName: String) {
                 do {
-                    try string.writeTo(file: fileName)
+                    try string.write(toFile: fileName, atomically: true, encoding: .utf8)
                 } catch {
-                    outq.async(group: queues) { fputs("\(error)\n", stderr) }
+                    outq.async(group: queues) { print("\(error)", to: &Streams.stdErr) }
                 }
             }
             func writebg(_ string: String, to fileName: String) {
@@ -213,22 +230,9 @@ extension Gir2Swift {
             }
             queues.wait()
             if verbose {
-                fputs("** Verbatim: \(GIR.verbatimConstants.count)\n\(GIR.verbatimConstants.joined(separator: "\n"))\n\n", stderr)
-                fputs("** Blacklisted: \(blacklist.count)\n\(blacklist.joined(separator: "\n\n"))\n\n", stderr)
+                print("** Verbatim: \(GIR.verbatimConstants.count)\n\(GIR.verbatimConstants.joined(separator: "\n"))\n", to: &Streams.stdErr)
+                print("** Blacklisted: \(blacklist.count)\n\(blacklist.joined(separator: "\n\n"))\n", to: &Streams.stdErr)
             }
         }
     }
-
-    /// process blacklist and verbatim constants information
-    func processSpecialCases(_ gir: GIR, forFile node: String) {
-        let preamble = node + ".preamble"
-        gir.preamble = preamble.contents ?? ""
-        let blacklist = node + ".blacklist"
-        GIR.blacklist = blacklist.contents.flatMap { Set($0.lines) } ?? []
-        let verbatimConstants = node + ".verbatim"
-        GIR.verbatimConstants = verbatimConstants.contents.flatMap { Set($0.lines) } ?? []
-        let overrideFile = node + ".override"
-        GIR.overrides = overrideFile.contents.flatMap { Set($0.lines) } ?? []
-    }
-
 }
