@@ -9,11 +9,9 @@ function is_processable_arg-path {
     local CALLER=$PWD
     cd $PACKAGE_PATH
 
-    local PACKAGE=`swift package dump-package`
-    local GENERATED=`jq -r '.dependencies | .[] | select(.name == "gir2swift") | .name' <<< $PACKAGE`
     local MANIFEST="gir2swift-manifest.sh"
 
-    if [[ $GENERATED && -f "$MANIFEST" ]]
+    if [[ -f "$MANIFEST" ]]
     then
         cd $CALLER
         return 0
