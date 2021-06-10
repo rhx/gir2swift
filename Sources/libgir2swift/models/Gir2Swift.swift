@@ -50,7 +50,7 @@ public struct Gir2Swift: ParsableCommand {
         if moduleBoilerPlateFile.isEmpty {
             moduleBoilerPlate = moduleBoilerPlateFile
         } else {
-            guard let contents = moduleBoilerPlateFile.contents else {
+            guard let contents = try? String(contentsOfFile: moduleBoilerPlateFile, encoding: .utf8) else {
                 fatalError("Cannot read contents of '\(moduleBoilerPlateFile)'")
             }
             moduleBoilerPlate = contents
