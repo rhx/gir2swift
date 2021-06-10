@@ -4,16 +4,6 @@
 //
 //  Created by Rene Hexel on 3/10/19.
 //
-#if !swift(>=5.0)
-import Foundation
-
-extension Character {
-    var isNewline: Bool { return self == "\n" || self == "\r" }
-    var isWhitespace: Bool { return isspace(CInt(unicodeScalars[unicodeScalars.startIndex].value)) != 0 }
-    var isLetter: Bool { return isalpha(CInt(unicodeScalars[unicodeScalars.startIndex].value)) != 0  }
-    var isNumber: Bool { return isdigit(CInt(unicodeScalars[unicodeScalars.startIndex].value)) != 0  }
-}
-#endif
 
 /// State for parsing `gtk-doc` style strings
 fileprivate enum State: Equatable {

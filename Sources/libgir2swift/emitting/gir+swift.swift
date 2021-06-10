@@ -132,7 +132,7 @@ public extension String {
     @inlinable
     var withoutDottedPrefix: String {
         guard !hasPrefix(GIR.dottedPrefix) else {
-            return split(separator: ".").last ?? self
+            return components(separatedBy: ".").last ?? self
         }
         return self
     }
@@ -282,7 +282,7 @@ public func valueCode(_ indentation: String) -> (GIR.Enumeration.Member) -> Stri
             cID = value
         }
         let comment = cID == value ? "" : (" // " + value)
-        let code = swiftCode(m, indentation + "static let " + m.name.camelCase.swiftQuoted + " = " + cID + comment, indentation: indentation)
+        let code = swiftCode(m, indentation + "static let " + m.name.snakeCase2camelCase.swiftQuoted + " = " + cID + comment, indentation: indentation)
         return code
     }
 }
@@ -365,7 +365,7 @@ public func bitfieldValueCode(_ bf: GIR.Bitfield, _ indentation: String) -> (GIR
         }
         let comment = cID == value ? "" : (" // " + cID)
         let cast = type + "(" + value + ")"
-        let code = swiftCode(m, indentation + "public static let " + m.name.camelCase.swiftQuoted + " = " + cast + comment, indentation: indentation)
+        let code = swiftCode(m, indentation + "public static let " + m.name.snakeCase2camelCase.swiftQuoted + " = " + cast + comment, indentation: indentation)
         return code
     }
 }
@@ -482,7 +482,7 @@ public func functionCode(_ f: GIR.Function, indentation: String = "    ", initia
 
 
 /// Swift code for methods (with a given indentation)
-public func methodCode(_ indentation: String, initialIndentation: String? = nil, record: GIR.Record? = nil, functionPrefix: String = "", avoiding existingNames: Set<String> = [], publicDesignation: String = "public ", convertName: @escaping (String) -> String = { $0.camelCase }, ptr ptrName: String = "ptr") -> (GIR.Method) -> String {
+public func methodCode(_ indentation: String, initialIndentation: String? = nil, record: GIR.Record? = nil, functionPrefix: String = "", avoiding existingNames: Set<String> = [], publicDesignation: String = "public ", convertName: @escaping (String) -> String = { $0.snakeCase2camelCase }, ptr ptrName: String = "ptr") -> (GIR.Method) -> String {
     let indent = initialIndentation ?? indentation
     let doubleIndent = indent + indentation
     let call = callCode(doubleIndent, record, ptr: ptrName)
@@ -522,7 +522,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
             let params = arguments.map(nullableRefParameterCode)
             let funcParam = params.joined(separator: ", ")
             let fname: String
-            if let firstParamName = params.first?.split(separator: " ").first?.split(separator: ":").first?.capitalised {
+            if let firstParamName = params.first?.components(separatedBy: " ").first?.components(separatedBy: ":").first?.capitalised {
                 fname = name.stringByRemoving(suffix: firstParamName) ?? name
             } else {
                 fname = name
@@ -546,7 +546,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
         let params = arguments.map(templatedParameterCode)
         let funcParam = params.joined(separator: ", ")
         let fname: String
-        if let firstParamName = params.first?.split(separator: " ").first?.split(separator: ":").first?.capitalised {
+        if let firstParamName = params.first?.components(separatedBy: " ").first?.components(separatedBy: ":").first?.capitalised {
             fname = name.stringByRemoving(suffix: firstParamName) ?? name
         } else {
             fname = name
@@ -640,7 +640,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
     let ret = instanceReturnCode(doubleIndent, ptr: "rv", castVar: "rv")
     return { (field: GIR.Field) -> String in
         let name = field.name
-        let potentiallyClashingName = name.camelCase
+        let potentiallyClashingName = name.snakeCase2camelCase
         let swname: String
         if existingNames.contains(potentiallyClashingName) {
             let underscored = "_" + potentiallyClashingName
@@ -724,7 +724,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
 
 
 /// Swift code for convenience constructors
-public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: String, convenience: String = "", override ovr: String = "", publicDesignation: String = "public ", factory: Bool = false, hasParent: Bool = false, shouldSink: Bool = false, convertName: @escaping (String) -> String = { $0.camelCase }) -> (GIR.Record) -> (GIR.Method) -> String {
+public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: String, convenience: String = "", override ovr: String = "", publicDesignation: String = "public ", factory: Bool = false, hasParent: Bool = false, shouldSink: Bool = false, convertName: @escaping (String) -> String = { $0.snakeCase2camelCase }) -> (GIR.Record) -> (GIR.Method) -> String {
     let isConv = !convenience.isEmpty
     let isExtension = publicDesignation.isEmpty
     let conv =  isConv ? "\(convenience) " : ""
@@ -1011,7 +1011,7 @@ public func constructorPrefix(_ method: GIR.Method) -> String? {
     let e = components.endIndex
     let s = f < e ? f : f - 1
     let name = components[s..<e].joined(separator: "_")
-    return name.camelCase.swift
+    return name.snakeCase2camelCase.swift
 }
 
 /// Swift code for a `@convention(c)` callback type declaration
@@ -1167,13 +1167,13 @@ public func convertSetterArgumentToSwiftFor(_ record: GIR.Record?, ptr: String =
 
 
 /// Swift code for signal names without prefixes
-public func signalNameCode(indentation indent: String, convertName: @escaping (String) -> String = { $0.camelSignal }) -> (GIR.CType) -> String {
+public func signalNameCode(indentation indent: String, convertName: @escaping (String) -> String = { $0.kebabSnakeCase2camelCase }) -> (GIR.CType) -> String {
     return signalNameCode(indentation: indent, prefixes: ("", ""), convertName: convertName)
 }
 
 
 /// Swift code for signal names with prefixes
-public func signalNameCode(indentation indent: String, prefixes: (String, String), convertName: @escaping (String) -> String = { $0.camelSignalComponent }) -> (GIR.CType) -> String {
+public func signalNameCode(indentation indent: String, prefixes: (String, String), convertName: @escaping (String) -> String = { $0.kebabSnakeCase2pascalCase }) -> (GIR.CType) -> String {
     return { signal in
         let name = signal.name
         let prefixedName = prefixes.0 + convertName(name)
