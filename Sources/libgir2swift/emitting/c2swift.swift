@@ -5,44 +5,8 @@
 //  Created by Rene Hexel on 29/04/2016.
 //  Copyright © 2016, 2017, 2018, 2019, 2020 Rene Hexel. All rights reserved.
 //
-#if os(Linux)
-    import Glibc
 
-    /// Linux is currently missing some basic String methods,
-    /// so add them here
-    public extension String {
-        /// return whether the receiver has the given prefix
-        func hasPrefix(_ prefix: String) -> Bool {
-            let p = prefix.utf8
-            let s = utf8
-            guard s.count >= p.count else { return false }
-
-            var pi = p.makeIterator()
-            var si = s.makeIterator()
-            while let p = pi.next(), let c = si.next() {
-                guard p == c else { return false }
-            }
-            return true
-        }
-
-        /// return whether the receiver has the given suffix
-        func hasSuffix(_ suffix: String) -> Bool {
-            let u = suffix.utf8
-            let v = utf8
-            guard v.count >= u.count else { return false }
-
-            var si = u.reversed().makeIterator()
-            var ci = v.reversed().makeIterator()
-            while let s = si.next(), let c = ci.next() {
-                guard s == c else { return false }
-            }
-            return true
-        }
-    }
-#else
-    import Darwin
-#endif
-
+import Foundation
 
 /// Scalar C types that have an equivalent in Swift
 private let castableScalars = [  "gint" : "CInt",    "glong" : "CLong",   "guint" : "CUnsignedInt", "char" : "CChar",
@@ -118,10 +82,6 @@ private let swiftVerbatimIdiomaticReplacements = swiftIdiomaticReplacements.mapV
 private let reservedTypes: Set = ["String", "Array", "Optional", "Set", "Error", "ErrorProtocol"]
 /// Known Swift type names
 private let typeNames: Set = reservedTypes.union(reversecast.keys)
-/// UnicodeScalars representing whitespaces and newlines
-private let wsnlScalars: Set<UnicodeScalar> = [ " ", "\t", "\n"]
-/// Set of whitespace and newline ASCII/UTF8 codes
-private let wsnl = Set(wsnlScalars.map { UInt8($0.value) })
 
 /// Swift keyword for `true` Boolean values
 private let trueS  = "true"
@@ -172,53 +132,7 @@ let swiftKeywords = declarationKeywords ∪ statementKeywords ∪ expressionKeyw
 /// List of all reserved names in Swift
 let reservedNames = typeNames ∪ swiftKeywords
 
-extension String.UTF8View: Equatable {
-    /// compare two UTF8Views for equality
-    public static func ==(lhs: String.UTF8View, rhs: String.UTF8View) -> Bool {
-        guard lhs.count == rhs.count else { return false }
-        var li = lhs.makeIterator()
-        var ri = rhs.makeIterator()
-        while let l = li.next(), let r = ri.next() {
-            guard l == r else { return false }
-        }
-        return true
-    }
-}
-
-
 public extension String {
-    /// recursively remove all occurrences of the given substring
-    /// Note: this does not recursively remove substrings that span
-    /// substrings partitioned by a previous removal.  E.g.,
-    /// "TesTestt".remove("Test") will return "Test" rather than an empty string!
-    func remove(_ subString: String) -> String {
-        return String(self[startIndex..<endIndex].remove(subString))
-    }
-
-    /// return whether the receiver contains the given substring
-    func contains(_ subString: String) -> Bool {
-        let k = subString.distance(from: subString.startIndex, to: subString.endIndex)
-        let n = count
-        guard n >= k else { return false }
-        let s = startIndex
-        for l in 0...(n-k) {
-            let i = index(s, offsetBy: l)
-            let j = index(i, offsetBy: k)
-            if self[i..<j] == subString { return true }
-        }
-        return false
-    }
-
-    /// trim the characters in the given set of UTF8 values at either end of the string
-    func trimmingCharacters(in: Set<UInt8>) -> String {
-        let u = utf8
-        let s = u.takeFrom(indexWhere: { !wsnl.contains($0) }).trimWhile { wsnl.contains($0) }
-        return String(Substring(s))
-    }
-
-    /// return the string trimmed of white space at either end
-    var trimmed: String { return trimmingCharacters(in: wsnl) }
-
     /// return a name with reserved Ref or Protocol suffixes escaped
     var typeEscaped: String {
         let nx: String
@@ -232,10 +146,9 @@ public extension String {
 
     /// Return a string that starts with an alpha or underscore character
     var swiftIdentifier: String {
-        guard let f = utf8.first else { return self }
-        let u = UnicodeScalar(f)
-        guard isalpha(Int32(f)) != 0 || Character(u) == "_" else { return "_" + self }
-        return self
+        self.first?.isLetter == false && self.first != "_"
+            ? "_" + self
+            : self
     }
 
     /// return a valid Swift type for an underlying C type
@@ -381,55 +294,8 @@ public extension String {
     /// return the C type without "volatile"
     var typeWithoutVolatile: String { return without("volatile") }
 
-    /// return C type without the given word
-    func without(_ substring: String) -> String {
-        let ns = remove(substring)
-        return ns.trimmed
-    }
-
-    /// return C type without the given prefix
-    func without(prefix: String) -> String {
-        let ns = trimmed
-        guard ns.hasPrefix(prefix) else { return ns }
-        let len = prefix.count
-        let s = ns.index(ns.startIndex, offsetBy: len)
-        let e = ns.endIndex
-        return String(ns[s..<e]).without(prefix: prefix)
-    }
-
-    /// return C type without any of the given prefixes
-    func without(prefixes: [String]) -> String {
-        let ns = trimmed
-        guard let prefix = prefixes.lazy.filter({ ns.hasPrefix($0) }).first else { return ns }
-        let len = prefix.count
-        let s = ns.index(ns.startIndex, offsetBy: len)
-        let e = ns.endIndex
-        return String(ns[s..<e]).without(prefixes: prefixes)
-    }
-
-    /// return C type without the given suffix
-    func without(suffix: String) -> String {
-        let ns = trimmed
-        guard ns.hasSuffix(suffix) else { return ns }
-        let len = suffix.count
-        let s = ns.startIndex
-        let e = ns.index(s, offsetBy: ns.count - len)
-        return String(ns[s..<e]).without(suffix: suffix)
-    }
-
-    /// return C type without any of the given suffixes
-    func without(suffixes: [String]) -> String {
-        let ns = trimmed
-        guard let suffix = suffixes.lazy.filter({ ns.hasSuffix($0) }).first else { return ns }
-        let len = suffix.count
-        let s = ns.startIndex
-        let e = ns.index(s, offsetBy: ns.count - len)
-        return String(ns[s..<e]).without(suffixes: suffixes)
-    }
-
     /// return whether the untrimmed string is a C pointer
     var isTrimmedCPointer: Bool { return self.hasSuffix("*") }
-
 
     /// return whether the untrimmed string is a gpointer or gconstpointer
     var isTrimmedGPointer: Bool { return self == "gpointer" || self == "gconstpointer" }
@@ -506,58 +372,15 @@ public extension String {
         let e = index(before: i)
         return (prefix: self[startIndex..<e], arg: self[i..<endIndex])
     }
-
-    /// Return the splittable prefix
-    /// - Parameter prefixes: the prefixes to check for
-    /// - Returns: The splittable substring index
-    @inlinable func splittablePrefixIndex<S: StringProtocol>(from prefixes: [S]) -> Index? {
-        for prefix in prefixes {
-            if hasPrefix(prefix) {
-                return index(startIndex, offsetBy: prefix.count)
-            }
-        }
-        return nil
-    }
 }
 
 @usableFromInline let splittablePrefixes = [ "after_", "before_", "for_", "from_", "in_", "of_", "with_", "within_" ]
 
-extension Substring {
-    /// recursively remove all occurrences of the given substring
-    /// Note: this does not recursively remove substrings that span
-    /// substrings partitioned by a previous removal.  E.g.,
-    /// "TesTestt".remove("Test") will return "Test" rather than an empty string!
-    func remove(_ subString: String) -> Substring {
-        let k = subString.distance(from: subString.startIndex, to: subString.endIndex)
-        let n = count
-        guard n >= k else { return self }
-        let s = startIndex
-        let e = endIndex
-        for l in 0...(n-k) {
-            let i = index(s, offsetBy: l)
-            let j = index(i, offsetBy: k)
-            guard self[i..<j] != subString else {
-                let left = self[s..<i]
-                let right = self[j..<e].remove(subString)
-                let str = left + right
-                return str
-            }
-        }
-        return self
-    }
-
+extension StringProtocol {
     /// return a valid Swift name by quoting a reserved name
     @usableFromInline var swiftQuoted: String {
         let s = String(self)
         guard !reservedNames.contains(s) else { return "`" + self + "`" }
         return s.swiftIdentifier
     }
-
-    /// return the Swift camel case name, quoted if necessary
-    @usableFromInline var camelQuoted: String { self.camelCase.swiftQuoted }
-}
-
-/// convert the given C type to a Swift type
-func toSwift(_ ctype: String) -> String {
-    return ctype.swiftRepresentationOfCType
 }

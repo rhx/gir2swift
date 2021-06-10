@@ -4,12 +4,6 @@
 //
 //  Created by Mikoláš Stuchlík on 17.11.2020.
 //
-
-#if os(Linux)
-    import Glibc
-#else
-    import Darwin
-#endif
 import SwiftLibXML
 
 extension GIR {
@@ -161,7 +155,7 @@ extension GIR {
 
         /// return the Swift camel case name, quoted if necessary
         @inlinable
-        public var camelQuoted: String { name.camelCase.swiftQuoted }
+        public var camelQuoted: String { name.snakeCase2camelCase.swiftQuoted }
 
         /// return a non-clashing argument name
         @inlinable
@@ -206,6 +200,6 @@ extension GIR {
         
         /// return the non-prefixed argument name
         @inlinable
-        public var argumentName: String { return name.argumentSplit.arg.camelQuoted }
+        public var argumentName: String { return name.argumentSplit.arg.snakeCase2camelCase.swiftQuoted }
     }
 }

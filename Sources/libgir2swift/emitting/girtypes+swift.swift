@@ -25,8 +25,8 @@ public extension GIR.CType {
     var prefixedArgumentName: String {
         let (prefix, arg) = name.argumentSplit
         let noPrefix = prefix.isEmpty
-        let argName = arg.camelQuoted
-        let label = prefix.camelQuoted
+        let argName = arg.snakeCase2camelCase.swiftQuoted
+        let label = prefix.snakeCase2camelCase.swiftQuoted
         let prefixedname = noPrefix || label == argName ? argName : (label + " " + argName)
         return prefixedname
     }

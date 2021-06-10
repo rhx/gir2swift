@@ -138,7 +138,7 @@ private func buildAvailableSignal(record: GIR.Record, signal: GIR.Signal) -> Str
 
     let recordName = record.name.swift
     let signalType = recordName + "SignalName"
-    let swiftSignal = signal.name.replacingOccurrences(of: "::", with: "_").camelSignal
+    let swiftSignal = signal.name.replacingOccurrences(of: "::", with: "_").kebabSnakeCase2camelCase
 
     "/// Run the given callback whenever the `\(swiftSignal)` signal is emitted"
     Code.line {
@@ -185,7 +185,7 @@ private func buildUnavailableSignal(record: GIR.Record, signal: GIR.Signal) -> S
 
     let recordName = record.name.swift
     let signalType = recordName + "SignalName"
-    let swiftSignal = signal.name.replacingOccurrences(of: "::", with: "_").camelSignal
+    let swiftSignal = signal.name.replacingOccurrences(of: "::", with: "_").kebabSnakeCase2camelCase
 
     "/// - Warning: a `on\(swiftSignal.capitalised)` wrapper for this signal could not be generated because it contains unimplemented features: { \( signalSanityCheck(signal).joined(separator: ", ") ) }"
     "/// - Note: Instead, you can connect `\(swiftSignal)Signal` using the `connect(signal:)` methods"
