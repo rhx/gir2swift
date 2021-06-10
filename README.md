@@ -5,7 +5,6 @@ A simple GIR parser in Swift for creating Swift types for a .gir file
 ![macOS 10.15 build](https://github.com/rhx/gir2swift/workflows/macOS%2010.15/badge.svg)
 ![Ubuntu 20.04 build](https://github.com/rhx/gir2swift/workflows/Ubuntu%2020.04/badge.svg)
 ![Ubuntu 18.04 build](https://github.com/rhx/gir2swift/workflows/Ubuntu%2018.04/badge.svg)
-![Ubuntu 16.04 build](https://github.com/rhx/gir2swift/workflows/Ubuntu%2016.04/badge.svg)
 ![gtk macOS](https://github.com/rhx/gir2swift/workflows/gtk%20macOS/badge.svg)
 ![gtk Ubuntu](https://github.com/rhx/gir2swift/workflows/gtk%20Ubuntu/badge.svg)
 
@@ -140,7 +139,7 @@ Normally, `gir2swift` tries to translate constants from C to Swift, as per the d
 
 ### Swift
 
-To build, you need at least Swift 5.2 (Swift 5.3 onwards should work fine), download from https://swift.org/download/ -- if you are using macOS, make sure you have the command line tools installed as well).  Test that your compiler works using `swift --version`, which should give you something like
+To build, you need at least Swift 5.2 (but some Linux distributions have issues and seem to **require at least Swift 5.5**), download from https://swift.org/download/ -- if you are using macOS, make sure you have the command line tools installed as well).  Test that your compiler works using `swift --version`, which should give you something like
 
 	$ swift --version
 	Apple Swift version 5.3.2 (swiftlang-1200.0.45 clang-1200.0.32.28)
@@ -201,13 +200,20 @@ After that, use the (usual) Build and Test buttons to build/test this package.
 ## Troubleshooting
 Here are some common errors you might encounter and how to fix them.
 
-### Old Swift toolchain or Xcode
+### Missing `.gir` Files
 If you get an error such as
 
-	$ ./build.sh 
-	error: unable to invoke subcommand: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-package (No such file or directory)
+	Girs located at
+	Cannot open '/GLib-2.0.gir': No such file or directory
+
+Make sure that you have the relevant `gobject-introspection` packages installed (as per the Pre-requisites section), including their `.gir` and `.pc` files.
+
+### Old Swift toolchain or Xcode
+If, when you run `swift build`, you get a `Segmentation fault (core dumped)` or circular dependency error such as
+
+	warning: circular dependency detected while parsing pangocairo: harfbuzz -> freetype2 -> harfbuzz
 	
-this probably means that your Swift toolchain is too old.  Make sure the latest toolchain is the one that is found when you run the Swift compiler (see above).
+this probably means that your Swift toolchain is too old, particularly on Linux (at the time of this writing, some Linux distributions require at least Swift 5.5).  Make sure the latest toolchain is the one that is found when you run the Swift compiler (see above).
 
   If you get an older version, make sure that the right version of the swift compiler is found first in your `PATH`.  On macOS, use xcode-select to select and install the latest version, e.g.:
 
