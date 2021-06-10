@@ -3,18 +3,11 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 25/04/2016.
-//  Copyright © 2016, 2017, 2018, 2019, 2020 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018, 2019, 2020, 2021 Rene Hexel. All rights reserved.
 //
 //
 
 import Foundation
-
-extension Character {
-    @usableFromInline var isNewline: Bool { CharacterSet(charactersIn: String(self)).isSubset(of: CharacterSet.newlines) }
-    @usableFromInline var isWhitespace: Bool { CharacterSet(charactersIn: String(self)).isSubset(of: CharacterSet.whitespacesAndNewlines) }
-    @usableFromInline var isLetter: Bool { CharacterSet(charactersIn: String(self)).isSubset(of: CharacterSet.letters)  }
-    @usableFromInline var isNumber: Bool { CharacterSet(charactersIn: String(self)).isSubset(of: CharacterSet.decimalDigits)  }
-}
 
 public extension StringProtocol {
 
