@@ -389,12 +389,11 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
     let ctype = cOriginalType.isEmpty ? e.name.swift : cOriginalType
     let subTypeAliases = e.records.map { subTypeAlias(e, $0, publicDesignation: "") }.joined()
     let documentation = commentCode(e)
-    let code = "// MARK: - \(e.name) \(e.kind)\n\n" +
+    let code = "// MARK: - \(e.name) \(e.kind)\n\n" + documentation + "\n///\n" +
         "/// The `\(e.protocolName)` protocol exposes the methods and properties of an underlying `\(ctype)` instance.\n" +
         "/// The default implementation of these can be found in the protocol extension below.\n" +
         "/// For a concrete class that implements these methods and properties, see `\(e.className)`.\n" +
         "/// Alternatively, use `\(e.structName)` as a lighweight, `unowned` reference if you already have an instance you just want to use.\n///\n" +
-            documentation + "\n" +
         "public protocol \(e.protocolName)\(p) {\n" + indentation +
             subTypeAliases + indentation +
             "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
@@ -1209,10 +1208,9 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
     let weakReferencable = e.rootType.name == "Object" && e.ref != nil
     let weakReferencingProtocol = weakReferencable ? ", GWeakCapturing" : ""
     
-    let code = "/// The `\(structName)` type acts as a lightweight Swift reference to an underlying `\(ctype)` instance.\n" +
+    let code = documentation + "\n///\n/// The `\(structName)` type acts as a lightweight Swift reference to an underlying `\(ctype)` instance.\n" +
     "/// It exposes methods that can operate on this data type through `\(protocolName)` conformance.\n" +
     "/// Use `\(structName)` only as an `unowned` reference to an existing `\(ctype)` instance.\n///\n" +
-        documentation + "\n" +
     "public struct \(structName): \(protocolName)\(weakReferencingProtocol) {\n" + indentation +
         subTypeAliases + indentation +
         "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
@@ -1345,10 +1343,9 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let p = parentName.isEmpty ? "" : (parentName + ", ")
     let documentation = commentCode(e)
     let subTypeAliases = e.records.map { subTypeAlias(e, $0) }.joined()
-    let code1 = "/// The `\(className)` type acts as a\(e.ref == nil ? "n" : " reference-counted") owner of an underlying `\(ctype)` instance.\n" +
+    let code1 = documentation + "\n///\n/// The `\(className)` type acts as a\(e.ref == nil ? "n" : " reference-counted") owner of an underlying `\(ctype)` instance.\n" +
     "/// It provides the methods that can operate on this data type through `\(protocolName)` conformance.\n" +
     "/// Use `\(className)` as a strong reference or owner of a `\(ctype)` instance.\n///\n" +
-        documentation + "\n" +
     "open class \(className): \(p)\(protocolName) {\n" + indentation +
        subTypeAliases + indentation +
         (hasParent ? "" : (
