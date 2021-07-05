@@ -6,7 +6,8 @@
         {
             "label": "Swift Build",
             "type": "shell",
-            "command": "swift build -Xswiftc -Xfrontend -Xswiftc -serialize-debugging-options",
+            "command": "swift build -j 4",
+            //"command": "swift build -Xswiftc -Xfrontend -Xswiftc -serialize-debugging-options",
             "group": {
                 "kind": "build",
                 "isDefault": true
