@@ -967,6 +967,7 @@ struct CallCode {
     }
 
     public mutating func callCode(method: GIR.Method) -> String {
+        hadInstance = false
         let throwsError = method.throwsError
         let args = method.args // not .lazy
         let n = args.count
