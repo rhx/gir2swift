@@ -189,4 +189,3 @@ public func swiftCode(_ thing: GIR.Thing, _ postfix: String = "", indentation: S
     }
     return t + ((t.isEmpty || t.hasSuffix("\n")) ? "" : "\n") + postfix
 }
-

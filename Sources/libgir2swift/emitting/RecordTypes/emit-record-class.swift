@@ -52,7 +52,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let p = parentName.isEmpty ? "" : (parentName + ", ")
     let documentation = commentCode(e)
     let subTypeAliases = e.records.map { subTypeAlias(e, $0) }.joined()
-    let code1 = "/// The `\(className)` type acts as a\(e.ref == nil ? "n" : " reference-counted") owner of an underlying `\(ctype)` instance.\n" +
+    let code1 = documentation + "\n///\n/// The `\(className)` type acts as a\(e.ref == nil ? "n" : " reference-counted") owner of an underlying `\(ctype)` instance.\n" +
     "/// It provides the methods that can operate on this data type through `\(protocolName)` conformance.\n" +
     "/// Use `\(className)` as a strong reference or owner of a `\(ctype)` instance.\n///\n" +
         documentation + "\n" +

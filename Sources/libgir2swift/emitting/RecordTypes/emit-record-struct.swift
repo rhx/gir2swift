@@ -25,7 +25,7 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
     let weakReferencable = e.rootType.name == "Object" && e.ref != nil
     let weakReferencingProtocol = weakReferencable ? ", GWeakCapturing" : ""
     
-    let code = "/// The `\(structName)` type acts as a lightweight Swift reference to an underlying `\(ctype)` instance.\n" +
+    let code = documentation + "\n///\n/// The `\(structName)` type acts as a lightweight Swift reference to an underlying `\(ctype)` instance.\n" +
     "/// It exposes methods that can operate on this data type through `\(protocolName)` conformance.\n" +
     "/// Use `\(structName)` only as an `unowned` reference to an existing `\(ctype)` instance.\n///\n" +
         documentation + "\n" +

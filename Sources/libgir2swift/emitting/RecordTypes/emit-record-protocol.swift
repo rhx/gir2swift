@@ -8,7 +8,7 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
     let ctype = cOriginalType.isEmpty ? e.name.swift : cOriginalType
     let subTypeAliases = e.records.map { subTypeAlias(e, $0, publicDesignation: "") }.joined()
     let documentation = commentCode(e)
-    let code = "// MARK: - \(e.name) \(e.kind)\n\n" +
+    let code = "// MARK: - \(e.name) \(e.kind)\n\n" + documentation + "\n///\n" +
         "/// The `\(e.protocolName)` protocol exposes the methods and properties of an underlying `\(ctype)` instance.\n" +
         "/// The default implementation of these can be found in the protocol extension below.\n" +
         "/// For a concrete class that implements these methods and properties, see `\(e.className)`.\n" +
