@@ -56,7 +56,7 @@ func buildSignalExtension(for record: GIR.Record) -> String {
         return "// MARK: \(record.name.swift) has no signals\n"
     }
     
-    return Code.block(indentation: nil) {
+    return Code.block(root: true) {
         
         "// MARK: \(recordName) signals"
         "public extension \(record.protocolName) {"
@@ -89,19 +89,21 @@ func buildSignalExtension(for record: GIR.Record) -> String {
                 (record is GIR.Interface ? "GLibObject.ObjectRef(raw: ptr)." : "") +
                 "connectSignal(s, flags: f, data: userData, destroyData: destructor, handler: h)"
             }
-            "}\n\n"
+            "}"
+            ""
+            ""
 
             // Generation of unavailable signals
-            Code.loop(over: record.signals.filter( {!signalSanityCheck($0).isEmpty} )) { signal in
+            for signal in record.signals.filter({ !signalSanityCheck($0).isEmpty }) { 
                 buildUnavailableSignal(record: record, signal: signal)
             }
             // Generation of available signals
-            Code.loop(over: record.signals.filter( {signalSanityCheck($0).isEmpty } )) { signal in
+            for signal in record.signals.filter({ signalSanityCheck($0).isEmpty }) {
                 buildAvailableSignal(record: record, signal: signal)
             }
             // Generation of property obsevers. Property observers have the same delcaration as GObject signal `notify`. This sinal should be available at all times.
-            if let notifySignal = GIR.knownRecords["Object"]?.signals.first(where: { $0.name == "notify"}) {
-                Code.loop(over: record.properties) { property in
+            if let notifySignal = GIR.knownRecords["Object"]?.signals.first(where:{ $0.name == "notify" }) {
+                for property in record.properties {
                     buildSignalForProperty(record: record, property: property, notify: notifySignal)
                 }
             } else {
@@ -109,15 +111,17 @@ func buildSignalExtension(for record: GIR.Record) -> String {
             }
             
         }
-        "}\n\n"
-    }
+        "}"
+        ""
+        ""
+    }.makeString()
 }
 
 /// Modifies provided signal model to notify about property change.
 /// - Parameter record: Record of the property
 /// - Parameter property: Property which observer will be genrated
 /// - Parameter notify: GObject signal "notify" which is basis for the signal generation.
-private func buildSignalForProperty(record: GIR.Record, property: GIR.Property, notify: GIR.Signal) -> String {
+private func buildSignalForProperty(record: GIR.Record, property: GIR.Property, notify: GIR.Signal) -> ElementRepresentable {
     let propertyNotify = GIR.Signal(
         name: notify.name + "::" + property.name,
         cname: notify.cname,
@@ -133,7 +137,7 @@ private func buildSignalForProperty(record: GIR.Record, property: GIR.Property, 
 }
 
 @CodeBuilder
-private func buildAvailableSignal(record: GIR.Record, signal: GIR.Signal) -> String {
+private func buildAvailableSignal(record: GIR.Record, signal: GIR.Signal) -> ElementRepresentable {
     addDocumentation(signal: signal)
 
     let recordName = record.name.swift
@@ -149,7 +153,7 @@ private func buildAvailableSignal(record: GIR.Record, signal: GIR.Signal) -> Str
         " ) -> Int {"
     }
     Code.block {
-        "typealias SwiftHandler = \(signalClosureHolderDecl(record: record, signal: signal))"
+        "typealias SwiftHandler = " + signalClosureHolderDecl(record: record, signal: signal)
         Code.line {
             "let cCallback: "
             cCallbackDecl(record: record, signal: signal)
@@ -159,7 +163,7 @@ private func buildAvailableSignal(record: GIR.Record, signal: GIR.Signal) -> Str
         }
         Code.block {
             "let holder = Unmanaged<SwiftHandler>.fromOpaque(userData).takeUnretainedValue()"
-            "let output\(signal.returns.typeRef.type.name == "Void" ? ": Void" : "") = holder.\(generaceCCallbackCall(record: record, signal: signal))"
+            "let output\(signal.returns.typeRef.type.name == "Void" ? ": Void" : "") = holder." + generaceCCallbackCall(record: record, signal: signal)
             generateReturnStatement(record: record, signal: signal)
         }
         "}"
@@ -180,7 +184,7 @@ private func buildAvailableSignal(record: GIR.Record, signal: GIR.Signal) -> Str
 
 /// This function build documentation and name for unavailable signal.
 @CodeBuilder
-private func buildUnavailableSignal(record: GIR.Record, signal: GIR.Signal) -> String {
+private func buildUnavailableSignal(record: GIR.Record, signal: GIR.Signal) -> ElementRepresentable {
     addDocumentation(signal: signal)
 
     let recordName = record.name.swift
@@ -194,9 +198,9 @@ private func buildUnavailableSignal(record: GIR.Record, signal: GIR.Signal) -> S
 
 /// This function build Swift closure handler declaration.
 @CodeBuilder
-private func handlerType(record: GIR.Record, signal: GIR.Signal) -> String {
+private func handlerType(record: GIR.Record, signal: GIR.Signal) -> ElementRepresentable {
     "@escaping ( _ unownedSelf: \(record.structName)"
-    Code.loop(over: signal.args) { argument in
+    for argument in signal.args {
         ", _ \(argument.prefixedArgumentName): \(argument.swiftIdiomaticType())"
     }
     ") -> "
@@ -215,17 +219,19 @@ private func signalClosureHolderDecl(record: GIR.Record, signal: GIR.Signal) -> 
         (signal.args.isEmpty ? "" : ", ")
         signal.returns.swiftIdiomaticType()
         ">"
-    }
+    }.makeString()
 }
 
 /// This function adds Parameter documentation to the signal on top of existing documentation generation.
 @CodeBuilder
-private func addDocumentation(signal: GIR.Signal) -> String {
-    { str -> String in str.isEmpty ? CodeBuilder.ignoringEspace : str}(commentCode(signal))
+private func addDocumentation(signal: GIR.Signal) -> ElementRepresentable {
+    if !commentCode(signal).isEmpty {
+        StringElement.composition(commentCode(signal).components(separatedBy: "\n").map(StringElement.line(_:)))
+    }
     "/// - Note: This represents the underlying `\(signal.name)` signal"
     "/// - Parameter flags: Flags"
     "/// - Parameter unownedSelf: Reference to instance of self"
-    Code.loop(over: signal.args) { argument in
+    for argument in signal.args {
         let comment = gtkDoc2SwiftDoc(argument.comment, linePrefix: "").replacingOccurrences(of: "\n", with: " ")
         "/// - Parameter \(argument.prefixedArgumentName): \(comment.isEmpty ? "none" : comment)"
     }
@@ -235,10 +241,10 @@ private func addDocumentation(signal: GIR.Signal) -> String {
 
 /// Returns declaration for c callback.
 @CodeBuilder
-private func cCallbackDecl(record: GIR.Record, signal: GIR.Signal) -> String {
+private func cCallbackDecl(record: GIR.Record, signal: GIR.Signal) -> ElementRepresentable {
     "@convention(c) ("
     GIR.gpointerType.typeName + ", "            // Representing record itself
-    Code.loop(over: signal.args) { argument in
+    for argument in signal.args {
         argument.swiftCCompatibleType() + ", "
     }
     GIR.gpointerType.typeName                   // Representing user data
@@ -247,10 +253,10 @@ private func cCallbackDecl(record: GIR.Record, signal: GIR.Signal) -> String {
 }
 
 /// list of names of arguments of c callback
-private func cCallbackArgumentsDecl(record: GIR.Record, signal: GIR.Signal) -> String {
+private func cCallbackArgumentsDecl(record: GIR.Record, signal: GIR.Signal) -> ElementRepresentable {
     Code.line {
         "unownedSelf"
-        Code.loopEnumerated(over: signal.args) { index, _ in
+        for (index, _) in signal.args.enumerated() {
             ", arg\(index + 1)"
         }
         ", userData"
@@ -261,15 +267,15 @@ private func cCallbackArgumentsDecl(record: GIR.Record, signal: GIR.Signal) -> S
 private func generaceCCallbackCall(record: GIR.Record, signal: GIR.Signal) -> String {
     Code.line {
         "call(\(record.structRef.type.swiftName)(raw: unownedSelf)"
-        Code.loopEnumerated(over: signal.args) { index, argument in
+        for (index, argument) in signal.args.enumerated() { 
             ", \(argument.swiftSignalArgumentConversion(at: index + 1))"
         }
         ")"
-    }
+    }.makeString()
 }
 
 /// Generates correct return statement. This method currently contains implementation of ownership-transfer ability for String.
-private func generateReturnStatement(record: GIR.Record, signal: GIR.Signal) -> String {
+private func generateReturnStatement(record: GIR.Record, signal: GIR.Signal) -> ElementRepresentable {
     switch signal.returns.knownType {
     case is GIR.Record:
         return "return \(signal.returns.typeRef.cast(expression: "output", from: signal.returns.swiftSignalRef))"
