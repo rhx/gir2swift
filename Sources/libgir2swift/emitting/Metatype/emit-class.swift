@@ -1,7 +1,7 @@
 
 /// This function builds declarations for metatypes. This feature was originaly intented to replace all of the metatype code, since dynamic features of GLib/GObject are not supported. This decision was deffered to future. Following declarations wrap only type getter for user convenience.
 func buildClassTypeDeclaration(for record: GIR.Record, classInstance: GIR.Record) -> String {
-    return Code.block(indentation: nil) {
+    return Code.block(root: true) {
         "/// Metatype/GType declaration for \(classInstance.name.swift)"
         "public extension \(record.structRef.type.swiftName) {"
         Code.block {
@@ -22,5 +22,5 @@ func buildClassTypeDeclaration(for record: GIR.Record, classInstance: GIR.Record
             ""
         }
         "}"
-    }
+    }.makeString()
 }

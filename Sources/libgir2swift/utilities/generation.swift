@@ -104,7 +104,7 @@ extension Gir2Swift {
             func writebg(_ string: String, to fileName: String) {
                 background.async(group: queues) { write(string, to: fileName) }
             }
-            func write<T: GIR.Record>(_ types: [T], using ptrconvert: (String) -> (GIR.Record) -> String) {
+            func write<T: GIR.Record>(_ types: [T], using: SwiftCode) {
                 if let dir = outputDirectory {
                     writebg(modulePrefix, to: "\(dir)/\(node).swift")
                     var output = prefix
@@ -112,8 +112,7 @@ extension Gir2Swift {
                     var firstName = ""
                     var name = ""
                     for type in types {
-                        let convert = ptrconvert(type.ptrName)
-                        let code = convert(type)
+                        let code = using.swiftCode(ptrName: type.ptrName, record: type)
                         
                         output += code + "\n\n"
                         name = type.className
@@ -136,8 +135,7 @@ extension Gir2Swift {
                     }
                 } else {
                     let code = types.map { type in
-                        let convert = ptrconvert(type.ptrName)
-                        return convert(type)
+                        return using.swiftCode(ptrName: type.ptrName, record: type)
                     }.joined(separator: "\n\n")
                     outq.async(group: queues) { print(code) }
                 }
@@ -185,8 +183,7 @@ extension Gir2Swift {
                 } else { outq.async(group: queues) { print(bitfields) } }
             }
             background.async(group: queues) {
-                let convert = swiftUnionsConversion(gir.functions)
-                let unions = gir.unions.filter {!blacklist.contains($0.name)}.map(convert).joined(separator: "\n\n")
+                let unions = gir.unions.filter {!blacklist.contains($0.name)}.map {  swiftUnionsConversion(gir.functions, u: $0) }.joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-unions.swift"
                     let output = prefix + unions
@@ -194,12 +191,12 @@ extension Gir2Swift {
                 } else { outq.async(group: queues) { print(unions) } }
             }
             background.async(group: queues) {
-                let convert = swiftCode(gir.functions)
+                let convert = SwiftCode(funcs: gir.functions)
                 let types = gir.interfaces.filter {!blacklist.contains($0.name)}
                 write(types, using: convert)
             }
             background.async(group: queues) {
-                let convert = swiftCode(gir.functions)
+                let convert = SwiftCode(funcs: gir.functions)
                 var types = gir.records.filter {!blacklist.contains($0.name)}
                 // If `generate all` option was not passed, the driver will not generate records wich are deemed as private.
                 // Currently only Private records are ommited. Private record is a record, which has suffic Record and, class with it's name without work "Private" exists and contains only private references to this type or none at all. 
@@ -216,7 +213,7 @@ extension Gir2Swift {
                 write(types, using: convert)
             }
             background.async(group: queues) {
-                let convert = swiftCode(gir.functions)
+                let convert = SwiftCode(funcs: gir.functions)
                 let types = gir.classes.filter{!blacklist.contains($0.name)}
                 write(types, using: convert)
             }
