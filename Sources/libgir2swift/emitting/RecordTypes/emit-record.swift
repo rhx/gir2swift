@@ -27,6 +27,6 @@ public struct SwiftCode {
         
         let e = recordProtocolExtensionCode(funcs, r, ptr: ptrName)
         let code = instanceTypeDescriptor + p + s + classDefinition + e
-        return code
+        return code.diagnostic()
     }
 }

@@ -5,7 +5,7 @@ import Foundation
 public func functionCode(_ f: GIR.Function, indentation: String = "    ", initialIndentation i: String = "") -> String {
     let mcode = MethodCode(indentation: indentation, initialIndentation: i)
     let code = mcode.methodCode(method: f) + "\n\n"
-    return code
+    return code.diagnostic()
 }
 
 
@@ -102,7 +102,7 @@ struct MethodCode {
             "}\n"
         let fullFunction = indent + funcDecl + paramDecl + returnDecl + bodyCode
         let code = defaultArgsCode + swiftCode(method, fullFunction, indentation: indent)
-        return code
+        return code.diagnostic()
     }
 }
 
@@ -125,7 +125,7 @@ struct ComputedPropertyCode {
             name = "_" + pair.name
         } else { name = pair.name.swiftQuoted }
         guard !GIR.blacklist.contains(name) else {
-            return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
+            return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n".diagnostic()
         }
         let getter = pair.getter
         let gs: GIR.Method
@@ -137,7 +137,7 @@ struct ComputedPropertyCode {
             let setter = pair.setter
             guard let args = setter?.args.filter({ !$0.isInstanceOf(record) }),
                 let at = args.first, args.count == 1 else {
-                return indentation + "// var \(name) is unavailable because it does not have a valid getter or setter\n"
+                return (indentation + "// var \(name) is unavailable because it does not have a valid getter or setter\n").diagnostic()
             }
             type = at.argumentTypeName
             gs = setter!
@@ -171,7 +171,7 @@ struct ComputedPropertyCode {
             setterCode = ""
         }
         let varEnd = indentation + "}\n"
-        return varDecl + getterCode + setterCode + varEnd
+        return (varDecl + getterCode + setterCode + varEnd).diagnostic()
     }
 }
 
@@ -196,7 +196,7 @@ struct FieldCode {
             }
         } else { swname = potentiallyClashingName.swiftQuoted }
         guard !GIR.blacklist.contains(name) && !GIR.blacklist.contains(swname) else {
-            return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
+            return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n".diagnostic()
         }
         guard !field.isPrivate else { return indentation + "// var \(swname) is unavailable because \(name) is private\n" }
         let fieldType = field.containedTypes.first
@@ -263,7 +263,7 @@ struct FieldCode {
             setterCode = ""
         }
         let varEnd = indentation + "}\n"
-        return varDecl + getterCode + setterCode + varEnd
+        return (varDecl + getterCode + setterCode + varEnd).diagnostic()
     }
 }
 
@@ -307,10 +307,10 @@ struct ConvenienceConstructorCode {
         }
         let name = convertName(nameWithoutPostFix)
         guard !GIR.blacklist.contains(rawName) && !GIR.blacklist.contains(name) else {
-            return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
+            return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n".diagnostic()
         }
         guard !method.varargs else {
-            return "\n\(indentation)// *** \(name)() is not available because it has a varargs (...) parameter!\n\n"
+            return "\n\(indentation)// *** \(name)() is not available because it has a varargs (...) parameter!\n\n".diagnostic()
         }
         let deprecated = method.deprecated != nil ? "@available(*, deprecated) " : ""
         let isOverride = GIR.overrides.contains(method.cname)
@@ -333,7 +333,7 @@ struct ConvenienceConstructorCode {
         }
         guard !vaList else {
             // FIXME: as of Swift 5.3 beta, generating static class methods with va_list crashes the compiler
-            return "\n\(indentation)// *** \(name)() is currently not available because \(method.cname) takes a va_list pointer!\n\n"
+            return "\n\(indentation)// *** \(name)() is currently not available because \(method.cname) takes a va_list pointer!\n\n".diagnostic()
         }
         let templateTypes = Set(arguments.compactMap(\.templateDecl)).sorted().joined(separator: ", ")
         let templateDecl = templateTypes.isEmpty ? "" : ("<" + templateTypes + ">")
@@ -353,7 +353,7 @@ struct ConvenienceConstructorCode {
                 indentation  + ret.returnCode(method: method) +
                 (!factory ? retainBlock : "") +
             indentation + "}\n", indentation: indentation)
-        return code
+        return code.diagnostic()
     
     }
 }
@@ -370,7 +370,7 @@ public func returnTypeCode(for method: GIR.Method, _ tr: (typeRef: TypeReference
     let rv = method.returns
     guard !rv.isVoid, !(tr?.isConstructor ?? false) else { return nil }
     let returnTypeName = rv.returnTypeName(for: tr?.record, beingIdiomatic: beIdiomatic, useStruct: useRef)
-    return returnTypeName
+    return returnTypeName.diagnostic()
 }
 
 /// Return code declaration for functions/methods/convenience constructors
@@ -380,8 +380,8 @@ struct ReturnDeclarationCode {
 
     public func returnDeclarationCode(method: GIR.Method) -> String {
         let throwCode = method.throwsError ? " throws" : ""
-        guard let returnType = returnTypeCode(for: method, tr, useStruct: useStructRef) else { return throwCode }
-        return throwCode + " -> \(returnType)"
+        guard let returnType = returnTypeCode(for: method, tr, useStruct: useStructRef) else { return throwCode.diagnostic() }
+        return (throwCode + " -> \(returnType)").diagnostic()
     }
 }
 
@@ -395,7 +395,7 @@ struct ReturnCode {
     var noCast: Bool = false
 
     public func returnCode(method: GIR.Method) -> String {
-        GenericReturnCode<GIR.Method>(indentation: indentation, tr: tr, ptr: ptr, hasParent: hasParent, useIdiomaticSwift: useIdiomaticSwift, noCast: noCast, extract: { $0.returns } ).returnCode(param: method)
+        GenericReturnCode<GIR.Method>(indentation: indentation, tr: tr, ptr: ptr, hasParent: hasParent, useIdiomaticSwift: useIdiomaticSwift, noCast: noCast, extract: { $0.returns } ).returnCode(param: method).diagnostic()
     }
 }
 
@@ -412,7 +412,7 @@ public func instanceReturnCode(
     useIdiomaticSwift beIdiomatic: Bool = true,
     cType: GIR.CType
 ) -> String {
-    GenericReturnCode(indentation: indentation, tr: tr, ptr: ptr, rv: castVar, hasParent: hasParent, forceCast: doForce, convertToSwiftTypes: doConvert, useIdiomaticSwift: beIdiomatic, noCast: noCast, extract: {$0} ).returnCode(param: cType)
+    GenericReturnCode(indentation: indentation, tr: tr, ptr: ptr, rv: castVar, hasParent: hasParent, forceCast: doForce, convertToSwiftTypes: doConvert, useIdiomaticSwift: beIdiomatic, noCast: noCast, extract: {$0} ).returnCode(param: cType).diagnostic()
 }
 
 /// Generic return code for methods/types
@@ -436,23 +436,23 @@ struct GenericReturnCode<T> {
         let swiftRef = field.swiftReturnRef
         let returnRef = convertToSwiftTypes ? swiftRef : fieldRef
         let t = returnRef.type
-        guard isInstance, let tr = tr else { return indentation + "return rv\n" }
+        guard isInstance, let tr = tr else { return (indentation + "return rv\n").diagnostic() }
         let typeRef = tr.typeRef
         guard !tr.isConstructor else {
             let cons = tr.isConvenience ? "self.init" : (hasParent ? "super.init(gpointer: " : "\(ptr) = UnsafeMutableRawPointer")
             let cast = "(" + rv + ")"
             let tail = tr.isConvenience || !hasParent ? "\n" : ")\n"
             let ret = indentation + cons + cast + tail
-            return ret
+            return ret.diagnostic()
         }
         guard !(useIdiomaticSwift && field.idiomaticWrappedRef != swiftRef) else {
-            return indentation + "return rv\n"
+            return (indentation + "return rv\n").diagnostic()
         }
         let cons = "return rv.map { \(t.swiftName)"
         let cast = returnRef.cast(expression: "$0", from: typeRef)
         let end = " }"
         let ret = indentation + cons + cast + end + "\n"
-        return ret
+        return ret.diagnostic()
     }
 }
 
@@ -486,7 +486,7 @@ struct CallCode {
         let varName = instance ? ptr : (name + argPtrName)
         let ref = arg.typeRef
         let param = ref.cast(expression: varName, from: arg.swiftParamRef)
-        return param
+        return param.diagnostic()
     }
 
     public mutating func callCode(method: GIR.Method) -> String {
@@ -544,7 +544,7 @@ struct CallCode {
             varCode = "let " + maybeRV + typeDeclaration + " = "
         }
         let code = errCode + conditional + varCode + callCode + suffix + throwCode
-        return code
+        return code.diagnostic()
     }
 }
 
@@ -561,7 +561,7 @@ struct CallSetter {
             "\(method.cname.swift)(\(args.map(toSwift.convertSetterArgumentToSwiftFor(arg:)).joined(separator: ", "))" +
             ( method.throwsError ? ", &error" : "" ) +
         ")\n"
-        return code
+        return code.diagnostic()
     }
 }
 
@@ -569,13 +569,13 @@ struct CallSetter {
 public func constructorParam(_ method: GIR.Method, prefix: String?) -> String {
     let comma = ", "
     let args = method.args
-    guard let first = args.first else { return "" }
-    guard let p = prefix else { return args.map(templatedParameterCode).joined(separator: comma) }
+    guard let first = args.first else { return "".diagnostic() }
+    guard let p = prefix else { return args.map(templatedParameterCode).joined(separator: comma).diagnostic() }
     let firstParam = prefixedTemplatedParameterCode(for: first, prefix: p)
     let n = args.count
-    guard n > 1 else { return firstParam }
+    guard n > 1 else { return firstParam.diagnostic() }
     let tail = args[1..<n]
-    return firstParam + comma + tail.map(templatedParameterCode).joined(separator: comma)
+    return (firstParam + comma + tail.map(templatedParameterCode).joined(separator: comma)).diagnostic()
 }
 
 
@@ -591,12 +591,12 @@ public func constructorPrefix(_ method: GIR.Method) -> String? {
         if let prefix = (["new_", "new"].lazy.filter { name.hasPrefix($0) }.first) {
             let s = name.index(name.startIndex, offsetBy: prefix.count)
             let e = name.endIndex
-            return String(name[s..<e]).swift
+            return String(name[s..<e]).swift.diagnostic()
         }
         if let suffix = (["_newv", "_new"].lazy.filter { name.hasSuffix($0) }.first) {
             let s = name.startIndex
             let e = name.index(name.endIndex, offsetBy: -suffix.count)
-            return String(name[s..<e]).swift
+            return String(name[s..<e]).swift.diagnostic()
         }
         return nil
     }
@@ -604,7 +604,7 @@ public func constructorPrefix(_ method: GIR.Method) -> String? {
     let e = components.endIndex
     let s = f < e ? f : f - 1
     let name = components[s..<e].joined(separator: "_")
-    return name.snakeCase2camelCase.swift
+    return name.snakeCase2camelCase.swift.diagnostic()
 }
 
 /// Swift code for a `@convention(c)` callback type declaration
@@ -632,7 +632,7 @@ public func callbackDecl(for callback: GIR.Callback) -> String {
         returnTypeCode = returnTypeCodeRaw
     }
     let code = voidCode + " -> " + returnTypeCode
-    return code
+    return code.diagnostic()
 }
 
 /// Swift code for a `@convention(c)` callback type declaration
@@ -640,7 +640,7 @@ public func callbackDecl(for callback: GIR.Callback) -> String {
 /// - Returns: The Swift type for the parameter
 public func forceUnwrappedDecl(for callback: GIR.Callback) -> String {
     let code = "(" + callbackDecl(for: callback) + ")!"
-    return code
+    return code.diagnostic()
 }
 
 /// Swift code for a `@convention(c)` callback parameter
@@ -649,7 +649,7 @@ public func forceUnwrappedDecl(for callback: GIR.Callback) -> String {
 public func callbackParameterCode(for argument: GIR.Argument) -> String {
     let type = argument.callbackArgumentTypeName
     guard type != GIR.gpointer.swiftName else { return type + "?" }
-    return type
+    return type.diagnostic()
 }
 
 /// Swift code for auto-prefixed arguments
@@ -664,7 +664,7 @@ public func callbackParameterCode(for argument: GIR.Argument) -> String {
     let escaping = type.maybeCallback ? "@escaping " : ""
     let defaultValue = !isTemplate && argument.isNullable && argument.allowNone ? " = nil" : ""
     let code = prefixedName + ": " + escaping + type + defaultValue
-    return code
+    return code.diagnostic()
 }
 
 /// Swift code for method parameters
@@ -676,7 +676,7 @@ public func callbackParameterCode(for argument: GIR.Argument) -> String {
     let escaping = type.maybeCallback ? "@escaping " : ""
     let defaultValue = !isTemplate && argument.isNullable && argument.allowNone ? " = nil" : ""
     let code = prefixedName + ": " + escaping + type + defaultValue
-    return code
+    return code.diagnostic()
 }
 
 /// Swift code for auto-prefixed arguments.
@@ -690,7 +690,7 @@ public func callbackParameterCode(for argument: GIR.Argument) -> String {
     let escaping = type.maybeCallback ? "@escaping " : ""
     let defaultValue = argument.isNullable && argument.allowNone ? " = nil" : ""
     let code = prefixedName + ": " + escaping + type + defaultValue
-    return code
+    return code.diagnostic()
 }
 
 /// Swift code for method parameters
@@ -701,7 +701,7 @@ public func callbackParameterCode(for argument: GIR.Argument) -> String {
     let escaping = type.maybeCallback ? "@escaping " : ""
     let defaultValue = argument.isNullable && argument.allowNone ? " = nil" : ""
     let code = prefixedName + ": " + escaping + type + defaultValue
-    return code
+    return code.diagnostic()
 }
 
 /// Swift code for auto-prefixed return values
@@ -709,7 +709,7 @@ public func returnCode(for argument: GIR.Argument) -> String {
     let prefixedname = argument.prefixedArgumentName
     let type = argument.argumentTypeName
     let code = "\(prefixedname): \(type)"
-    return code
+    return code.diagnostic()
 }
 
 
@@ -718,7 +718,7 @@ public func returnCode(for argument: GIR.Argument, prefix: String) -> String {
     let name = argument.argumentName
     let type = argument.returnTypeName
     let code = "\(prefix) \(name): \(type)"
-    return code
+    return code.diagnostic()
 }
 
 
@@ -727,7 +727,7 @@ public func toSwift(_ arg: GIR.Argument, ptr: String = "ptr") -> String {
     let t = arg.typeRef.type
     let varName = arg.instance ? ptr : (arg.nonClashingName + (arg.isKnownRecord ? ".ptr" : ""))
     let param = t.cast(expression: varName)
-    return param
+    return param.diagnostic()
 }
 
 
@@ -738,7 +738,7 @@ struct ConvertSetterArgumentToSwiftFor {
 
     public func convertSetterArgumentToSwiftFor(arg: GIR.Argument) -> String {
         let name = arg.nonClashingName
-        guard !arg.isScalarArray else { return "&" + name }
+        guard !arg.isScalarArray else { return ("&" + name).diagnostic() }
         let ref = arg.typeRef
         let paramRef = arg.swiftParamRef
         let sourceRef: TypeReference
@@ -757,6 +757,6 @@ struct ConvertSetterArgumentToSwiftFor {
             sourceRef = paramRef
         }
         let param = ref.cast(expression: exp, from: sourceRef)
-        return param
+        return param.diagnostic()
     }
 }

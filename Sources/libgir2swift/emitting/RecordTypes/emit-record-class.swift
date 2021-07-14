@@ -268,5 +268,5 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     //        "public typealias Class = \(protocolName)\n") +
         signals.map(scode.signalNameCode(signal:)).joined(separator: "\n") + "\n" +
         properties.map(ncode.signalNameCode(signal:)).joined(separator: "\n") + "\n}\n\n")
-    return code1 + code2 + code3 + signalEnumCode + buildSignalExtension(for: e)
+    return (code1 + code2 + code3 + signalEnumCode + buildSignalExtension(for: e)).diagnostic()
 }

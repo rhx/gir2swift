@@ -14,6 +14,10 @@ public struct Gir2Swift: ParsableCommand {
     @Flag(name: .short, help: "Produce verbose output.")
     var verbose = false
 
+    /// Generated wrappers contain more diagnostic information about creation process if `true`.
+    @Flag(name: .short, help: "Generated wrappers contain more diagnostic information about creation process. Notice: output in diagnostic mode may (and probably will ) fail to compile!")
+    var diagnostic = false
+
     /// Generate output for everything, including private C types if `true`
     @Flag(name: .short, help: "Disables all filters. Wrappers for all C types will be generated.")
     var allFilesGenerate = false
@@ -42,6 +46,9 @@ public struct Gir2Swift: ParsableCommand {
     /// Designated initialiser
     public init() {}
     
+    /// This property switches the output into diagnostic mode. Remove in future revision.
+    static var diagnostic: Bool = false
+
     /// Main function to run the `gir2swift command`
     mutating public func run() throws {
         let nTypesPrior = GIR.knownTypes.count
@@ -55,6 +62,8 @@ public struct Gir2Swift: ParsableCommand {
             }
             moduleBoilerPlate = contents
         }
+
+        Gir2Swift.diagnostic = diagnostic
 
         // pre-load gir files to ensure pre-requisite types are known
         for girFile in prerequisiteGir {

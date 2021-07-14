@@ -12,5 +12,5 @@ public func subRecordProperty(_ e: GIR.Record, ptr: String, _ r: GIR.Record, ind
         doubleIndentation + "get { \(ptr).pointee.\(r.name) }\n" +
         doubleIndentation + "set { \(ptr).pointee.\(r.name) = newValue }\n" + indentation +
     "}\n\n"
-    return documentation + typeDef
+    return (documentation + typeDef).diagnostic()
 }

@@ -114,7 +114,7 @@ func buildSignalExtension(for record: GIR.Record) -> String {
         "}"
         ""
         ""
-    }.makeString()
+    }.makeString().diagnostic()
 }
 
 /// Modifies provided signal model to notify about property change.
@@ -209,14 +209,9 @@ private func handlerType(record: GIR.Record, signal: GIR.Signal) -> ElementRepre
 
 /// This function builds declaration for the typealias holding the reference to the Swift closure handler
 private func signalClosureHolderDecl(record: GIR.Record, signal: GIR.Signal) -> String {
-    if signal.args.count > 6 {
-        fatalError("Argument count \(signal.args.count) exceeds the maximum number of allowed arguments (6)")
-    }
     return Code.line {
-        "GLib.ClosureHolder" + (signal.args.count > 0 ? "\(signal.args.count + 1)" : "")
-        "<" + record.structName + ", "
-        signal.args.map { $0.swiftIdiomaticType() }.joined(separator: ", ")
-        (signal.args.isEmpty ? "" : ", ")
+        "GLib.ClosureHolder<"
+        "(" + ([record.structName] + signal.args.map { $0.swiftIdiomaticType() }).joined(separator: ", ") + "), "
         signal.returns.swiftIdiomaticType()
         ">"
     }.makeString()
@@ -266,11 +261,11 @@ private func cCallbackArgumentsDecl(record: GIR.Record, signal: GIR.Signal) -> E
 /// Returns correct call of Swift handler from c callback scope with correct casting.
 private func generaceCCallbackCall(record: GIR.Record, signal: GIR.Signal) -> String {
     Code.line {
-        "call(\(record.structRef.type.swiftName)(raw: unownedSelf)"
+        "call((\(record.structRef.type.swiftName)(raw: unownedSelf)"
         for (index, argument) in signal.args.enumerated() { 
             ", \(argument.swiftSignalArgumentConversion(at: index + 1))"
         }
-        ")"
+        "))"
     }.makeString()
 }
 

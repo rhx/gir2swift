@@ -25,7 +25,7 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
             "/// Required Initialiser for types conforming to `\(e.protocolName)`\n" + indentation +
             "init(raw: UnsafeMutableRawPointer)\n" +
         "}\n\n"
-    return code
+    return code.diagnostic()
 }
 
 /// Default implementation for record methods as protocol extension
@@ -61,5 +61,5 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
         e.fields.map(fcode.fieldCode(field:)).joined(separator: "\n") + "\n" +
         subTypeProperties +
     "}\n\n"
-    return code
+    return code.diagnostic()
 }

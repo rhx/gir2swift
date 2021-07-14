@@ -268,5 +268,5 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
     } else if state == .functionArguments {
         output.append(")`")
     }
-    return output
+    return output.diagnostic()
 }

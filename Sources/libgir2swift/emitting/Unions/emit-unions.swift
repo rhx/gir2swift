@@ -11,5 +11,5 @@ public func swiftUnionsConversion(_ funcs: [GIR.Function], u: GIR.Union) -> Stri
     let c = recordClassCode(u, parent: "", ptr: ptrName)
     let e = recordProtocolExtensionCode(funcs, u, ptr: ptrName)
     let code = p + s + c + e
-    return code
+    return code.diagnostic()
 }

@@ -7,7 +7,7 @@ public func bitfieldTypeHead(_ bf: GIR.Bitfield, enumRawType: String = "UInt32",
     let ctype = type.typeName
     let doubleIndentation = indentation + indentation
     let tripleIndentation = indentation + doubleIndentation
-    return swiftCode(bf, "public struct \(bf.escapedName.swift): OptionSet {\n" + indentation +
+    return (swiftCode(bf, "public struct \(bf.escapedName.swift): OptionSet {\n" + indentation +
         "/// The corresponding value of the raw type\n" + indentation +
         "public var rawValue: \(enumRawType) = 0\n" + indentation +
         "/// The equivalent raw Int value\n" + indentation +
@@ -27,7 +27,7 @@ public func bitfieldTypeHead(_ bf: GIR.Bitfield, enumRawType: String = "UInt32",
         "/// Creates a new instance with the specified `\(ctype)` enum value\n" + indentation +
         "@inlinable public init(_ enumValue: \(ctype)) { self.rawValue = \(enumRawType)(enumValue.rawValue) }\n" + indentation +
         "/// Creates a new instance with the specified Int value\n" + indentation +
-        "@inlinable public init<I: BinaryInteger>(_ intValue: I) { self.rawValue = \(enumRawType)(intValue)  }\n\n"
+        "@inlinable public init<I: BinaryInteger>(_ intValue: I) { self.rawValue = \(enumRawType)(intValue)  }\n\n").diagnostic()
     )
 }
 
@@ -42,7 +42,7 @@ public func swiftCode(_ bf: GIR.Bitfield) -> String {
                     // + deprecated.map(bitfieldDeprecated(bf, indent)).joined(separator: "\n")
     let tail = "\n}\n\n"
     let code = head + fields + tail
-    return code
+    return code.diagnostic()
 }
 
 /// Swift code representation of a bit field value
@@ -62,6 +62,6 @@ struct BitfieldValueCode {
         let comment = cID == value ? "" : (" // " + cID)
         let cast = type + "(" + value + ")"
         let code = swiftCode(member, indentation + "public static let " + member.name.snakeCase2camelCase.swiftQuoted + " = " + cast + comment, indentation: indentation)
-        return code
+        return code.diagnostic()
     }
 }

@@ -105,5 +105,5 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
         constructors.map { ccode.convenienceConstructorCode(record: e, method: $0) }.joined(separator: "\n") +
         factories.map { fcode.convenienceConstructorCode(record: e, method: $0) }.joined(separator: "\n") +
     "}\n\n"
-    return code
+    return code.diagnostic()
 }

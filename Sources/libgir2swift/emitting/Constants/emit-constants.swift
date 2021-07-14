@@ -11,10 +11,10 @@ public func swiftCode(constant: GIR.Constant) -> String {
     guard !GIR.verbatimConstants.contains(name) else {
         let code = swiftCode(constant, "public let " + name +
             (parentRef == nil ? "" : (": " + parent.swift)) + " = " + value + comment + original)
-        return code
+        return code.diagnostic()
     }
     let code = swiftCode(constant, "public let \(name) = \(name == original ? value : original)" + comment + (name == original ? "" : value))
-    return code
+    return code.diagnostic()
 }
 
 /// Swift code type alias representation of an enum
@@ -23,5 +23,5 @@ public func typeAlias(_ e: GIR.Enumeration) -> String {
     let parent = e.typeRef.type.parent?.type.typeName ?? e.typeRef.type.ctype
     let comment = original == parent ? "" : (" // " + parent)
     let code = swiftCode(e, "public typealias " + e.escapedName.swift + " = " + original + comment)
-    return code
+    return code.diagnostic()
 }

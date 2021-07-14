@@ -22,5 +22,5 @@ func buildClassTypeDeclaration(for record: GIR.Record, classInstance: GIR.Record
             ""
         }
         "}"
-    }.makeString()
+    }.makeString().diagnostic()
 }

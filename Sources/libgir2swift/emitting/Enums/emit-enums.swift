@@ -28,7 +28,7 @@ public func swiftCode(_ e: GIR.Enumeration) -> String {
     let fields = values.map(vcf.valueCode(member:)).joined(separator: "\n") // + "\n" + deprecated.map(vdf).joined(separator: "\n")
     let tail = "\n}\n\n"
     let code = alias + head + initialiser + fields + tail
-    return code
+    return code.diagnostic()
 }
 
 /// Swift code representation of an enum value
@@ -45,6 +45,6 @@ struct ValueCode {
         }
         let comment = cID == value ? "" : (" // " + value)
         let code = swiftCode(member, indentation + "static let " + member.name.snakeCase2camelCase.swiftQuoted + " = " + cID + comment, indentation: indentation)
-        return code
+        return code.diagnostic()
     }    
 }

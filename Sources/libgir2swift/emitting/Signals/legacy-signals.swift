@@ -13,6 +13,6 @@ struct SignalNameCode {
             : prefixes.0 + convertName(name).capitalised
         let declaration = indentation + "case \(prefixedName.swift) = \"\(prefixes.1)\(name)\""
         let code = swiftCode(signal, declaration, indentation: indentation)
-        return code
+        return code.diagnostic()
     }
 }
