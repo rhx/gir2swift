@@ -96,9 +96,9 @@ extension Gir2Swift {
             let outq = DispatchQueue(label: "com.github.rhx.gir2swift.outputqueue")
             if outputDirectory == nil { print(modulePrefix + preamble) }
 
-            func write(_ string: String, to fileName: String, preamble: String = gir.preamble) {
+            func write(_ string: String, to fileName: String, preamble: String = preamble, append doAppend: Bool = false) {
                 do {
-                    if useAlphaNames && fileManager.fileExists(atPath: fileName) {
+                    if doAppend && fileManager.fileExists(atPath: fileName) {
                         let oldContent = try String(contentsOfFile: fileName, encoding: .utf8)
                         let newContent = oldContent + string
                         try newContent.write(toFile: fileName, atomically: true, encoding: .utf8)
@@ -110,7 +110,7 @@ extension Gir2Swift {
                     outq.async(group: queues) { print("\(error)", to: &Streams.stdErr) }
                 }
             }
-            func writebg(queue: DispatchQueue = background, _ string: String, to fileName: String) {
+            func writebg(queue: DispatchQueue = background, _ string: String, to fileName: String, append doAppend: Bool = false) {
                 queue.async(group: queues) { write(string, to: fileName) }
             }
             func write<T: GIR.Record>(_ types: [T], using ptrconvert: (String) -> (GIR.Record) -> String) {
@@ -148,13 +148,13 @@ extension Gir2Swift {
                             }
                             f = "\(dir)/\(node)-\(firstName)\(name).swift"
                         }
-                        writebg(queue: alphaq, output, to: f)
+                        writebg(queue: alphaq, output, to: f, append: alphaNames)
                         output = ""
                         first = nil
                     }
                     if first != nil {
                         let f = "\(dir)/\(node)-\(firstName)\(useAlphaNames ? "" : name).swift"
-                        writebg(queue: alphaq, output, to: f)
+                        writebg(queue: alphaq, output, to: f, append: alphaNames)
                     }
                 } else {
                     let code = types.map { type in
@@ -162,6 +162,18 @@ extension Gir2Swift {
                         return convert(type)
                     }.joined(separator: "\n\n")
                     outq.async(group: queues) { print(code) }
+                }
+            }
+
+            if let dir = outputDirectory {
+                let atChar = Character("@").utf8.first!
+                DispatchQueue.concurrentPerform(iterations: 27) { i in
+                    let ascii = atChar + UInt8(i)
+                    let f = "\(dir)/\(node)-\(Character(UnicodeScalar(ascii))).swift"
+                    try? fileManager.removeItem(atPath: f)
+                    if alphaNames {
+                        try? preamble.write(toFile: f, atomically: true, encoding: .utf8)
+                    }
                 }
             }
 
