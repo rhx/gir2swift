@@ -193,41 +193,36 @@ extension Gir2Swift {
                 let aliases = gir.aliases.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-aliases.swift"
-                    let output = preamble + aliases
-                    write(output, to: f)
+                    write(aliases, to: f)
                 } else {
                     outq.async(group: queues) { print(aliases) } }
             }
             background.async(group: queues) {
                 let callbacks = gir.callbacks.filter{!blacklist.contains($0.name)}.map(swiftCallbackAliasCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
-                    let output = preamble + callbacks
                     let f = "\(dir)/\(node)-callbacks.swift"
-                    write(output, to: f)
+                    write(callbacks, to: f)
                 } else { outq.async(group: queues) { print(callbacks) } }
             }
             background.async(group: queues) {
                 let constants = gir.constants.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-constants.swift"
-                    let output = preamble + constants
-                    write(output, to: f)
+                    write(constants, to: f)
                 } else {  outq.async(group: queues) { print(constants) } }
             }
             background.async(group: queues) {
                 let enumerations = gir.enumerations.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-enumerations.swift"
-                    let output = preamble + enumerations
-                    write(output, to: f)
+                    write(enumerations, to: f)
                 } else { outq.async(group: queues) { print(enumerations) } }
             }
             background.async(group: queues) {
                 let bitfields = gir.bitfields.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-bitfields.swift"
-                    let output = preamble + bitfields
-                    write(output, to: f)
+                    write(bitfields, to: f)
                 } else { outq.async(group: queues) { print(bitfields) } }
             }
             background.async(group: queues) {
@@ -235,8 +230,7 @@ extension Gir2Swift {
                 let unions = gir.unions.filter {!blacklist.contains($0.name)}.map(convert).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-unions.swift"
-                    let output = preamble + unions
-                    write(output, to: f)
+                    write(unions, to: f)
                 } else { outq.async(group: queues) { print(unions) } }
             }
             background.async(group: queues) {
@@ -269,9 +263,8 @@ extension Gir2Swift {
             background.async(group: queues) {
                 let functions = gir.functions.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
-                    let output = preamble + functions
                     let f = "\(dir)/\(node)-functions.swift"
-                    write(output, to: f)
+                    write(functions, to: f)
                 } else { outq.async(group: queues) { print(functions) } }
             }
             queues.wait()
