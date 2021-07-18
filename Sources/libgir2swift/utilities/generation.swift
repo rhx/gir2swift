@@ -123,11 +123,12 @@ extension Gir2Swift {
                         let code = convert(type)
                         
                         output += code + "\n\n"
+                        name = type.className
                         guard let firstChar = name.first else { continue }
                         let f: String
                         if useAlphaNames {
-                            name = type.className.upperInitial
-                            guard first != firstChar else {
+                            name = firstChar.isASCII && firstChar.isLetter ? type.className.upperInitial : "@"
+                            guard first != nil && first != firstChar else {
                                 if first == nil {
                                     first = firstChar
                                     firstName = name
@@ -136,7 +137,6 @@ extension Gir2Swift {
                             }
                             f = "\(dir)/\(node)-\(firstName).swift"
                         } else {
-                            name = type.className
                             guard singleFilePerClass || ( first != nil && first != firstChar ) else {
                                 if first == nil {
                                     first = firstChar
