@@ -18,8 +18,8 @@ public struct Gir2Swift: ParsableCommand {
     @Flag(name: .short, help: "Disables all filters. Wrappers for all C types will be generated.")
     var allFilesGenerate = false
 
-    /// Create a fixed set of output files ending in A-Z and @ if `true`
-    @Flag(name: .long, help: "Create a fixed set of output files ending in A-Z and @.")
+    /// Create a fixed set of output files ending in A-Z if `true`
+    @Flag(name: .long, help: "Create a fixed set of output files ending in A-Z.")
     var alphaNames = false
 
     /// Create a single output file per class if `true`
