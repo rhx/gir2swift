@@ -52,7 +52,7 @@ extension Gir2Swift {
     }
 
     /// process a GIR file
-    func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirectory: String? = nil, split singleFilePerClass: Bool = false, generateAll: Bool = false, alphaNames: Bool = false) {
+    func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirectory: String? = nil, split singleFilePerClass: Bool = false, generateAll: Bool = false, useAlphaNames: Bool = false) {
         let node = file.components(separatedBy: "/").last?.stringByRemoving(suffix: ".gir") ?? file
         let wlfile = node + ".whitelist"
         if let whitelist = (try? String(contentsOfFile: wlfile)).flatMap({ Set($0.nonEmptyComponents(separatedBy: "\n")) }) {
@@ -123,22 +123,35 @@ extension Gir2Swift {
                         let code = convert(type)
                         
                         output += code + "\n\n"
-                        name = type.className
                         guard let firstChar = name.first else { continue }
-                        guard singleFilePerClass || ( first != nil && first != firstChar ) else {
-                            if first == nil {
-                                first = firstChar
-                                firstName = name + "-"
+                        let f: String
+                        if useAlphaNames {
+                            name = type.className.upperInitial
+                            guard first != firstChar else {
+                                if first == nil {
+                                    first = firstChar
+                                    firstName = name
+                                }
+                                continue
                             }
-                            continue
+                            f = "\(dir)/\(node)-\(firstName).swift"
+                        } else {
+                            name = type.className
+                            guard singleFilePerClass || ( first != nil && first != firstChar ) else {
+                                if first == nil {
+                                    first = firstChar
+                                    firstName = name + "-"
+                                }
+                                continue
+                            }
+                            f = "\(dir)/\(node)-\(firstName)\(name).swift"
                         }
-                        let f = "\(dir)/\(node)-\(firstName)\(name).swift"
                         writebg(output, to: f)
                         output = prefix
                         first = nil
                     }
                     if first != nil {
-                        let f = "\(dir)/\(node)-\(firstName)\(name).swift"
+                        let f = "\(dir)/\(node)-\(firstName)\(useAlphaNames ? "" : name).swift"
                         writebg(output, to: f)
                     }
                 } else {

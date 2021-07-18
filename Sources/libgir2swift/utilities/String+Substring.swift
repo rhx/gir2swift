@@ -10,6 +10,15 @@
 import Foundation
 
 public extension StringProtocol {
+    /// Return the first character of a String as a SubSequence
+    @inlinable var initial: SubSequence {
+        self[startIndex...startIndex]
+    }
+
+    /// Return the first character of a String as an uppercase single-character String
+    @inlinable var upperInitial: String {
+        initial.uppercased()
+    }
 
     /// Dotted prefix for the string (empty if none)
     ///
