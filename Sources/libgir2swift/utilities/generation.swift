@@ -88,33 +88,35 @@ extension Gir2Swift {
             processSpecialCases(gir, forFile: node)
             let blacklist = GIR.blacklist
             let boilerplate = gir.boilerPlate
-            let prefix = gir.preamble
+            let preamble = gir.preamble
             let modulePrefix = modulePrefix + boilerplate
             let queues = DispatchGroup()
             let background = DispatchQueue.global()
+            let alphaq = useAlphaNames ? DispatchQueue(label: "com.github.rhx.gir2swift.recordqueue") : background
             let outq = DispatchQueue(label: "com.github.rhx.gir2swift.outputqueue")
-            if outputDirectory == nil { print(modulePrefix + prefix) }
+            if outputDirectory == nil { print(modulePrefix + preamble) }
 
-            func write(_ string: String, to fileName: String) {
+            func write(_ string: String, to fileName: String, preamble: String = gir.preamble) {
                 do {
                     if fileManager.fileExists(atPath: fileName) {
                         let oldContent = try String(contentsOfFile: fileName, encoding: .utf8)
                         let newContent = oldContent + string
                         try newContent.write(toFile: fileName, atomically: true, encoding: .utf8)
                     } else {
-                        try string.write(toFile: fileName, atomically: true, encoding: .utf8)
+                        let newContent = preamble + string
+                        try newContent.write(toFile: fileName, atomically: true, encoding: .utf8)
                     }
                 } catch {
                     outq.async(group: queues) { print("\(error)", to: &Streams.stdErr) }
                 }
             }
-            func writebg(_ string: String, to fileName: String) {
-                background.async(group: queues) { write(string, to: fileName) }
+            func writebg(queue: DispatchQueue = background, _ string: String, to fileName: String) {
+                queue.async(group: queues) { write(string, to: fileName) }
             }
             func write<T: GIR.Record>(_ types: [T], using ptrconvert: (String) -> (GIR.Record) -> String) {
                 if let dir = outputDirectory {
                     writebg(modulePrefix, to: "\(dir)/\(node).swift")
-                    var output = prefix
+                    var output = ""
                     var first: Character? = nil
                     var firstName = ""
                     var name = ""
@@ -146,13 +148,13 @@ extension Gir2Swift {
                             }
                             f = "\(dir)/\(node)-\(firstName)\(name).swift"
                         }
-                        writebg(output, to: f)
-                        output = prefix
+                        writebg(queue: alphaq, output, to: f)
+                        output = ""
                         first = nil
                     }
                     if first != nil {
                         let f = "\(dir)/\(node)-\(firstName)\(useAlphaNames ? "" : name).swift"
-                        writebg(output, to: f)
+                        writebg(queue: alphaq, output, to: f)
                     }
                 } else {
                     let code = types.map { type in
@@ -167,7 +169,7 @@ extension Gir2Swift {
                 let aliases = gir.aliases.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-aliases.swift"
-                    let output = prefix + aliases
+                    let output = preamble + aliases
                     write(output, to: f)
                 } else {
                     outq.async(group: queues) { print(aliases) } }
@@ -175,7 +177,7 @@ extension Gir2Swift {
             background.async(group: queues) {
                 let callbacks = gir.callbacks.filter{!blacklist.contains($0.name)}.map(swiftCallbackAliasCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
-                    let output = prefix + callbacks
+                    let output = preamble + callbacks
                     let f = "\(dir)/\(node)-callbacks.swift"
                     write(output, to: f)
                 } else { outq.async(group: queues) { print(callbacks) } }
@@ -184,7 +186,7 @@ extension Gir2Swift {
                 let constants = gir.constants.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-constants.swift"
-                    let output = prefix + constants
+                    let output = preamble + constants
                     write(output, to: f)
                 } else {  outq.async(group: queues) { print(constants) } }
             }
@@ -192,7 +194,7 @@ extension Gir2Swift {
                 let enumerations = gir.enumerations.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-enumerations.swift"
-                    let output = prefix + enumerations
+                    let output = preamble + enumerations
                     write(output, to: f)
                 } else { outq.async(group: queues) { print(enumerations) } }
             }
@@ -200,7 +202,7 @@ extension Gir2Swift {
                 let bitfields = gir.bitfields.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-bitfields.swift"
-                    let output = prefix + bitfields
+                    let output = preamble + bitfields
                     write(output, to: f)
                 } else { outq.async(group: queues) { print(bitfields) } }
             }
@@ -209,7 +211,7 @@ extension Gir2Swift {
                 let unions = gir.unions.filter {!blacklist.contains($0.name)}.map(convert).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-unions.swift"
-                    let output = prefix + unions
+                    let output = preamble + unions
                     write(output, to: f)
                 } else { outq.async(group: queues) { print(unions) } }
             }
@@ -243,7 +245,7 @@ extension Gir2Swift {
             background.async(group: queues) {
                 let functions = gir.functions.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
-                    let output = prefix + functions
+                    let output = preamble + functions
                     let f = "\(dir)/\(node)-functions.swift"
                     write(output, to: f)
                 } else { outq.async(group: queues) { print(functions) } }
