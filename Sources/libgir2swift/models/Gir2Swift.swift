@@ -18,6 +18,10 @@ public struct Gir2Swift: ParsableCommand {
     @Flag(name: .short, help: "Disables all filters. Wrappers for all C types will be generated.")
     var allFilesGenerate = false
 
+    /// Create a fixed set of output files ending in A-Z and @ if `true`
+    @Flag(name: .long, help: "Create a fixed set of output files ending in A-Z and @.")
+    var alphaNames = false
+
     /// Create a single output file per class if `true`
     @Flag(name: .short, help: "Create a single .swift file per class.")
     var singleFilePerClass = false
@@ -63,7 +67,7 @@ public struct Gir2Swift: ParsableCommand {
 
         let target = outputDirectory.isEmpty ? nil : outputDirectory
         for girFile in girFiles {
-            process_gir(file: girFile, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate)
+            process_gir(file: girFile, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: alphaNames)
         }
 
         if verbose {
