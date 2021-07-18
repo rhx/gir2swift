@@ -52,7 +52,7 @@ extension Gir2Swift {
     }
 
     /// process a GIR file
-    func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirectory: String? = nil, split singleFilePerClass: Bool = false, generateAll: Bool = false) {
+    func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirectory: String? = nil, split singleFilePerClass: Bool = false, generateAll: Bool = false, alphaNames: Bool = false) {
         let node = file.components(separatedBy: "/").last?.stringByRemoving(suffix: ".gir") ?? file
         let wlfile = node + ".whitelist"
         if let whitelist = (try? String(contentsOfFile: wlfile)).flatMap({ Set($0.nonEmptyComponents(separatedBy: "\n")) }) {
@@ -82,6 +82,7 @@ extension Gir2Swift {
                 GIR.namespaceReplacements[key] = value
             }
         }
+        let fileManager = FileManager.default
 
         load_gir(file) { gir in
             processSpecialCases(gir, forFile: node)
@@ -96,7 +97,13 @@ extension Gir2Swift {
 
             func write(_ string: String, to fileName: String) {
                 do {
-                    try string.write(toFile: fileName, atomically: true, encoding: .utf8)
+                    if fileManager.fileExists(atPath: fileName) {
+                        let oldContent = try String(contentsOfFile: fileName, encoding: .utf8)
+                        let newContent = oldContent + string
+                        try newContent.write(toFile: fileName, atomically: true, encoding: .utf8)
+                    } else {
+                        try string.write(toFile: fileName, atomically: true, encoding: .utf8)
+                    }
                 } catch {
                     outq.async(group: queues) { print("\(error)", to: &Streams.stdErr) }
                 }
