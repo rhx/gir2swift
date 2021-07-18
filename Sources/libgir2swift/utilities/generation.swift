@@ -92,7 +92,10 @@ extension Gir2Swift {
             let modulePrefix = modulePrefix + boilerplate
             let queues = DispatchGroup()
             let background = DispatchQueue.global()
-            let alphaq = useAlphaNames ? DispatchQueue(label: "com.github.rhx.gir2swift.recordqueue") : background
+            let atChar = Character("@").utf8.first!
+            let alphaQueues = useAlphaNames ? (0...26).map { i in
+                DispatchQueue(label: "com.github.rhx.gir2swift.alphaqueue.\(Character(UnicodeScalar(atChar + UInt8(i))))")
+            } : []
             let outq = DispatchQueue(label: "com.github.rhx.gir2swift.outputqueue")
             if outputDirectory == nil { print(modulePrefix + preamble) }
 
@@ -120,6 +123,7 @@ extension Gir2Swift {
                     var first: Character? = nil
                     var firstName = ""
                     var name = ""
+                    var alphaq = background
                     for type in types {
                         let convert = ptrconvert(type.ptrName)
                         let code = convert(type)
@@ -134,6 +138,8 @@ extension Gir2Swift {
                                 if first == nil {
                                     first = firstChar
                                     firstName = name
+                                    let i = Int((name.utf8.first ?? atChar) - atChar)
+                                    alphaq = alphaQueues[i]
                                 }
                                 continue
                             }
@@ -153,7 +159,14 @@ extension Gir2Swift {
                         first = nil
                     }
                     if first != nil {
-                        let f = "\(dir)/\(node)-\(firstName)\(useAlphaNames ? "" : name).swift"
+                        let f: String
+                        if useAlphaNames {
+                            let i = Int((name.utf8.first ?? atChar) - atChar)
+                            alphaq = alphaQueues[i]
+                            f = "\(dir)/\(node)-\(firstName).swift"
+                        } else {
+                            f = "\(dir)/\(node)-\(firstName)\(name).swift"
+                        }
                         writebg(queue: alphaq, output, to: f, append: alphaNames)
                     }
                 } else {
@@ -166,7 +179,6 @@ extension Gir2Swift {
             }
 
             if let dir = outputDirectory {
-                let atChar = Character("@").utf8.first!
                 DispatchQueue.concurrentPerform(iterations: 27) { i in
                     let ascii = atChar + UInt8(i)
                     let f = "\(dir)/\(node)-\(Character(UnicodeScalar(ascii))).swift"
