@@ -98,7 +98,7 @@ extension Gir2Swift {
 
             func write(_ string: String, to fileName: String, preamble: String = gir.preamble) {
                 do {
-                    if fileManager.fileExists(atPath: fileName) {
+                    if useAlphaNames && fileManager.fileExists(atPath: fileName) {
                         let oldContent = try String(contentsOfFile: fileName, encoding: .utf8)
                         let newContent = oldContent + string
                         try newContent.write(toFile: fileName, atomically: true, encoding: .utf8)
