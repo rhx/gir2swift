@@ -83,6 +83,8 @@ extension Gir2Swift {
             }
         }
         let fileManager = FileManager.default
+        var outputFiles = Set<String>()
+        var outputString = ""
 
         load_gir(file) { gir in
             processSpecialCases(gir, forFile: node)
@@ -97,7 +99,7 @@ extension Gir2Swift {
                 DispatchQueue(label: "com.github.rhx.gir2swift.alphaqueue.\(Character(UnicodeScalar(atChar + UInt8(i))))")
             } : []
             let outq = DispatchQueue(label: "com.github.rhx.gir2swift.outputqueue")
-            if outputDirectory == nil { print(modulePrefix + preamble) }
+            if outputDirectory == nil { outputString += modulePrefix + preamble }
 
             func write(_ string: String, to fileName: String, preamble: String = preamble, append doAppend: Bool = false) {
                 do {
@@ -109,6 +111,7 @@ extension Gir2Swift {
                         let newContent = preamble + string
                         try newContent.write(toFile: fileName, atomically: true, encoding: .utf8)
                     }
+                    outq.async(group: queues) { outputFiles.insert(fileName) }
                 } catch {
                     outq.async(group: queues) { print("\(error)", to: &Streams.stdErr) }
                 }
@@ -174,7 +177,7 @@ extension Gir2Swift {
                         let convert = ptrconvert(type.ptrName)
                         return convert(type)
                     }.joined(separator: "\n\n")
-                    outq.async(group: queues) { print(code) }
+                    outq.async(group: queues) { outputString += code }
                 }
             }
 
@@ -185,6 +188,7 @@ extension Gir2Swift {
                     try? fileManager.removeItem(atPath: f)
                     if alphaNames {
                         try? preamble.write(toFile: f, atomically: true, encoding: .utf8)
+                        outq.async(group: queues) { outputFiles.insert(f) }
                     }
                 }
             }
@@ -195,35 +199,35 @@ extension Gir2Swift {
                     let f = "\(dir)/\(node)-aliases.swift"
                     write(aliases, to: f)
                 } else {
-                    outq.async(group: queues) { print(aliases) } }
+                    outq.async(group: queues) { outputString += aliases } }
             }
             background.async(group: queues) {
                 let callbacks = gir.callbacks.filter{!blacklist.contains($0.name)}.map(swiftCallbackAliasCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-callbacks.swift"
                     write(callbacks, to: f)
-                } else { outq.async(group: queues) { print(callbacks) } }
+                } else { outq.async(group: queues) { outputString += callbacks } }
             }
             background.async(group: queues) {
                 let constants = gir.constants.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-constants.swift"
                     write(constants, to: f)
-                } else {  outq.async(group: queues) { print(constants) } }
+                } else {  outq.async(group: queues) { outputString += constants } }
             }
             background.async(group: queues) {
                 let enumerations = gir.enumerations.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-enumerations.swift"
                     write(enumerations, to: f)
-                } else { outq.async(group: queues) { print(enumerations) } }
+                } else { outq.async(group: queues) { outputString += enumerations } }
             }
             background.async(group: queues) {
                 let bitfields = gir.bitfields.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-bitfields.swift"
                     write(bitfields, to: f)
-                } else { outq.async(group: queues) { print(bitfields) } }
+                } else { outq.async(group: queues) { outputString += bitfields } }
             }
             background.async(group: queues) {
                 let convert = swiftUnionsConversion(gir.functions)
@@ -231,7 +235,7 @@ extension Gir2Swift {
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-unions.swift"
                     write(unions, to: f)
-                } else { outq.async(group: queues) { print(unions) } }
+                } else { outq.async(group: queues) { outputString += unions } }
             }
             background.async(group: queues) {
                 let convert = swiftCode(gir.functions)
@@ -265,12 +269,15 @@ extension Gir2Swift {
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-functions.swift"
                     write(functions, to: f)
-                } else { outq.async(group: queues) { print(functions) } }
+                } else { outq.async(group: queues) { outputString += functions } }
             }
             queues.wait()
+            if !outputString.isEmpty { print(outputString) }
             if verbose {
-                print("** Verbatim: \(GIR.verbatimConstants.count)\n\(GIR.verbatimConstants.joined(separator: "\n"))\n", to: &Streams.stdErr)
-                print("** Blacklisted: \(blacklist.count)\n\(blacklist.joined(separator: "\n\n"))\n", to: &Streams.stdErr)
+                let pf = outputString.isEmpty ? "** " : "// "
+                let nl = outputString.isEmpty ? "\n"  : "\n// "
+                print("\(pf)Verbatim: \(GIR.verbatimConstants.count)\(nl)\(GIR.verbatimConstants.joined(separator: nl))\n", to: &Streams.stdErr)
+                print("\(pf)Blacklisted: \(blacklist.count)\(nl)\(blacklist.joined(separator: "\n" + nl))\n", to: &Streams.stdErr)
             }
         }
     }
