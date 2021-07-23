@@ -35,6 +35,11 @@ public struct Gir2Swift: ParsableCommand {
     @Option(name: .short, help: "Specify the output directory to put the generated files into.")
     var outputDirectory: String = ""
 
+    /// Name of the library to pass to pkg-config
+    /// - Note: Defaults to the lower-cased name of the `.gir` file
+    @Option(name: .shortAndLong, help: "Library name to pass to pkg-config.")
+    var pkgConfigName: String?
+
     /// File containing one-off boilerplate code for your module
     @Option(name: .short, help: "Add the given .swift file as the main (hand-crafted) Swift file for your library target.")
     var moduleBoilerPlateFile: String = ""
@@ -67,7 +72,7 @@ public struct Gir2Swift: ParsableCommand {
 
         let target = outputDirectory.isEmpty ? nil : outputDirectory
         for girFile in girFiles {
-            process_gir(file: girFile, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: alphaNames)
+            process_gir(file: girFile, pkgConfigName: pkgConfigName, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: alphaNames)
         }
 
         if verbose {

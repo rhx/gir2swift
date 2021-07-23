@@ -13,6 +13,14 @@ protocol IOHandle {}
 extension Pipe: IOHandle {}
 extension FileHandle: IOHandle {}
 
+/// A structure representing a shell comand and its arguments
+struct CommandArguments {
+    /// Name of the shell comand
+    var command: String
+    /// Arguments to pass to the shell command
+    var arguments: [String]
+}
+
 /// Return the current working directory
 /// - Returns: Upon successful completion, a string containing the pathname is returned.
 func getcwd() -> String? {
@@ -55,9 +63,10 @@ func urlForExecutable(named executable: String, in path: [String] = ProcessInfo.
 ///   - arguments: the arguments to pass to the command
 ///   - standardInput: the pipe to redirect standard input from if not `nil`
 ///   - standardOutput: the pipe to redirect standard output to if not `nil`
+///   - standardError: the pipe to redirect standard error to if not `nil`
 /// - Throws: an error if the command cannot be run
 /// - Returns: The process being executed.  Call `run()` and then `waitUntilExit()` on the process to collect its `terminationStatus`
-func createProcess(command: String, in path: [String] = ProcessInfo.processInfo.environment["PATH"].map { $0.split(separator: ":").map(String.init) } ?? [], arguments: [String] = [], standardInput: Any? = nil, standardOutput: Any? = nil) throws -> Process {
+func createProcess(command: String, in path: [String] = ProcessInfo.processInfo.environment["PATH"].map { $0.split(separator: ":").map(String.init) } ?? [], arguments: [String] = [], standardInput: Any? = nil, standardOutput: Any? = nil, standardError: Any? = nil) throws -> Process {
     guard let url = urlForExecutable(named: command, in: path) else {
         throw POSIXError(.ENOENT)
     }
@@ -65,6 +74,7 @@ func createProcess(command: String, in path: [String] = ProcessInfo.processInfo.
     if !arguments.isEmpty { process.arguments = arguments }
     if let stdin  = standardInput  { process.standardInput  = stdin  }
     if let stdout = standardOutput { process.standardOutput = stdout }
+    if let stderr = standardError  { process.standardError  = stderr }
     if #available(macOS 10.13, *) {
         process.executableURL = url
     } else {
@@ -74,9 +84,10 @@ func createProcess(command: String, in path: [String] = ProcessInfo.processInfo.
 }
 
 /// Run a pipeline of executables
+/// - Parameter components: an array commands and associated arguments to execute
 /// - Throws: an error if any of the commands cannot be run
 /// - Returns: an array of processes being executed
-func pipe<Input: IOHandle, Output: IOHandle>(_ components: [(command: String, arguments: [String])], in path: [String] = ProcessInfo.processInfo.environment["PATH"].map { $0.split(separator: ":").map(String.init) } ?? [], input: Input? = nil, output: Output? = nil) throws -> [Process] {
+func pipe<Input: IOHandle, Output: IOHandle>(_ components: [CommandArguments], in path: [String] = ProcessInfo.processInfo.environment["PATH"].map { $0.split(separator: ":").map(String.init) } ?? [], input: Input? = nil, output: Output? = nil) throws -> [Process] {
     let pipes: [Any?] = components.enumerated().map { $0.offset == 0 ? input : Pipe() as Any? } + [output]
     let processes = try components.enumerated().map {
         try createProcess(command: $0.element.command, in: path, arguments: $0.element.arguments, standardInput: pipes[$0.offset], standardOutput: pipes[$0.offset+1])
@@ -87,4 +98,28 @@ func pipe<Input: IOHandle, Output: IOHandle>(_ components: [(command: String, ar
         processes.forEach { $0.launch() }
     }
     return processes
+}
+
+/// Execute the given shell command
+/// - Parameters:
+///   - standardInput: the pipe to redirect standard input from if not `nil`
+///   - standardOutput: the pipe to redirect standard output to if not `nil`
+///   - standardError: the pipe to redirect standard error to if not `nil`
+///   - command: the name of the executable to run
+///   - arguments: the arguments to pass to the command
+/// - Returns: `nil` if the program cannot be run, the program's termination status otherwise
+func run(standardInput: Any? = nil, standardOutput: Any? = nil, standardError: Any? = nil, _ command: String, _ arguments: String...) -> Int? {
+    do {
+        let process = try createProcess(command: command)
+        if #available(macOS 10.13, *) {
+            try process.run()
+        } else {
+            process.launch()
+        }
+        process.waitUntilExit()
+        return Int(process.terminationStatus)
+    } catch {
+        perror("Cannot run \(command)")
+        return nil
+    }
 }

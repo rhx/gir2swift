@@ -52,8 +52,9 @@ extension Gir2Swift {
     }
 
     /// process a GIR file
-    func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirectory: String? = nil, split singleFilePerClass: Bool = false, generateAll: Bool = false, useAlphaNames: Bool = false) {
+    func process_gir(file: String, pkgConfigName: String?, boilerPlate modulePrefix: String, to outputDirectory: String? = nil, split singleFilePerClass: Bool = false, generateAll: Bool = false, useAlphaNames: Bool = false) {
         let node = file.components(separatedBy: "/").last?.stringByRemoving(suffix: ".gir") ?? file
+        let pkgConfigArg = pkgConfigName ?? node.lowercased()
         let wlfile = node + ".whitelist"
         if let whitelist = (try? String(contentsOfFile: wlfile)).flatMap({ Set($0.nonEmptyComponents(separatedBy: "\n")) }) {
             for name in whitelist {
@@ -272,7 +273,7 @@ extension Gir2Swift {
                 } else { outq.async(group: queues) { outputString += functions } }
             }
             queues.wait()
-            if !outputString.isEmpty { print(outputString) }
+            postProcess(node, pkgConfigName: pkgConfigArg, outputString: outputString, outputDirectory: outputDirectory, outputFiles: outputFiles)
             if verbose {
                 let pf = outputString.isEmpty ? "** " : "// "
                 let nl = outputString.isEmpty ? "\n"  : "\n// "
