@@ -108,9 +108,10 @@ func pipe<Input: IOHandle, Output: IOHandle>(_ components: [CommandArguments], i
 ///   - command: the name of the executable to run
 ///   - arguments: the arguments to pass to the command
 /// - Returns: `nil` if the program cannot be run, the program's termination status otherwise
+@discardableResult
 func run(standardInput: Any? = nil, standardOutput: Any? = nil, standardError: Any? = nil, _ command: String, _ arguments: String...) -> Int? {
     do {
-        let process = try createProcess(command: command)
+        let process = try createProcess(command: command, arguments: arguments)
         if #available(macOS 10.13, *) {
             try process.run()
         } else {

@@ -37,7 +37,7 @@ public struct Gir2Swift: ParsableCommand {
 
     /// Name of the library to pass to pkg-config
     /// - Note: Defaults to the lower-cased name of the `.gir` file
-    @Option(name: .shortAndLong, help: "Library name to pass to pkg-config.")
+    @Option(name: .long, help: "Library name to pass to pkg-config.")
     var pkgConfigName: String?
 
     /// File containing one-off boilerplate code for your module
