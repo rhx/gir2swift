@@ -32,15 +32,15 @@ func postProcess(_ node: String, pkgConfigName: String, outputString: String, ou
             let j = $0.index(after: i)
             let k = $0.index(after: j)
             let arg: String
-            if $0[i] == "-" && $0[j].isNumber {
+            if $0[i] == "-" && $0[j].isDigit {
                 arg = "--atleast-version=" + $0[j..<e]
-            } else if $0[i...j] == ">=" && $0[k].isNumber {
+            } else if $0[i...j] == ">=" && $0[k].isDigit {
                 arg = "--atleast-version=" + $0[k..<e]
-            } else if $0[i...j] == "<=" && $0[k].isNumber {
+            } else if $0[i...j] == "<=" && $0[k].isDigit {
                 arg = "--max-version=" + $0[k..<e]
-            } else if $0[i] == "=" && $0[j].isNumber {
+            } else if $0[i] == "=" && $0[j].isDigit {
                 arg = "--exact-version=" + $0[j..<e]
-            } else if $0[i...j] == "==" && $0[k].isNumber {
+            } else if $0[i...j] == "==" && $0[k].isDigit {
                 arg = "--exact-version=" + $0[k..<e]
             } else {
                 return false
