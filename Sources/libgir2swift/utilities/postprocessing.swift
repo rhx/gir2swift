@@ -28,7 +28,7 @@ func postProcess(_ node: String, pkgConfigName: String, outputString: String, ou
     let cmds = ((try? fm.contentsOfDirectory(atPath: cwd)) ?? []).filter {
         guard $0.hasPrefix(node) else { return false }
         for command in postProcessors {
-            guard $0.hasSuffix(command), let i = $0.index($0.startIndex, offsetBy: node.count, limitedBy: $0.endIndex), let e = $0.index($0.endIndex, offsetBy: -(command.count+1), limitedBy: $0.startIndex) else { continue }
+            guard $0.hasSuffix("." + command), let i = $0.index($0.startIndex, offsetBy: node.count, limitedBy: $0.endIndex), let e = $0.index($0.endIndex, offsetBy: -(command.count+1), limitedBy: $0.startIndex) else { continue }
             let j = $0.index(after: i)
             let k = $0.index(after: j)
             let arg: String
