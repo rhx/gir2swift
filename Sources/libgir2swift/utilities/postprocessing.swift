@@ -25,10 +25,10 @@ func postProcess(_ node: String, pkgConfigName: String, outputString: String, ou
         }
     }
     let cwd = fm.currentDirectoryPath
-    let cmds = ((try? fm.contentsOfDirectory(atPath: cwd)) ?? []).filter {
-        guard $0.hasPrefix(node) else { return false }
-        for command in postProcessors {
-            guard $0.hasSuffix("." + command), let i = $0.index($0.startIndex, offsetBy: node.count, limitedBy: $0.endIndex), let e = $0.index($0.endIndex, offsetBy: -(command.count+1), limitedBy: $0.startIndex) else { continue }
+    let nodeFiles = ((try? fm.contentsOfDirectory(atPath: cwd)) ?? []).filter { $0.hasPrefix(node) }
+    let cmds = postProcessors.flatMap { command in
+        nodeFiles.filter {
+            guard $0.hasSuffix("." + command), let i = $0.index($0.startIndex, offsetBy: node.count, limitedBy: $0.endIndex), let e = $0.index($0.endIndex, offsetBy: -(command.count+1), limitedBy: $0.startIndex) else { return false }
             let j = $0.index(after: i)
             let k = $0.index(after: j)
             let arg: String
@@ -53,12 +53,11 @@ func postProcess(_ node: String, pkgConfigName: String, outputString: String, ou
             } }
             guard let result = run(standardError: null, "pkg-config", arg, pkgConfigName) else { return false }
             return result == 0
+        }.map { (f: String) -> CommandArguments in
+            let d = f.lastIndex(of: ".") ?? f.index(f.endIndex, offsetBy: -4)
+            let s = f.index(after: d)
+            return .init(command: String(f[s..<f.endIndex]), arguments: ["-f", f])
         }
-        return false
-    }.map { (f: String) -> CommandArguments in
-        let d = f.lastIndex(of: ".") ?? f.index(f.endIndex, offsetBy: -4)
-        let s = f.index(after: d)
-        return .init(command: String(f[s..<f.endIndex]), arguments: ["-f", f])
     }
     pipeCommands += cmds
     if pipeCommands.isEmpty {
