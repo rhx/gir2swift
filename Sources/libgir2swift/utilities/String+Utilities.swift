@@ -18,8 +18,9 @@ extension String {
     }
 }
 
-public extension StringProtocol {
+extension StringProtocol {
     /// Heuristic to check whether the receiver may be an escaping callback type
+    @usableFromInline
     var maybeCallback: Bool {
         for suffix in GIR.callbackSuffixes {
             guard !hasSuffix(suffix) else { return true }
@@ -28,18 +29,21 @@ public extension StringProtocol {
     }
 
     /// Heuristic that returns an optional when the receiver may be a callback
+    @usableFromInline
     var optionalWhenCallback: String {
         guard !hasSuffix("?") && !hasSuffix("!") && maybeCallback else { return String(self) }
         return self + "?"
     }
 
     /// Heuristic that returns an optional when the receiver may be a callback
+    @usableFromInline
     var optionalWhenPointer: String {
         guard !hasSuffix("?") && !hasSuffix("!") && (hasSuffix("pointer") || maybeCallback) else { return String(self) }
         return self + "?"
     }
 
     /// Return `true` if the receiver represents a type name that should be a force-unwrapped optional
+    @usableFromInline
     var doForceOptional: Bool {
         return GIR.forceUnwrapped.contains(String(self)) || maybeCallback
     }
@@ -49,6 +53,7 @@ public extension StringProtocol {
 /// - Parameters:
 ///   - level: indentation level
 ///   - s: String to be indented
+@usableFromInline
 func indent(level: Int, _ s: String = "") -> String {
     return String(repeating: " ", count: level * 4) + s
 }
