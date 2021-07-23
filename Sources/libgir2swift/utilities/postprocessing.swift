@@ -67,8 +67,10 @@ func postProcess(_ node: String, pkgConfigName: String, outputString: String, ou
         if !outputString.isEmpty {
         }
         let pipes = outputFiles.flatMap { (f: String) -> [Process] in
+            let o = f + ".out"
             guard let inFile = FileHandle(forReadingAtPath: f),
-                  let outFile = FileHandle(forWritingAtPath: f + ".out") else { return [] }
+                  fm.createFile(atPath: o, contents: nil, attributes: nil),
+                  let outFile = FileHandle(forWritingAtPath: o) else { return [] }
             do {
                 return try pipe(pipeCommands, input: inFile, output: outFile)
             } catch {
@@ -78,15 +80,15 @@ func postProcess(_ node: String, pkgConfigName: String, outputString: String, ou
         }
         processes += pipes
         processes.forEach { $0.waitUntilExit() }
-//        let null = FileHandle(forWritingAtPath: "/dev/null")
-//        defer { if #available(macOS 10.15, *) {
-//            try? null?.close()
-//        } else {
-//            null?.closeFile()
-//        } }
-//        outputFiles.forEach {
-//            run(standardError: null, "mv", $0 + ".out", "$0")
-//        }
+        let null = FileHandle(forWritingAtPath: "/dev/null")
+        defer { if #available(macOS 10.15, *) {
+            try? null?.close()
+        } else {
+            null?.closeFile()
+        } }
+        outputFiles.forEach {
+            run("mv", $0 + ".out", "$0")
+        }
     }
 }
 
