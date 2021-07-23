@@ -79,6 +79,15 @@ func postProcess(_ node: String, pkgConfigName: String, outputString: String, ou
         }
         processes += pipes
         processes.forEach { $0.waitUntilExit() }
+//        let null = FileHandle(forWritingAtPath: "/dev/null")
+//        defer { if #available(macOS 10.15, *) {
+//            try? null?.close()
+//        } else {
+//            null?.closeFile()
+//        } }
+//        outputFiles.forEach {
+//            run(standardError: null, "mv", $0 + ".out", "$0")
+//        }
     }
 }
 
