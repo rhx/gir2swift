@@ -100,6 +100,7 @@ func pipe<Input: IOHandle, Output: IOHandle>(_ components: [CommandArguments], i
     return processes
 }
 
+
 /// Execute the given shell command
 /// - Parameters:
 ///   - standardInput: the pipe to redirect standard input from if not `nil`
@@ -109,7 +110,7 @@ func pipe<Input: IOHandle, Output: IOHandle>(_ components: [CommandArguments], i
 ///   - arguments: the arguments to pass to the command
 /// - Returns: `nil` if the program cannot be run, the program's termination status otherwise
 @discardableResult
-func run(standardInput: Any? = nil, standardOutput: Any? = nil, standardError: Any? = nil, _ command: String, _ arguments: String...) -> Int? {
+func run(standardInput: Any? = nil, standardOutput: Any? = nil, standardError: Any? = nil, _ command: String, arguments: [String]) -> Int? {
     do {
         let process = try createProcess(command: command, arguments: arguments)
         if #available(macOS 10.13, *) {
@@ -123,4 +124,30 @@ func run(standardInput: Any? = nil, standardOutput: Any? = nil, standardError: A
         perror("Cannot run \(command)")
         return nil
     }
+}
+
+/// Execute the given shell command and test its return value
+/// - Parameters:
+///   - standardInput: the pipe to redirect standard input from if not `nil`
+///   - standardOutput: the pipe to redirect standard output to if not `nil`
+///   - standardError: the pipe to redirect standard error to, or `/dev/null` if `nil`
+///   - expectedResult: the expected return value of the shell command
+///   - command: the name of the executable to run
+///   - arguments: the arguments to pass to the command
+/// - Returns: `true` if the shell command has suceeded (returned the expected result)
+func test(standardInput: Any? = nil, standardOutput: Any? = nil, standardError: Any? = nil, expecting expectedResult: Int = 0, _ command: String, _ arguments: String...) -> Bool {
+    let stderr: Any?
+    if let se = standardError { stderr = se }
+    else {
+        stderr = FileHandle(forWritingAtPath: "/dev/null")
+    }
+    let rv = run(standardInput: standardInput, standardOutput: standardOutput, standardError: stderr, command, arguments: arguments)
+    if standardError == nil, let se = stderr as? FileHandle {
+        if #available(macOS 10.15, *) {
+            try? se.close()
+        } else {
+            se.closeFile()
+        }
+    }
+    return rv == expectedResult
 }
