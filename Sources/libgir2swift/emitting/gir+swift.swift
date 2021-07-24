@@ -198,7 +198,7 @@ public func swiftCode(alias: GIR.Alias) -> String {
     let parent = alias.typeRef.type.parent?.fullCType ?? alias.typeRef.fullCType
     let comment = original == parent ? "" : (" // " + parent)
     let code = swiftCode(alias, "public typealias " + alias.escapedName.swift + " = " + original + comment)
-    return code
+    return code + "\n"
 }
 
 /// Swift code representation of a callback as a type alias
@@ -207,7 +207,7 @@ public func swiftCallbackAliasCode(callback: GIR.Callback) -> String {
     let parent = callback.typeRef.type.parent?.type.typeName ?? callback.typeRef.type.ctype
     let comment = original == parent ? "" : (" // " + parent)
     let code = swiftCode(callback, "public typealias " + callback.escapedName.swift + " = " + original + comment)
-    return code
+    return code + "\n"
 }
 
 // MARK: - Swift code for Constants
@@ -226,7 +226,7 @@ public func swiftCode(constant: GIR.Constant) -> String {
         return code
     }
     let code = swiftCode(constant, "public let \(name) = \(name == original ? value : original)" + comment + (name == original ? "" : value))
-    return code
+    return code + "\n"
 }
 
 /// Swift code type alias representation of an enum
@@ -235,7 +235,7 @@ public func typeAlias(_ e: GIR.Enumeration) -> String {
     let parent = e.typeRef.type.parent?.type.typeName ?? e.typeRef.type.ctype
     let comment = original == parent ? "" : (" // " + parent)
     let code = swiftCode(e, "public typealias " + e.escapedName.swift + " = " + original + comment)
-    return code
+    return code + "\n"
 }
 
 // MARK: - Swift code for Enumerations
@@ -283,7 +283,7 @@ public func valueCode(_ indentation: String) -> (GIR.Enumeration.Member) -> Stri
         }
         let comment = cID == value ? "" : (" // " + value)
         let code = swiftCode(m, indentation + "static let " + m.name.snakeCase2camelCase.swiftQuoted + " = " + cID + comment, indentation: indentation)
-        return code
+        return code + "\n"
     }
 }
 
@@ -366,7 +366,7 @@ public func bitfieldValueCode(_ bf: GIR.Bitfield, _ indentation: String) -> (GIR
         let comment = cID == value ? "" : (" // " + cID)
         let cast = type + "(" + value + ")"
         let code = swiftCode(m, indentation + "public static let " + m.name.snakeCase2camelCase.swiftQuoted + " = " + cast + comment, indentation: indentation)
-        return code
+        return code + "\n"
     }
 }
 
