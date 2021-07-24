@@ -68,5 +68,5 @@ jobs:
           name: build-artefact-ubuntu
           path: |
             gir2swift/
-            SwiftGtk/
+            SwiftGtk/Sources/
           retention-days: 1
