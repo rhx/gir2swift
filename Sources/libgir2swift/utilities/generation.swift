@@ -52,8 +52,15 @@ extension Gir2Swift {
     }
 
     /// process a GIR file
-    func process_gir(file: String, boilerPlate modulePrefix: String, to outputDirectory: String? = nil, split singleFilePerClass: Bool = false, generateAll: Bool = false, useAlphaNames: Bool = false) {
+    func process_gir(file: String, boilerPlate: String, to outputDirectory: String? = nil, split singleFilePerClass: Bool = false, generateAll: Bool = false, useAlphaNames: Bool = false) {
         let node = file.components(separatedBy: "/").last?.stringByRemoving(suffix: ".gir") ?? file
+        let modulePrefix: String
+        if boilerPlate.isEmpty {
+            let bpfile = node + ".module"
+            modulePrefix = (try? String(contentsOfFile: bpfile)) ?? boilerPlate
+        } else {
+            modulePrefix = boilerPlate
+        }
         let pkgConfigArg = pkgConfigName ?? node.lowercased()
         let wlfile = node + ".whitelist"
         if let whitelist = (try? String(contentsOfFile: wlfile)).flatMap({ Set($0.nonEmptyComponents(separatedBy: "\n")) }) {
