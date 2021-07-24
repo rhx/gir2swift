@@ -2,16 +2,28 @@ import Foundation
 import Yams
 import SwiftLibXML
 
+struct Prerequisity: Codable {
+    private enum CodingKeys: String, CodingKey {
+        case girName = "gir-name"
+        case pkgConfig = "pkg-config"
+    }
+    
+    let girName: String
+    let pkgConfig: String
+}
+
 struct Manifest: Codable {
     private enum CodingKeys: String, CodingKey {
         case version
         case girName = "gir-name"
         case pkgConfig = "pkg-config"
+        case prerequisities
     }
 
     let version: UInt
     let girName: String
     let pkgConfig: String
+    let prerequisities: [Prerequisity]?
 }
 
 struct GirPackageMetadata {
@@ -51,11 +63,11 @@ struct Plan {
         } 
 
         self.girFileToGenerate = girPath
-        self.girFilesToPreload = try Plan.loadPrerequisities(from: girPath, pkgConfig: manifest.pkgConfig)
+        self.girFilesToPreload = try Plan.loadPrerequisities(from: girPath, pkgConfig: manifest.pkgConfig, prerequisities: manifest.prerequisities)
         self.pkgConfigName = manifest.pkgConfig
     }
 
-    private static func searchForGir(named name: String, pkgConfig: [String]) throws -> URL? {
+    private static func searchForGir(named name: String, pkgConfig: Set<String>) throws -> URL? {
         let defaultPaths = ["/opt/homebrew/share/gir-1.0", "/usr/local/share/gir-1.0", "/usr/share/gir-1.0"].map { URL.init(fileURLWithPath: $0, isDirectory: false) }
 
         #if os(macOS)
@@ -81,18 +93,16 @@ struct Plan {
             }
     }
 
-    private static func loadPrerequisities(from gir: URL, pkgConfig: String) throws -> [URL] {
+    private static func loadPrerequisities(from gir: URL, pkgConfig: String, prerequisities: [Prerequisity]?) throws -> [URL] {
         var explored: [String: URL] = [ gir.deletingLastPathComponent().lastPathComponent : gir ]
-        var toExplore: Set<String> = Set(try parsePackageInfo(for: gir).dependency.map(\.girName))
+        var toExplore: Set<String> = Set(try parsePackageInfo(for: gir).dependency.map(\.girName) + (prerequisities?.map(\.girName) ?? []))
 
-        let pkgConfigCandidates: [String]
-        #if os(macOS)
-            pkgConfigCandidates = try getAllPkgConfigDependencies(for: pkgConfig)
-        #else
-            pkgConfigCandidates = []
+        var pkgConfigCandidates: Set<String> = []
+        #if !os(macOS)
+            for package in (prerequisities?.map(\.pkgConfig) ?? []) + [pkgConfig] {
+                pkgConfigCandidates.formUnion(try getAllPkgConfigDependencies(for: package))
+            }
         #endif
-
-        
 
         while true {
             if toExplore.isEmpty {
@@ -117,7 +127,7 @@ struct Plan {
         return Array(explored.values)
     }
 
-    private static func getAllPkgConfigDependencies(for package: String) throws -> [String] {
+    private static func getAllPkgConfigDependencies(for package: String) throws -> Set<String> {
         var explored: Set<String> = []
         var toExplore: Set<String> = [package]
 
@@ -136,7 +146,7 @@ struct Plan {
             }
         }
 
-        return Array(explored)
+        return explored
     }
 
     private static func getPkgConfigDependencies(for package: String) throws -> [String] {
