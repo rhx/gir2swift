@@ -59,6 +59,17 @@ func postProcess(_ node: String, pkgConfigName: String, outputString: String, ou
     } else {
         var processes = [Process]()
         if !outputString.isEmpty {
+            let p = Pipe()
+            do {
+                processes = try pipe(pipeCommands, input: p)
+            } catch {
+                perror("Cannot post-process using \(pipeCommands.map { ([$0.command] + $0.arguments).joined(separator: " ") }.joined(separator: ", "))")
+            }
+            DispatchQueue.global(qos: .userInitiated).async {
+                let data = outputString.data(using: .utf8) ?? Data()
+                p.fileHandleForWriting.write(data)
+                p.fileHandleForWriting.closeFile()
+            }
         }
         let pipes = outputFiles.flatMap { (f: String) -> [Process] in
             let o = f + ".out"
