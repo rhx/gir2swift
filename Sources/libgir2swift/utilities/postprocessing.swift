@@ -45,14 +45,8 @@ func postProcess(_ node: String, pkgConfigName: String, outputString: String, ou
             } else {
                 return false
             }
-            let null = FileHandle(forWritingAtPath: "/dev/null")
-            defer { if #available(macOS 10.15, *) {
-                try? null?.close()
-            } else {
-                null?.closeFile()
-            } }
-            guard let result = run(standardError: null, "pkg-config", arg, pkgConfigName) else { return false }
-            return result == 0
+            let result = test("pkg-config", arg, pkgConfigName)
+            return result
         }.map { (f: String) -> CommandArguments in
             let d = f.lastIndex(of: ".") ?? f.index(f.endIndex, offsetBy: -4)
             let s = f.index(after: d)
@@ -80,12 +74,6 @@ func postProcess(_ node: String, pkgConfigName: String, outputString: String, ou
         }
         processes += pipes
         processes.forEach { $0.waitUntilExit() }
-        let null = FileHandle(forWritingAtPath: "/dev/null")
-        defer { if #available(macOS 10.15, *) {
-            try? null?.close()
-        } else {
-            null?.closeFile()
-        } }
         outputFiles.forEach {
             let o = $0 + ".out"
             do {
