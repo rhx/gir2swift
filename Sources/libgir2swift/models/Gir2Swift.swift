@@ -26,6 +26,10 @@ public struct Gir2Swift: ParsableCommand {
     @Flag(name: .short, help: "Create a single .swift file per class.")
     var singleFilePerClass = false
 
+    /// Array of extra files to post-process.
+    @Option(name: .long, help: "Additional files to post-process.")
+    var postProcess: [String] = []
+
     /// Array of names of pre-parsed `.gir` files.
     @Option(name: .short, help: "Add pre-requisite .gir files to ensure the types in file.gir are known.")
     var prerequisiteGir: [String] = []
@@ -72,7 +76,7 @@ public struct Gir2Swift: ParsableCommand {
 
         let target = outputDirectory.isEmpty ? nil : outputDirectory
         for girFile in girFiles {
-            process_gir(file: girFile, pkgConfigName: pkgConfigName, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: alphaNames)
+            process_gir(file: girFile, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: alphaNames)
         }
 
         if verbose {
