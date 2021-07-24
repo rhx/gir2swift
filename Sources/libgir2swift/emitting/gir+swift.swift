@@ -193,11 +193,29 @@ public func swiftCode(_ thing: GIR.Thing, _ postfix: String = "", indentation: S
 // MARK: - Swift code for Aliases
 
 /// Swift code representation of a type alias
-public func swiftCode(alias: GIR.Alias) -> String {
-    let original = alias.typeRef.type.typeName.swift
-    let parent = alias.typeRef.type.parent?.fullCType ?? alias.typeRef.fullCType
+/// - Parameter alias: The type alias to generate code for
+/// - Returns: The Swift code representingg the type alias
+@inlinable public func swiftCode(alias: GIR.Alias) -> String {
+    typeAliasCode(for: alias)
+}
+
+/// Swift code representation of a type alias
+/// - Parameter prefix: The prefix to use for the public typealias
+/// - Returns: The Swift code representingg the type alias
+@inlinable public func typeAliasSwiftCode(prefixedWith prefix: String) -> (GIR.Alias) -> String {
+    { alias in typeAliasCode(for: alias) }
+}
+
+/// Swift typealias code representation for a given data type
+/// - Parameters:
+///   - dataType: The data type that represents a typealias
+///   - prefix: A prefix to use for the public typealias
+/// - Returns: The Swift code representingg the type alias
+public func typeAliasCode(for dataType: GIR.Datatype, prefix: String = "") -> String {
+    let original = dataType.typeRef.type.typeName.swift
+    let parent = dataType.typeRef.type.parent?.fullCType ?? dataType.typeRef.fullCType
     let comment = original == parent ? "" : (" // " + parent)
-    let code = swiftCode(alias, "public typealias " + alias.escapedName.swift + " = " + original + comment)
+    let code = swiftCode(dataType, "public typealias " + prefix + dataType.escapedName.swift + " = " + original + comment)
     return code + "\n"
 }
 
@@ -213,7 +231,14 @@ public func swiftCallbackAliasCode(callback: GIR.Callback) -> String {
 // MARK: - Swift code for Constants
 
 /// Swift code representation of a constant
-public func swiftCode(constant: GIR.Constant) -> String {
+@inlinable public func swiftCode(constant: GIR.Constant) -> String {
+    constantSwiftCode()(constant)
+}
+
+/// Swift code representation of a constant
+/// - Parameter indent: The indentation string to use
+/// - Returns: a function that takes a constant and creates the corresponding Swift code indented by `indent`
+@inlinable public func constantSwiftCode(indentedBy indent: String = "") -> (GIR.Constant) -> String {{ constant in
     let original = constant.typeRef.type.typeName.swift
     let parentRef = constant.typeRef.type.parent
     let parent = parentRef?.type.typeName ?? constant.typeRef.type.ctype
@@ -225,9 +250,9 @@ public func swiftCode(constant: GIR.Constant) -> String {
             (parentRef == nil ? "" : (": " + parent.swift)) + " = " + value + comment + original)
         return code
     }
-    let code = swiftCode(constant, "public let \(name) = \(name == original ? value : original)" + comment + (name == original ? "" : value))
+    let code = swiftCode(constant, "public let \(name) = \(name == original ? value : original)" + comment + (name == original ? "" : value), indentation: indent)
     return code + "\n"
-}
+}}
 
 /// Swift code type alias representation of an enum
 public func typeAlias(_ e: GIR.Enumeration) -> String {
