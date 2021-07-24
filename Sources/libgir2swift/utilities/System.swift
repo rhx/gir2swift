@@ -174,9 +174,9 @@ func test(standardInput: Any? = nil, standardOutput: Any? = nil, standardError: 
 
 func executeAndWait(_ program: String, arguments: [String]) throws -> String? {
     let stdOut = Pipe()
-    let code = run(standardOutput: stdOut, program, arguments: arguments)
+    let optCode = run(standardOutput: stdOut, program, arguments: arguments)
 
-    guard let code = code else {
+    guard let code = optCode else {
         throw ProcessError.couldNotBeSpawned
     }
 
