@@ -84,10 +84,13 @@ func createProcess(command: String, in path: [String] = ProcessInfo.processInfo.
 }
 
 /// Run a pipeline of executables
-/// - Parameter components: an array commands and associated arguments to execute
+/// - Parameters
+///   -  components: an array commands and associated arguments to execute
+///   - input: the FileHandle to redirect standard input from if not `nil`
+///   - output: the FileHandle to redirect standard output to if not `nil`
 /// - Throws: an error if any of the commands cannot be run
 /// - Returns: an array of processes being executed
-func pipe<Input: IOHandle, Output: IOHandle>(_ components: [CommandArguments], in path: [String] = ProcessInfo.processInfo.environment["PATH"].map { $0.split(separator: ":").map(String.init) } ?? [], input: Input? = nil, output: Output? = nil) throws -> [Process] {
+func pipe(_ components: [CommandArguments], in path: [String] = ProcessInfo.processInfo.environment["PATH"].map { $0.split(separator: ":").map(String.init) } ?? [], input: Any? = nil, output: Any? = nil) throws -> [Process] {
     let pipes: [Any?] = components.enumerated().map { $0.offset == 0 ? input : Pipe() as Any? } + [output]
     let processes = try components.enumerated().map {
         try createProcess(command: $0.element.command, in: path, arguments: $0.element.arguments, standardInput: pipes[$0.offset], standardOutput: pipes[$0.offset+1])
@@ -103,9 +106,9 @@ func pipe<Input: IOHandle, Output: IOHandle>(_ components: [CommandArguments], i
 
 /// Execute the given shell command
 /// - Parameters:
-///   - standardInput: the pipe to redirect standard input from if not `nil`
-///   - standardOutput: the pipe to redirect standard output to if not `nil`
-///   - standardError: the pipe to redirect standard error to if not `nil`
+///   - standardInput: the FileHandle to redirect standard input from if not `nil`
+///   - standardOutput: the FileHandle to redirect standard output to if not `nil`
+///   - standardError: the FileHandle to redirect standard error to if not `nil`
 ///   - command: the name of the executable to run
 ///   - arguments: the arguments to pass to the command
 /// - Returns: `nil` if the program cannot be run, the program's termination status otherwise
@@ -128,9 +131,9 @@ func run(standardInput: Any? = nil, standardOutput: Any? = nil, standardError: A
 
 /// Execute the given shell command and test its return value
 /// - Parameters:
-///   - standardInput: the pipe to redirect standard input from if not `nil`
-///   - standardOutput: the pipe to redirect standard output to if not `nil`
-///   - standardError: the pipe to redirect standard error to, or `/dev/null` if `nil`
+///   - standardInput: the FileHandle to redirect standard input from if not `nil`
+///   - standardOutput: the FileHandle to redirect standard output to if not `nil`
+///   - standardError: the FileHandle to redirect standard error to, or `/dev/null` if `nil`
 ///   - expectedResult: the expected return value of the shell command
 ///   - command: the name of the executable to run
 ///   - arguments: the arguments to pass to the command
