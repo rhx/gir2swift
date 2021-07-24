@@ -54,11 +54,11 @@ struct Plan {
         let data = try String.init(contentsOfFile: manifestUrl.path)
         let manifest = try YAMLDecoder().decode(Manifest.self, from: data)
         
-        let girPath = try Plan.searchForGir(
+        let optGirPath = try Plan.searchForGir(
             named: manifest.girName, 
             pkgConfig: [manifest.pkgConfig]
         )
-        guard let girPath = girPath else {
+        guard let girPath = optGirPath else {
             throw Error.girNotFound(named: manifest.girName + ".gir" )
         } 
 
