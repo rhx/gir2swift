@@ -87,8 +87,13 @@ func postProcess(_ node: String, pkgConfigName: String, outputString: String, ou
             null?.closeFile()
         } }
         outputFiles.forEach {
-            run("mv", $0 + ".out", "$0")
+            let o = $0 + ".out"
+            do {
+                try? fm.removeItem(atPath: $0)
+                try fm.moveItem(atPath: o, toPath: $0)
+            } catch {
+                print("Cannot move '\(o)' to '\($0)': \(error)", to: &Streams.stdErr)
+            }
         }
     }
 }
-
