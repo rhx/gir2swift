@@ -22,6 +22,10 @@ public struct Gir2Swift: ParsableCommand {
     @Flag(name: .long, help: "Create a fixed set of output files ending in A-Z.")
     var alphaNames = false
 
+    /// Array of namespaces to add global structs, classes, and protocols to.
+    @Option(name: .shortAndLong, help: "Add a namespace with the given name.")
+    var namespace: [String] = []
+
     /// Create a single output file per class if `true`
     @Flag(name: .short, help: "Create a single .swift file per class.")
     var singleFilePerClass = false

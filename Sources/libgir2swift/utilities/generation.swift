@@ -279,6 +279,27 @@ extension Gir2Swift {
                     write(functions, to: f)
                 } else { outq.async(group: queues) { outputString += functions } }
             }
+            if !namespace.isEmpty {
+                background.async(group: queues) {
+                    let privatePrefix = "_" + gir.prefix + "_"
+                    let prefixedAliasSwiftCode = typeAliasSwiftCode(prefixedWith: privatePrefix)
+                    let aliases = gir.aliases.filter{!blacklist.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
+                    let outputFile = outputDirectory.map { "\($0)/\(node)-namespaces.swift" }
+                    if let f = outputFile {
+                        write(aliases, to: f)
+                    } else {
+                        outq.async(group: queues) { outputString += aliases }
+                    }
+                    let indent = "    "
+                    let constantSwiftCode = constantSwiftCode(indentedBy: indent)
+                    namespace.forEach { namespace in
+                        let constants = gir.constants.filter{!blacklist.contains($0.name)}.map(constantSwiftCode).joined(separator: "\n")
+                        if let f = outputFile {
+                            write(constants, to: f, append: true)
+                        } else {  outq.async(group: queues) { outputString += constants } }
+                    }
+                }
+            }
             queues.wait()
             libgir2swift.postProcess(node, pkgConfigName: pkgConfigArg, outputString: outputString, outputDirectory: outputDirectory, outputFiles: outputFiles)
             if verbose {
