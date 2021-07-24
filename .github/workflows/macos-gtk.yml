@@ -74,5 +74,5 @@ jobs:
           name: build-artefact-macos
           path: |
             gir2swift/
-            SwiftGtk/
+            SwiftGtk/Sources/
           retention-days: 1
