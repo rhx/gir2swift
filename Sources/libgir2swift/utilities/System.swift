@@ -141,7 +141,7 @@ func run(standardInput: Any? = nil, standardOutput: Any? = nil, standardError: A
         process.waitUntilExit()
         return Int(process.terminationStatus)
     } catch {
-        perror("Cannot run \(command)")
+        print("Cannot run \(command)", to: &Streams.stdErr)
         return nil
     }
 }

@@ -30,7 +30,6 @@ public struct Gir2Swift: ParsableCommand {
     @Option(name: .long, help: "Additional files to post-process.")
     var postProcess: [String] = []
 
-    #warning("Remove this code when all projects are migrated")
     /// Array of names of pre-parsed `.gir` files.
     @Option(name: .short, help: "Add pre-requisite .gir files to ensure the types in file.gir are known.")
     var prerequisiteGir: [String] = []
@@ -40,7 +39,6 @@ public struct Gir2Swift: ParsableCommand {
     @Option(name: .short, help: "Specify the output directory to put the generated files into.")
     var outputDirectory: String = ""
 
-    #warning("Remove this code when all projects are migrated")
     /// Name of the library to pass to pkg-config
     /// - Note: Defaults to the lower-cased name of the `.gir` file
     @Option(name: .long, help: "Library name to pass to pkg-config.")
@@ -53,10 +51,9 @@ public struct Gir2Swift: ParsableCommand {
     @Option(name: .long, help: "Custom path to manifest")
     var manifest: String = "gir2swift-manifest.yaml"
 
-    #warning("Remove this code when all projects are migrated")
     /// The actual, main `.gir` file(s) to process
     @Argument(help: "The .gir metadata files to process.")
-    var girFiles: [String]
+    var girFiles: [String] = []
 
 
     /// Designated initialiser
@@ -76,34 +73,32 @@ public struct Gir2Swift: ParsableCommand {
             moduleBoilerPlate = contents
         }
 
+        var girsToPreload = Set(prerequisiteGir)
+        var girFilesToGenerate = Set(girFiles)
+
+        // This variable is a dead store
+        var pkgConfig = pkgConfigName
+
         // TODO: Make planning nicer
-        if 
-            let wd = getcwd(), 
-            let manifestUrl = URL(string: wd)?.appendingPathComponent(manifest),
-            let plan = try? Plan(using: manifestUrl) 
-        {
-
-            // NEW PLAN
-            for girFile in plan.girFilesToPreload {
-                preload_gir(file: girFile.path)
+        do {
+            if let wd = getcwd(), let manifestUrl = URL(string: wd)?.appendingPathComponent(manifest) {
+                let plan = try Plan(using: manifestUrl) 
+                girsToPreload.formUnion(plan.girFilesToPreload.map(\.path))
+                girFilesToGenerate.insert(plan.girFileToGenerate.path)
+                pkgConfig = pkgConfig ?? plan.pkgConfigName
             }
+        } catch {
+            print("Failed to load manifest: \(error)", to: &Streams.stdErr)
+        }
 
-            let target = outputDirectory.isEmpty ? nil : outputDirectory
-            process_gir(file: plan.girFileToGenerate.path, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: alphaNames)
-        } else {
+        // pre-load gir files to ensure pre-requisite types are known
+        for girFile in girsToPreload {
+            preload_gir(file: girFile)
+        }
 
-            // USE LEGACE PLAN
-            #warning("Remove this code when all projects are migrated")
-            // pre-load gir files to ensure pre-requisite types are known
-            for girFile in prerequisiteGir {
-                preload_gir(file: girFile)
-            }
-
-            let target = outputDirectory.isEmpty ? nil : outputDirectory
-            for girFile in girFiles {
-                process_gir(file: girFile, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: alphaNames)
-            }
-
+        let target = outputDirectory.isEmpty ? nil : outputDirectory
+        for girFile in girFilesToGenerate {
+            process_gir(file: girFile, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: alphaNames)
         }
 
         if verbose {

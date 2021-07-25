@@ -68,7 +68,7 @@ struct Plan {
     }
 
     private static func searchForGir(named name: String, pkgConfig: Set<String>) throws -> URL? {
-        let defaultPaths = ["/opt/homebrew/share/gir-1.0", "/usr/local/share/gir-1.0", "/usr/share/gir-1.0"].map { URL.init(fileURLWithPath: $0, isDirectory: false) }
+        let defaultPaths = ["/opt/homebrew/share/gir-1.0", "/usr/local/share/gir-1.0", "/usr/share/gir-1.0"].map { URL(fileURLWithPath: $0, isDirectory: false) }
 
         #if os(macOS)
         let homebrewRelativeGirLocation = "../share/gir-1.0/"
@@ -98,17 +98,13 @@ struct Plan {
         var toExplore: Set<String> = Set(try parsePackageInfo(for: gir).dependency.map(\.girName) + (prerequisities?.map(\.girName) ?? []))
 
         var pkgConfigCandidates: Set<String> = []
-        #if !os(macOS)
+        #if os(macOS)
             for package in (prerequisities?.map(\.pkgConfig) ?? []) + [pkgConfig] {
                 pkgConfigCandidates.formUnion(try getAllPkgConfigDependencies(for: package))
             }
         #endif
 
-        while true {
-            if toExplore.isEmpty {
-                break
-            }
-
+        while !toExplore.isEmpty {
             let executing = toExplore.removeFirst()
             guard let url = try searchForGir(named: executing, pkgConfig: pkgConfigCandidates) else {
                 throw Error.girNotFound(named: executing)
@@ -131,11 +127,7 @@ struct Plan {
         var explored: Set<String> = []
         var toExplore: Set<String> = [package]
 
-        while true {
-            if toExplore.isEmpty {
-                break
-            }
-
+        while !toExplore.isEmpty {
             let executing = toExplore.removeFirst()
             explored.insert(executing)
 
@@ -159,7 +151,7 @@ struct Plan {
             line.components(separatedBy: .whitespaces).first
         }
 
-        return packageNames
+        return packageNames.filter { !$0.isEmpty }
     }
 
     private static func parsePackageInfo(for gir: URL) throws -> GirPackageMetadata {
