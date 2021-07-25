@@ -286,10 +286,10 @@ extension Gir2Swift {
                     let privateEnumerations = gir.enumerations.filter{!blacklist.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
                     let privateBitfields = gir.bitfields.filter{!blacklist.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
                     let privateUnions = gir.unions.filter {!blacklist.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
-                    let code = preamble + [privateRecords, privateAliases, privateEnumerations, privateBitfields, privateUnions].joined(separator: "\n\n") + "\n"
+                    let code = [privateRecords, privateAliases, privateEnumerations, privateBitfields, privateUnions].joined(separator: "\n\n") + "\n"
                     let outputFile = outputDirectory.map { "\($0)/\(node)-namespaces.swift" }
                     if let f = outputFile {
-                        write(code, to: f)
+                        write(code, to: f, preamble: preamble)
                     } else {
                         outq.async(group: queues) { outputString += code }
                     }
