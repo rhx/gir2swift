@@ -141,7 +141,7 @@ func run(standardInput: Any? = nil, standardOutput: Any? = nil, standardError: A
         process.waitUntilExit()
         return Int(process.terminationStatus)
     } catch {
-        print("Cannot run \(command)", to: &Streams.stdErr)
+        print("Cannot run \(command) with error: \(error)", to: &Streams.stdErr)
         return nil
     }
 }
@@ -172,6 +172,12 @@ func test(standardInput: Any? = nil, standardOutput: Any? = nil, standardError: 
     return rv == expectedResult
 }
 
+/// Executes desired program and
+/// - Parameters:
+///   - program: The name of the program
+///   - arguments: List of arguments
+/// - Throws: Throws in case, that the process could not be executed or returned non-zero code.
+/// - Returns: The contents of std-out
 func executeAndWait(_ program: String, arguments: [String]) throws -> String? {
     let stdOut = Pipe()
     let optCode = run(standardOutput: stdOut, program, arguments: arguments)

@@ -31,7 +31,7 @@ public struct Gir2Swift: ParsableCommand {
     var postProcess: [String] = []
 
     /// Array of names of pre-parsed `.gir` files.
-    @Option(name: .short, help: "Add pre-requisite .gir files to ensure the types in file.gir are known.")
+    @Option(name: .short, help: "Add pre-requisite .gir files to ensure the types in file.gir are known. Prerequisities specified in CLI are merged with the prerequisities found by gir2swift.")
     var prerequisiteGir: [String] = []
 
     /// Name of the output directory to write generated files to.
@@ -41,18 +41,19 @@ public struct Gir2Swift: ParsableCommand {
 
     /// Name of the library to pass to pkg-config
     /// - Note: Defaults to the lower-cased name of the `.gir` file
-    @Option(name: .long, help: "Library name to pass to pkg-config.")
+    @Option(name: .long, help: "Library name to pass to pkg-config. Pkg config name specified in CLI trumps the one found in manifest.")
     var pkgConfigName: String?
 
     /// File containing one-off boilerplate code for your module
     @Option(name: .short, help: "Add the given .swift file as the main (hand-crafted) Swift file for your library target.")
     var moduleBoilerPlateFile: String = ""
 
-    @Option(name: .long, help: "Custom path to manifest")
+    /// By default, the gir2swift searches for manifest in the work directory. As for now, the search can't be sidabled.
+    @Option(name: .long, help: "Custom path to manifest.")
     var manifest: String = "gir2swift-manifest.yaml"
 
     /// The actual, main `.gir` file(s) to process
-    @Argument(help: "The .gir metadata files to process.")
+    @Argument(help: "The .gir metadata files to process. Gir files specified in CLI are merged with those specified in the manifest.")
     var girFiles: [String] = []
 
 
@@ -79,7 +80,6 @@ public struct Gir2Swift: ParsableCommand {
         // This variable is a dead store
         var pkgConfig = pkgConfigName
 
-        // TODO: Make planning nicer
         do {
             if let wd = getcwd(), let manifestUrl = URL(string: wd)?.appendingPathComponent(manifest) {
                 let plan = try Plan(using: manifestUrl) 
