@@ -38,7 +38,13 @@ func getcwd() -> String? {
 func urlForExecutable(named executable: String, in path: [String] = ProcessInfo.processInfo.environment["PATH"].map { $0.split(separator: ":").map(String.init) } ?? []) -> URL? {
     guard let wd = getcwd().map(URL.init(fileURLWithPath:)) else { return nil }
     let fm = FileManager.default
-    for url in path.map({ URL(string: $0, relativeTo: wd) ?? URL(fileURLWithPath: $0) }) {
+    for url in path.map({ (d: String) -> URL in
+        if #available(macOS 10.11, *) {
+            return URL(fileURLWithPath: d, isDirectory: true, relativeTo: wd)
+        } else {
+            return URL(fileURLWithPath: d)
+        }
+    }) {
         let file = url.appendingPathComponent(executable, isDirectory: false)
         #if os(macOS)
         var directory = ObjCBool(false)

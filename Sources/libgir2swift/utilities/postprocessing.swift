@@ -25,6 +25,7 @@ func postProcess(_ node: String, pkgConfigName: String, outputString: String, ou
         }
     }
     let cwd = fm.currentDirectoryPath
+    let cwdURL = URL(fileURLWithPath: cwd)
     let nodeFiles = ((try? fm.contentsOfDirectory(atPath: cwd)) ?? []).filter { $0.hasPrefix(node) }
     let cmds = postProcessors.flatMap { command in
         nodeFiles.filter {
@@ -54,6 +55,29 @@ func postProcess(_ node: String, pkgConfigName: String, outputString: String, ou
         }
     }
     pipeCommands += cmds
+    let swiftSuffix = ".swift"
+    let n = swiftSuffix.count
+    let inputFiles = nodeFiles.filter {
+        guard $0.hasSuffix(swiftSuffix), let j = $0.lastIndex(of: "=") ?? $0.lastIndex(of: "-"), let e = $0.index($0.endIndex, offsetBy: -(n+1), limitedBy: $0.startIndex) else { return false }
+        let i = $0.index(before: j)
+        let k = $0.index(after: j)
+        let arg: String
+        if $0[i] == "-" && $0[j].isDigit {
+            arg = "--atleast-version=" + $0[j..<e]
+        } else if $0[i...j] == ">=" && $0[k].isDigit {
+            arg = "--atleast-version=" + $0[k..<e]
+        } else if $0[i...j] == "<=" && $0[k].isDigit {
+            arg = "--max-version=" + $0[k..<e]
+        } else if $0[i] == "=" && $0[j].isDigit {
+            arg = "--exact-version=" + $0[j..<e]
+        } else if $0[i...j] == "==" && $0[k].isDigit {
+            arg = "--exact-version=" + $0[k..<e]
+        } else {
+            return false
+        }
+        let result = test("pkg-config", arg, pkgConfigName)
+        return result
+    }
     if pipeCommands.isEmpty {
         if !outputString.isEmpty { print(outputString) }
     } else {
@@ -68,6 +92,18 @@ func postProcess(_ node: String, pkgConfigName: String, outputString: String, ou
             DispatchQueue.global(qos: .userInitiated).async {
                 let data = outputString.data(using: .utf8) ?? Data()
                 p.fileHandleForWriting.write(data)
+                if outputDirectory == nil {
+                    for file in inputFiles {
+                        let fileURL: URL
+                        if #available(macOS 10.11, *) {
+                            fileURL = URL(fileURLWithPath: file, isDirectory: false, relativeTo: cwdURL)
+                        } else {
+                            fileURL = URL(fileURLWithPath: file)
+                        }
+                        guard let data = try? Data(contentsOf: fileURL, options: .mappedIfSafe) else { continue }
+                        p.fileHandleForWriting.write(data)
+                    }
+                }
                 p.fileHandleForWriting.closeFile()
             }
         }
@@ -84,6 +120,31 @@ func postProcess(_ node: String, pkgConfigName: String, outputString: String, ou
             }
         }
         processes += pipes
+        let inputFileProcesses: [Process]
+        if let outputDirectory = outputDirectory {
+            let outDirURL: URL
+            if #available(macOS 10.11, *) {
+                outDirURL = URL(fileURLWithPath: outputDirectory, isDirectory: true, relativeTo: cwdURL)
+            } else {
+                outDirURL = URL(fileURLWithPath: outputDirectory)
+            }
+            inputFileProcesses = inputFiles.flatMap { (f: String) -> [Process] in
+                let fileURL = URL(fileURLWithPath: f)
+                let outputURL = outDirURL.appendingPathComponent(fileURL.lastPathComponent, isDirectory: false)
+                let o = outputURL.path
+                guard let inFile = FileHandle(forReadingAtPath: f),
+                      fm.createFile(atPath: o, contents: nil, attributes: nil),
+                      let outFile = FileHandle(forWritingAtPath: o) else { return [] }
+                do {
+                    return try pipe(pipeCommands, input: inFile, output: outFile)
+                } catch {
+                    perror("Cannot process \(f) -> \(o)")
+                    return []
+                }
+            }
+        } else {
+            inputFileProcesses = []
+        }
         processes.forEach { $0.waitUntilExit() }
         outputFiles.forEach {
             let o = $0 + ".out"
@@ -94,5 +155,6 @@ func postProcess(_ node: String, pkgConfigName: String, outputString: String, ou
                 print("Cannot move '\(o)' to '\($0)': \(error)", to: &Streams.stdErr)
             }
         }
+        inputFileProcesses.forEach { $0.waitUntilExit() }
     }
 }
