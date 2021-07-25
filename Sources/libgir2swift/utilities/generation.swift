@@ -292,9 +292,9 @@ extension Gir2Swift {
                         outq.async(group: queues) { outputString += code }
                     }
                     let indent = "    "
-                    let constantSwiftCode = constantSwiftCode(indentedBy: indent, scopePrefix: "static")
+                    let constSwiftCode = constantSwiftCode(indentedBy: indent, scopePrefix: "static")
                     let datatypeSwiftCode = namespacedAliasSwiftCode(prefixedWith: privatePrefix, indentation: indent)
-                    let constants = gir.constants.filter{!blacklist.contains($0.name)}.map(constantSwiftCode).joined(separator: "\n")
+                    let constants = gir.constants.filter{!blacklist.contains($0.name)}.map(constSwiftCode).joined(separator: "\n")
                     let aliases = gir.aliases.filter{!blacklist.contains($0.name)}.map(datatypeSwiftCode).joined(separator: "\n")
                     let enumerations = gir.enumerations.filter{!blacklist.contains($0.name)}.map(datatypeSwiftCode).joined(separator: "\n")
                     let bitfields = gir.bitfields.filter{!blacklist.contains($0.name)}.map(datatypeSwiftCode).joined(separator: "\n")
