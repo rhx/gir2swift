@@ -20,6 +20,8 @@ To start a project that uses Swift wrappers around low-level libraries that util
 
 ## What is new?
 
+Version 14 automates post-processing using `sed` and `awk`, simplifying build-system integration.
+
 Version 13 uses [swift-argument-parser](https://github.com/apple/swift-argument-parser) instead of `getopt()`.
 
 As of version 12.2, `init(raw:)` is now required by the protocol and `init(retainingRaw:)` is required for classes, closing [PR#6](https://github.com/rhx/gir2swift/pull/6).
