@@ -94,7 +94,7 @@ struct Plan {
     }
 
     private static func loadPrerequisities(from gir: URL, pkgConfig: String, prerequisities: [Prerequisity]?) throws -> [URL] {
-        var explored: [String: URL] = [ gir.deletingLastPathComponent().lastPathComponent : gir ]
+        var explored: [String: URL] = [:]
         var toExplore: Set<String> = Set(try parsePackageInfo(for: gir).dependency.map(\.girName) + (prerequisities?.map(\.girName) ?? []))
 
         var pkgConfigCandidates: Set<String> = []
@@ -120,7 +120,9 @@ struct Plan {
             }
         }
 
-        return Array(explored.values)
+        return explored
+            .filter { $1.lastPathComponent != gir.lastPathComponent }
+            .map(\.value)
     }
 
     private static func getAllPkgConfigDependencies(for package: String) throws -> Set<String> {

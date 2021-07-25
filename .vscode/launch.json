@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/.build/debug/gir2swift",
             "cwd": "${workspaceFolder}/../SwiftGtk",
-            "args": ["-o", "Sources/Gtk", "-s", ""]
+            "args": ["-o", "Sources/Gtk"]
         }
     ]
 }
