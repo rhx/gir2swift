@@ -252,20 +252,16 @@ extension Gir2Swift {
             }
             background.async(group: queues) {
                 let convert = swiftCode(gir.functions)
-                var types = gir.records.filter {!blacklist.contains($0.name)}
-                // If `generate all` option was not passed, the driver will not generate records wich are deemed as private.
-                // Currently only Private records are ommited. Private record is a record, which has suffic Record and, class with it's name without work "Private" exists and contains only private references to this type or none at all. 
-                // Since not all private attributes of classes are marked as private in .gir, only those records with non-private attributed references will be generated.
-                if !generateAll {
-                    let classes: [String: GIR.Class] = Dictionary(gir.classes.map { ($0.name, $0) }) { lhs, _ in lhs}
-                    types.removeAll { record in 
-                            record.name.hasSuffix("Private") &&
-                            record.name.stringByRemoving(suffix: "Private")
-                            .flatMap { classes[$0] }
-                            .flatMap { $0.fields.allSatisfy { field in field.typeRef.type.name != record.name || field.isPrivate } } == true
-                    }
+                let classes = generateAll ? [:] : Dictionary(gir.classes.map { ($0.name, $0) }) { lhs, _ in lhs}
+                let records = gir.records.filter { r in
+                    !blacklist.contains(r.name) &&
+                    (generateAll || !r.name.hasSuffix("Private") ||
+                     r.name.stringByRemoving(suffix: "Private").flatMap { classes[$0] }.flatMap {
+                        $0.fields.allSatisfy { $0.isPrivate || $0.typeRef.type.name != r.name }
+                     } != true
+                    )
                 }
-                write(types, using: convert)
+                write(records, using: convert)
             }
             background.async(group: queues) {
                 let convert = swiftCode(gir.functions)
@@ -283,20 +279,46 @@ extension Gir2Swift {
                 background.async(group: queues) {
                     let privatePrefix = "_" + gir.prefix + "_"
                     let prefixedAliasSwiftCode = typeAliasSwiftCode(prefixedWith: privatePrefix)
-                    let aliases = gir.aliases.filter{!blacklist.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
+                    let privateRecords = gir.records.filter{!blacklist.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
+                    let privateAliases = gir.aliases.filter{!blacklist.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
+                    let privateEnumerations = gir.enumerations.filter{!blacklist.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
+                    let privateBitfields = gir.bitfields.filter{!blacklist.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
+                    let privateUnions = gir.unions.filter {!blacklist.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
+                    let code = preamble + [privateRecords, privateAliases, privateEnumerations, privateBitfields, privateUnions].joined(separator: "\n\n") + "\n"
                     let outputFile = outputDirectory.map { "\($0)/\(node)-namespaces.swift" }
                     if let f = outputFile {
-                        write(aliases, to: f)
+                        write(code, to: f)
                     } else {
-                        outq.async(group: queues) { outputString += aliases }
+                        outq.async(group: queues) { outputString += code }
                     }
                     let indent = "    "
-                    let constantSwiftCode = constantSwiftCode(indentedBy: indent)
+                    let constantSwiftCode = constantSwiftCode(indentedBy: indent, scopePrefix: "static")
+                    let datatypeSwiftCode = namespacedAliasSwiftCode(prefixedWith: privatePrefix, indentation: indent)
+                    let constants = gir.constants.filter{!blacklist.contains($0.name)}.map(constantSwiftCode).joined(separator: "\n")
+                    let aliases = gir.aliases.filter{!blacklist.contains($0.name)}.map(datatypeSwiftCode).joined(separator: "\n")
+                    let enumerations = gir.enumerations.filter{!blacklist.contains($0.name)}.map(datatypeSwiftCode).joined(separator: "\n")
+                    let bitfields = gir.bitfields.filter{!blacklist.contains($0.name)}.map(datatypeSwiftCode).joined(separator: "\n")
+                    let unions = gir.unions.filter {!blacklist.contains($0.name)}.map(datatypeSwiftCode).joined(separator: "\n")
+                    let classes = generateAll ? [:] : Dictionary(gir.classes.map { ($0.name, $0) }) { lhs, _ in lhs}
+                    let records = gir.records.filter { r in
+                        !blacklist.contains(r.name) &&
+                        (generateAll || !r.name.hasSuffix("Private") ||
+                         r.name.stringByRemoving(suffix: "Private").flatMap { classes[$0] }.flatMap {
+                            $0.fields.allSatisfy { $0.isPrivate || $0.typeRef.type.name != r.name }
+                        } != true
+                        )
+                    }.map(datatypeSwiftCode).joined(separator: "\n\n")
                     namespace.forEach { namespace in
-                        let constants = gir.constants.filter{!blacklist.contains($0.name)}.map(constantSwiftCode).joined(separator: "\n")
+                        let namespaceDeclaration: String
+                        if let record = GIR.knownRecords[namespace] {
+                            namespaceDeclaration = "extension " + record.className + " {\n"
+                        } else {
+                            namespaceDeclaration = "public enum " + namespace + " {\n"
+                        }
+                        let code = namespaceDeclaration + [constants, records, aliases, enumerations, bitfields, unions].joined(separator: "\n\n") + "\n}\n\n"
                         if let f = outputFile {
-                            write(constants, to: f, append: true)
-                        } else {  outq.async(group: queues) { outputString += constants } }
+                            write(code, to: f, append: true)
+                        } else {  outq.async(group: queues) { outputString += code } }
                     }
                 }
             }
