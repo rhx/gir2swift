@@ -275,7 +275,9 @@ extension Gir2Swift {
                     write(functions, to: f)
                 } else { outq.async(group: queues) { outputString += functions } }
             }
-            if !namespace.isEmpty {
+            if !(namespace.isEmpty && extensionNamespace.isEmpty) {
+                let namespaces = namespace + extensionNamespace
+                let extensions = Set(extensionNamespace)
                 background.async(group: queues) {
                     let privatePrefix = "_" + gir.prefix + "_"
                     let prefixedAliasSwiftCode = typeAliasSwiftCode(prefixedWith: privatePrefix)
@@ -308,9 +310,11 @@ extension Gir2Swift {
                         } != true
                         )
                     }.map(datatypeSwiftCode).joined(separator: "\n\n")
-                    namespace.forEach { namespace in
+                    namespaces.forEach { namespace in
                         let namespaceDeclaration: String
-                        if let record = GIR.knownRecords[namespace] {
+                        if extensions.contains(namespace) {
+                            namespaceDeclaration = "extension " + namespace + " {\n"
+                        } else if let record = GIR.knownRecords[namespace] {
                             namespaceDeclaration = "extension " + record.className + " {\n"
                         } else {
                             namespaceDeclaration = "public enum " + namespace + " {\n"
