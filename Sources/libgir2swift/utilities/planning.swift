@@ -120,7 +120,7 @@ struct Plan {
         // All pkg-config packages passed in the argument are scanned and their `libdir` values are reported.
         // TODO: This is major performance hit. Optimization desirable.
         let homebrewPaths = pkgConfig.compactMap { pkgName -> URL? in 
-            let libDir = try? executeAndWait("pkg-config", arguments: ["--variable=libdir", pkgName])
+            let libDir = try? executeAndWait("env", arguments: ["pkg-config", "--variable=libdir", pkgName])
             return libDir.flatMap { 
                 let libDirUrl = URL(fileURLWithPath: $0, isDirectory: true)
                 return URL(string: homebrewRelativeGirLocation, relativeTo: libDirUrl)
@@ -222,7 +222,7 @@ struct Plan {
     /// - Parameter package: The name of the `pkg-config` package.
     /// - Returns: The list of dependencies.
     private static func getPkgConfigDependencies(for package: String) throws -> [String] {
-        guard let output = try executeAndWait("pkg-config", arguments: ["--print-requires", package]) else {
+        guard let output = try executeAndWait("env", arguments: ["pkg-config", "--print-requires", package]) else {
             return []
         }
 
