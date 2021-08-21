@@ -8,7 +8,7 @@ struct Manifest: Codable {
         case version
         case girName = "gir-name"
         case pkgConfig = "pkg-config"
-        case prerequisities
+        case prerequisites
     }
 
     /// The version of manifest. It is not utilized now, but I want to keep the property there for future purposes.
@@ -20,12 +20,12 @@ struct Manifest: Codable {
     /// The name of pkg-config package in which the gir file resides (mainly for the purposes of macOS sandboxing)
     let pkgConfig: String
     
-    /// Optional list of `.gir` prerequisities
-    let prerequisities: [Prerequisity]?
+    /// Optional list of `.gir` prerequisites
+    let prerequisites: [Prerequisite]?
 }
 
 /// Description of a `.gir` prerequisity
-struct Prerequisity: Codable {
+struct Prerequisite: Codable {
     private enum CodingKeys: String, CodingKey {
         case girName = "gir-name"
         case pkgConfig = "pkg-config"
@@ -65,7 +65,7 @@ struct Plan {
     /// The path to `.gir` file that shall be generated
     let girFileToGenerate: URL
 
-    /// The paths to prerequisities of the `.gir` file
+    /// The paths to prerequisites of the `.gir` file
     let girFilesToPreload: [URL]
     
     /// Pkg config name of the generated package
@@ -82,12 +82,12 @@ struct Plan {
     /// to consult the `pkg-config` out of necessity, because this is the only way we can learn the
     /// potential location of the gir files.
     ///
-    /// - Parameter manifestUrl: Path to manifest
+    /// - Parameter manifestURL: Path to manifest
     /// - Throws: Error may represent various error states, differing from the inability to read
     /// the `.yaml` file, a `.gir` file or error during consulting `pkg-config`.
-    init(using manifestUrl: URL) throws {
+    init(using manifestURL: URL) throws {
         // For some reason `swift-corelibs-foundation` failed to open the file as a `Data`.
-        let data = try String.init(contentsOfFile: manifestUrl.path)
+        let data = try String.init(contentsOfFile: manifestURL.path)
         let manifest = try YAMLDecoder().decode(Manifest.self, from: data)
         
         // Search for location of the generated `.gir` file.
@@ -100,7 +100,7 @@ struct Plan {
         } 
 
         self.girFileToGenerate = girPath
-        self.girFilesToPreload = try Plan.loadPrerequisities(from: girPath, pkgConfig: manifest.pkgConfig, prerequisities: manifest.prerequisities)
+        self.girFilesToPreload = try Plan.loadPrerequisities(from: girPath, pkgConfig: manifest.pkgConfig, prerequisites: manifest.prerequisites)
         self.pkgConfigName = manifest.pkgConfig
     }
     
@@ -146,13 +146,13 @@ struct Plan {
     /// - Parameters:
     ///   - gir: Path to root gir file.
     ///   - pkgConfig: Name of `pkg-config` package which corresponds to the root `.gir` file.
-    ///   - prerequisities: Additional prerequisites alongside with their `pkg-config` package names specified in the manifest.
+    ///   - prerequisites: Additional prerequisites alongside with their `pkg-config` package names specified in the manifest.
     /// - Returns: List of locations of `.gir` files that have to be preloaded.
-    private static func loadPrerequisities(from gir: URL, pkgConfig: String, prerequisities: [Prerequisity]?) throws -> [URL] {
+    private static func loadPrerequisities(from gir: URL, pkgConfig: String, prerequisites: [Prerequisite]?) throws -> [URL] {
         // We do not want to list the root `.gir` file as explored, since it is not it's own dependency. (Having the gir file in the list would break the generation process.)
         var explored: [String: URL] = [:]
         // The root `.gir` file is parsed and it's dependencies are scheduled for exploration. Also any prerequisited are scheduled for exploration.
-        var toExplore: Set<String> = Set(try parsePackageInfo(for: gir).dependency.map(\.girName) + (prerequisities?.map(\.girName) ?? []))
+        var toExplore: Set<String> = Set(try parsePackageInfo(for: gir).dependency.map(\.girName) + (prerequisites?.map(\.girName) ?? []))
 
         // This set is used to store names of `pkg-config` packages, that may contain a `.gir` file.
         // This is needed only on macOS since it is the only supported platform where the `.gir`
@@ -160,7 +160,7 @@ struct Plan {
         var pkgConfigCandidates: Set<String> = []
         #if os(macOS)
             // Determine the dependency graph of `pkg-config` and add them all to the candidate set.
-            for package in (prerequisities?.map(\.pkgConfig) ?? []) + [pkgConfig] {
+            for package in (prerequisites?.map(\.pkgConfig) ?? []) + [pkgConfig] {
                 pkgConfigCandidates.formUnion(try getAllPkgConfigDependencies(for: package))
             }
         #endif

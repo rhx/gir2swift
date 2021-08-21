@@ -39,7 +39,7 @@ public struct Gir2Swift: ParsableCommand {
     var postProcess: [String] = []
 
     /// Array of names of pre-parsed `.gir` files.
-    @Option(name: .short, help: "Add pre-requisite .gir files to ensure the types in file.gir are known. Prerequisities specified in CLI are merged with the prerequisities found by gir2swift.")
+    @Option(name: .short, help: "Add pre-requisite .gir files to ensure the types in file.gir are known. Prerequisities specified in CLI are merged with the prerequisites found by gir2swift.")
     var prerequisiteGir: [String] = []
 
     /// Name of the output directory to write generated files to.
@@ -89,8 +89,8 @@ public struct Gir2Swift: ParsableCommand {
         var pkgConfig = pkgConfigName
 
         do {
-            if let wd = getcwd(), let manifestUrl = URL(string: wd)?.appendingPathComponent(manifest) {
-                let plan = try Plan(using: manifestUrl) 
+            if let wd = getcwd(), let manifestURL = URL(string: wd)?.appendingPathComponent(manifest) {
+                let plan = try Plan(using: manifestURL) 
                 girsToPreload.formUnion(plan.girFilesToPreload.map(\.path))
                 girFilesToGenerate.insert(plan.girFileToGenerate.path)
                 pkgConfig = pkgConfig ?? plan.pkgConfigName
