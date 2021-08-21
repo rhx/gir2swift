@@ -88,15 +88,21 @@ public struct Gir2Swift: ParsableCommand {
         // This variable is a dead store
         var pkgConfig = pkgConfigName
 
-        do {
-            if let wd = getcwd(), let manifestURL = URL(string: wd)?.appendingPathComponent(manifest) {
-                let plan = try Plan(using: manifestURL) 
+        let manifestPlan: Plan?
+        if let wd = getcwd() {
+            let manifestURL = URL(fileURLWithPath: wd).appendingPathComponent(manifest)
+            do {
+                let plan = try Plan(using: manifestURL)
                 girsToPreload.formUnion(plan.girFilesToPreload.map(\.path))
                 girFilesToGenerate.insert(plan.girFileToGenerate.path)
                 pkgConfig = pkgConfig ?? plan.pkgConfigName
+                manifestPlan = plan
+            } catch {
+                manifestPlan = nil
+                print("Failed to load manifest: \(error)", to: &Streams.stdErr)
             }
-        } catch {
-            print("Failed to load manifest: \(error)", to: &Streams.stdErr)
+        } else {
+            manifestPlan = nil
         }
 
         // pre-load gir files to ensure pre-requisite types are known
@@ -104,7 +110,7 @@ public struct Gir2Swift: ParsableCommand {
             preload_gir(file: girFile)
         }
 
-        let target = outputDirectory.isEmpty ? nil : outputDirectory
+        let target = outputDirectory.isEmpty ? manifestPlan?.outputDirectory : outputDirectory
         for girFile in girFilesToGenerate {
             process_gir(file: girFile, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: alphaNames)
         }

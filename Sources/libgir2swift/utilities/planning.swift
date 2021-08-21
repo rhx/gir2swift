@@ -9,7 +9,6 @@ struct Manifest: Codable {
         case girName = "gir-name"
         case pkgConfig = "pkg-config"
         case outputDirectory = "output-directory"
-        case alphaNames = "alpha-names"
         case prerequisites
         case postProcess = "post-process"
     }
@@ -26,9 +25,6 @@ struct Manifest: Codable {
 
     /// The output directory for the generated files
     let outputDirectory: String?
-
-    /// output alphabetical names
-    let alphaNames: Bool?
 
     /// Optional list of `.gir` prerequisites
     let prerequisites: [Prerequisite]?
@@ -84,7 +80,10 @@ struct Plan {
     
     /// Pkg config name of the generated package
     let pkgConfigName: String
-    
+
+    /// The output directory for the generated files
+    let outputDirectory: String?
+
     /// Creates generation plan by reading `.yaml` manifest. The strucuture of the manifest is
     /// described by structure `Manifest`.
     ///
@@ -100,8 +99,7 @@ struct Plan {
     /// - Throws: Error may represent various error states, differing from the inability to read
     /// the `.yaml` file, a `.gir` file or error during consulting `pkg-config`.
     init(using manifestURL: URL) throws {
-        // For some reason `swift-corelibs-foundation` failed to open the file as a `Data`.
-        let data = try String.init(contentsOfFile: manifestURL.path)
+        let data = try Data(contentsOf: manifestURL, options: .mappedIfSafe)
         let manifest = try YAMLDecoder().decode(Manifest.self, from: data)
         let pkgConfig = manifest.pkgConfig ?? manifest.girName.lowercased()
         
@@ -117,6 +115,7 @@ struct Plan {
         self.girFileToGenerate = girPath
         self.girFilesToPreload = try Plan.loadPrerequisities(from: girPath, pkgConfig: pkgConfig, prerequisites: manifest.prerequisites)
         self.pkgConfigName = pkgConfig
+        self.outputDirectory = manifest.outputDirectory
     }
     
     /// Searches for `.gir` file location for given name.
