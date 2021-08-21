@@ -111,8 +111,9 @@ public struct Gir2Swift: ParsableCommand {
         }
 
         let target = outputDirectory.isEmpty ? manifestPlan?.outputDirectory : outputDirectory
+        let generateAlphaFiles = alphaNames || manifestPlan?.useAlphaNames ?? false
         for girFile in girFilesToGenerate {
-            process_gir(file: girFile, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: alphaNames)
+            process_gir(file: girFile, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: generateAlphaFiles)
         }
 
         if verbose {

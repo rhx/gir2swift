@@ -9,6 +9,7 @@ struct Manifest: Codable {
         case girName = "gir-name"
         case pkgConfig = "pkg-config"
         case outputDirectory = "output-directory"
+        case alphaNames = "alpha-names"
         case prerequisites
         case postProcess = "post-process"
     }
@@ -25,6 +26,9 @@ struct Manifest: Codable {
 
     /// The output directory for the generated files
     let outputDirectory: String?
+
+    /// output alphabetical names
+    let alphaNames: Bool?
 
     /// Optional list of `.gir` prerequisites
     let prerequisites: [Prerequisite]?
@@ -84,6 +88,9 @@ struct Plan {
     /// The output directory for the generated files
     let outputDirectory: String?
 
+    /// output alphabetical names
+    let useAlphaNames: Bool
+
     /// Creates generation plan by reading `.yaml` manifest. The strucuture of the manifest is
     /// described by structure `Manifest`.
     ///
@@ -116,6 +123,7 @@ struct Plan {
         self.girFilesToPreload = try Plan.loadPrerequisities(from: girPath, pkgConfig: pkgConfig, prerequisites: manifest.prerequisites)
         self.pkgConfigName = pkgConfig
         self.outputDirectory = manifest.outputDirectory
+        self.useAlphaNames = manifest.alphaNames ?? false
     }
     
     /// Searches for `.gir` file location for given name.
