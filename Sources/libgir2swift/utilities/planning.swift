@@ -8,23 +8,36 @@ struct Manifest: Codable {
         case version
         case girName = "gir-name"
         case pkgConfig = "pkg-config"
+        case outputDirectory = "output-directory"
+        case alphaNames = "alpha-names"
         case prerequisites
+        case postProcess = "post-process"
     }
 
     /// The version of manifest. It is not utilized now, but I want to keep the property there for future purposes.
     let version: UInt
-    
+
     /// The name of the gir file associated with the manifest. Extension is NOT expected.
     let girName: String
-    
-    /// The name of pkg-config package in which the gir file resides (mainly for the purposes of macOS sandboxing)
-    let pkgConfig: String
-    
+
+    /// The name of pkg-config package in which the gir file resides.
+    /// If this is `nil`, then the lowercase version of the gir name will be used.
+    let pkgConfig: String?
+
+    /// The output directory for the generated files
+    let outputDirectory: String?
+
+    /// output alphabetical names
+    let alphaNames: Bool?
+
     /// Optional list of `.gir` prerequisites
     let prerequisites: [Prerequisite]?
+
+    /// Optional list of  files to postprocess
+    let postProcess: [String]?
 }
 
-/// Description of a `.gir` prerequisity
+/// Description of a `.gir` prerequisite
 struct Prerequisite: Codable {
     private enum CodingKeys: String, CodingKey {
         case girName = "gir-name"
@@ -35,7 +48,8 @@ struct Prerequisite: Codable {
     let girName: String
 
     /// The name of pkg-config package in which the gir file resides (mainly for the purposes of macOS sandboxing)
-    let pkgConfig: String
+    /// If this is `nil`, then the lowercase version of the gir name will be used.
+    let pkgConfig: String?
 }
 
 /// Metadata parsed from a `.gir` file. This structure is intended to help in determining the dependency graph of `.gir` files. It represents the contents of `/gir:repository`
@@ -89,19 +103,20 @@ struct Plan {
         // For some reason `swift-corelibs-foundation` failed to open the file as a `Data`.
         let data = try String.init(contentsOfFile: manifestURL.path)
         let manifest = try YAMLDecoder().decode(Manifest.self, from: data)
+        let pkgConfig = manifest.pkgConfig ?? manifest.girName.lowercased()
         
         // Search for location of the generated `.gir` file.
         let optGirPath = try Plan.searchForGir(
             named: manifest.girName, 
-            pkgConfig: [manifest.pkgConfig]
+            pkgConfig: [pkgConfig]
         )
         guard let girPath = optGirPath else {
             throw Error.girNotFound(named: manifest.girName + ".gir" )
         } 
 
         self.girFileToGenerate = girPath
-        self.girFilesToPreload = try Plan.loadPrerequisities(from: girPath, pkgConfig: manifest.pkgConfig, prerequisites: manifest.prerequisites)
-        self.pkgConfigName = manifest.pkgConfig
+        self.girFilesToPreload = try Plan.loadPrerequisities(from: girPath, pkgConfig: pkgConfig, prerequisites: manifest.prerequisites)
+        self.pkgConfigName = pkgConfig
     }
     
     /// Searches for `.gir` file location for given name.
@@ -160,7 +175,7 @@ struct Plan {
         var pkgConfigCandidates: Set<String> = []
         #if os(macOS)
             // Determine the dependency graph of `pkg-config` and add them all to the candidate set.
-            for package in (prerequisites?.map(\.pkgConfig) ?? []) + [pkgConfig] {
+            for package in (prerequisites?.map({$0.pkgConfig ?? $0.girName.lowercased()}) ?? []) + [pkgConfig] {
                 pkgConfigCandidates.formUnion(try getAllPkgConfigDependencies(for: package))
             }
         #endif
