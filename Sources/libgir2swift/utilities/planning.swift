@@ -91,6 +91,9 @@ struct Plan {
     /// output alphabetical names
     let useAlphaNames: Bool
 
+    /// Additional files to postprocess
+    let postProcess: [String]
+
     /// Creates generation plan by reading `.yaml` manifest. The strucuture of the manifest is
     /// described by structure `Manifest`.
     ///
@@ -124,6 +127,7 @@ struct Plan {
         self.pkgConfigName = pkgConfig
         self.outputDirectory = manifest.outputDirectory
         self.useAlphaNames = manifest.alphaNames ?? false
+        self.postProcess = manifest.postProcess ?? []
     }
     
     /// Searches for `.gir` file location for given name.
