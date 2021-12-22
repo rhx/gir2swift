@@ -19,7 +19,7 @@ extension GIR {
         /// Methods associated with this record
         public let methods: [Method]
         /// Functions associated with this record
-        public let functions: [Function]
+        public var functions = [Function]()
         /// Constructors for this record
         public let constructors: [Method]
         /// Properties of this record
@@ -103,8 +103,6 @@ extension GIR {
             typeStruct = node.attribute(named: "type-struct")
             isGTypeStructForType = node.attribute(named: "is-gtype-struct-for")
             let children = node.children.lazy
-            let funcs = children.filter { $0.name == "function" }
-            functions = funcs.enumerated().map { Function(node: $0.1, at: $0.0) }
             let meths = children.filter { $0.name == "method" }
             methods = meths.enumerated().map { Method(node: $0.1, at: $0.0) }
             let cons = children.filter { $0.name == "constructor" }
@@ -121,6 +119,9 @@ extension GIR {
                 Record(node: $0.element, at: $0.offset)
             }
             super.init(node: node, at: index)
+
+            let funcs = children.filter { $0.name == "function" }
+            functions = funcs.enumerated().map { Function(node: $0.1, at: $0.0) }
         }
 
         /// Register this type as a record type
