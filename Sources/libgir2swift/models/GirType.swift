@@ -346,11 +346,24 @@ func addType(_ type: GIRType) -> GIRType {
 
 
 /// Add a known type to the name -> type mappings
+///
+/// This function will use both the unprefixed name (as is)
+/// as well at the prefixed name as a key to the dictionary.
 /// - Parameter type: The type to add
+/// - Parameter namedTypes: The dictionary to add the type to
 /// - Returns: An existing type matching the new type, or the passed in type if new
-@inlinable
-func addKnownType(_ type: GIRType, to namedTypes: inout [String : Set<GIRType>]) {
-    let name = type.name
+@inlinable func addKnownType(_ type: GIRType, to namedTypes: inout [String : Set<GIRType>]) {
+    addKnownType(type, to: &namedTypes, usingName: type.name)
+    guard !type.name.contains(".") && !GIR.dottedPrefix.isEmpty else { return }
+    addKnownType(type, to: &namedTypes, usingName: GIR.dottedPrefix + type.name)
+}
+
+/// Add a known type to the name -> type mappings
+/// - Parameter type: The type to add
+/// - Parameter namedTypes: The dictionary to add the type to
+/// - Parameter name: The name to use as a key into the dictionary
+/// - Returns: An existing type matching the new type, or the passed in type if new
+@inlinable func addKnownType(_ type: GIRType, to namedTypes: inout [String : Set<GIRType>], usingName name: String) {
     if namedTypes[name] == nil {
         namedTypes[name] = [type]
     } else {
