@@ -12,7 +12,7 @@ let package = Package(
         .library(name: libTarget, targets: [libTarget]),
     ],
     dependencies: [ 
-        .package(url: "https://github.com/rhx/SwiftLibXML.git", .branch("manual")),
+        .package(url: "https://github.com/rhx/SwiftLibXML.git", .branch("main")),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.4.0")
     ],
     targets: [
