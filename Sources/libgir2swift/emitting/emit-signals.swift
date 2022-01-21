@@ -159,7 +159,7 @@ private func buildAvailableSignal(record: GIR.Record, signal: GIR.Signal) -> Str
         }
         Code.block {
             "let holder = Unmanaged<SwiftHandler>.fromOpaque(userData).takeUnretainedValue()"
-            "let output\(signal.returns.typeRef.type.name == "Void" ? ": Void" : "") = holder.\(generaceCCallbackCall(record: record, signal: signal))"
+            "let output\(signal.returns.typeRef.type.name == "Void" ? ": Void" : "") = holder.\(generateCCallbackCall(record: record, signal: signal))"
             generateReturnStatement(record: record, signal: signal)
         }
         "}"
@@ -253,13 +253,13 @@ private func cCallbackArgumentsDecl(record: GIR.Record, signal: GIR.Signal) -> S
 }
 
 /// Returns correct call of Swift handler from c callback scope with correct casting.
-private func generaceCCallbackCall(record: GIR.Record, signal: GIR.Signal) -> String {
+private func generateCCallbackCall(record: GIR.Record, signal: GIR.Signal) -> String {
     Code.line {
-        "call(\(record.structRef.type.swiftName)(raw: unownedSelf)"
+        "call((\(record.structRef.type.swiftName)(raw: unownedSelf)"
         Code.loopEnumerated(over: signal.args) { index, argument in
             ", \(argument.swiftSignalArgumentConversion(at: index + 1))"
         }
-        ")"
+        "))"
     }
 }
 
