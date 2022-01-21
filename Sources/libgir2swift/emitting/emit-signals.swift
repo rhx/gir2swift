@@ -205,14 +205,9 @@ private func handlerType(record: GIR.Record, signal: GIR.Signal) -> String {
 
 /// This function builds declaration for the typealias holding the reference to the Swift closure handler
 private func signalClosureHolderDecl(record: GIR.Record, signal: GIR.Signal) -> String {
-    if signal.args.count > 6 {
-        fatalError("Argument count \(signal.args.count) exceeds the maximum number of allowed arguments (6)")
-    }
     return Code.line {
-        "GLib.ClosureHolder" + (signal.args.count > 0 ? "\(signal.args.count + 1)" : "")
-        "<" + record.structName + ", "
-        signal.args.map { $0.swiftIdiomaticType() }.joined(separator: ", ")
-        (signal.args.isEmpty ? "" : ", ")
+        "GLib.ClosureHolder<"
+        "(" + ([record.structName] + signal.args.map { $0.swiftIdiomaticType() }).joined(separator: ", ") + "), "
         signal.returns.swiftIdiomaticType()
         ">"
     }
