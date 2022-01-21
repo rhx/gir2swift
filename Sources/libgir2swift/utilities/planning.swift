@@ -12,6 +12,7 @@ struct Manifest: Codable {
         case alphaNames = "alpha-names"
         case prerequisites
         case postProcess = "post-process"
+        case namespaces
     }
 
     /// The version of manifest. It is not utilized now, but I want to keep the property there for future purposes.
@@ -35,6 +36,9 @@ struct Manifest: Codable {
 
     /// Optional list of  files to postprocess
     let postProcess: [String]?
+
+    /// Namespaces to add types to
+    let namespaces: [String]
 }
 
 /// Description of a `.gir` prerequisite
@@ -94,6 +98,9 @@ struct Plan {
     /// Additional files to postprocess
     let postProcess: [String]
 
+    /// Namespaces to add types to
+    let namespaces: [String]
+
     /// Creates generation plan by reading `.yaml` manifest. The strucuture of the manifest is
     /// described by structure `Manifest`.
     ///
@@ -128,6 +135,7 @@ struct Plan {
         self.outputDirectory = manifest.outputDirectory
         self.useAlphaNames = manifest.alphaNames ?? false
         self.postProcess = manifest.postProcess ?? []
+        self.namespaces = manifest.namespaces
     }
     
     /// Searches for `.gir` file location for given name.

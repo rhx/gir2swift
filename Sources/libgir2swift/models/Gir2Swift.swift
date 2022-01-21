@@ -96,10 +96,11 @@ public struct Gir2Swift: ParsableCommand {
                 girsToPreload.formUnion(plan.girFilesToPreload.map(\.path))
                 girFilesToGenerate.insert(plan.girFileToGenerate.path)
                 pkgConfig = pkgConfig ?? plan.pkgConfigName
+                namespace += plan.namespaces
                 manifestPlan = plan
             } catch {
                 manifestPlan = nil
-                print("Failed to load manifest: \(error)", to: &Streams.stdErr)
+                print("Failed to load \(girFilesToGenerate.joined(separator: ", ")) manifest\(girFilesToGenerate.count > 1 ? "s" : ""):\n    \(error)", to: &Streams.stdErr)
             }
         } else {
             manifestPlan = nil
