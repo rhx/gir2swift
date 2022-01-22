@@ -38,7 +38,7 @@ struct Manifest: Codable {
     let postProcess: [String]?
 
     /// Namespaces to add types to
-    let namespaces: [String]
+    let namespaces: [String]?
 }
 
 /// Description of a `.gir` prerequisite
@@ -135,7 +135,7 @@ struct Plan {
         self.outputDirectory = manifest.outputDirectory
         self.useAlphaNames = manifest.alphaNames ?? false
         self.postProcess = manifest.postProcess ?? []
-        self.namespaces = manifest.namespaces
+        self.namespaces = manifest.namespaces ?? []
     }
     
     /// Searches for `.gir` file location for given name.
