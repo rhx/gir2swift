@@ -96,7 +96,10 @@ public struct Gir2Swift: ParsableCommand {
                 girsToPreload.formUnion(plan.girFilesToPreload.map(\.path))
                 girFilesToGenerate.insert(plan.girFileToGenerate.path)
                 pkgConfig = pkgConfig ?? plan.pkgConfigName
-                namespace += plan.namespaces
+                for ns in plan.namespaces {
+                    guard !namespace.contains(ns) else { continue }
+                    namespace.append(ns)
+                }
                 manifestPlan = plan
             } catch {
                 manifestPlan = nil
