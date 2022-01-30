@@ -39,7 +39,18 @@ extension SwiftLibXML.XMLElement {
         let identifier = attribute(named: "identifier")
         let isNullable = attribute(named: "nullable").flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
         let oldN = GIR.namedTypes[prefixedName]?.count ?? 0
-        let rawTypeRef = typeReference(named: identifier, for: name, in: namespace, typeName: plainType, cType: cName, isOptional: isNullable)
+        let rawTypeRef: TypeReference
+        //
+        // Check if the exact same C type exists without any namespace,
+        // if so, create a namespaced alias
+        //
+        if oldN == 0, let unprefixedType = (GIR.namedTypes[rawName] ?? []).lazy.filter({
+            $0.ctype == cName
+        }).first {
+            rawTypeRef = typeReference(original: unprefixedType, named: identifier, for: name, in: namespace, swiftName: unprefixedType.swiftName, cType: cName, isOptional: isNullable)
+        } else {
+            rawTypeRef = typeReference(named: identifier, for: name, in: namespace, typeName: plainType, cType: cName, isOptional: isNullable)
+        }
         let typeRef = GIR.swiftFundamentalReplacements[rawTypeRef] ?? rawTypeRef
         let newN = GIR.namedTypes[name]?.count ?? 0
         let isNewType = oldN != newN

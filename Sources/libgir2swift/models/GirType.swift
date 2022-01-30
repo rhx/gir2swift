@@ -414,6 +414,25 @@ func typeReference(named identifier: String? = nil, for name: String, in namespa
     return TypeReference(type: t, in: namespace, identifier: identifier, isConst: info.isConst, isOptional: isOptional, constPointers: info.indirection)
 }
 
+/// Return a known or new type reference for an alias to a given type
+/// - Parameters:
+///   - original: The original type to alias
+///   - identifier: The identifier of this type reference
+///   - name: The name of the type without a namespace
+///   - namespace: The namespace this type is in
+///   - swiftName: The name of the type to use in Swift (same as name if `nil`)
+///   - cType: The underlying C type
+///   - isOptional: `true` if the reference is an optional
+/// - Returns: A type reference
+func typeReference(original: GIRType, named identifier: String? = nil, for name: String, in namespace: String? = nil, swiftName: String? = nil, cType: String, isOptional: Bool = false) -> TypeReference {
+    let info = decodeIndirection(for: cType)
+    let prefixedName = namespace.map { $0 + "." + name } ?? name
+    let maybeType = GIR.namedTypes[prefixedName]?.first { $0.ctype == info.innerType }
+    let type = maybeType ?? GIRType(aliasOf: original, name: name, in: namespace ?? "", swiftName: swiftName, ctype: info.innerType)
+    let t = addType(type)
+    return TypeReference(type: t, in: namespace, identifier: identifier, isConst: info.isConst, isOptional: isOptional, constPointers: info.indirection)
+}
+
 /// Add a new type to the list of known types
 /// - Parameter type: The type to add
 /// - Returns: An existing type matching the new type, or the passed in type if new
