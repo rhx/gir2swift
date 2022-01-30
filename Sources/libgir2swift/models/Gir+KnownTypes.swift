@@ -3,28 +3,29 @@
 //  libgir2swift
 //
 //  Created by Rene Hexel on 26/7/20.
-//  Copyright © 2020 Rene Hexel. All rights reserved.
+//  Copyright © 2020, 2022 Rene Hexel.
+//  All rights reserved.
 //
 import Foundation
 
 public extension GIR {
-    static let voidType = GIRType(name: "Void", ctype: "void")
+    static let voidType = GIRType("Void", ctype: "void")
     static let voidRef  = TypeReference(type: voidType)
-    static let noneType = GIRType(name: "none", ctype: "void", superType: voidRef, isAlias: true)
+    static let noneType = GIRType("none", ctype: "void", superType: voidRef, isAlias: true)
 
-    static let floatType   = GIRType(name: "Float", ctype: "float")
-    static let doubleType  = GIRType(name: "Double", ctype: "double")
-    static let float80Type = GIRType(name: "Float80", ctype: "long double")
-    static let intType     = GIRType(name: "Int", ctype: "long")
-    static let uintType    = GIRType(name: "UInt", ctype: "unsigned long")
-    static let int8Type    = GIRType(name: "Int8", ctype: "int8_t")
-    static let int16Type   = GIRType(name: "Int16", ctype: "int16_t")
-    static let int32Type   = GIRType(name: "Int32", ctype: "int32_t")
-    static let int64Type   = GIRType(name: "Int64", ctype: "int64_t")
-    static let uint8Type   = GIRType(name: "UInt8", ctype: "u_int8_t")
-    static let uint16Type  = GIRType(name: "UInt16", ctype: "u_int16_t")
-    static let uint32Type  = GIRType(name: "UInt32", ctype: "u_int32_t")
-    static let uint64Type  = GIRType(name: "UInt64", ctype: "u_int64_t")
+    static let floatType   = GIRType("Float", ctype: "float")
+    static let doubleType  = GIRType("Double", ctype: "double")
+    static let float80Type = GIRType("Float80", ctype: "long double")
+    static let intType     = GIRType("Int", ctype: "long")
+    static let uintType    = GIRType("UInt", ctype: "unsigned long")
+    static let int8Type    = GIRType("Int8", ctype: "int8_t")
+    static let int16Type   = GIRType("Int16", ctype: "int16_t")
+    static let int32Type   = GIRType("Int32", ctype: "int32_t")
+    static let int64Type   = GIRType("Int64", ctype: "int64_t")
+    static let uint8Type   = GIRType("UInt8", ctype: "u_int8_t")
+    static let uint16Type  = GIRType("UInt16", ctype: "u_int16_t")
+    static let uint32Type  = GIRType("UInt32", ctype: "u_int32_t")
+    static let uint64Type  = GIRType("UInt64", ctype: "u_int64_t")
     static let swiftNumericTypes: Set<GIRType> = [floatType, doubleType, float80Type, intType, uintType, int8Type, int16Type, int32Type, int64Type, uint8Type, uint16Type, uint32Type, uint64Type]
     static let intRef = TypeReference(type: intType)
     static let uintRef = TypeReference(type: uintType)
@@ -32,19 +33,19 @@ public extension GIR {
 
     static let Bool = "Bool"
     static let bool = "bool"
-    static let cintType     = GIRType(name: "CInt", ctype: "int")
-    static let clongType    = GIRType(name: "CLong", ctype: "long")
-    static let cshortType   = GIRType(name: "CShort", ctype: "short")
-    static let cboolType    = GIRType(name: "CBool", ctype: bool)
-    static let ccharType    = GIRType(name: CChar, ctype: char)
-    static let cscharType   = GIRType(name: "CSignedChar", ctype: "signed char")
-    static let cuintType    = GIRType(name: "CUnsignedInt", ctype: "unsigned int")
-    static let culongType   = GIRType(name: "CUnsignedLong", ctype: "unsigned long")
-    static let cushortType  = GIRType(name: "CUnsignedShort", ctype: "unsigned short")
-    static let cucharType   = GIRType(name: "CUnsignedChar", ctype: "unsigned char")
-    static let cfloatType   = GIRType(name: "CFloat", ctype: "float")
-    static let cdoubleType  = GIRType(name: "CDouble", ctype: "double")
-    static let cldoubleType = GIRType(name: "CLongDouble", ctype: "long double")
+    static let cintType     = GIRType("CInt", ctype: "int")
+    static let clongType    = GIRType("CLong", ctype: "long")
+    static let cshortType   = GIRType("CShort", ctype: "short")
+    static let cboolType    = GIRType("CBool", ctype: bool)
+    static let ccharType    = GIRType(CChar, ctype: char)
+    static let cscharType   = GIRType("CSignedChar", ctype: "signed char")
+    static let cuintType    = GIRType("CUnsignedInt", ctype: "unsigned int")
+    static let culongType   = GIRType("CUnsignedLong", ctype: "unsigned long")
+    static let cushortType  = GIRType("CUnsignedShort", ctype: "unsigned short")
+    static let cucharType   = GIRType("CUnsignedChar", ctype: "unsigned char")
+    static let cfloatType   = GIRType("CFloat", ctype: "float")
+    static let cdoubleType  = GIRType("CDouble", ctype: "double")
+    static let cldoubleType = GIRType("CLongDouble", ctype: "long double")
     static let cNumericTypes: Set<GIRType> = [cintType, clongType, cshortType, cboolType, ccharType, cscharType, cuintType, culongType, cushortType, cucharType, cfloatType, cdoubleType, cldoubleType]
 
     static let char = "char"
@@ -54,45 +55,45 @@ public extension GIR {
     static let filename = "filename"
     static let string = "String"
     static let CChar = "CChar"
-    static let gfloatType  = GIRType(name: "gfloat", ctype: "gfloat")
-    static let gdoubleType = GIRType(name: "gdouble", ctype: "gdouble")
-    static let gcharType   = GIRType(name: gchar, ctype: gchar)
-    static let gintType    = GIRType(name: "gint", ctype: cintType.ctype)
+    static let gfloatType  = GIRType("gfloat", ctype: "gfloat")
+    static let gdoubleType = GIRType("gdouble", ctype: "gdouble")
+    static let gcharType   = GIRType(gchar, ctype: gchar)
+    static let gintType    = GIRType("gint", ctype: cintType.ctype)
     static let gintRef     = TypeReference(type: gintType)
-    static let gintAlias   = GIRType(name: "gint", ctype: "gint", superType: gintRef, isAlias: true)
-    static let glongType   = GIRType(name: "glong", ctype: culongType.ctype)
+    static let gintAlias   = GIRType("gint", ctype: "gint", superType: gintRef, isAlias: true)
+    static let glongType   = GIRType("glong", ctype: culongType.ctype)
     static let glongRef    = TypeReference(type: glongType)
-    static let glongAlias  = GIRType(name: "glong", ctype: "glong", superType: glongRef, isAlias: true)
-    static let gshortType  = GIRType(name: "gshort", ctype: cshortType.ctype)
+    static let glongAlias  = GIRType("glong", ctype: "glong", superType: glongRef, isAlias: true)
+    static let gshortType  = GIRType("gshort", ctype: cshortType.ctype)
     static let gshortRef   = TypeReference(type: gshortType)
-    static let gshortAlias = GIRType(name: "gshort", ctype: "gshort", superType: gshortRef, isAlias: true)
-    static let gucharType  = GIRType(name: guchar, ctype: guchar)
-    static let guintType   = GIRType(name: "guint", ctype: cuintType.ctype)
+    static let gshortAlias = GIRType("gshort", ctype: "gshort", superType: gshortRef, isAlias: true)
+    static let gucharType  = GIRType(guchar, ctype: guchar)
+    static let guintType   = GIRType("guint", ctype: cuintType.ctype)
     static let guintRef    = TypeReference(type: guintType)
-    static let guintAlias  = GIRType(name: "guint", ctype: "guint", superType: guintRef, isAlias: true)
-    static let gulongType  = GIRType(name: "gulong", ctype: culongType.ctype)
+    static let guintAlias  = GIRType("guint", ctype: "guint", superType: guintRef, isAlias: true)
+    static let gulongType  = GIRType("gulong", ctype: culongType.ctype)
     static let gulongRef   = TypeReference(type: gulongType)
-    static let gulongAlias = GIRType(name: "gulong", ctype: "gulong", superType: gulongRef, isAlias: true)
-    static let gushortType = GIRType(name: "gushort", ctype: cushortType.ctype)
+    static let gulongAlias = GIRType("gulong", ctype: "gulong", superType: gulongRef, isAlias: true)
+    static let gushortType = GIRType("gushort", ctype: cushortType.ctype)
     static let gushortRef   = TypeReference(type: gshortType)
-    static let gushortAlias = GIRType(name: "gushort", ctype: "gushort", superType: gushortRef, isAlias: true)
-    static let gint8Type   = GIRType(name: "gint8", ctype: "gint8")
-    static let gint16Type  = GIRType(name: "gint16", ctype: "gint16")
-    static let gint32Type  = GIRType(name: "gint32", ctype: "gint32")
-    static let gint64Type  = GIRType(name: "gint64", ctype: "gint64")
-    static let guint8Type  = GIRType(name: "guint8", ctype: "guint8")
-    static let guint16Type = GIRType(name: "guint16", ctype: "guint16")
-    static let guint32Type = GIRType(name: "guint32", ctype: "guint32")
-    static let guint64Type = GIRType(name: "guint64", ctype: "guint64")
-    static let gsizeType   = GIRType(name: "gsize", ctype: "gsize")
-    static let goffsetType = GIRType(name: "goffset", ctype: "goffset")
-    static let gbooleanType = GIRType(name: "gboolean", ctype: "gboolean")
+    static let gushortAlias = GIRType("gushort", ctype: "gushort", superType: gushortRef, isAlias: true)
+    static let gint8Type   = GIRType("gint8", ctype: "gint8")
+    static let gint16Type  = GIRType("gint16", ctype: "gint16")
+    static let gint32Type  = GIRType("gint32", ctype: "gint32")
+    static let gint64Type  = GIRType("gint64", ctype: "gint64")
+    static let guint8Type  = GIRType("guint8", ctype: "guint8")
+    static let guint16Type = GIRType("guint16", ctype: "guint16")
+    static let guint32Type = GIRType("guint32", ctype: "guint32")
+    static let guint64Type = GIRType("guint64", ctype: "guint64")
+    static let gsizeType   = GIRType("gsize", ctype: "gsize")
+    static let goffsetType = GIRType("goffset", ctype: "goffset")
+    static let gbooleanType = GIRType("gboolean", ctype: "gboolean")
     static let glibNumericTypes: Set<GIRType> = [gfloatType, gdoubleType, gcharType, gintType, glongType, gshortType, gucharType, guintType, gulongType, gushortType, gint8Type, gint16Type, gint32Type, gint64Type, guint8Type, guint16Type, guint32Type, guint64Type, gsizeType, gbooleanType]
 
     static let numericTypes = swiftNumericTypes ∪ cNumericTypes ∪ glibNumericTypes
 
     static var boolType: GIRType = {
-        let b = GIRType(name: Bool, ctype: bool)
+        let b = GIRType(Bool, ctype: bool)
         let p = "(("
         let s = ") != 0)"
         numericTypes.forEach { type in
@@ -121,10 +122,10 @@ public extension GIR {
     static let constGUStringType = GIRStringType(name: string, ctype: guchar, superType: constGUCharPtr)
     static let stringRef = TypeReference(type: stringType)
     static let constStringRef = TypeReference(type: constStringType, isConst: true)
-    static let utf8Type = GIRType(name: utf8, ctype: gcharType.ctype)
+    static let utf8Type = GIRType(utf8, ctype: gcharType.ctype)
     static let utf8Ref = TypeReference.pointer(to: utf8Type)
     static let constUTF8Ref = TypeReference.pointer(to: utf8Type, isConst: true)
-    static let fileType = GIRType(name: filename, ctype: gcharType.ctype)
+    static let fileType = GIRType(filename, ctype: gcharType.ctype)
     static let fileRef = TypeReference.pointer(to: fileType)
     static let constFileRef = TypeReference.pointer(to: fileType, isConst: true)
 
@@ -189,9 +190,9 @@ public extension GIR {
     static let error = "Error"
     static let gerror = "GError"
     static let errorT = "GLibError"
-    static let errorProtocol = GIRType(name: error, ctype: "")
+    static let errorProtocol = GIRType(error, ctype: "")
     static let errorReference = TypeReference(type: errorProtocol)
-    static let gErrorStruct = GIRType(name: gerror, ctype: gerror, superType: errorReference)
+    static let gErrorStruct = GIRType(gerror, ctype: gerror, superType: errorReference)
     static let errorPointer = TypeReference.pointer(to: gErrorStruct)
     static let constErrorPointer = TypeReference.pointer(to: gErrorStruct, isConst: true)
     static let errorType = GIRType(aliasOf: errorPointer, name: error, swiftName: errorT)

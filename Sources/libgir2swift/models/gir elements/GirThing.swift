@@ -25,7 +25,7 @@ extension GIR {
         public let markedAsDeprecated: Bool
         /// Version the receiver is available from
         public let version: String?
-        
+
         /// Hashes the essential components of this value by feeding them into the given hasher.
         ///
         /// This method is implemented to conform to the Hashable protocol.

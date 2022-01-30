@@ -1,8 +1,9 @@
 //
-//  File.swift
-//  
+//  gir.swift
+//  gir2swift
 //
-//  Created by Mikoláš Stuchlík on 17.11.2020.
+//  Created by Rene Hexel on 25/03/2016.
+//  Copyright © 2016, 2017, 2018, 2019, 2020, 2022 Rene Hexel. All rights reserved.
 //
 import SwiftLibXML
 
@@ -149,22 +150,22 @@ extension GIR {
             if GIR.refRecords[clsType] == nil { GIR.refRecords[clsType] = typeRef }
             if GIR.refRecords[refType] == nil { GIR.refRecords[refType] = typeRef }
             if GIR.refRecords[type] == nil    { GIR.refRecords[type]    = typeRef }
-            let prefixedType = type.prefixed
-            guard prefixedType !== type else { return }
-            let prefixedCls = clsType.prefixed
-            let prefixedRef = refType.prefixed
-            let prefixedPro = proType.prefixed
-            if GIR.protocols[prefixedType] == nil  { GIR.protocols[prefixedType]  = protocolRef }
-            if GIR.protocols[prefixedCls] == nil   { GIR.protocols[prefixedCls]   = clsRef }
-            if GIR.protocols[prefixedRef] == nil   { GIR.protocols[prefixedRef]   = protocolRef }
-            if GIR.recordRefs[prefixedType] == nil { GIR.recordRefs[prefixedType] = ref }
-            if GIR.recordRefs[prefixedCls] == nil  { GIR.recordRefs[prefixedCls]  = ref }
-            if GIR.recordRefs[prefixedRef] == nil  { GIR.recordRefs[prefixedRef]  = ref }
-            if GIR.recordRefs[prefixedPro] == nil  { GIR.recordRefs[prefixedPro]  = ref }
-            if GIR.refRecords[prefixedPro] == nil  { GIR.refRecords[prefixedPro]  = typeRef }
-            if GIR.refRecords[prefixedCls] == nil  { GIR.refRecords[prefixedCls]  = typeRef }
-            if GIR.refRecords[prefixedRef] == nil  { GIR.refRecords[prefixedRef]  = typeRef }
-            if GIR.refRecords[prefixedType] == nil { GIR.refRecords[prefixedType] = typeRef }
+//            let prefixedType = type.prefixed
+//            guard prefixedType !== type else { return }
+//            let prefixedCls = clsType.prefixed
+//            let prefixedRef = refType.prefixed
+//            let prefixedPro = proType.prefixed
+//            if GIR.protocols[prefixedType] == nil  { GIR.protocols[prefixedType]  = protocolRef }
+//            if GIR.protocols[prefixedCls] == nil   { GIR.protocols[prefixedCls]   = clsRef }
+//            if GIR.protocols[prefixedRef] == nil   { GIR.protocols[prefixedRef]   = protocolRef }
+//            if GIR.recordRefs[prefixedType] == nil { GIR.recordRefs[prefixedType] = ref }
+//            if GIR.recordRefs[prefixedCls] == nil  { GIR.recordRefs[prefixedCls]  = ref }
+//            if GIR.recordRefs[prefixedRef] == nil  { GIR.recordRefs[prefixedRef]  = ref }
+//            if GIR.recordRefs[prefixedPro] == nil  { GIR.recordRefs[prefixedPro]  = ref }
+//            if GIR.refRecords[prefixedPro] == nil  { GIR.refRecords[prefixedPro]  = typeRef }
+//            if GIR.refRecords[prefixedCls] == nil  { GIR.refRecords[prefixedCls]  = typeRef }
+//            if GIR.refRecords[prefixedRef] == nil  { GIR.refRecords[prefixedRef]  = typeRef }
+//            if GIR.refRecords[prefixedType] == nil { GIR.refRecords[prefixedType] = typeRef }
         }
 
         /// Name of the Protocol for this record

@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 25/03/2016.
-//  Copyright © 2016, 2017, 2018, 2019, 2020 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018, 2019, 2020, 2022 Rene Hexel. All rights reserved.
 //
 import SwiftLibXML
 
@@ -25,8 +25,15 @@ public final class GIR {
     /// Preample boilerplate to output before any generated code
     public var preamble = ""
     /// Namespace prefix defined by the receiver
-    public var prefix = "" { didSet { GIR.dottedPrefix = prefix + "." } }
-    /// Namespace prefix defined by the receiver with a trailing "."
+    public var prefix = "" {
+        didSet {
+            GIR.prefix = prefix
+            GIR.dottedPrefix = prefix + "."
+        }
+    }
+    /// Current namespace prefix
+    public static var prefix = ""
+    /// Current namespace prefix  with a trailing "."
     public static var dottedPrefix = ""
     /// Collection of identifier prefixes
     public var identifierPrefixes = Array<String>()

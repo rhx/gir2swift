@@ -3,7 +3,8 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 2/04/2016.
-//  Copyright © 2016, 2017, 2018, 2019, 2020, 2021 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018, 2019, 2020, 2021, 2022 Rene Hexel.
+//  All rights reserved.
 //
 import Foundation
 
@@ -155,8 +156,20 @@ public extension String {
         }
         return replacement
     }
+
+    /// Return the normalised version of the namespace represented by the receiver
+    @inlinable var asNormalisedPrefix: String {
+        GIR.namespaceReplacements[Substring(self)].map(String.init) ?? self
+    }
 }
 
+
+public extension Substring {
+    /// Return the normalised version of the namespace represented by the receiver
+    @inlinable var asNormalisedPrefix: Substring {
+        GIR.namespaceReplacements[self] ?? self
+    }
+}
 
 /// SwiftDoc representation of comments
 public func commentCode(_ thing: GIR.Thing, indentation: String = "") -> String {
