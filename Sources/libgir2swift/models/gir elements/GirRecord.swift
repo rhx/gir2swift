@@ -14,6 +14,8 @@ extension GIR {
         public override var kind: String { return "Record" }
         /// C language symbol prefix
         public let cprefix: String
+        /// Corresponding C type of the record (gir-1.0.rnc:214)
+        public let correspondingCType: String?
         /// C type getter function
         public let typegetter: String?
         /// Methods associated with this record
@@ -72,8 +74,9 @@ extension GIR {
         ///   - comment: Documentation text for the constant
         ///   - introspectable: Set to `true` if introspectable
         ///   - deprecated: Documentation on deprecation status if non-`nil`
-        public init(name: String, type: TypeReference, cprefix: String, typegetter: String? = nil, isGTypeStructForType: String? = nil, methods: [Method] = [], functions: [Function] = [], constructors: [Method] = [], properties: [Property] = [], fields: [Field] = [], signals: [Signal] = [], interfaces: [String] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
+        public init(name: String, type: TypeReference, cprefix: String, correspondingCType: String? = nil, typegetter: String? = nil, isGTypeStructForType: String? = nil, methods: [Method] = [], functions: [Function] = [], constructors: [Method] = [], properties: [Property] = [], fields: [Field] = [], signals: [Signal] = [], interfaces: [String] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
             self.cprefix = cprefix
+            self.correspondingCType = correspondingCType
             self.typegetter = typegetter
             self.isGTypeStructForType = isGTypeStructForType
             self.methods = methods
@@ -92,6 +95,8 @@ extension GIR {
         ///   - index: Index within the siblings of the `node`
         public init(node: XMLElement, at index: Int) {
             cprefix = node.attribute(named: "symbol-prefix") ?? ""
+
+            correspondingCType = node.attribute(named: "type")
 
             // Regarding "intern": https://gitlab.gnome.org/GNOME/gobject-introspection/-/blob/gnome-3-36/girepository/giregisteredtypeinfo.c
             if let typegetter = node.attribute(named: "get-type"), typegetter != "intern" {

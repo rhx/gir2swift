@@ -64,6 +64,9 @@ public struct Gir2Swift: ParsableCommand {
     @Argument(help: "The .gir metadata files to process. Gir files specified in CLI are merged with those specified in the manifest.")
     var girFiles: [String] = []
 
+    /// Skips all other generations steps and prints opaque struct stylized declarations for each record and class to stdout.
+    @Flag(name: .long, help: "Skips all other generations steps and prints opaque struct stylized declarations for each record and class to stdout.")
+    var opaqueDeclarations: Bool = false
 
     /// Designated initialiser
     public init() {}
@@ -116,8 +119,16 @@ public struct Gir2Swift: ParsableCommand {
 
         let target = outputDirectory.isEmpty ? manifestPlan?.outputDirectory : outputDirectory
         let generateAlphaFiles = alphaNames || manifestPlan?.useAlphaNames ?? false
-        for girFile in girFilesToGenerate {
-            process_gir(file: girFile, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: generateAlphaFiles, postProcess: postProcess + (manifestPlan?.postProcess ?? []))
+
+        switch opaqueDeclarations {
+        case true:
+            for girFile in girFilesToGenerate {
+                process_gir_to_opaque_decls(file: girFile, generateAll: allFilesGenerate)
+            }
+        case false:
+            for girFile in girFilesToGenerate {
+                process_gir(file: girFile, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: generateAlphaFiles, postProcess: postProcess + (manifestPlan?.postProcess ?? []))
+            }
         }
 
         if verbose {
