@@ -1004,16 +1004,19 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         }
         let invocationStart = method.cname.swift + "(\(args.map(toSwift).joined(separator: ", "))"
         let call = invocationStart + invocationTail
-        let callCode = rvSwiftRef.cast(expression: call, from: rvRef)
+        let castCode = rvSwiftRef.cast(expression: call, from: rvRef)
         let rvTypeName = isConstructor || !useRef ? "" : rv.prefixedIdiomaticWrappedTypeName
         let varCode: String
+        let callCode: String
         if isVoid {
             varCode = ""
+            callCode = ""
         } else {
-            let typeDeclaration = rvTypeName.isEmpty || callCode != call ? "" : (": " + rvTypeName)
+            let typeDeclaration = rvTypeName.isEmpty || castCode != call ? "" : (": " + rvTypeName)
             varCode = "let " + maybeRV + typeDeclaration + " = "
+            callCode = "let result = " + call
         }
-        let code = errCode + conditional + varCode + callCode + suffix + throwCode
+        let code = errCode + callCode + conditional + varCode + castCode + suffix + throwCode
         return code
     }
 }
