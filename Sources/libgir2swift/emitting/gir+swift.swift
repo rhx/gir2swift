@@ -725,7 +725,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
             typeName = "(" + (0..<tupleSize).map { (i: Int) -> String in
                 let type: GIR.CType = i < n ? field.containedTypes[i] : (n != 0 ? field.containedTypes[i % n] : field)
                 let ref = type.typeRef
-                let typeName = ref.fullTypeName
+                let typeName = ref.fullUnderlyingTypeName(asOptional: type.isGPointer)
                 return typeName.optionalWhenPointer
             }.joined(separator: ", ") + ")"
         } else {

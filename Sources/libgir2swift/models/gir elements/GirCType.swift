@@ -133,8 +133,7 @@ extension GIR {
         @inlinable
         public var containsGPointer: Bool {
             let type = typeRef.type
-            let name = type.typeName
-            return name == GIR.gpointer || name == GIR.gconstpointer
+            return type.isGPointer
         }
 
         /// return whether the receiver is an instance of the given record (class) or any of its ancestors

@@ -31,6 +31,10 @@ public class GIRType: Hashable {
     /// to a pointer, `5` is an immutable pointer to a pointer, etc.
     public var conversions: [GIRType : [TypeConversion]] = [:]
 
+    /// Return whether the type is a magic gpointer or related
+    @inlinable public var isGPointer: Bool {
+        return typeName == GIR.gpointer || typeName == GIR.gconstpointer
+    }
     /// Convenience property, returning the dotted prefix
     ///  - Note: this prefix is empty if the type is in the global namespace
     @inlinable public var dottedPrefix: String {

@@ -224,7 +224,7 @@ public extension GIR.CType {
         } else if pointers == 0 && isKnownBitfield {
             name = prefixedTypeName
         } else {
-            name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : ref.fullTypeName
+            name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : ref.fullUnderlyingTypeName(asOptional: underlyingType.isGPointer)
         }
         let normalisedName = name.withNormalisedPrefix
         if (typeRef.isOptional || maybeOptional(for: record) || name.maybeCallback) && !name.isOptional {
@@ -264,7 +264,7 @@ public extension GIR.Argument {
     @inlinable
     var argumentTypeName: String {
         let swiftRef = swiftParamRef
-        let name = swiftRef.fullUnderlyingTypeName(makeInnermostOptional: containsGPointer).withNormalisedPrefix
+        let name = swiftRef.fullUnderlyingTypeName(asOptional: containsGPointer ? true : nil).withNormalisedPrefix
         guard typeRef.type === swiftRef.type && (isScalarArray || swiftRef.indirectionLevel > 0) else {
             guard typeRef.knownIndirectionLevel != 0 || !isKnownBitfield else {
                 return typeRef.type.name.withNormalisedPrefix.swift

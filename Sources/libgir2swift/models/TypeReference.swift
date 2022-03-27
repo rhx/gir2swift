@@ -50,21 +50,17 @@ public struct TypeReference: Hashable {
 
     /// returns the full type including pointers and  taking into account `const`
     @inlinable public var fullTypeName: String {
-        let typeName = type.typeName.validSwift
-        let raw = embeddedType(named: typeName)
-        let full = raw.validFullSwift
-        return full
+        return fullUnderlyingTypeName(asOptional: false)
     }
 
     /// returns the full type including pointers and  taking into account `const`
-    /// - Returns: Full type, including pointers and taking into account `const`
     /// - Parameters:
     ///   - isOptional: return an optional if `true`, otherwise will return an optional if a callback only
-    ///   - makeInnermostOptional: make sure the innermost type embedded in a pointer is optional if `true`
-    @inlinable public func fullUnderlyingTypeName(isOptional: Bool? = nil, makeInnermostOptional: Bool = false) -> String {
+    /// - Returns: Full type, including pointers and taking into account `const`
+    @inlinable public func fullUnderlyingTypeName(asOptional: Bool? = nil) -> String {
         let swiftType = type.typeName.validSwift
-        let typeName = (isOptional ?? swiftType.maybeCallback ) ? swiftType.asOptional : swiftType
-        let raw = embeddedType(named: typeName, makeInnermostOptional: makeInnermostOptional)
+        let typeName = (asOptional ?? swiftType.maybeCallback ) ? swiftType.asOptional : swiftType
+        let raw = embeddedType(named: typeName)
         let full = raw.validFullSwift
         return full
     }
@@ -97,7 +93,7 @@ public struct TypeReference: Hashable {
     ///   - name: The inner type to wrap
     ///   - makeInnermostOptional: make the innermost type an optional if `true`
     /// - Returns: The type wrapped in pointers as appropriate
-    public func embeddedType(named name: String, makeInnermostOptional: Bool = false) -> String {
+    public func embeddedType(named name: String) -> String {
         let k = constPointers.count - 1
         let prefix = (isArray ? "[" : "") + constPointers.enumerated().map {
             let i = min(k, $0.offset+1)
@@ -114,7 +110,7 @@ public struct TypeReference: Hashable {
             innerSuffix = constPointers[s..<e].map { _ in ">?" }.joined()
         }
         let outerSuffix = constPointers.isEmpty ? "" : (">" + (isOptional ? "?" : "!"))
-        let suffix = (makeInnermostOptional && k >= 0 && !name.isOptional ? "?" : "") + innerSuffix + outerSuffix + (isArray ? "]" : "")
+        let suffix = innerSuffix + outerSuffix + (isArray ? "]" : "")
         let st = prefix + name + suffix
         return st
     }
