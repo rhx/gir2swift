@@ -216,7 +216,7 @@ private func signalClosureHolderDecl(record: GIR.Record, signal: GIR.Signal) -> 
 /// This function adds Parameter documentation to the signal on top of existing documentation generation.
 @CodeBuilder
 private func addDocumentation(signal: GIR.Signal) -> String {
-    { str -> String in str.isEmpty ? CodeBuilder.ignoringEspace : str}(commentCode(signal))
+    { str -> String in str.isEmpty ? CodeBuilder.unused : str}(commentCode(signal))
     "/// - Note: This represents the underlying `\(signal.name)` signal"
     "/// - Parameter flags: Flags"
     "/// - Parameter unownedSelf: Reference to instance of self"

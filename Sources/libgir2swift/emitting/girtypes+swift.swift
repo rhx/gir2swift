@@ -126,7 +126,10 @@ public extension GIR.CType {
 
     /// Return a prefixed version of the wrapped type reference
     @inlinable var prefixedIdiomaticWrappedRef: TypeReference {
-        prefixed(ref: idiomaticWrappedRef)
+        guard let record = knownRecordReference else {
+            return swiftReturnRef
+        }
+        return prefixed(ref: record.structRef)
     }
 
     /// return a prefixed ref for a given TypeReference

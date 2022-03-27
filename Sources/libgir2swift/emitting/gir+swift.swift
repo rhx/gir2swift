@@ -596,8 +596,8 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
             let callCode = call(method)
             let returnCode = ret(method)
             let bodyCode = " {\n" +
-                doubleIndent + callCode +
-                indent       + returnCode  + indent +
+                indent + callCode +
+                indent + returnCode  + indent +
                 "}\n"
             let fullFunction = indent + funcDecl + paramDecl + returnDecl + bodyCode
             defaultArgsCode = swiftCode(method, fullFunction, indentation: indent)
@@ -619,10 +619,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
         let returnDecl = returnDeclaration(method)
         let callCode = call(method)
         let returnCode = ret(method)
-        let bodyCode = " {\n" +
-                doubleIndent + callCode +
-                indent       + returnCode  + indent +
-            "}\n"
+        let bodyCode = " {\n" + callCode + returnCode  + indent + "}\n"
         let fullFunction = indent + funcDecl + paramDecl + returnDecl + bodyCode
         let code = defaultArgsCode + swiftCode(method, fullFunction, indentation: indent)
         return code
@@ -633,7 +630,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
 /// Swift code for computed properties
 public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoiding existingNames: Set<String> = [], publicDesignation: String = "public ", ptr ptrName: String = "ptr") -> (GetterSetterPair) -> String {
     let doubleIndent = indentation + indentation
-    let tripleIndent = doubleIndent + indentation
+//    let tripleIndent = doubleIndent + indentation
     let gcall = callCode(doubleIndent, record, ptr: ptrName, doThrow: false)
     let scall = callSetter(doubleIndent, record, ptr: ptrName)
     let ret = returnCode(doubleIndent, ptr: ptrName)
@@ -670,21 +667,22 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoi
         let varDecl = swiftCode(property, indentation + "@inlinable \(publicDesignation)var \(name): \(idiomaticType) {\n", indentation: indentation)
         let deprecated = getter.deprecated != nil ? "@available(*, deprecated) " : ""
         let getterCode = swiftCode(getter, doubleIndent + "\(deprecated)get {\n" +
-            doubleIndent + indentation + gcall(getter) +
-            indentation  + ret(getter) + doubleIndent +
+            indentation + gcall(getter) +
+            indentation + ret(getter) + doubleIndent +
             "}\n", indentation: doubleIndent)
         let setterCode: String
         if let setter = pair.setter {
             let deprecated = setter.deprecated != nil ? "@available(*, deprecated) " : ""
-            setterCode = swiftCode(setter, doubleIndent + "\(deprecated)nonmutating set {\n" + tripleIndent +
-                (setter.throwsError ? (
-                    "var error: UnsafeMutablePointer<\(GIR.gerror)>?\n" + tripleIndent
-                ) : "") +
-                scall(setter) +
-                (setter.throwsError ? ( tripleIndent +
-                    "g_log(messagePtr: error?.pointee.message, level: .error)\n"
-                    ) : "") +
-                doubleIndent + "}\n", indentation: doubleIndent)
+            let codePrefix = ((doubleIndent + "\(deprecated)nonmutating set {\n") + doubleIndent)
+            let codeError = (setter.throwsError ? (
+                (indentation + "var error: UnsafeMutablePointer<\(GIR.gerror)>?\n") + doubleIndent
+            ) : "")
+            let codeCall = scall(setter)
+            let codeSuffix = (setter.throwsError ? ( doubleIndent +
+                                    "g_log(messagePtr: error?.pointee.message, level: .error)\n"
+                                  ) : "") +
+            (indentation + "}\n")
+            setterCode = swiftCode(setter, codePrefix + codeError + codeCall + codeSuffix, indentation: doubleIndent)
         } else {
             setterCode = ""
         }
@@ -849,14 +847,14 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
             // This code will consume floating references upon instantiation. This is suggested by the GObject documentation since Floating references are C-specific syntactic sugar.
             // https://developer.gnome.org/gobject/stable/gobject-The-Base-Object-Type.html
             let retainBlock = isGObject ?
-                doubleIndent + "if typeIsA(type: \(factory ? "rv" : "self").type, isAType: InitiallyUnownedClassRef.metatypeReference) { _ = \(factory ? "rv" : "self").refSink() } \n"
+                (indentation + "if typeIsA(type: \(factory ? "rv" : "self").type, isAType: InitiallyUnownedClassRef.metatypeReference) { _ = \(factory ? "rv" : "self").refSink() } \n")
                 : "" 
 
             let code = swiftCode(method, indentation + "\(deprecated)@inlinable \(publicDesignation)\(fact)" +
-                constructorParam(method, prefix: p) + ")\(returnDeclaration(method)) {\n" +
-                    doubleIndent + call(method) +
+                constructorParam(method, prefix: p) + (")\(returnDeclaration(method)) {\n" +
+                    indentation + call(method)) +
                     (factory ? retainBlock : "") +
-                    indentation  + ret(method) +
+                               ret(method) +
                     (!factory ? retainBlock : "") +
                 indentation + "}\n", indentation: indentation)
             return code
@@ -917,7 +915,7 @@ public func returnCode<T>(_ indentation: String, _ tr: (typeRef: TypeReference, 
         let swiftRef = field.swiftReturnRef
         let returnRef = doConvert ? swiftRef : fieldRef
         let t = returnRef.type
-        guard isInstance, let tr = tr else { return indentation + "return rv\n" }
+        guard isInstance, let tr = tr else { return "return " + rv + "\n" }
         let typeRef = tr.typeRef
         guard !tr.isConstructor else {
             let cons = tr.isConvenience ? "self.init" : (hasParent ? "super.init(gpointer: " : "\(ptr) = UnsafeMutableRawPointer")
@@ -927,9 +925,9 @@ public func returnCode<T>(_ indentation: String, _ tr: (typeRef: TypeReference, 
             return ret
         }
         guard !(beIdiomatic && field.idiomaticWrappedRef != swiftRef) else {
-            return indentation + "return rv\n"
+            return "return " + rv + "\n"
         }
-        let cons = "return rv.map { \(t.swiftName)"
+        let cons = "return \(rv).map { \(t.swiftName)"
         let cast = returnRef.cast(expression: "$0", from: typeRef)
         let end = " }"
         let ret = indentation + cons + cast + end + "\n"
@@ -968,29 +966,30 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         let isVoid = rvVar.isEmpty || rv.isVoid
         let maybeOptional = rv.maybeOptional(for: record)
         let needsNilGuard = !isVoid && maybeOptional && !isConstructor
-        let errCode: String
-        let throwCode: String
+        let errorVariableDeclaration: String
+        let potentialThrow: String
         let invocationTail: String
-        let conditional: String
+        let potentialGuard: String
         let suffix: String
         let maybeRV: String
+        let nilCode: String
         if throwsError {
             maybeRV = needsNilGuard ? ("maybe" + rvVar.uppercased()) : rvVar
-            conditional = ""
-            suffix = ""
-            errCode = "var error: UnsafeMutablePointer<\(GIR.gerror)>?\n" + indentation
+            potentialGuard = ""
+            suffix = "\n"
+            errorVariableDeclaration = "var error: UnsafeMutablePointer<\(GIR.gerror)>?"
             invocationTail = (n == 0 ? "" : ", ") + "&error)"
-            let errorCode = "\n" + indentation + (doThrow ?
-                                        "if let error = error { throw GLibError(error) }\n" :
-                                        "g_log(messagePtr: error?.pointee.message, level: .error)\n")
-            let nilCode = needsNilGuard ? indentation + "guard let " + rvVar + " = " + maybeRV + " else { return nil }\n" : ""
-            throwCode = errorCode + nilCode
+            potentialThrow = (doThrow ?
+                                "if let error = error { throw GLibError(error) }\n" :
+                                "g_log(messagePtr: error?.pointee.message, level: .error)\n")
+            nilCode = needsNilGuard ? "guard let " + rvVar + " = " + maybeRV + " else { return nil }\n" : CodeBuilder.unused
         } else {
             maybeRV = rvVar
-            errCode = ""
-            throwCode = "\n"
+            errorVariableDeclaration = CodeBuilder.unused
+            potentialThrow = ""
+            nilCode = ""
             invocationTail = ")"
-            conditional = needsNilGuard ? "guard " : ""
+            potentialGuard = needsNilGuard ? "guard " : ""
             suffix = needsNilGuard ? " else { return nil }" : ""
         }
         let rvRef: TypeReference
@@ -1004,19 +1003,25 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         }
         let invocationStart = method.cname.swift + "(\(args.map(toSwift).joined(separator: ", "))"
         let call = invocationStart + invocationTail
-        let castCode = rvSwiftRef.cast(expression: call, from: rvRef)
+        let castCode = rvSwiftRef.cast(expression: isVoid ? call : "result", from: rvRef)
         let rvTypeName = isConstructor || !useRef ? "" : rv.prefixedIdiomaticWrappedTypeName
-        let varCode: String
+        let returnVariableEquals: String
         let callCode: String
         if isVoid {
-            varCode = ""
+            returnVariableEquals = ""
             callCode = ""
         } else {
             let typeDeclaration = rvTypeName.isEmpty || castCode != call ? "" : (": " + rvTypeName)
-            varCode = "let " + maybeRV + typeDeclaration + " = "
+            returnVariableEquals = "let " + maybeRV + typeDeclaration + " = "
             callCode = "let result = " + call
         }
-        let code = errCode + callCode + conditional + varCode + castCode + suffix + throwCode
+//        let code = errCode + callCode + conditional + throwCode + varCode + castCode + suffix
+        let code = Code.block(indentation: indentation) {
+            errorVariableDeclaration
+            callCode
+            potentialGuard + potentialThrow + returnVariableEquals + castCode + suffix
+            nilCode
+        }
         return code
     }
 }

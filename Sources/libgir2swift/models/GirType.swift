@@ -45,14 +45,16 @@ public class GIRType: Hashable {
         return namespace.asNormalisedPrefix + "."
     }
 
-    /// Swift name to use for casting: replaces trailing `!` with `?`
+    /// Swift name to use for casting: removes trailing `!` and `?`
     @inlinable public var castName: String {
-        guard swiftName.hasSuffix("!") else {
+        guard !swiftName.isEmpty else { return swiftName }
+        let e = swiftName.index(before: swiftName.endIndex)
+        let lastChar = swiftName[e]
+        guard lastChar == "!" || lastChar == "?" else {
             return swiftName.hasSuffix("Ref") || GIR.knownBitfields[swiftName] != nil ? swiftName : typeName
         }
         let s = swiftName.startIndex
-        let e = swiftName.index(before: swiftName.endIndex)
-        return swiftName[s..<e] + "?"
+        return String(swiftName[s..<e])
     }
 
     /// Return the normalised, fully qualified name
