@@ -227,7 +227,7 @@ public extension GIR.CType {
             name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : ref.fullTypeName
         }
         let normalisedName = name.withNormalisedPrefix
-        if (typeRef.isOptional || maybeOptional(for: record) || name.maybeCallback) && !name.hasSuffix("?") && !name.hasSuffix("!") {
+        if (typeRef.isOptional || maybeOptional(for: record) || name.maybeCallback) && !name.isOptional {
             return normalisedName + "!"
         } else {
             return normalisedName
@@ -264,12 +264,12 @@ public extension GIR.Argument {
     @inlinable
     var argumentTypeName: String {
         let swiftRef = swiftParamRef
-        let name = swiftRef.fullUnderlyingTypeName.withNormalisedPrefix
+        let name = swiftRef.fullUnderlyingTypeName(isNullable: isNullable).withNormalisedPrefix
         guard typeRef.type === swiftRef.type && (isScalarArray || swiftRef.indirectionLevel > 0) else {
             guard typeRef.knownIndirectionLevel != 0 || !isKnownBitfield else {
                 return typeRef.type.name.withNormalisedPrefix.swift
             }
-            let optionalName = ((isNullable || isOptional) && !(name.hasSuffix("!") || name.hasSuffix("?"))) ? (name + "!") : name
+            let optionalName = ((isNullable || isOptional) && !name.isOptional) ? (name + "!") : name
             return optionalName
         }
         let code = (isScalarArray ? "inout [" : "") + name + (isScalarArray ? "]" : "")
@@ -281,7 +281,7 @@ public extension GIR.Argument {
     @inlinable
     var callbackArgumentTypeName: String {
         let ref = typeRef
-        let rawName = ref.type.typeName == GIR.errorT ? ref.fullUnderlyingCName : ref.fullUnderlyingTypeName
+        let rawName = ref.type.typeName == GIR.errorT ? ref.fullUnderlyingCName : ref.fullUnderlyingTypeName(isOptional: isNullable ? true : nil)
         let name = rawName.withNormalisedPrefix
         guard typeRef.indirectionLevel != 0 && !name.hasSuffix("?") else { return name }
         let optionalName: String
