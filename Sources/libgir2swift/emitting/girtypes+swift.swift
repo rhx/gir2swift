@@ -264,7 +264,7 @@ public extension GIR.Argument {
     @inlinable
     var argumentTypeName: String {
         let swiftRef = swiftParamRef
-        let name = swiftRef.fullUnderlyingTypeName(isNullable: isNullable).withNormalisedPrefix
+        let name = swiftRef.fullUnderlyingTypeName(makeInnermostOptional: containsGPointer).withNormalisedPrefix
         guard typeRef.type === swiftRef.type && (isScalarArray || swiftRef.indirectionLevel > 0) else {
             guard typeRef.knownIndirectionLevel != 0 || !isKnownBitfield else {
                 return typeRef.type.name.withNormalisedPrefix.swift
@@ -281,7 +281,7 @@ public extension GIR.Argument {
     @inlinable
     var callbackArgumentTypeName: String {
         let ref = typeRef
-        let rawName = ref.type.typeName == GIR.errorT ? ref.fullUnderlyingCName : ref.fullUnderlyingTypeName(isOptional: isNullable ? true : nil)
+        let rawName = ref.type.typeName == GIR.errorT ? ref.fullUnderlyingCName : ref.fullUnderlyingTypeName()
         let name = rawName.withNormalisedPrefix
         guard typeRef.indirectionLevel != 0 && !name.hasSuffix("?") else { return name }
         let optionalName: String

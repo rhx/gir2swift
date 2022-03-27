@@ -60,11 +60,11 @@ public struct TypeReference: Hashable {
     /// - Returns: Full type, including pointers and taking into account `const`
     /// - Parameters:
     ///   - isOptional: return an optional if `true`, otherwise will return an optional if a callback only
-    ///   - isNullable: ensure the first-level indirection is optional if `true`
-    @inlinable public func fullUnderlyingTypeName(isOptional: Bool? = nil, isNullable: Bool = false) -> String {
+    ///   - makeInnermostOptional: make sure the innermost type embedded in a pointer is optional if `true`
+    @inlinable public func fullUnderlyingTypeName(isOptional: Bool? = nil, makeInnermostOptional: Bool = false) -> String {
         let swiftType = type.typeName.validSwift
         let typeName = (isOptional ?? swiftType.maybeCallback ) ? swiftType.asOptional : swiftType
-        let raw = embeddedType(named: typeName)
+        let raw = embeddedType(named: typeName, makeInnermostOptional: makeInnermostOptional)
         let full = raw.validFullSwift
         return full
     }
@@ -95,9 +95,9 @@ public struct TypeReference: Hashable {
     /// Embed the given type in a layer of pointers as appropriate
     /// - Parameters:
     ///   - name: The inner type to wrap
-    ///   - isNullable: make the second level pointer an optional if `true`
+    ///   - makeInnermostOptional: make the innermost type an optional if `true`
     /// - Returns: The type wrapped in pointers as appropriate
-    public func embeddedType(named name: String, isNullable: Bool = false) -> String {
+    public func embeddedType(named name: String, makeInnermostOptional: Bool = false) -> String {
         let k = constPointers.count - 1
         let prefix = (isArray ? "[" : "") + constPointers.enumerated().map {
             let i = min(k, $0.offset+1)
@@ -114,7 +114,7 @@ public struct TypeReference: Hashable {
             innerSuffix = constPointers[s..<e].map { _ in ">?" }.joined()
         }
         let outerSuffix = constPointers.isEmpty ? "" : (">" + (isOptional ? "?" : "!"))
-        let suffix = (isNullable && k == 0 && !name.isOptional ? "?" : "") + innerSuffix + outerSuffix + (isArray ? "]" : "")
+        let suffix = (makeInnermostOptional && k >= 0 && !name.isOptional ? "?" : "") + innerSuffix + outerSuffix + (isArray ? "]" : "")
         let st = prefix + name + suffix
         return st
     }
