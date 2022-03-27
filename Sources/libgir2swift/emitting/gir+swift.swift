@@ -972,7 +972,7 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         let potentialGuard: String
         let suffix: String
         let maybeRV: String
-        let nilCode: String
+        let nilGuardCode: String
         if throwsError {
             maybeRV = needsNilGuard ? ("maybe" + rvVar.uppercased()) : rvVar
             potentialGuard = ""
@@ -982,12 +982,12 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
             potentialThrow = (doThrow ?
                                 "if let error = error { throw GLibError(error) }\n" :
                                 "g_log(messagePtr: error?.pointee.message, level: .error)\n")
-            nilCode = needsNilGuard ? "guard let " + rvVar + " = " + maybeRV + " else { return nil }\n" : CodeBuilder.unused
+            nilGuardCode = needsNilGuard ? "guard let " + rvVar + " = " + maybeRV + " else { return nil }\n" : CodeBuilder.unused
         } else {
             maybeRV = rvVar
             errorVariableDeclaration = CodeBuilder.unused
             potentialThrow = ""
-            nilCode = ""
+            nilGuardCode = ""
             invocationTail = ")"
             potentialGuard = needsNilGuard ? "guard " : ""
             suffix = needsNilGuard ? " else { return nil }" : ""
@@ -1020,7 +1020,7 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
             errorVariableDeclaration
             callCode
             potentialGuard + potentialThrow + returnVariableEquals + castCode + suffix
-            nilCode
+            nilGuardCode
         }
         return code
     }
