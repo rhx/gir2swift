@@ -43,9 +43,14 @@ public struct Gir2Swift: ParsableCommand {
     var prerequisiteGir: [String] = []
 
     /// Name of the output directory to write generated files to.
-    /// - Note: Writes generated code to `standardOutput` if `nil`
+    /// - Note: Writes generated code to `standardOutput` if empty
     @Option(name: .short, help: "Specify the output directory to put the generated files into.")
     var outputDirectory: String = ""
+
+    /// Name of the working directory to operate within.
+    /// - Note: Will use the current working directory if empty
+    @Option(name: .shortAndLong, help: "Specify the working directory (package directory of the target) to change into.")
+    var workingDirectory: String = ""
 
     /// Name of the library to pass to pkg-config
     /// - Note: Defaults to the lower-cased name of the `.gir` file
@@ -70,6 +75,10 @@ public struct Gir2Swift: ParsableCommand {
     
     /// Main function to run the `gir2swift command`
     mutating public func run() throws {
+        guard workingDirectory.isEmpty || chdir(workingDirectory) == 0 else {
+            fatalError("Cannot change into '\(workingDirectory)': \(String(cString: strerror(errno)))")
+        }
+
         let nTypesPrior = GIR.knownTypes.count
 
         let moduleBoilerPlate: String

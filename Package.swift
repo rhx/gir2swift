@@ -19,7 +19,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.1.1")
     ],
     targets: [
-        .target(
+        .executableTarget(
             name: pkgName, 
             dependencies: [
                 .init(stringLiteral: libTarget)
