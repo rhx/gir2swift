@@ -3,7 +3,7 @@
 //  libgir2swift
 //
 //  Created by Rene Hexel on 18/7/21.
-//  Copyright © 2021 Rene Hexel. All rights reserved.
+//  Copyright © 2021, 2022 Rene Hexel. All rights reserved.
 //
 import Foundation
 
@@ -12,6 +12,17 @@ protocol IOHandle {}
 
 extension Pipe: IOHandle {}
 extension FileHandle: IOHandle {}
+
+enum ProcessError: Error {
+    case endedWith(code: Int)
+    case couldNotBeSpawned
+}
+
+private extension ProcessInfo {
+    var environmentPaths: [String]? {
+        environment["PATH"].flatMap { $0.split(separator: ":", omittingEmptySubsequences: true) }?.map(String.init)
+    }
+}
 
 /// A structure representing a shell comand and its arguments
 struct CommandArguments {
@@ -35,7 +46,7 @@ func getcwd() -> String? {
 ///   - executable: The executable to search for
 ///   - path: The array of directories to search in (defaults to the contents of the `PATH` environment variable)
 /// - Returns: a `URL` representing the full path of the executable if successful, `nil` otherwise
-func urlForExecutable(named executable: String, in path: [String] = ProcessInfo.processInfo.environment["PATH"].map { $0.split(separator: ":").map(String.init) } ?? []) -> URL? {
+func urlForExecutable(named executable: String, in path: [String] = ProcessInfo.processInfo.environmentPaths ?? []) -> URL? {
     guard let wd = getcwd().map(URL.init(fileURLWithPath:)) else { return nil }
     let fm = FileManager.default
     for url in path.map({ (d: String) -> URL in
@@ -72,7 +83,11 @@ func urlForExecutable(named executable: String, in path: [String] = ProcessInfo.
 ///   - standardError: the pipe to redirect standard error to if not `nil`
 /// - Throws: an error if the command cannot be run
 /// - Returns: The process being executed.  Call `run()` and then `waitUntilExit()` on the process to collect its `terminationStatus`
+<<<<<<< HEAD
 func createProcess(command: String, in path: [String] = ProcessInfo.processInfo.environment["PATH"].map { $0.split(separator: ":").map(String.init) } ?? [], arguments: [String] = [], standardInput: Any? = nil, standardOutput: Any? = nil, standardError: Any? = nil) throws -> Process {
+=======
+func createProcess(command: String, in path: [String] = ProcessInfo.processInfo.environmentPaths ?? [], arguments: [String] = [], standardInput: Any? = nil, standardOutput: Any? = nil, standardError: Any? = nil) throws -> Process {
+>>>>>>> pre-namespace
     guard let url = urlForExecutable(named: command, in: path) else {
         throw POSIXError(.ENOENT)
     }
@@ -96,7 +111,11 @@ func createProcess(command: String, in path: [String] = ProcessInfo.processInfo.
 ///   - output: the FileHandle to redirect standard output to if not `nil`
 /// - Throws: an error if any of the commands cannot be run
 /// - Returns: an array of processes being executed
+<<<<<<< HEAD
 func pipe(_ components: [CommandArguments], in path: [String] = ProcessInfo.processInfo.environment["PATH"].map { $0.split(separator: ":").map(String.init) } ?? [], input: Any? = nil, output: Any? = nil) throws -> [Process] {
+=======
+func pipe(_ components: [CommandArguments], in path: [String] = ProcessInfo.processInfo.environmentPaths ?? [], input: Any? = nil, output: Any? = nil) throws -> [Process] {
+>>>>>>> pre-namespace
     let pipes: [Any?] = components.enumerated().map { $0.offset == 0 ? input : Pipe() as Any? } + [output]
     let processes = try components.enumerated().map {
         try createProcess(command: $0.element.command, in: path, arguments: $0.element.arguments, standardInput: pipes[$0.offset], standardOutput: pipes[$0.offset+1])
@@ -121,7 +140,17 @@ func pipe(_ components: [CommandArguments], in path: [String] = ProcessInfo.proc
 @discardableResult
 func run(standardInput: Any? = nil, standardOutput: Any? = nil, standardError: Any? = nil, _ command: String, arguments: [String]) -> Int? {
     do {
+<<<<<<< HEAD
         let process = try createProcess(command: command, arguments: arguments)
+=======
+        let process = try createProcess(
+            command: command, 
+            arguments: arguments, 
+            standardInput: standardInput, 
+            standardOutput: standardOutput, 
+            standardError: standardError
+        )
+>>>>>>> pre-namespace
         if #available(macOS 10.13, *) {
             try process.run()
         } else {
@@ -130,7 +159,11 @@ func run(standardInput: Any? = nil, standardOutput: Any? = nil, standardError: A
         process.waitUntilExit()
         return Int(process.terminationStatus)
     } catch {
+<<<<<<< HEAD
         perror("Cannot run \(command)")
+=======
+        print("Cannot run \(command) with error: \(error)", to: &Streams.stdErr)
+>>>>>>> pre-namespace
         return nil
     }
 }
@@ -160,3 +193,30 @@ func test(standardInput: Any? = nil, standardOutput: Any? = nil, standardError: 
     }
     return rv == expectedResult
 }
+<<<<<<< HEAD
+=======
+
+/// Executes desired program and
+/// - Parameters:
+///   - program: The name of the program
+///   - arguments: List of arguments
+/// - Throws: Throws in case, that the process could not be executed or returned non-zero code.
+/// - Returns: The contents of std-out
+func executeAndWait(_ program: String, arguments: [String]) throws -> String? {
+    let stdOut = Pipe()
+    let optCode = run(standardOutput: stdOut, program, arguments: arguments)
+
+    guard let code = optCode else {
+        throw ProcessError.couldNotBeSpawned
+    }
+
+    guard code == 0 else {
+        throw ProcessError.endedWith(code: code)
+    }
+
+    return String(
+        data: stdOut.fileHandleForReading.readDataToEndOfFile(),
+        encoding: .utf8
+    )?.trimmingCharacters(in: .whitespacesAndNewlines)
+}
+>>>>>>> pre-namespace

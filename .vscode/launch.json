@@ -8,9 +8,9 @@
             "name": "Launch",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/.build/debug/${workspaceFolderBasename}",
-            "cwd": "${workspaceFolder}/../test-SwiftGtk",
-            "args": ["-o", "Sources/Gtk", "-s", "-m", "Gtk-3.0.module", "-p", "/usr/share/gir-1.0/Atk-1.0.gir", "-p", "/usr/share/gir-1.0/cairo-1.0.gir", "-p", "/usr/share/gir-1.0/Gdk-3.0.gir", "-p", "/usr/share/gir-1.0/GdkPixbuf-2.0.gir", "-p", "/usr/share/gir-1.0/Gio-2.0.gir", "-p", "/usr/share/gir-1.0/GLib-2.0.gir", "-p", "/usr/share/gir-1.0/GModule-2.0.gir", "-p", "/usr/share/gir-1.0/GObject-2.0.gir", "-p", "/usr/share/gir-1.0/Pango-1.0.gir", "-p", "/usr/share/gir-1.0/PangoCairo-1.0.gir", "/usr/share/gir-1.0/Gtk-3.0.gir"]
+            "program": "${workspaceFolder}/.build/debug/gir2swift",
+            "cwd": "${workspaceFolder}/../SwiftGtk",
+            "args": ["-o", "Sources/Gtk"]
         }
     ]
 }

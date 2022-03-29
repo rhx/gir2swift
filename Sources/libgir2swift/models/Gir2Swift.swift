@@ -3,7 +3,7 @@
 //  libgir2swift
 //
 //  Created by Rene Hexel on 20/5/21.
-//  Copyright © 2021 Rene Hexel. All rights reserved.
+//  Copyright © 2021, 2022 Rene Hexel. All rights reserved.
 //
 import ArgumentParser
 import Foundation
@@ -39,7 +39,7 @@ public struct Gir2Swift: ParsableCommand {
     var postProcess: [String] = []
 
     /// Array of names of pre-parsed `.gir` files.
-    @Option(name: .short, help: "Add pre-requisite .gir files to ensure the types in file.gir are known.")
+    @Option(name: .short, help: "Add pre-requisite .gir files to ensure the types in file.gir are known. Prerequisities specified in CLI are merged with the prerequisites found by gir2swift.")
     var prerequisiteGir: [String] = []
 
     /// Name of the output directory to write generated files to.
@@ -49,17 +49,22 @@ public struct Gir2Swift: ParsableCommand {
 
     /// Name of the library to pass to pkg-config
     /// - Note: Defaults to the lower-cased name of the `.gir` file
-    @Option(name: .long, help: "Library name to pass to pkg-config.")
+    @Option(name: .long, help: "Library name to pass to pkg-config. Pkg config name specified in CLI trumps the one found in manifest.")
     var pkgConfigName: String?
 
     /// File containing one-off boilerplate code for your module
     @Option(name: .short, help: "Add the given .swift file as the main (hand-crafted) Swift file for your library target.")
     var moduleBoilerPlateFile: String = ""
 
+    /// By default, the gir2swift searches for manifest in the work directory. As for now, the search can't be sidabled.
+    @Option(name: .long, help: "Custom path to manifest.")
+    var manifest: String = "gir2swift-manifest.yaml"
+
     /// The actual, main `.gir` file(s) to process
-    @Argument(help: "The .gir metadata files to process.")
-    var girFiles: [String]
-    
+    @Argument(help: "The .gir metadata files to process. Gir files specified in CLI are merged with those specified in the manifest.")
+    var girFiles: [String] = []
+
+
     /// Designated initialiser
     public init() {}
     
@@ -77,14 +82,38 @@ public struct Gir2Swift: ParsableCommand {
             moduleBoilerPlate = contents
         }
 
+        var girsToPreload = Set(prerequisiteGir)
+        var girFilesToGenerate = Set(girFiles)
+
+        // This variable is a dead store
+        var pkgConfig = pkgConfigName
+
+        let manifestPlan: Plan?
+        if let wd = getcwd() {
+            let manifestURL = URL(fileURLWithPath: wd).appendingPathComponent(manifest)
+            do {
+                let plan = try Plan(using: manifestURL)
+                girsToPreload.formUnion(plan.girFilesToPreload.map(\.path))
+                girFilesToGenerate.insert(plan.girFileToGenerate.path)
+                pkgConfig = pkgConfig ?? plan.pkgConfigName
+                manifestPlan = plan
+            } catch {
+                manifestPlan = nil
+                print("Failed to load manifest: \(error)", to: &Streams.stdErr)
+            }
+        } else {
+            manifestPlan = nil
+        }
+
         // pre-load gir files to ensure pre-requisite types are known
-        for girFile in prerequisiteGir {
+        for girFile in girsToPreload {
             preload_gir(file: girFile)
         }
 
-        let target = outputDirectory.isEmpty ? nil : outputDirectory
-        for girFile in girFiles {
-            process_gir(file: girFile, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: alphaNames)
+        let target = outputDirectory.isEmpty ? manifestPlan?.outputDirectory : outputDirectory
+        let generateAlphaFiles = alphaNames || manifestPlan?.useAlphaNames ?? false
+        for girFile in girFilesToGenerate {
+            process_gir(file: girFile, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: generateAlphaFiles, postProcess: postProcess + (manifestPlan?.postProcess ?? []))
         }
 
         if verbose {

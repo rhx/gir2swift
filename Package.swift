@@ -14,6 +14,7 @@ let package = Package(
         .plugin(name: plugin, targets: [plugin]),
     ],
     dependencies: [ 
+        .package(url: "https://github.com/jpsim/Yams.git", from: "4.0.6"),
         .package(url: "https://github.com/rhx/SwiftLibXML.git", branch: "main"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.1.1")
     ],
@@ -27,8 +28,9 @@ let package = Package(
         .target(
             name: libTarget,
             dependencies: [
-                .init(stringLiteral: "SwiftLibXML"),
-                .product(name: "ArgumentParser", package: "swift-argument-parser")
+                "SwiftLibXML",
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+                "Yams"
             ]
         ),
         .testTarget(name: "\(pkgName)Tests", dependencies: [.init(stringLiteral: libTarget)]),

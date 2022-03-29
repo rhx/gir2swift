@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 20/5/2021.
-//  Copyright © 2016, 2017, 2018, 2019, 2020, 2021 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018, 2019, 2020, 2021, 2022 Rene Hexel. All rights reserved.
 //
 import Foundation
 import Dispatch
@@ -52,7 +52,7 @@ extension Gir2Swift {
     }
 
     /// process a GIR file
-    func process_gir(file: String, boilerPlate: String, to outputDirectory: String? = nil, split singleFilePerClass: Bool = false, generateAll: Bool = false, useAlphaNames: Bool = false) {
+    func process_gir(file: String, boilerPlate: String, to outputDirectory: String? = nil, split singleFilePerClass: Bool = false, generateAll: Bool = false, useAlphaNames: Bool = false, postProcess: [String]) {
         let node = file.components(separatedBy: "/").last?.stringByRemoving(suffix: ".gir") ?? file
         let modulePrefix: String
         if boilerPlate.isEmpty {
