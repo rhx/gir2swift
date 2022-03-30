@@ -57,14 +57,12 @@ func getGirDirectory(containing girFiles: [String]) throws -> Path {
         let girName = try getGirName(target)
 
         // Determine the list of output files
-        let suffixes = ["aliases", "bitfields", "callbacks", "constants", "enumerations", "functions", "unions"]
+        let atChar = Character("@").utf8.first!
+        let suffixes = ["aliases", "bitfields", "callbacks", "constants", "enumerations", "functions", "unions"] +
+                       (0...26).map { String(Character(UnicodeScalar(atChar + UInt8($0)))) }
         var outputFiles = suffixes.map { suffix in
             outputDir.appending("\(girName)-\(suffix).swift")
         }
-
-        outputFiles.append(contentsOf: String("A").map { character in
-            outputDir.appending("\(girName)-\(character).swift")
-        })
 
         outputFiles.append(outputDir.appending("\(girName).swift"))
 
