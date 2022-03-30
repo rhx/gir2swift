@@ -77,7 +77,7 @@ struct Plan {
 
     enum Error: Swift.Error {
         case girNotFound(named: String)
-        case girParsingFailed
+        case girParsingFailed(path: String)
     }
 
     /// The path to `.gir` file that shall be generated
@@ -118,7 +118,11 @@ struct Plan {
     init(using manifestURL: URL) throws {
         let data = try Data(contentsOf: manifestURL, options: .mappedIfSafe)
         let manifest = try YAMLDecoder().decode(Manifest.self, from: data)
-        let pkgConfig = manifest.pkgConfig ?? manifest.girName.lowercased()
+        let pkgConfig = manifest.pkgConfig ?? {
+            let assumedPkgName = manifest.girName.lowercased()
+            print("Warning: pkg-config package name was not specified, using modified gir name `\(assumedPkgName)` instead.", to: &Streams.stdErr)
+            return assumedPkgName
+        }()
         
         // Search for location of the generated `.gir` file.
         let optGirPath = try Plan.searchForGir(
@@ -211,11 +215,18 @@ struct Plan {
             explored[executing] = url
 
             // Add all `.gir` files that were not already explored to the exploration list.
-            let packageInfo = try parsePackageInfo(for: url)
-            packageInfo.dependency.forEach { dependency in
-                if explored[dependency.girName] == nil {
-                    toExplore.insert(dependency.girName)
+            do {
+                let packageInfo = try parsePackageInfo(for: url)
+                packageInfo.dependency.forEach { dependency in
+                    if explored[dependency.girName] == nil {
+                        toExplore.insert(dependency.girName)
+                    }
                 }
+            } catch {
+                guard case let Error.girParsingFailed(path: path) = error else {
+                    throw error
+                }
+                print("Warning: gir file at path `\(path)` is missing required fileds and could not be parsed - skipping", to: &Streams.stdErr)
             }
         }
 
@@ -294,7 +305,9 @@ struct Plan {
                     namespaces: namespaces, 
                     defaultPrefix: "gir"
                 )?.first?.attribute(named: "name") 
-            else { throw Error.girParsingFailed }
+            else { 
+                throw Error.girParsingFailed(path: gir.path) 
+            }
 
             // Search for all occurances of `include` element. We expect, that the attributes of the element represent an existing `.gir` file.
             let dependencies = xml.xpath(
@@ -316,6 +329,6 @@ struct Plan {
 
         }
 
-        throw Error.girParsingFailed
+        throw Error.girParsingFailed(path: gir.path)
     }
 }
