@@ -4,7 +4,7 @@ import PackageDescription
 
 let pkgName = "gir2swift"
 let libTarget = "lib\(pkgName)"
-let plugin = "\(pkgName)Plugin"
+let plugin = "\(pkgName)-plugin"
 
 let package = Package(
     name: pkgName,
