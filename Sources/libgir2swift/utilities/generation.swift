@@ -254,11 +254,12 @@ extension Gir2Swift {
                 let convert = swiftCode(gir.functions)
                 let classes = generateAll ? [:] : Dictionary(gir.classes.map { ($0.name, $0) }) { lhs, _ in lhs}
                 let records = gir.records.filter { r in
-                    !blacklist.contains(r.name) &&
-                    (generateAll || !r.name.hasSuffix("Private") ||
-                     r.name.stringByRemoving(suffix: "Private").flatMap { classes[$0] }.flatMap {
-                        $0.fields.allSatisfy { $0.isPrivate || $0.typeRef.type.name != r.name }
-                     } != true
+                    !blacklist.contains(r.name) 
+                    &&
+                    (
+                        generateAll 
+                        || !r.name.hasSuffix("Private") 
+                        || r.name.stringByRemoving(suffix: "Private").flatMap { classes[$0] }.flatMap { $0.fields.allSatisfy { $0.isPrivate || $0.typeRef.type.name != r.name }} != true
                     )
                 }
                 write(records, using: convert)
@@ -333,6 +334,54 @@ extension Gir2Swift {
                 let nl = outputString.isEmpty ? "\n"  : "\n// "
                 print("\(pf)Verbatim: \(GIR.verbatimConstants.count)\(nl)\(GIR.verbatimConstants.joined(separator: nl))\n", to: &Streams.stdErr)
                 print("\(pf)Blacklisted: \(blacklist.count)\(nl)\(blacklist.joined(separator: "\n" + nl))\n", to: &Streams.stdErr)
+            }
+        }
+    }
+
+    /// create opaque pointer declarations
+    func process_gir_to_opaque_decls(file: String, generateAll: Bool = false) {
+        let node = file.components(separatedBy: "/").last?.stringByRemoving(suffix: ".gir") ?? file
+        let wlfile = node + ".whitelist"
+        if let whitelist = (try? String(contentsOfFile: wlfile)).flatMap({ Set($0.nonEmptyComponents(separatedBy: "\n")) }) {
+            for name in whitelist {
+                GIR.knownDataTypes.removeValue(forKey: name)
+                GIR.knownRecords.removeValue(forKey: name)
+                GIR.KnownFunctions.removeValue(forKey: name)
+            }
+        }
+        let nsfile = node + ".namespaceReplacements"
+        if let ns = (try? String(contentsOfFile: nsfile)).flatMap({Set($0.nonEmptyComponents(separatedBy: "\n"))}) {
+            for line in ns {
+                let keyValues: [Substring]
+                let tabbedKeyValues: [Substring] = line.split(separator: "\t")
+                if tabbedKeyValues.count >= 2 {
+                    keyValues = tabbedKeyValues
+                } else {
+                    keyValues = line.split(separator: " ")
+                    guard keyValues.count >= 2 else { continue }
+                }
+                let key = keyValues[0]
+                let value = keyValues[1]
+                GIR.namespaceReplacements[key] = value
+            }
+        }
+
+        load_gir(file) { gir in
+            processSpecialCases(gir, forFile: node)
+            let blacklist = GIR.blacklist
+            let classes = generateAll ? [:] : Dictionary(gir.classes.map { ($0.name, $0) }) { lhs, _ in lhs}
+            let records = gir.records.filter { r in
+                !blacklist.contains(r.name) 
+                &&
+                (
+                    generateAll 
+                    || !r.name.hasSuffix("Private") 
+                    || r.name.stringByRemoving(suffix: "Private").flatMap { classes[$0] }.flatMap { $0.fields.allSatisfy { $0.isPrivate || $0.typeRef.type.name != r.name }} != true
+                )
+            }
+
+            for recordCName in records.compactMap(\.correspondingCType) {
+                print("struct " + recordCName + " {};")
             }
         }
     }
