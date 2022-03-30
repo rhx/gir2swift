@@ -11,7 +11,8 @@ enum Gir2SwiftError: LocalizedError {
 private let gir2swiftManifest = "gir2swift-manifest.yaml"
 
 func getGirName(_ target: Target) throws -> String {
-    let manifest = target.directory.appending(gir2swiftManifest)
+    let targetPackageDirectory = target.directory.removingLastComponent().removingLastComponent()
+    let manifest = targetPackageDirectory.appending(gir2swiftManifest)
     let lines = try String(contentsOf: URL(fileURLWithPath: manifest.string)).split(separator: "\n")
     var girName: String? = nil
     for line in lines {
@@ -76,7 +77,7 @@ func getGirDirectory(containing girFiles: [String]) throws -> Path {
             Path(file.path)
         }
 
-        inputFiles.append(target.directory.appending(gir2swiftManifest.string))
+        inputFiles.append(targetPackageDirectory.appending(gir2swiftManifest.string))
 
         // Find all girs that this library depends on
         let girFiles = target.recursiveTargetDependencies.compactMap {
