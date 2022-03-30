@@ -75,7 +75,8 @@ public struct Gir2Swift: ParsableCommand {
     
     /// Main function to run the `gir2swift command`
     mutating public func run() throws {
-        guard workingDirectory.isEmpty || chdir(workingDirectory) == 0 else {
+        let fileManager = FileManager.default
+        guard workingDirectory.isEmpty || fileManager.changeCurrentDirectoryPath(workingDirectory) else {
             fatalError("Cannot change into '\(workingDirectory)': \(String(cString: strerror(errno)))")
         }
 
@@ -98,20 +99,23 @@ public struct Gir2Swift: ParsableCommand {
         var pkgConfig = pkgConfigName
 
         let manifestPlan: Plan?
-        if let wd = getcwd() {
-            let manifestURL = URL(fileURLWithPath: wd).appendingPathComponent(manifest)
-            do {
-                let plan = try Plan(using: manifestURL)
-                girsToPreload.formUnion(plan.girFilesToPreload.map(\.path))
-                girFilesToGenerate.insert(plan.girFileToGenerate.path)
-                pkgConfig = pkgConfig ?? plan.pkgConfigName
-                manifestPlan = plan
-            } catch {
-                manifestPlan = nil
-                print("Failed to load manifest: \(error)", to: &Streams.stdErr)
-            }
+        let manifestURL: URL
+        let wd = fileManager.currentDirectoryPath
+        let wdURL = URL(fileURLWithPath: wd)
+        if #available(macOS 10.11, *) {
+            manifestURL = URL(fileURLWithPath: manifest, relativeTo: wdURL)
         } else {
+            manifestURL = wdURL.appendingPathComponent(manifest)
+        }
+        do {
+            let plan = try Plan(using: manifestURL)
+            girsToPreload.formUnion(plan.girFilesToPreload.map(\.path))
+            girFilesToGenerate.insert(plan.girFileToGenerate.path)
+            pkgConfig = pkgConfig ?? plan.pkgConfigName
+            manifestPlan = plan
+        } catch {
             manifestPlan = nil
+            print("Failed to load manifest: \(error)", to: &Streams.stdErr)
         }
 
         // pre-load gir files to ensure pre-requisite types are known
