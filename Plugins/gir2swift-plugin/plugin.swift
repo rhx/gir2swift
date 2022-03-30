@@ -8,11 +8,11 @@ enum Gir2SwiftError: LocalizedError {
 }
 
 /// The file name of the gir2swift manifest
-private let gir2swiftManifest = "gir2swift-manifest.yaml"
+private let gir2swiftManifestYaml = "gir2swift-manifest.yaml"
 
 func getGirName(_ target: Target) throws -> String {
     let targetPackageDirectory = target.directory.removingLastComponent().removingLastComponent()
-    let manifest = targetPackageDirectory.appending(gir2swiftManifest)
+    let manifest = targetPackageDirectory.appending(gir2swiftManifestYaml)
     let lines = try String(contentsOf: URL(fileURLWithPath: manifest.string)).split(separator: "\n")
     var girName: String? = nil
     for line in lines {
@@ -51,7 +51,7 @@ func getGirDirectory(containing girFiles: [String]) throws -> Path {
     /// - Returns: the commands to run during the build
     func createBuildCommands(context: PluginContext, target: Target) throws -> [Command] {
         let targetPackageDirectory = context.package.directory
-        let gir2swiftManifest = targetPackageDirectory.appending(gir2swiftManifest)
+        let gir2swiftManifest = targetPackageDirectory.appending(gir2swiftManifestYaml)
         let outputDir = context.pluginWorkDirectory.appending("gir2swift-generated").appending(target.name)
         try FileManager.default.createDirectory(atPath: outputDir.string, withIntermediateDirectories: true)
 
@@ -77,7 +77,7 @@ func getGirDirectory(containing girFiles: [String]) throws -> Path {
             Path(file.path)
         }
 
-        inputFiles.append(targetPackageDirectory.appending(gir2swiftManifest.string))
+        inputFiles.append(gir2swiftManifest)
 
         // Find all girs that this library depends on
         let girFiles = target.recursiveTargetDependencies.compactMap {
