@@ -103,7 +103,7 @@ func getGirDirectory(containing girFiles: [String]) throws -> Path {
         })
 
         return [.buildCommand(
-            displayName: "Running gir2swift",
+            displayName: "Running gir2swift " + arguments.joined(separator: " "),
             executable: try context.tool(named: "gir2swift").path,
             arguments: arguments,
             inputFiles: inputFiles,
