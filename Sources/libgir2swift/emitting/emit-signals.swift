@@ -159,7 +159,7 @@ private func buildAvailableSignal(record: GIR.Record, signal: GIR.Signal) -> Str
         }
         Code.block {
             "let holder = Unmanaged<SwiftHandler>.fromOpaque(userData).takeUnretainedValue()"
-            "let output\(signal.returns.typeRef.type.name == "Void" ? ": Void" : "") = holder.\(generaceCCallbackCall(record: record, signal: signal))"
+            "let output\(signal.returns.typeRef.type.name == "Void" ? ": Void" : "") = holder.\(generateCCallbackCall(record: record, signal: signal))"
             generateReturnStatement(record: record, signal: signal)
         }
         "}"
@@ -205,14 +205,9 @@ private func handlerType(record: GIR.Record, signal: GIR.Signal) -> String {
 
 /// This function builds declaration for the typealias holding the reference to the Swift closure handler
 private func signalClosureHolderDecl(record: GIR.Record, signal: GIR.Signal) -> String {
-    if signal.args.count > 6 {
-        fatalError("Argument count \(signal.args.count) exceeds the maximum number of allowed arguments (6)")
-    }
     return Code.line {
-        "GLib.ClosureHolder" + (signal.args.count > 0 ? "\(signal.args.count + 1)" : "")
-        "<" + record.structName + ", "
-        signal.args.map { $0.swiftIdiomaticType() }.joined(separator: ", ")
-        (signal.args.isEmpty ? "" : ", ")
+        "GLib.ClosureHolder<"
+        "(" + ([record.structName] + signal.args.map { $0.swiftIdiomaticType() }).joined(separator: ", ") + "), "
         signal.returns.swiftIdiomaticType()
         ">"
     }
@@ -221,7 +216,7 @@ private func signalClosureHolderDecl(record: GIR.Record, signal: GIR.Signal) -> 
 /// This function adds Parameter documentation to the signal on top of existing documentation generation.
 @CodeBuilder
 private func addDocumentation(signal: GIR.Signal) -> String {
-    { str -> String in str.isEmpty ? CodeBuilder.ignoringEspace : str}(commentCode(signal))
+    { str -> String in str.isEmpty ? CodeBuilder.unused : str}(commentCode(signal))
     "/// - Note: This represents the underlying `\(signal.name)` signal"
     "/// - Parameter flags: Flags"
     "/// - Parameter unownedSelf: Reference to instance of self"
@@ -258,13 +253,13 @@ private func cCallbackArgumentsDecl(record: GIR.Record, signal: GIR.Signal) -> S
 }
 
 /// Returns correct call of Swift handler from c callback scope with correct casting.
-private func generaceCCallbackCall(record: GIR.Record, signal: GIR.Signal) -> String {
+private func generateCCallbackCall(record: GIR.Record, signal: GIR.Signal) -> String {
     Code.line {
-        "call(\(record.structRef.type.swiftName)(raw: unownedSelf)"
+        "call((\(record.structRef.type.swiftName)(raw: unownedSelf)"
         Code.loopEnumerated(over: signal.args) { index, argument in
             ", \(argument.swiftSignalArgumentConversion(at: index + 1))"
         }
-        ")"
+        "))"
     }
 }
 

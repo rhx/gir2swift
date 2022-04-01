@@ -3,7 +3,7 @@
 //  libgir2swift
 //
 //  Created by Rene Hexel on 26/7/20.
-//  Copyright © 2020 Rene Hexel. All rights reserved.
+//  Copyright © 2020, 2022 Rene Hexel. All rights reserved.
 //
 import Foundation
 
@@ -14,6 +14,9 @@ public struct TypeReference: Hashable {
 
     /// The identifier of this instance
     public let identifier: String?
+
+    /// The namespace for this instance
+    public let namespace: String
 
     /// Whether or not the referenced type is `const`
     public var isConst: Bool = false
@@ -26,13 +29,6 @@ public struct TypeReference: Hashable {
 
     /// Array of pointers (`true` if they are const, `false` if they are mutable)
     public var constPointers = [Bool]()
-
-    /// Return an equivalent type reference from the current namespace
-    @inlinable public var prefixed: TypeReference {
-        let prefixedType = type.prefixed
-        guard prefixedType !== type else { return self }
-        return TypeReference(type: prefixedType, identifier: identifier, isConst: isConst, isOptional: isOptional, isArray: isArray, constPointers: constPointers)
-    }
 
     /// The level of indirection,
     /// with `0` indicating the referenced type itself,
@@ -54,15 +50,16 @@ public struct TypeReference: Hashable {
 
     /// returns the full type including pointers and  taking into account `const`
     @inlinable public var fullTypeName: String {
-        let typeName = type.typeName.validSwift
-        let raw = embeddedType(named: typeName)
-        let full = raw.validFullSwift
-        return full
+        return fullUnderlyingTypeName(asOptional: false)
     }
 
     /// returns the full type including pointers and  taking into account `const`
-    @inlinable public var fullUnderlyingTypeName: String {
-        let typeName = type.typeName.validSwift.optionalWhenCallback
+    /// - Parameters:
+    ///   - isOptional: return an optional if `true`, otherwise will return an optional if a callback only
+    /// - Returns: Full type, including pointers and taking into account `const`
+    @inlinable public func fullUnderlyingTypeName(asOptional: Bool? = nil) -> String {
+        let swiftType = type.typeName.validSwift
+        let typeName = (asOptional ?? swiftType.maybeCallback ) ? swiftType.asOptional : swiftType
         let raw = embeddedType(named: typeName)
         let full = raw.validFullSwift
         return full
@@ -79,7 +76,7 @@ public struct TypeReference: Hashable {
     /// returns the force-unwrapped, full type name
     @inlinable public var forceUnwrappedName: String {
         let name = fullTypeName
-        guard !name.hasSuffix("!") && !name.hasSuffix("?") else { return name }
+        guard !name.isOptional else { return name }
         return name + "!"
     }
 
@@ -91,6 +88,11 @@ public struct TypeReference: Hashable {
         return full
     }
 
+    /// Embed the given type in a layer of pointers as appropriate
+    /// - Parameters:
+    ///   - name: The inner type to wrap
+    ///   - makeInnermostOptional: make the innermost type an optional if `true`
+    /// - Returns: The type wrapped in pointers as appropriate
     public func embeddedType(named name: String) -> String {
         let k = constPointers.count - 1
         let prefix = (isArray ? "[" : "") + constPointers.enumerated().map {
@@ -132,15 +134,17 @@ public struct TypeReference: Hashable {
     /// Designated initialiser for a type reference
     /// - Parameters:
     ///   - type: The type to reference
+    ///   - namespace: The namespace to use, `nil` to use referenced type namespace
     ///   - identifier: The identifier for this instance (e.g. C enum case name)
     ///   - isConst: Whether or not this reference is to a `const` instance
     ///   - isArray: Whether or not this is an array
     ///   - isOptional: Whether or not this instance is nullable
     ///   - constPointers: Array of booleans representing indirection levels (pointers), `true` if the pointer is `const`
     @inlinable
-    public init(type: GIRType, identifier: String? = nil, isConst: Bool = false, isOptional: Bool = false, isArray: Bool = false, constPointers: [Bool] = []) {
+    public init(type: GIRType, in namespace: String? = nil, identifier: String? = nil, isConst: Bool = false, isOptional: Bool = false, isArray: Bool = false, constPointers: [Bool] = []) {
         self.type = type
         self.identifier = identifier?.isEmpty ?? true ? nil : identifier
+        self.namespace = namespace ?? type.namespace
         self.isConst = isConst
         self.isOptional = isOptional
         self.isArray = isArray
@@ -149,11 +153,12 @@ public struct TypeReference: Hashable {
 
     /// Create a single-indirection pointer to a given target
     /// - Parameter target: The target type to reference
+    /// - Parameter namespace: The name space to use, `nil` if top level
     /// - Parameter isConst: Whether the target is `const`
     /// - Parameter pointerIsConst:Whether the pointer itself is `const`
     /// - Returns: A type reference representing a pointer to the target
-    public static func pointer(to target: GIRType, isConst const: Bool = false, pointerIsConst: Bool = false) -> TypeReference {
-        TypeReference(type: target, isConst: const, constPointers: [pointerIsConst])
+    public static func pointer(to target: GIRType, in namespace: String? = nil, isConst const: Bool = false, pointerIsConst: Bool = false) -> TypeReference {
+        TypeReference(type: target, in: namespace, isConst: const, constPointers: [pointerIsConst])
     }
 
     /// Test whether the receiver references the given type

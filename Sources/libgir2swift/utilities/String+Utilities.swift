@@ -28,17 +28,24 @@ extension StringProtocol {
         return false
     }
 
-    /// Heuristic that returns an optional when the receiver may be a callback
+    /// Return `true` if the receiver has a `?` or `!` suffix
+    @usableFromInline var isOptional: Bool {
+        guard !isEmpty else { return false }
+        let e = index(before: endIndex)
+        return self[e] == "?" || self[e] == "!"
+    }
+
+    /// Return an optional version of the receiver
     @usableFromInline
-    var optionalWhenCallback: String {
-        guard !hasSuffix("?") && !hasSuffix("!") && maybeCallback else { return String(self) }
+    var asOptional: String {
+        guard !isOptional else { return String(self) }
         return self + "?"
     }
 
     /// Heuristic that returns an optional when the receiver may be a callback
     @usableFromInline
     var optionalWhenPointer: String {
-        guard !hasSuffix("?") && !hasSuffix("!") && (hasSuffix("pointer") || maybeCallback) else { return String(self) }
+        guard !isOptional && (hasSuffix("pointer") || maybeCallback) else { return String(self) }
         return self + "?"
     }
 

@@ -126,20 +126,20 @@ public extension GIR.CType {
 
     /// Return a prefixed version of the wrapped type reference
     @inlinable var prefixedIdiomaticWrappedRef: TypeReference {
-        prefixed(ref: idiomaticWrappedRef)
+        guard let record = knownRecordReference else {
+            return swiftReturnRef
+        }
+        return prefixed(ref: record.structRef)
     }
 
     /// return a prefixed ref for a given TypeReference
     @inlinable func prefixed(ref: TypeReference) -> TypeReference {
         let type = ref.type
-        let name = type.name
-        guard name.firstIndex(of: ".") == nil else { return ref }
-        let dottedPrefix = typeRef.type.name.dottedPrefix
-        guard !dottedPrefix.isEmpty else { return ref }
-        let prefixedName = (dottedPrefix + name).withNormalisedPrefix
-        let swName = (dottedPrefix + type.swiftName).withNormalisedPrefix
-        let prefixedType = GIRType(name: prefixedName, swiftName: swName, typeName: type.typeName, ctype: type.ctype, superType: type.parent, isAlias: type.isAlias, conversions: type.conversions)
-        let prefixedRef = TypeReference(type: prefixedType, identifier: ref.identifier, isConst: ref.isConst, isOptional: ref.isOptional, isArray: ref.isArray, constPointers: ref.constPointers)
+        guard type.namespace.isEmpty else { return ref }
+        let namespace = typeRef.type.namespace.asNormalisedPrefix
+        guard !namespace.isEmpty else { return ref }
+        let prefixedType = GIRType(name: type.name, in: namespace, swiftName: type.swiftName, typeName: type.typeName, ctype: type.ctype, superType: type.parent, isAlias: type.isAlias, conversions: type.conversions)
+        let prefixedRef = TypeReference(type: prefixedType, in: namespace, identifier: ref.identifier, isConst: ref.isConst, isOptional: ref.isOptional, isArray: ref.isArray, constPointers: ref.constPointers)
         return prefixedRef
     }
 
@@ -205,13 +205,14 @@ public extension GIR.CType {
         let idiomaticName = idiomaticWrappedTypeName
         let ref = typeRef
         let pointers = ref.knownIndirectionLevel
-        let typeName = ref.type.name
+        let underlyingType = ref.type
+        let prefixedTypeName = ref.type.name
         let name: String
-        if pointers == 1, let knownRecord = GIR.knownRecords[typeName] {
+        if pointers == 1, let knownRecord = GIR.knownRecords[prefixedTypeName] {
             let knownRef = useStruct ? knownRecord.structRef : (beingIdiomatic ? knownRecord.classRef : knownRecord.typeRef)
             let unprefixedName = knownRef.forceUnwrappedName
             if useStruct || beingIdiomatic {
-                let dottedPrefix = typeName.dottedPrefix
+                let dottedPrefix = prefixedTypeName.dottedPrefix
                 if dottedPrefix.isEmpty || unprefixedName.firstIndex(of: ".") != nil {
                     name = unprefixedName
                 } else {
@@ -221,12 +222,12 @@ public extension GIR.CType {
                 name = unprefixedName
             }
         } else if pointers == 0 && isKnownBitfield {
-            name = typeName
+            name = prefixedTypeName
         } else {
-            name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : ref.fullTypeName
+            name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : ref.fullUnderlyingTypeName(asOptional: underlyingType.isGPointer)
         }
         let normalisedName = name.withNormalisedPrefix
-        if (typeRef.isOptional || maybeOptional(for: record) || name.maybeCallback) && !name.hasSuffix("?") && !name.hasSuffix("!") {
+        if (typeRef.isOptional || maybeOptional(for: record) || name.maybeCallback) && !name.isOptional {
             return normalisedName + "!"
         } else {
             return normalisedName
@@ -263,12 +264,12 @@ public extension GIR.Argument {
     @inlinable
     var argumentTypeName: String {
         let swiftRef = swiftParamRef
-        let name = swiftRef.fullUnderlyingTypeName.withNormalisedPrefix
+        let name = swiftRef.fullUnderlyingTypeName(asOptional: containsGPointer ? true : nil).withNormalisedPrefix
         guard typeRef.type === swiftRef.type && (isScalarArray || swiftRef.indirectionLevel > 0) else {
             guard typeRef.knownIndirectionLevel != 0 || !isKnownBitfield else {
                 return typeRef.type.name.withNormalisedPrefix.swift
             }
-            let optionalName = ((isNullable || isOptional) && !(name.hasSuffix("!") || name.hasSuffix("?"))) ? (name + "!") : name
+            let optionalName = ((isNullable || isOptional) && !name.isOptional) ? (name + "!") : name
             return optionalName
         }
         let code = (isScalarArray ? "inout [" : "") + name + (isScalarArray ? "]" : "")
@@ -280,7 +281,7 @@ public extension GIR.Argument {
     @inlinable
     var callbackArgumentTypeName: String {
         let ref = typeRef
-        let rawName = ref.type.typeName == GIR.errorT ? ref.fullUnderlyingCName : ref.fullUnderlyingTypeName
+        let rawName = ref.type.typeName == GIR.errorT ? ref.fullUnderlyingCName : ref.fullUnderlyingTypeName()
         let name = rawName.withNormalisedPrefix
         guard typeRef.indirectionLevel != 0 && !name.hasSuffix("?") else { return name }
         let optionalName: String

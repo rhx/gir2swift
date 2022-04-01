@@ -126,10 +126,14 @@ extension GIR {
         /// - Note: This returns `false` if the indirection level is non-zero (e.g. for a `gpointer *`)
         @inlinable
         public var isGPointer: Bool {
-            guard typeRef.indirectionLevel == 0 else { return false }
+            return typeRef.indirectionLevel == 0 && containsGPointer
+        }
+
+        /// return whether the type contains a magical `gpointer` or related
+        @inlinable
+        public var containsGPointer: Bool {
             let type = typeRef.type
-            let name = type.typeName
-            return name == GIR.gpointer || name == GIR.gconstpointer
+            return type.isGPointer
         }
 
         /// return whether the receiver is an instance of the given record (class) or any of its ancestors

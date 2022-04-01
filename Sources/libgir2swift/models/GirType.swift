@@ -3,14 +3,14 @@
 //  libgir2swift
 //
 //  Created by Rene Hexel on 18/7/20.
-//  Copyright © 2020 Rene Hexel. All rights reserved.
+//  Copyright © 2020, 2022 Rene Hexel. All rights reserved.
 //
 import Foundation
 
 /// Representation of a fundamental type, its relationship to other types,
 /// and casting operations
 public class GIRType: Hashable {
-    /// Name of the type defined in the GIR file
+    /// Name of the type defined in the GIR file, without a namespace
     public let name: String
     /// Name of the type in Swift
     public var swiftName: String
@@ -18,6 +18,8 @@ public class GIRType: Hashable {
     public let typeName: String
     /// Name of the type in C
     public let ctype: String
+    /// Namespace for this type, empty if in the global namespace
+    public let namespace: String
     /// The supertype (or equivalent, if alias) of this type
     public var parent: TypeReference?
     /// Indicator whether this type is an alias that doesn't need casting
@@ -29,36 +31,118 @@ public class GIRType: Hashable {
     /// to a pointer, `5` is an immutable pointer to a pointer, etc.
     public var conversions: [GIRType : [TypeConversion]] = [:]
 
-    /// Swift name to use for casting: replaces trailing `!` with `?`
+    /// Return whether the type is a magic gpointer or related
+    @inlinable public var isGPointer: Bool {
+        return typeName == GIR.gpointer || typeName == GIR.gconstpointer
+    }
+    /// Convenience property, returning the dotted prefix
+    ///  - Note: this prefix is empty if the type is in the global namespace
+    @inlinable public var dottedPrefix: String {
+        guard !namespace.isEmpty else { return namespace }
+        return namespace + "."
+    }
+
+    /// Convenience property, returning the normalised, dotted prefix
+    ///  - Note: this prefix is empty if the type is in the global namespace
+    @inlinable public var normalisedDottedPrefix: String {
+        guard !namespace.isEmpty else { return namespace }
+        return namespace.asNormalisedPrefix + "."
+    }
+
+    /// Swift name to use for casting: removes trailing `!` and `?`
     @inlinable public var castName: String {
-        guard swiftName.hasSuffix("!") else {
+        guard !swiftName.isEmpty else { return swiftName }
+        let e = swiftName.index(before: swiftName.endIndex)
+        let lastChar = swiftName[e]
+        guard lastChar == "!" || lastChar == "?" else {
             return swiftName.hasSuffix("Ref") || GIR.knownBitfields[swiftName] != nil ? swiftName : typeName
         }
         let s = swiftName.startIndex
-        let e = swiftName.index(before: swiftName.endIndex)
-        return swiftName[s..<e] + "?"
+        return String(swiftName[s..<e])
     }
 
-    /// Return an equivalent type from the current namespace
-    @inlinable public var prefixed: GIRType {
-        guard !GIR.dottedPrefix.isEmpty && name.firstIndex(of: ".") == nil else { return self }
-        let prefixed = GIR.dottedPrefix.withNormalisedPrefix + name
-        let swPrefixed = swiftName.firstIndex(of: ".") == nil ? (GIR.dottedPrefix.withNormalisedPrefix + swiftName) : swiftName
-        return GIRType(name: prefixed, swiftName: swPrefixed, typeName: typeName, ctype: ctype, superType: parent, isAlias: isAlias, conversions: conversions)
+    /// Return the normalised, fully qualified name
+    @inlinable public var prefixedName: String { normalisedDottedPrefix + name }
+
+    /// Return the normalised, fully qualified name, if necessary
+    /// - Note: a prefix will only be used if the namespace is different from the current namespace
+    @inlinable public var namePrefixedWhereNecessary: String {
+        guard !namespace.isEmpty else { return name }
+        let prefix = namespace.asNormalisedPrefix
+        guard prefix != GIR.prefix else { return name }
+        return prefix + "." + name
     }
 
-    /// Designated initialiser for a GIR type
+//    /// Return an equivalent type from the current namespace
+//    @inlinable public var prefixed: GIRType {
+//        guard !GIR.dottedPrefix.isEmpty && namespace.isEmpty else { return self }
+//        let prefixed = GIR.dottedPrefix.withNormalisedPrefix + name
+//        let swPrefixed = swiftName.firstIndex(of: ".") == nil ? (GIR.dottedPrefix.withNormalisedPrefix + swiftName) : swiftName
+//        return GIRType(name: prefixed, swiftName: swPrefixed, typeName: typeName, ctype: ctype, superType: parent, isAlias: isAlias, conversions: conversions)
+//    }
+
+    /// Convenience initialiser for a GIR type in the current namespace
     /// - Parameters:
-    ///   - name: The name of the type
+    ///   - name: The fully qualified name of the type, uses `GIR.prefix` if unqualified
     ///   - swiftName: The name of the type in Swift (empty or `nil` if same as `name`)
     ///   - typeName: The name of the underlying type (empty or `nil` if same as `swiftName`)
     ///   - ctype: The name of the type in C
     ///   - superType: The parent or alias type (or `nil` if fundamental)
     ///   - isAlias: An indicator whether the type is an alias of its supertype that does not need casting
     @inlinable
-    public init(name: String, swiftName: String? = nil, typeName: String? = nil, ctype: String, superType: TypeReference? = nil, isAlias: Bool = false, conversions: [GIRType : [TypeConversion]] = [:]) {
+    public convenience init(name: String, swiftName: String? = nil, typeName: String? = nil, ctype: String, superType: TypeReference? = nil, isAlias: Bool = false, conversions: [GIRType : [TypeConversion]] = [:]) {
+        precondition(isAlias == false || superType != nil)
+        let basename: String
+        let namespace: String
+        if let dotIndex = name.firstIndex(of: ".") {
+            basename = String(name[name.startIndex..<dotIndex])
+            namespace = String(name[name.index(after: dotIndex)..<name.endIndex])
+        } else {
+            basename = name
+            namespace = GIR.prefix
+        }
+        self.init(name: basename, in: namespace, swiftName: swiftName, typeName: typeName, ctype: ctype, superType: superType, isAlias: isAlias, conversions: conversions)
+    }
+
+    /// Convenience initialiser for a top-level GIR type
+    /// - Note: this will record a type without a namespace
+    /// - Parameters:
+    ///   - knownName: The uqualified name of the type known at top level in the default `Swift` namespace.
+    ///   - swiftName: The name of the type in Swift (empty or `nil` if same as `name`)
+    ///   - typeName: The name of the underlying type (empty or `nil` if same as `swiftName`)
+    ///   - ctype: The name of the type in C
+    ///   - superType: The parent or alias type (or `nil` if fundamental)
+    ///   - isAlias: An indicator whether the type is an alias of its supertype that does not need casting
+    @inlinable
+    public convenience init(_ knownName: String, swiftName: String? = nil, typeName: String? = nil, ctype: String, superType: TypeReference? = nil, isAlias: Bool = false, conversions: [GIRType : [TypeConversion]] = [:]) {
+        precondition(isAlias == false || superType != nil)
+        let basename: String
+        let namespace: String
+        if let dotIndex = knownName.firstIndex(of: ".") {
+            basename = String(knownName[knownName.startIndex..<dotIndex])
+            namespace = String(knownName[knownName.index(after: dotIndex)..<knownName.endIndex])
+        } else {
+            basename = knownName
+            namespace = ""
+        }
+        self.init(name: basename, in: namespace, swiftName: swiftName, typeName: typeName, ctype: ctype, superType: superType, isAlias: isAlias, conversions: conversions)
+    }
+
+    /// Designated initialiser for a GIR type
+    /// - Parameters:
+    ///   - name: The name of the type without a namespace
+    ///   - namespace: The namespace (empty if top-level C)
+    ///   - swiftName: The name of the type in Swift (empty or `nil` if same as `name`)
+    ///   - typeName: The name of the underlying type (empty or `nil` if same as `swiftName`)
+    ///   - ctype: The name of the type in C
+    ///   - superType: The parent or alias type (or `nil` if fundamental)
+    ///   - isAlias: An indicator whether the type is an alias of its supertype that does not need casting
+    ///   - conversions: Conversion dictionary to use
+    @inlinable
+    public init(name: String, in namespace: String, swiftName: String? = nil, typeName: String? = nil, ctype: String, superType: TypeReference? = nil, isAlias: Bool = false, conversions: [GIRType : [TypeConversion]] = [:]) {
         precondition(isAlias == false || superType != nil)
         self.name = name
+        self.namespace = namespace
         let swiftDefault = swiftName.map { $0.isEmpty ? name : $0 } ?? name
         let swift = GIR.underlyingPrimitiveSwiftTypes[swiftDefault] ?? swiftDefault
         self.swiftName = swift
@@ -74,12 +158,13 @@ public class GIRType: Hashable {
     /// - Parameters:
     ///   - typeReference: A reference to the type to alias
     ///   - name: The name of the new alias, or `nil` if the same as the aliased type
+    ///   - namespace: The namespace to use,  `nil` to use namespace of referenced alias
     ///   - swiftName: The swift name of the new alias, or `nil` if the same as the aliased type
     ///   - ctype: The C type of the new alias, or `nil` if the same as the aliased type
     @inlinable
-    public convenience init(aliasOf typeReference: TypeReference, name: String? = nil, swiftName: String? = nil, ctype: String? = nil) {
+    public convenience init(aliasOf typeReference: TypeReference, name: String? = nil, in namespace: String? = nil, swiftName: String? = nil, ctype: String? = nil) {
         let t = typeReference.type
-        self.init(name: name ?? t.name, swiftName: swiftName ?? t.swiftName, ctype: ctype ?? t.ctype, superType: typeReference, isAlias: true, conversions: typeReference.indirectionLevel == 0 ? typeReference.type.conversions : [:])
+        self.init(name: name ?? t.name, in: namespace ?? t.namespace, swiftName: swiftName ?? t.swiftName, ctype: ctype ?? t.ctype, superType: typeReference, isAlias: true, conversions: typeReference.indirectionLevel == 0 ? typeReference.type.conversions : [:])
     }
 
     /// Initialise a new type as an alias of the given type reference,
@@ -87,12 +172,13 @@ public class GIRType: Hashable {
     /// - Parameters:
     ///   - aliasOf: The type to alias
     ///   - name: The name of the new alias, or `nil` if the same as the aliased type
+    ///   - namespace: The namespace to use,  `nil` to use namespace of referenced alias
     ///   - swiftName: The swift name of the new alias, or `nil` if the same as the aliased type
     ///   - ctype: The C type of the new alias, or `nil` if the same as the aliased type
     /// - Note: One of the name or type parameters should be non-`nil` for this alias to define a new type
     @inlinable
-    public convenience init(aliasOf: GIRType, name: String? = nil, swiftName: String? = nil, ctype: String? = nil) {
-        self.init(aliasOf: TypeReference(type: aliasOf), name: name, swiftName: swiftName, ctype: ctype)
+    public convenience init(aliasOf: GIRType, name: String? = nil, in namespace: String? = nil, swiftName: String? = nil, ctype: String? = nil) {
+        self.init(aliasOf: TypeReference(type: aliasOf), name: name, in: namespace ?? aliasOf.namespace, swiftName: swiftName, ctype: ctype)
     }
 
     /// Return an explicitly known cast to convert the given expression to the target type
@@ -238,6 +324,7 @@ public class GIRType: Hashable {
     ///   of this instance.
     @inlinable
     public func hash(into hasher: inout Hasher) {
+        hasher.combine(namespace)
         hasher.combine(name)
         hasher.combine(swiftName)
         hasher.combine(typeName)
@@ -317,18 +404,39 @@ public final class GIROpaquePointerType: GIRType {
 /// Return a known or new type reference for a given name and C type
 /// - Parameters:
 ///   - identifier: The identifier of this type reference
-///   - name: The name of the type
+///   - name: The name of the type without a namespace
+///   - namespace: The namespace this type is in
 ///   - swiftName: The name of the type to use in Swift (same as name if `nil`)
 ///   - typeName: The name of the underlying type (same as cType if `nil`)
 ///   - cType: The underlying C type
 ///   - isOptional: `true` if the reference is an optional
 /// - Returns: A type reference
-func typeReference(named identifier: String? = nil, for name: String, swiftName: String? = nil, typeName: String? = nil, cType: String, isOptional: Bool = false) -> TypeReference {
+func typeReference(named identifier: String? = nil, for name: String, in namespace: String? = nil, swiftName: String? = nil, typeName: String? = nil, cType: String, isOptional: Bool = false) -> TypeReference {
     let info = decodeIndirection(for: cType)
-    let maybeType = GIR.namedTypes[name]?.first { $0.ctype == info.innerType }
-    let type = maybeType ?? GIRType(name: name, swiftName: swiftName, typeName: typeName, ctype: info.innerType)
+    let prefixedName = namespace.map { $0 + "." + name } ?? name
+    let maybeType = GIR.namedTypes[prefixedName]?.first { $0.ctype == info.innerType }
+    let type = maybeType ?? GIRType(name: name, in: namespace ?? "", swiftName: swiftName, typeName: typeName, ctype: info.innerType)
     let t = addType(type)
-    return TypeReference(type: t, identifier: identifier, isConst: info.isConst, isOptional: isOptional, constPointers: info.indirection)
+    return TypeReference(type: t, in: namespace, identifier: identifier, isConst: info.isConst, isOptional: isOptional, constPointers: info.indirection)
+}
+
+/// Return a known or new type reference for an alias to a given type
+/// - Parameters:
+///   - original: The original type to alias
+///   - identifier: The identifier of this type reference
+///   - name: The name of the type without a namespace
+///   - namespace: The namespace this type is in
+///   - swiftName: The name of the type to use in Swift (same as name if `nil`)
+///   - cType: The underlying C type
+///   - isOptional: `true` if the reference is an optional
+/// - Returns: A type reference
+func typeReference(original: GIRType, named identifier: String? = nil, for name: String, in namespace: String? = nil, swiftName: String? = nil, cType: String, isOptional: Bool = false) -> TypeReference {
+    let info = decodeIndirection(for: cType)
+    let prefixedName = namespace.map { $0 + "." + name } ?? name
+    let maybeType = GIR.namedTypes[prefixedName]?.first { $0.ctype == info.innerType }
+    let type = maybeType ?? GIRType(aliasOf: original, name: name, in: namespace ?? "", swiftName: swiftName, ctype: info.innerType)
+    let t = addType(type)
+    return TypeReference(type: t, in: namespace, identifier: identifier, isConst: info.isConst, isOptional: isOptional, constPointers: info.indirection)
 }
 
 /// Add a new type to the list of known types
@@ -346,11 +454,25 @@ func addType(_ type: GIRType) -> GIRType {
 
 
 /// Add a known type to the name -> type mappings
+///
+/// This function will use both the unprefixed name (as is)
+/// as well at the prefixed name as a key to the dictionary.
 /// - Parameter type: The type to add
+/// - Parameter namedTypes: The dictionary to add the type to
 /// - Returns: An existing type matching the new type, or the passed in type if new
-@inlinable
-func addKnownType(_ type: GIRType, to namedTypes: inout [String : Set<GIRType>]) {
-    let name = type.name
+@inlinable func addKnownType(_ type: GIRType, to namedTypes: inout [String : Set<GIRType>]) {
+    addKnownType(type, to: &namedTypes, usingName: type.prefixedName)
+    let normalisedNamespace = type.namespace.asNormalisedPrefix
+    guard normalisedNamespace != type.namespace else { return }
+    addKnownType(type, to: &namedTypes, usingName: type.normalisedDottedPrefix + type.name)
+}
+
+/// Add a known type to the name -> type mappings
+/// - Parameter type: The type to add
+/// - Parameter namedTypes: The dictionary to add the type to
+/// - Parameter name: The name to use as a key into the dictionary
+/// - Returns: An existing type matching the new type, or the passed in type if new
+@inlinable func addKnownType(_ type: GIRType, to namedTypes: inout [String : Set<GIRType>], usingName name: String) {
     if namedTypes[name] == nil {
         namedTypes[name] = [type]
     } else {

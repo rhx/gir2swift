@@ -9,18 +9,18 @@ import Foundation
 @_functionBuilder class CodeBuilder {}
 #endif
 extension CodeBuilder {
-    /// Ignoring sequence is introduec in order to prevent superfulous line breaks in conditions 
-    static let ignoringEspace: String = "<%IGNORED%>"
+    /// Ignoring sequence is introduced in order to prevent superfulous line breaks in conditions 
+    static let unused: String = "<%IGN%>"
     
     /// Following static methods are documented in https://github.com/apple/swift-evolution/blob/main/proposals/0289-result-builders.md
     static func buildBlock( _ segments: String...) -> String {
-        segments.filter { $0 != CodeBuilder.ignoringEspace } .joined(separator: "\n")
+        segments.filter { $0 != CodeBuilder.unused } .joined(separator: "\n")
     }
     
     static func buildEither(first: String) -> String { first }
     static func buildEither(second: String) -> String { second }
     
-    static func buildOptional(_ component: String?) -> String { component ?? CodeBuilder.ignoringEspace }
+    static func buildOptional(_ component: String?) -> String { component ?? CodeBuilder.unused }
     static func buildIf(_ segment: String?) -> String { buildOptional(segment) }
 }
 
@@ -47,11 +47,11 @@ class Code {
     
     /// Loop provided as a replacement for missing for-in loop. This function will be removed in the future. For Enumerated variant use `loopEnumerated(over:builder:)`
     static func loop<T>(over items: [T], @CodeBuilder builder: (T)->String) -> String {
-        !items.isEmpty ? items.map(builder).joined(separator: "\n") : CodeBuilder.ignoringEspace
+        !items.isEmpty ? items.map(builder).joined(separator: "\n") : CodeBuilder.unused
     }
     
     /// Loop provided as a replacement for missing for-in loop. Array is returned as enumerated.
     static func loopEnumerated<T>(over items: [T], @CodeBuilder builder: (Int, T)->String) -> String {
-        !items.isEmpty ? items.enumerated().map(builder).joined(separator: "\n") : CodeBuilder.ignoringEspace
+        !items.isEmpty ? items.enumerated().map(builder).joined(separator: "\n") : CodeBuilder.unused
     }
 }
