@@ -416,39 +416,4 @@ final class gir2swiftTests: XCTestCase {
         XCTAssertEqual(i1.indirection, ri.constPointers)
         XCTAssertEqual(fi, si)
     }
-
-    static var allTests = [
-        ("testGIRTypes", testGIRTypes),
-        ("testGtkDoc2SwiftDoc", testGtkDoc2SwiftDoc),
-        ("testGtkDoc2SwiftDocNewline", testGtkDoc2SwiftDocNewline),
-        ("testGtkDoc2SwiftDocHTMLNewline", testGtkDoc2SwiftDocHTMLNewline),
-        ("testGtkDoc2SwiftDocHTMLlines", testGtkDoc2SwiftDocHTMLlines),
-        ("testGtkDoc2SwiftDocFunction", testGtkDoc2SwiftDocFunction),
-        ("testGtkDoc2SwiftDocFunctionParameters", testGtkDoc2SwiftDocFunctionParameters),
-        ("testGtkDoc2SwiftDocParam", testGtkDoc2SwiftDocParam),
-        ("testGtkDoc2SwiftDocConst", testGtkDoc2SwiftDocConst),
-        ("testGtkDoc2SwiftDocNullConstant", testGtkDoc2SwiftDocNullConstant),
-        ("testGtkDoc2SwiftDocTrueConstant", testGtkDoc2SwiftDocTrueConstant),
-        ("testGtkDoc2SwiftDocFalseConstant", testGtkDoc2SwiftDocFalseConstant),
-        ("testGtkDoc2SwiftDocSignal", testGtkDoc2SwiftDocSignal),
-        ("testGtkDoc2SwiftDocDashedSignal", testGtkDoc2SwiftDocDashedSignal),
-        ("testGtkDoc2SwiftDocObjectSignal", testGtkDoc2SwiftDocObjectSignal),
-        ("testGtkDoc2SwiftDocObjectProperty", testGtkDoc2SwiftDocObjectProperty),
-        ("testGtkDoc2SwiftDocStructField", testGtkDoc2SwiftDocStructField),
-        ("testGtkDoc2SwiftDocStructEndOfSentence", testGtkDoc2SwiftDocStructEndOfSentence),
-        ("testGtkDoc2SwiftDocStructEndOfFile", testGtkDoc2SwiftDocStructEndOfFile),
-        ("testGtkDoc2SwiftDocMarkdownHash", testGtkDoc2SwiftDocMarkdownHash),
-        ("testGtkDoc2SwiftDocMarkdownHashHash", testGtkDoc2SwiftDocMarkdownHashHash),
-        ("testGtkDoc2SwiftDocMarkdownHashHashHash", testGtkDoc2SwiftDocMarkdownHashHashHash),
-        ("testGtkDoc2SwiftDocMarkdownAnchor", testGtkDoc2SwiftDocMarkdownAnchor),
-        ("testGtkDoc2SwiftDocMarkdownHREF", testGtkDoc2SwiftDocMarkdownHREF),
-        ("testGtkDoc2SwiftDocTripleQuoted", testGtkDoc2SwiftDocTripleQuoted),
-        ("testGtkDoc2SwiftDocTripleQuotedLinePrefix", testGtkDoc2SwiftDocTripleQuotedLinePrefix),
-        ("testGtkDoc2SwiftDocTripleQuotedNewline", testGtkDoc2SwiftDocTripleQuotedNewline),
-        ("testGtkDoc2SwiftDocTripleQuotedNewlineLinePrefix", testGtkDoc2SwiftDocTripleQuotedNewlineLinePrefix),
-        ("testGtkDoc2SwiftDocTripleQuotedNewlinesLinePrefix", testGtkDoc2SwiftDocTripleQuotedNewlinesLinePrefix),
-        ("testGtkDoc2SwiftDocTripleQuotedLanguage", testGtkDoc2SwiftDocTripleQuotedLanguage),
-        ("testGtkDoc2SwiftDocTripleQuotedLanguageWhitespace", testGtkDoc2SwiftDocTripleQuotedLanguageWhitespace),
-        ("testSubstringFunctions", testSubstringFunctions),
-    ]
 }
