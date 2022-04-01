@@ -18,7 +18,13 @@ jobs:
   # Ubuntu 18.04 tasks
   build-ubuntu-18_04-swift-latest:
     runs-on: ubuntu-18.04
+- run: swift test
     steps:
+      - uses: actions/checkout@v2
+      - uses: YOCKOW/Action-setup-swift@v1
+        with:
+          swift-version: '5.6'
+
       - name: Print Swift version to confirm
         run: swift --version
 
