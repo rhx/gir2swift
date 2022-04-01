@@ -3,7 +3,7 @@
 //  libgir2swift
 //
 //  Created by Rene Hexel on 18/7/21.
-//  Copyright © 2021 Rene Hexel. All rights reserved.
+//  Copyright © 2021, 2022 Rene Hexel. All rights reserved.
 //
 import Foundation
 

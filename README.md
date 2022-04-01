@@ -20,6 +20,8 @@ To start a project that uses Swift wrappers around low-level libraries that util
 
 ## What is new?
 
+Version 15 provides a Package Manager Plugin.  This requires Swift 5.6 or higher.
+
 Version 14 automates post-processing using `sed` and `awk`, simplifying build-system integration.
 
 Version 13 uses [swift-argument-parser](https://github.com/apple/swift-argument-parser) instead of `getopt()`.
@@ -104,16 +106,16 @@ Normally, `gir2swift` tries to translate constants from C to Swift, as per the d
 
 ### Swift
 
-To build, you need at least Swift 5.2 (but some Linux distributions have issues and seem to **require at least Swift 5.5**), download from https://swift.org/download/ -- if you are using macOS, make sure you have the command line tools installed as well).  Test that your compiler works using `swift --version`, which should give you something like
+To build, you need at least Swift 5.6; download from https://swift.org/download/ -- if you are using macOS, make sure you have the command line tools installed as well).  Test that your compiler works using `swift --version`, which should give you something like
 
 	$ swift --version
-	Apple Swift version 5.5.2 (swiftlang-1300.0.47.5 clang-1300.0.29.30)
-    Target: x86_64-apple-macosx12.0
+	swift-driver version: 1.45.2 Apple Swift version 5.6 (swiftlang-5.6.0.323.62 clang-1316.0.20.8)
+    Target: x86_64-apple-darwin21.0.0
 
 on macOS, or on Linux you should get something like:
 
 	$ swift --version
-	Swift version 5.5.2 (swift-5.5.2-RELEASE)
+	Swift version 5.6.0 (swift-5.6.0-RELEASE)
 	Target: x86_64-unknown-linux-gnu
 
 ### LibXML 2.9.4 or higher

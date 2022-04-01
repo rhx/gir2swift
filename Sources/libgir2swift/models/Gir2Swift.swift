@@ -3,7 +3,7 @@
 //  libgir2swift
 //
 //  Created by Rene Hexel on 20/5/21.
-//  Copyright © 2021 Rene Hexel. All rights reserved.
+//  Copyright © 2021, 2022 Rene Hexel. All rights reserved.
 //
 import ArgumentParser
 import Foundation
@@ -43,9 +43,14 @@ public struct Gir2Swift: ParsableCommand {
     var prerequisiteGir: [String] = []
 
     /// Name of the output directory to write generated files to.
-    /// - Note: Writes generated code to `standardOutput` if `nil`
+    /// - Note: Writes generated code to `standardOutput` if empty
     @Option(name: .short, help: "Specify the output directory to put the generated files into.")
     var outputDirectory: String = ""
+
+    /// Name of the working directory to operate within.
+    /// - Note: Will use the current working directory if empty
+    @Option(name: .shortAndLong, help: "Specify the working directory (package directory of the target) to change into.")
+    var workingDirectory: String = ""
 
     /// Name of the library to pass to pkg-config
     /// - Note: Defaults to the lower-cased name of the `.gir` file
@@ -73,6 +78,11 @@ public struct Gir2Swift: ParsableCommand {
     
     /// Main function to run the `gir2swift command`
     mutating public func run() throws {
+        let fileManager = FileManager.default
+        guard workingDirectory.isEmpty || fileManager.changeCurrentDirectoryPath(workingDirectory) else {
+            fatalError("Cannot change into '\(workingDirectory)': \(String(cString: strerror(errno)))")
+        }
+
         let nTypesPrior = GIR.knownTypes.count
 
         let moduleBoilerPlate: String
@@ -92,24 +102,27 @@ public struct Gir2Swift: ParsableCommand {
         var pkgConfig = pkgConfigName
 
         let manifestPlan: Plan?
-        if let wd = getcwd() {
-            let manifestURL = URL(fileURLWithPath: wd).appendingPathComponent(manifest)
-            do {
-                let plan = try Plan(using: manifestURL)
-                girsToPreload.formUnion(plan.girFilesToPreload.map(\.path))
-                girFilesToGenerate.insert(plan.girFileToGenerate.path)
-                pkgConfig = pkgConfig ?? plan.pkgConfigName
-                for ns in plan.namespaces {
-                    guard !namespace.contains(ns) else { continue }
-                    namespace.append(ns)
-                }
-                manifestPlan = plan
-            } catch {
-                manifestPlan = nil
-                print("Failed to load \(girFilesToGenerate.map { ($0.split(separator: "/").last ?? "").split(separator: ".").first ?? "" }.joined(separator: ", ")) manifest\(girFilesToGenerate.count > 1 ? "s" : ""):\n    \(error)", to: &Streams.stdErr)
-            }
+        let manifestURL: URL
+        let wd = fileManager.currentDirectoryPath
+        let wdURL = URL(fileURLWithPath: wd)
+        if #available(macOS 10.11, *) {
+            manifestURL = URL(fileURLWithPath: manifest, relativeTo: wdURL)
         } else {
+            manifestURL = wdURL.appendingPathComponent(manifest)
+        }
+        do {
+            let plan = try Plan(using: manifestURL)
+            girsToPreload.formUnion(plan.girFilesToPreload.map(\.path))
+            girFilesToGenerate.insert(plan.girFileToGenerate.path)
+            pkgConfig = pkgConfig ?? plan.pkgConfigName
+            for ns in plan.namespaces {
+                guard !namespace.contains(ns) else { continue }
+                namespace.append(ns)
+            }
+            manifestPlan = plan
+        } catch {
             manifestPlan = nil
+            print("Failed to load \(girFilesToGenerate.map { ($0.split(separator: "/").last ?? "").split(separator: ".").first ?? "" }.joined(separator: ", ")) manifest\(girFilesToGenerate.count > 1 ? "s" : ""):\n    \(error)", to: &Streams.stdErr)
         }
 
         // pre-load gir files to ensure pre-requisite types are known

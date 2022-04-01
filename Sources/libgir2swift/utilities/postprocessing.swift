@@ -149,6 +149,11 @@ func postProcess(_ node: String, pkgConfigName: String, outputString: String, ou
         outputFiles.forEach {
             let o = $0 + ".out"
             do {
+                try fm.removeItem(atPath: $0)
+            } catch {
+                print("Cannot remove '\($0)': \(error)", to: &Streams.stdErr)
+            }
+            do {
                 try? fm.removeItem(atPath: $0)
                 try fm.moveItem(atPath: o, toPath: $0)
             } catch {

@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 20/5/2021.
-//  Copyright © 2016, 2017, 2018, 2019, 2020, 2021 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018, 2019, 2020, 2021, 2022 Rene Hexel. All rights reserved.
 //
 import Foundation
 import Dispatch
