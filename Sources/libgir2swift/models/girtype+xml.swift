@@ -53,7 +53,7 @@ extension SwiftLibXML.XMLElement {
             rawTypeRef = typeReference(named: identifier, for: name, in: namespace, typeName: plainType, cType: cName, isOptional: isNullable)
         }
         let typeRef = GIR.swiftFundamentalReplacements[rawTypeRef] ?? rawTypeRef
-        let newN = GIR.namedTypes[name]?.count ?? 0
+        let newN = GIR.namedTypes[prefixedName]?.count ?? 0
         let isNewType = oldN != newN
         guard isNewType, let typeXMLNode = children.filter({ $0.name == "type" }).first else {
             return typeRef
