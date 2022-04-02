@@ -25,9 +25,10 @@ extension SwiftLibXML.XMLElement {
         let namespace: String?
         let prefixedName: String
         if let n = nameAttr {
-            rawName = n
-            prefixedName = n == ctype ? n : GIR.dottedPrefix + n
-            namespace = n == ctype ? "" : GIR.prefix
+            rawName = n.unprefixed()
+            prefixedName = n.contains(".") ? n :
+                               (n == ctype ? n : GIR.dottedPrefix + n)
+            namespace = n == ctype ? "" : String(prefixedName.namespacePrefix)
         } else {
             rawName = innerName
             prefixedName = rawName

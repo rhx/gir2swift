@@ -31,6 +31,17 @@ public extension StringProtocol {
         firstIndex(of: ".").flatMap { self[startIndex...$0] } ?? ""
     }
 
+    /// Prefix for the string (empty if none)
+    ///
+    /// ```
+    /// "gtk.is.neat".namespacePrefix // "gtk."
+    /// "neat".namespacePrefix // ""
+    /// ```
+    ///
+    @inlinable var namespacePrefix: SubSequence {
+        firstIndex(of: ".").flatMap { self[startIndex..<$0] } ?? ""
+    }
+
     /// return the unprefixed version of the string
     /// (e.g. type without namespace)
     @inlinable func unprefixed(separator: String = ".") -> String {
