@@ -545,8 +545,8 @@ public func functionCode(_ f: GIR.Function, indentation: String = "    ", initia
 public func methodCode(_ indentation: String, initialIndentation: String? = nil, record: GIR.Record? = nil, functionPrefix: String = "", avoiding existingNames: Set<String> = [], publicDesignation: String = "public ", convertName: @escaping (String) -> String = { $0.snakeCase2camelCase }, ptr ptrName: String = "ptr") -> (GIR.Method) -> String {
     let indent = initialIndentation ?? indentation
     let doubleIndent = indent + indentation
-    let call = callCode(doubleIndent, record, ptr: ptrName)
-    let returnDeclaration = returnDeclarationCode()
+    let invocationCodeFor = callCode(doubleIndent, record, ptr: ptrName)
+    let returnDeclarationCodeFor = returnDeclarationCode()
     let ret = returnCode(indentation, ptr: ptrName)
     return { (method: GIR.Method) -> String in
         let rawName = method.name.isEmpty ? method.cname : method.name
@@ -592,8 +592,8 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
             let inlinable = "@inlinable "
             let funcDecl = deprecated + discardable + inlinable + publicDesignation + "func " + fname.swift + templateDecl
             let paramDecl = "(" + funcParam + ")"
-            let returnDecl = returnDeclaration(method)
-            let callCode = call(method)
+            let returnDecl = returnDeclarationCodeFor(method)
+            let callCode = invocationCodeFor(method)
             let returnCode = ret(method)
             let bodyCode = " {\n" +
                 indent + callCode +
@@ -616,8 +616,8 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
         let inlinable = "@inlinable "
         let funcDecl = deprecated + discardable + inlinable + publicDesignation + "func " + fname.swift + templateDecl
         let paramDecl = "(" + funcParam + ")"
-        let returnDecl = returnDeclaration(method)
-        let callCode = call(method)
+        let returnDecl = returnDeclarationCodeFor(method)
+        let callCode = invocationCodeFor(method)
         let returnCode = ret(method)
         let bodyCode = " {\n" + callCode + returnCode  + indent + "}\n"
         let fullFunction = indent + funcDecl + paramDecl + returnDecl + bodyCode
@@ -1002,23 +1002,22 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
             rvSwiftRef = !isConstructor ? (useRef ? rv.prefixedIdiomaticWrappedRef : rv.prefixedIdiomaticClassRef ) : rvRef
         }
         let invocationStart = method.cname.swift + "(\(args.map(toSwift).joined(separator: ", "))"
-        let call = invocationStart + invocationTail
-        let castCode = rvSwiftRef.cast(expression: isVoid ? call : "result", from: rvRef)
+        let invocation = invocationStart + invocationTail
+        let castCode = rvSwiftRef.cast(expression: isVoid ? invocation : "result", from: rvRef)
         let rvTypeName = isConstructor || !useRef ? "" : rv.prefixedIdiomaticWrappedTypeName
         let returnVariableEquals: String
-        let callCode: String
+        let invocationResultCode: String
         if isVoid {
             returnVariableEquals = ""
-            callCode = ""
+            invocationResultCode = ""
         } else {
-            let typeDeclaration = rvTypeName.isEmpty || castCode != call ? "" : (": " + rvTypeName)
+            let typeDeclaration = rvTypeName.isEmpty || castCode != invocation ? "" : (": " + rvTypeName)
+            invocationResultCode = "let result = " + invocation
             returnVariableEquals = "let " + maybeRV + typeDeclaration + " = "
-            callCode = "let result = " + call
         }
-//        let code = errCode + callCode + conditional + throwCode + varCode + castCode + suffix
         let code = Code.block(indentation: indentation) {
             errorVariableDeclaration
-            callCode
+            invocationResultCode
             potentialGuard + potentialThrow + returnVariableEquals + castCode + suffix
             nilGuardCode
         }

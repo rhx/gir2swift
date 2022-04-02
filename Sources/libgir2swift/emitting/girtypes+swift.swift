@@ -202,7 +202,7 @@ public extension GIR.CType {
 
     /// return the idiomatic/non-idiomatic return type name
     @inlinable func returnTypeName(for record: GIR.Record? = nil, beingIdiomatic: Bool = true, useStruct: Bool = true) -> String {
-        let idiomaticName = idiomaticWrappedTypeName
+        let idiomaticName = prefixedIdiomaticWrappedTypeName
         let ref = typeRef
         let pointers = ref.knownIndirectionLevel
         let underlyingType = ref.type
