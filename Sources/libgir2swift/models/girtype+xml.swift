@@ -17,7 +17,7 @@ extension SwiftLibXML.XMLElement {
         let typeName = attribute(named: "type-name")?.withNormalisedPrefix
         let ctype = attribute(named: "type")?.withNormalisedPrefix ?? typeName
         let nameAttr = attribute(named: "name")?.withNormalisedPrefix
-        guard let cAttr = ctype ?? nameAttr else { return .void }
+        guard let cAttr = ctype ?? nameAttr, nameAttr != "none" else { return .void }
         let cReference = decodeIndirection(for: cAttr)
         let innerType = cReference.innerType
         let innerName = innerType.isEmpty ? type.type.name : innerType
