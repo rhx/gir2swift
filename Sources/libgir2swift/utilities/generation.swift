@@ -125,11 +125,10 @@ extension Gir2Swift {
                 }
             }
             func writebg(queue: DispatchQueue = background, _ string: String, to fileName: String, append doAppend: Bool = false) {
-                queue.async(group: queues) { write(string, to: fileName) }
+                queue.async(group: queues) { write(string, to: fileName, append: doAppend) }
             }
             func write<T: GIR.Record>(_ types: [T], using ptrconvert: (String) -> (GIR.Record) -> String) {
                 if let dir = outputDirectory {
-                    writebg(modulePrefix, to: "\(dir)/\(node).swift")
                     var output = ""
                     var first: Character? = nil
                     var firstName = ""
@@ -145,15 +144,10 @@ extension Gir2Swift {
                         let f: String
                         if useAlphaNames {
                             name = firstChar.isASCII && firstChar.isLetter ? type.className.upperInitial : "@"
-                            guard first != nil && first != firstChar else {
-                                if first == nil {
-                                    first = firstChar
-                                    firstName = name
-                                    let i = Int((name.utf8.first ?? atChar) - atChar)
-                                    alphaq = alphaQueues[i]
-                                }
-                                continue
-                            }
+                            first = firstChar
+                            firstName = name
+                            let i = Int((name.utf8.first ?? atChar) - atChar)
+                            alphaq = alphaQueues[i]
                             f = "\(dir)/\(node)-\(firstName).swift"
                         } else {
                             guard singleFilePerClass || ( first != nil && first != firstChar ) else {
@@ -190,6 +184,7 @@ extension Gir2Swift {
             }
 
             if let dir = outputDirectory {
+                writebg(modulePrefix, to: "\(dir)/\(node).swift")
                 DispatchQueue.concurrentPerform(iterations: 27) { i in
                     let ascii = atChar + UInt8(i)
                     let f = "\(dir)/\(node)-\(Character(UnicodeScalar(ascii))).swift"
