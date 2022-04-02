@@ -75,6 +75,8 @@ struct GirPackageMetadata {
 /// Structure, that is used to determine generation process.
 struct Plan {
 
+    /// A type representing errors that occur when building
+    /// a plan from a manifest
     enum Error: Swift.Error {
         case girNotFound(named: String)
         case girParsingFailed(path: String)
@@ -113,14 +115,17 @@ struct Plan {
     /// potential location of the gir files.
     ///
     /// - Parameter manifestURL: Path to manifest
+    /// - Parameter isVerbose: Print warnings if `true`
     /// - Throws: Error may represent various error states, differing from the inability to read
     /// the `.yaml` file, a `.gir` file or error during consulting `pkg-config`.
-    init(using manifestURL: URL) throws {
+    init(using manifestURL: URL, isVerbose: Bool) throws {
         let data = try Data(contentsOf: manifestURL, options: .mappedIfSafe)
         let manifest = try YAMLDecoder().decode(Manifest.self, from: data)
         let pkgConfig = manifest.pkgConfig ?? {
             let assumedPkgName = manifest.girName.lowercased()
-            print("Warning: pkg-config package name was not specified, using modified gir name `\(assumedPkgName)` instead.", to: &Streams.stdErr)
+            if isVerbose {
+                print("\nWarning: pkg-config package name was not specified,\nusing modified gir name `\(assumedPkgName)` instead.", to: &Streams.stdErr)
+            }
             return assumedPkgName
         }()
         
@@ -156,12 +161,18 @@ struct Plan {
         // Path relative to the `libdir` variable of the package, where the `.gir` files are commonly located. This path is arbitrary!
         let homebrewRelativeGirLocation = "../share/gir-1.0/"
         // All pkg-config packages passed in the argument are scanned and their `libdir` values are reported.
-        // TODO: This is major performance hit. Optimization desirable.
+        // TODO: This is a major performance hit. Optimization desirable.
         let homebrewPaths = pkgConfig.compactMap { pkgName -> URL? in 
             let libDir = try? executeAndWait("env", arguments: ["pkg-config", "--variable=libdir", pkgName])
             return libDir.flatMap { 
-                let libDirUrl = URL(fileURLWithPath: $0, isDirectory: true)
-                return URL(string: homebrewRelativeGirLocation, relativeTo: libDirUrl)
+                let libDirURL = URL(fileURLWithPath: $0, isDirectory: true)
+                let manifestURL: URL?
+                if #available(macOS 10.11, *) {
+                    manifestURL = URL(fileURLWithPath: homebrewRelativeGirLocation, relativeTo: libDirURL)
+                } else {
+                    manifestURL = URL(string: homebrewRelativeGirLocation, relativeTo: libDirURL)
+                }
+                return manifestURL
             }
         }
 

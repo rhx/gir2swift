@@ -111,7 +111,7 @@ public struct Gir2Swift: ParsableCommand {
             manifestURL = wdURL.appendingPathComponent(manifest)
         }
         do {
-            let plan = try Plan(using: manifestURL)
+            let plan = try Plan(using: manifestURL, isVerbose: verbose)
             girsToPreload.formUnion(plan.girFilesToPreload.map(\.path))
             girFilesToGenerate.insert(plan.girFileToGenerate.path)
             pkgConfig = pkgConfig ?? plan.pkgConfigName
