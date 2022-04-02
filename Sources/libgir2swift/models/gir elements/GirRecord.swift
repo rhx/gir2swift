@@ -187,14 +187,14 @@ extension GIR {
         }
 
         /// Type of the Protocol for this record
-        @inlinable public var protocolType: GIRType { GIRType(name: protocolName, typeName: protocolName, ctype: "") }
+        @inlinable public var protocolType: GIRType { GIRType(name: protocolName, in: typeRef.namespace, typeName: protocolName, ctype: "") }
 
         /// Protocol reference for this record
         @inlinable public var protocolRef: TypeReference { TypeReference(type: protocolType) }
 
         /// Type of the `Ref` struct for this record
         @inlinable
-        public var structType: GIRRecordType { GIRRecordType(name: structName, typeName: structName, ctype: "", superType: protocolRef) }
+        public var structType: GIRRecordType { GIRRecordType(name: structName, in: typeRef.namespace, typeName: structName, ctype: "", superType: protocolRef) }
 
         /// Struct reference for this record
         @inlinable public var structRef: TypeReference { TypeReference(type: structType) }

@@ -111,7 +111,7 @@ public final class GIR {
           withUnsafeMutablePointer(to: &GIR.knownRecords) { (knownRecords: UnsafeMutablePointer<[ String : Record]>) -> Void in
             withUnsafeMutablePointer(to: &GIR.knownBitfields) { (knownBitfields: UnsafeMutablePointer<[ String : Bitfield]>) -> Void in
             let prefixed: (String) -> String = { $0.prefixed(with: self.prefix) }
-            
+
             func setKnown<T>(_ d: UnsafeMutablePointer<[ String : T]>) -> (String, T) -> Bool {
                 return { (name: String, type: T) -> Bool in
                     guard d.pointee[name] == nil || d.pointee[prefixed(name)] == nil else { return false }

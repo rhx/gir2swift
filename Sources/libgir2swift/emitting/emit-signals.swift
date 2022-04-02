@@ -99,8 +99,9 @@ func buildSignalExtension(for record: GIR.Record) -> String {
             Code.loop(over: record.signals.filter( {signalSanityCheck($0).isEmpty } )) { signal in
                 buildAvailableSignal(record: record, signal: signal)
             }
-            // Generation of property obsevers. Property observers have the same delcaration as GObject signal `notify`. This sinal should be available at all times.
-            if let notifySignal = GIR.knownRecords["Object"]?.signals.first(where: { $0.name == "notify"}) {
+            // Generation of property obsevers. Property observers have the same declaration as GObject signal `notify`. This sinal should be available at all times.
+            if let knownObject = GIR.knownRecords["GLibObject.Object"] ?? GIR.knownRecords["Object"],
+               let notifySignal = knownObject.signals.first(where: { $0.name == "notify"}) {
                 Code.loop(over: record.properties) { property in
                     buildSignalForProperty(record: record, property: property, notify: notifySignal)
                 }

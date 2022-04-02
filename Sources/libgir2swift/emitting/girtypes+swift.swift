@@ -206,9 +206,9 @@ public extension GIR.CType {
         let ref = typeRef
         let pointers = ref.knownIndirectionLevel
         let underlyingType = ref.type
-        let prefixedTypeName = ref.type.name
+        let prefixedTypeName = ref.type.prefixedName
         let name: String
-        if pointers == 1, let knownRecord = GIR.knownRecords[prefixedTypeName] {
+        if pointers == 1, let knownRecord = GIR.knownRecords[prefixedTypeName] ?? GIR.knownRecords[ref.type.name] {
             let knownRef = useStruct ? knownRecord.structRef : (beingIdiomatic ? knownRecord.classRef : knownRecord.typeRef)
             let unprefixedName = knownRef.forceUnwrappedName
             if useStruct || beingIdiomatic {

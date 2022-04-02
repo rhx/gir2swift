@@ -183,12 +183,12 @@ extension GIR {
         //// return the known class/record of the argument (nil if not known)
         @inlinable
         public var knownRecord: GIR.Record? {
-            typeRef.knownIndirectionLevel == 1 ? GIR.knownRecords[typeRef.type.name] : nil
+            typeRef.knownIndirectionLevel == 1 ? GIR.knownRecords[typeRef.type.prefixedName] ?? GIR.knownRecords[typeRef.type.name] : nil
         }
         
         //// return the known bitfield the argument represents (nil if not known)
         @inlinable
-        public var knownBitfield: GIR.Bitfield? { return GIR.knownBitfields[typeRef.type.name] }
+        public var knownBitfield: GIR.Bitfield? { return GIR.knownBitfields[typeRef.type.prefixedName] ?? GIR.knownBitfields[typeRef.type.name] }
 
         /// indicates whether the receiver is a known type
         @inlinable
