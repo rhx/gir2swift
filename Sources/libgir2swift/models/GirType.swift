@@ -329,7 +329,8 @@ public class GIRType: Hashable {
         hasher.combine(swiftName)
         hasher.combine(typeName)
         hasher.combine(ctype)
-//        hasher.combine(isAlias)
+        hasher.combine(isAlias)
+        hasher.combine(parent?.type)
     }
 }
 
