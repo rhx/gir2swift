@@ -159,7 +159,13 @@ public extension String {
 
     /// Return the normalised version of the namespace represented by the receiver
     @inlinable var asNormalisedPrefix: String {
-        GIR.namespaceReplacements[Substring(self)].map(String.init) ?? self
+        let isDotted = hasSuffix(".")
+        return GIR.namespaceReplacements[Substring(isDotted ? self : (self + "."))].map {
+            guard !isDotted && !$0.isEmpty else { return String($0) }
+            let s = $0.startIndex
+            let e = $0.index(before: $0.endIndex)
+            return String($0[s..<e])
+        } ?? self
     }
 }
 
@@ -167,7 +173,13 @@ public extension String {
 public extension Substring {
     /// Return the normalised version of the namespace represented by the receiver
     @inlinable var asNormalisedPrefix: Substring {
-        GIR.namespaceReplacements[self] ?? self
+        let isDotted = hasSuffix(".")
+        return GIR.namespaceReplacements[isDotted ? self : Substring(self + ".")].map {
+            guard !isDotted && !$0.isEmpty else { return $0 }
+            let s = $0.startIndex
+            let e = $0.index(before: $0.endIndex)
+            return $0[s..<e]
+        } ?? self
     }
 }
 

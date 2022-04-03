@@ -52,25 +52,43 @@ public class GIRType: Hashable {
     /// Swift name to use for casting: removes trailing `!` and `?`
     @inlinable public var castName: String {
         guard !swiftName.isEmpty else { return swiftName }
-        let e = swiftName.index(before: swiftName.endIndex)
-        let lastChar = swiftName[e]
+        let nm = swiftNamePrefixedWhereNecessary
+        let e = nm.index(before: nm.endIndex)
+        let lastChar = nm[e]
         guard lastChar == "!" || lastChar == "?" else {
-            return swiftName.hasSuffix("Ref") || GIR.knownBitfields[swiftName] != nil ? swiftName : typeName
+            return nm.hasSuffix("Ref") || GIR.knownBitfields[nm] != nil ? nm : typeNamePrefixedWhereNecessary
         }
-        let s = swiftName.startIndex
-        return String(swiftName[s..<e])
+        let s = nm.startIndex
+        return prefixedWhereNecessary(String(nm[s..<e]))
     }
 
     /// Return the normalised, fully qualified name
     @inlinable public var prefixedName: String { normalisedDottedPrefix + name }
 
-    /// Return the normalised, fully qualified name, if necessary
-    /// - Note: a prefix will only be used if the namespace is different from the current namespace
-    @inlinable public var namePrefixedWhereNecessary: String {
+    /// Return the given name, prefixed if necessary
+    @inlinable public func prefixedWhereNecessary(_ name: String) -> String {
         guard !namespace.isEmpty else { return name }
         let prefix = namespace.asNormalisedPrefix
         guard prefix != GIR.prefix else { return name }
         return prefix + "." + name
+    }
+
+    /// Return the normalised, fully qualified name, if necessary
+    /// - Note: a prefix will only be used if the namespace is different from the current namespace
+    @inlinable public var namePrefixedWhereNecessary: String {
+        prefixedWhereNecessary(name)
+    }
+
+    /// Return the normalised, fully qualified name, if necessary
+    /// - Note: a prefix will only be used if the namespace is different from the current namespace
+    @inlinable public var swiftNamePrefixedWhereNecessary: String {
+        prefixedWhereNecessary(swiftName)
+    }
+
+    /// Return the normalised, fully qualified name, if necessary
+    /// - Note: a prefix will only be used if the namespace is different from the current namespace
+    @inlinable public var typeNamePrefixedWhereNecessary: String {
+        prefixedWhereNecessary(typeName)
     }
 
 //    /// Return an equivalent type from the current namespace
@@ -234,7 +252,7 @@ public class GIRType: Hashable {
                 let sourceC = source.ctype
                 if sourceC == GIR.gpointer || sourceC == GIR.gconstpointer {
                     if GIR.refRecords[self] != nil {
-                        return name + "(" + sourceC + ": " + e + ")"
+                        return namePrefixedWhereNecessary + "(" + sourceC + ": " + e + ")"
                     }
                 }
             }
@@ -312,9 +330,11 @@ public class GIRType: Hashable {
     /// - Returns: `true` if both types are considered equal
     @inlinable
     public static func == (lhs: GIRType, rhs: GIRType) -> Bool {
-        return /* lhs.isAlias == rhs.isAlias && lhs.parent == rhs.parent && */
-            lhs.ctype == rhs.ctype
-            && lhs.name == rhs.name && lhs.swiftName == rhs.swiftName && lhs.typeName == rhs.typeName
+        lhs.ctype == rhs.ctype &&
+        lhs.name == rhs.name   &&
+        lhs.namespace == rhs.namespace &&
+        lhs.swiftName == rhs.swiftName &&
+        lhs.typeName == rhs.typeName
     }
 
     /// Hashes the essential components of this type by feeding them into the
@@ -329,8 +349,6 @@ public class GIRType: Hashable {
         hasher.combine(swiftName)
         hasher.combine(typeName)
         hasher.combine(ctype)
-        hasher.combine(isAlias)
-        hasher.combine(parent?.type)
     }
 }
 
