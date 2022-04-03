@@ -87,14 +87,18 @@ public extension GIR.CType {
         let className = record.className
         let protocolName = record.protocolName
         let typeName = typeRef.type.name
-        let prefix = typeName.girDottedPrefix
+        let prefix = typeRef.type.dottedPrefix
+        let normalisedPrefix = prefix.asNormalisedPrefix
+        let templateName: String
         let name: String
-        if GIR.dottedPrefix != prefix && typeName.hasSuffix(className) {
-            name = prefix + protocolName
+        if GIR.dottedPrefix != prefix && GIR.dottedPrefix != normalisedPrefix && typeName.hasSuffix(className) {
+            name = normalisedPrefix + protocolName
+            templateName = typeRef.type.namespace + className.capitalised
         } else {
             name = protocolName
+            templateName = className
         }
-        return className + "T: " + name
+        return templateName + "T: " + name
     }
 
     /// return a directly referenced known record, `nil` otherwise
@@ -312,7 +316,16 @@ public extension GIR.Argument {
         guard let record = knownRecordReference else {
             return argumentTypeName
         }
-        let templateName = record.className + "T"
+        let className = record.className
+        let prefix = typeRef.type.dottedPrefix
+        let normalisedPrefix = prefix.asNormalisedPrefix
+        let templatePrefix: String
+        if GIR.dottedPrefix != prefix && GIR.dottedPrefix != normalisedPrefix {
+            templatePrefix = typeRef.type.namespace + className.capitalised
+        } else {
+            templatePrefix = className
+        }
+        let templateName = templatePrefix + "T"
         let typeName = isNullable ? (templateName + "?") : templateName
         return typeName
     }
@@ -326,17 +339,19 @@ public extension GIR.Argument {
         }
         let templateName: String
         if allowNone {
-            let className = record.className
-            let protocolName = record.structName
-            let typeName = typeRef.type.name
-            let prefix = typeName.girDottedPrefix
-            if GIR.dottedPrefix != prefix && typeName.hasSuffix(className) {
-                templateName = prefix + protocolName
-            } else {
-                templateName = protocolName
-            }
+            let refName = record.structName
+            templateName = record.typeRef.type.prefixedWhereNecessary(refName)
         } else {
-            templateName = record.className + "T"
+            let className = record.className
+            let prefix = typeRef.type.dottedPrefix
+            let normalisedPrefix = prefix.asNormalisedPrefix
+            let templatePrefix: String
+            if GIR.dottedPrefix != prefix && GIR.dottedPrefix != normalisedPrefix {
+                templatePrefix = typeRef.type.namespace + className.capitalised
+            } else {
+                templatePrefix = className
+            }
+            templateName = templatePrefix + "T"
         }
         let typeName = isNullable ? (templateName + "?") : templateName
         return typeName
