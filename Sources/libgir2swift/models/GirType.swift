@@ -67,7 +67,7 @@ public class GIRType: Hashable {
 
     /// Return the given name, prefixed if necessary
     @inlinable public func prefixedWhereNecessary(_ name: String) -> String {
-        guard !namespace.isEmpty else { return name }
+        guard !namespace.isEmpty && namespace != GIR.prefix else { return name }
         let prefix = namespace.asNormalisedPrefix
         guard prefix != GIR.prefix else { return name }
         return prefix + "." + name
