@@ -159,7 +159,7 @@ public extension GIR.CType {
     /// explicit, idiomatic type name (empty if same as the underlying C type)
     @inlinable var idiomaticWrappedTypeName: String {
         let ref = idiomaticWrappedRef
-        guard ref == swiftReturnRef else { return ref.type.swiftName }
+        guard ref == swiftReturnRef else { return ref.type.swiftNamePrefixedWhereNecessary }
         guard ref != typeRef else { return "" }
         let typeName = swiftReturnRef.fullTypeName
         return typeName
@@ -168,7 +168,7 @@ public extension GIR.CType {
     /// explicit, idiomatic type name (empty if same as the underlying C type)
     @inlinable var prefixedIdiomaticWrappedTypeName: String {
         let ref = prefixedIdiomaticWrappedRef
-        guard ref == swiftReturnRef else { return ref.type.swiftName }
+        guard ref == swiftReturnRef else { return ref.type.swiftNamePrefixedWhereNecessary }
         guard ref != typeRef else { return "" }
         let typeName = swiftReturnRef.fullTypeName
         return typeName
@@ -177,7 +177,7 @@ public extension GIR.CType {
     /// explicit, idiomatic class type name (empty if same as the underlying C type)
     @inlinable var idiomaticClassTypeName: String {
         let ref = idiomaticClassRef
-        guard ref == swiftReturnRef else { return ref.type.swiftName }
+        guard ref == swiftReturnRef else { return ref.type.swiftNamePrefixedWhereNecessary }
         guard ref != typeRef else { return "" }
         let typeName = swiftReturnRef.fullTypeName
         return typeName
@@ -186,7 +186,7 @@ public extension GIR.CType {
     /// explicit, idiomatic class type name (empty if same as the underlying C type)
     @inlinable var prefixedIdiomaticClassTypeName: String {
         let ref = prefixedIdiomaticClassRef
-        guard ref == swiftReturnRef else { return ref.type.swiftName }
+        guard ref == swiftReturnRef else { return ref.type.swiftNamePrefixedWhereNecessary }
         guard ref != typeRef else { return "" }
         let typeName = swiftReturnRef.fullTypeName
         return typeName
