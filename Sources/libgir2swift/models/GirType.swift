@@ -52,11 +52,24 @@ public class GIRType: Hashable {
     /// Swift name to use for casting: removes trailing `!` and `?`
     @inlinable public var castName: String {
         guard !swiftName.isEmpty else { return swiftName }
-        let nm = swiftNamePrefixedWhereNecessary
+        let nm = swiftName == ctype ? swiftName : swiftNamePrefixedWhereNecessary
         let e = nm.index(before: nm.endIndex)
         let lastChar = nm[e]
         guard lastChar == "!" || lastChar == "?" else {
             return nm.hasSuffix("Ref") || GIR.knownBitfields[nm] != nil ? nm : typeNamePrefixedWhereNecessary
+        }
+        let s = nm.startIndex
+        return prefixedWhereNecessary(String(nm[s..<e]))
+    }
+
+    /// Type name to use for casting: removes trailing `!` and `?`
+    @inlinable public var castTypeName: String {
+        guard !typeName.isEmpty else { return typeName }
+        let nm = typeNamePrefixedWhereNecessary
+        let e = nm.index(before: nm.endIndex)
+        let lastChar = nm[e]
+        guard lastChar == "!" || lastChar == "?" else {
+            return nm
         }
         let s = nm.startIndex
         return prefixedWhereNecessary(String(nm[s..<e]))
@@ -88,7 +101,7 @@ public class GIRType: Hashable {
     /// Return the normalised, fully qualified name, if necessary
     /// - Note: a prefix will only be used if the namespace is different from the current namespace
     @inlinable public var typeNamePrefixedWhereNecessary: String {
-        prefixedWhereNecessary(typeName)
+        typeName == ctype ? typeName : prefixedWhereNecessary(typeName)
     }
 
 //    /// Return an equivalent type from the current namespace
@@ -317,7 +330,7 @@ public class GIRType: Hashable {
             return RawPointerConversion(source: self, target: self).castFromTarget(expression: e)
         } else {
             let ptr = const ? "UnsafePointer" : "UnsafeMutablePointer"
-            prefix = ptr + "<" + castName + ">"
+            prefix = ptr + "<" + castTypeName + ">"
         }
         return prefix + "(" + e + ")"
     }

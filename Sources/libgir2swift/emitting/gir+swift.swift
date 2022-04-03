@@ -642,7 +642,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
 /// Swift code for computed properties
 public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoiding existingNames: Set<String> = [], publicDesignation: String = "public ", ptr ptrName: String = "ptr") -> (GetterSetterPair) -> String {
     let doubleIndent = indentation + indentation
-//    let tripleIndent = doubleIndent + indentation
+    let tripleIndent = doubleIndent + indentation
     let gcall = callCode(doubleIndent, record, ptr: ptrName, doThrow: false)
     let scall = callSetter(doubleIndent, record, ptr: ptrName)
     let ret = returnCode(doubleIndent, ptr: ptrName)
@@ -685,7 +685,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoi
         let setterCode: String
         if let setter = pair.setter {
             let deprecated = setter.deprecated != nil ? "@available(*, deprecated) " : ""
-            let codePrefix = ((doubleIndent + "\(deprecated)nonmutating set {\n") + doubleIndent)
+            let codePrefix = ((doubleIndent + "\(deprecated)nonmutating set {\n") + tripleIndent)
             let codeError = (setter.throwsError ? (
                 (indentation + "var error: UnsafeMutablePointer<\(GIR.gerror)>?\n") + doubleIndent
             ) : "")
@@ -693,7 +693,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoi
             let codeSuffix = (setter.throwsError ? ( doubleIndent +
                                     "g_log(messagePtr: error?.pointee.message, level: .error)\n"
                                   ) : "") +
-            (indentation + "}\n")
+            (doubleIndent + "}\n")
             setterCode = swiftCode(setter, codePrefix + codeError + codeCall + codeSuffix, indentation: doubleIndent)
         } else {
             setterCode = ""
@@ -951,25 +951,44 @@ public func returnCode<T>(_ indentation: String, _ tr: (typeRef: TypeReference, 
 /// Swift code for calling the underlying function and assigning the raw return value
 public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: String = "ptr", rvVar: String = "rv", doThrow: Bool = true, isConstructor: Bool = false, useStruct useRef: Bool = true) -> (GIR.Method) -> String {
     var hadInstance = false
-    let toSwift: (GIR.Argument) -> String = { arg in
-        let name = arg.argumentName
-        guard !arg.isScalarArray else { return "&" + name }
-        let instance = !hadInstance && (arg.instance || arg.isInstanceOf(record))
-        if instance { hadInstance = true }
-        let argPtrName: String
-        if let knownRecord = arg.knownRecord {
-            argPtrName = (arg.isNullable ? "?." : ".") + knownRecord.ptrName
-        } else if arg.typeRef.indirectionLevel == 0 && arg.isKnownBitfield {
-            argPtrName = arg.isNullable || arg.isOptional ? ".value ?? 0" : ".value"
-        } else {
-            argPtrName = ""
-        }
-        let varName = instance ? ptr : (name + argPtrName)
-        let ref = arg.typeRef
-        let param = ref.cast(expression: varName, from: arg.swiftParamRef)
-        return param
-    }
+//    let toSwift: (GIR.Argument) -> String = { arg in
+//        let name = arg.argumentName
+//        guard !arg.isScalarArray else { return "&" + name }
+//        let instance = !hadInstance && (arg.instance || arg.isInstanceOf(record))
+//        if instance { hadInstance = true }
+//        let argPtrName: String
+//        if let knownRecord = arg.knownRecord {
+//            argPtrName = (arg.isNullable ? "?." : ".") + knownRecord.ptrName
+//        } else if arg.typeRef.indirectionLevel == 0 && arg.isKnownBitfield {
+//            argPtrName = arg.isNullable || arg.isOptional ? ".value ?? 0" : ".value"
+//        } else {
+//            argPtrName = ""
+//        }
+//        let varName = instance ? ptr : (name + argPtrName)
+//        let ref = arg.typeRef
+//        let param = ref.cast(expression: varName, from: arg.swiftParamRef)
+//        return param
+//    }
     return { method in
+        let toSwift: (GIR.Argument) -> String = { arg in
+            let name = arg.argumentName
+            let cname = method.cname
+            guard !arg.isScalarArray else { return "&" + name }
+            let instance = !hadInstance && (arg.instance || arg.isInstanceOf(record))
+            if instance { hadInstance = true }
+            let argPtrName: String
+            if let knownRecord = arg.knownRecord {
+                argPtrName = (arg.isNullable ? "?." : ".") + knownRecord.ptrName
+            } else if arg.typeRef.indirectionLevel == 0 && arg.isKnownBitfield {
+                argPtrName = arg.isNullable || arg.isOptional ? ".value ?? 0" : ".value"
+            } else {
+                argPtrName = ""
+            }
+            let varName = instance ? ptr : (name + argPtrName)
+            let ref = arg.typeRef
+            let param = ref.cast(expression: varName, from: arg.swiftParamRef)
+            return param
+        }
         hadInstance = false
         let throwsError = method.throwsError
         let args = method.args // not .lazy
