@@ -90,15 +90,15 @@ public extension GIR.CType {
         let prefix = typeRef.type.dottedPrefix
         let normalisedPrefix = prefix.asNormalisedPrefix
         let templateName: String
-        let name: String
-        if GIR.dottedPrefix != prefix && GIR.dottedPrefix != normalisedPrefix && typeName.hasSuffix(className) {
-            name = normalisedPrefix + protocolName
+        let protocolTypeName: String
+        if GIR.dottedPrefix != prefix && GIR.dottedPrefix != normalisedPrefix && typeName.hasSuffix(record.name) {
+            protocolTypeName = normalisedPrefix + protocolName
             templateName = typeRef.type.namespace + className.capitalised
         } else {
-            name = protocolName
+            protocolTypeName = protocolName
             templateName = className
         }
-        return templateName + "T: " + name
+        return templateName + "T: " + protocolTypeName
     }
 
     /// return a directly referenced known record, `nil` otherwise
