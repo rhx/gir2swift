@@ -51,6 +51,7 @@ public extension GIR.CType {
                 return replacement
             }
             ref = currentRef.type.isAlias ? currentRef.type.parent : nil
+            if ref?.indirectionLevel != currentRef.indirectionLevel { ref = nil }
         }
         return typeRef
     }
@@ -60,12 +61,13 @@ public extension GIR.CType {
     var swiftReturnRef: TypeReference {
         var ref: TypeReference? = typeRef
         while let currentRef = ref {
-            if var replacement = GIR.swiftReturnTypeReplacements[typeRef] {
+            if var replacement = GIR.swiftReturnTypeReplacements[currentRef] {
                 replacement.isConst = currentRef.isConst || typeRef.isConst
                 replacement.isOptional = currentRef.isOptional || typeRef.isOptional
                 return replacement
             }
             ref = currentRef.type.isAlias ? currentRef.type.parent : nil
+            if ref?.indirectionLevel != currentRef.indirectionLevel { ref = nil }
         }
         if typeRef.indirectionLevel == 1 && typeRef.type.typeName.hasSuffix("char") && !typeRef.type.typeName.hasSuffix("unichar") {
             return GIR.stringRef
@@ -76,15 +78,20 @@ public extension GIR.CType {
     /// Type reference to an idiomatic Swift type used for a Swift signals. This property is copy of `swiftReturnRef` with a different domain. The domain for this property was modified to include support for unsigned ints.
     @inlinable
     var swiftSignalRef: TypeReference {
-        guard var replacement = GIR.swiftSignalTypeReplacements[typeRef] else {
-            if typeRef.indirectionLevel == 1 && typeRef.type.typeName.hasSuffix("char") && !typeRef.type.typeName.hasSuffix("unichar") {
-                return GIR.stringRef
+        var ref: TypeReference? = typeRef
+        while let currentRef = ref {
+            if var replacement = GIR.swiftSignalTypeReplacements[currentRef] {
+                replacement.isConst = currentRef.isConst || typeRef.isConst
+                replacement.isOptional = currentRef.isOptional || typeRef.isOptional
+                return replacement
             }
-            return typeRef
+            ref = currentRef.type.isAlias ? currentRef.type.parent : nil
+            if ref?.indirectionLevel != currentRef.indirectionLevel { ref = nil }
         }
-        replacement.isConst = typeRef.isConst
-        replacement.isOptional = typeRef.isOptional
-        return replacement
+        if typeRef.indirectionLevel == 1 && typeRef.type.typeName.hasSuffix("char") && !typeRef.type.typeName.hasSuffix("unichar") {
+            return GIR.stringRef
+        }
+        return typeRef
     }
 
     /// Return a Swift template declaration for a known record,
