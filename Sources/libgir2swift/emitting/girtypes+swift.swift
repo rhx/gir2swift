@@ -43,24 +43,34 @@ public extension GIR.CType {
     /// Type reference to an idiomatic Swift type used for a Swift function parameter
     @inlinable
     var swiftParamRef: TypeReference {
-        guard var replacement = GIR.swiftParameterTypeReplacements[typeRef] else { return typeRef }
-        replacement.isConst = typeRef.isConst
-        replacement.isOptional = typeRef.isOptional
-        return replacement
+        var ref: TypeReference? = typeRef
+        while let currentRef = ref {
+            if var replacement = GIR.swiftParameterTypeReplacements[currentRef] {
+                replacement.isConst = currentRef.isConst || typeRef.isConst
+                replacement.isOptional = currentRef.isOptional || typeRef.isOptional
+                return replacement
+            }
+            ref = currentRef.type.isAlias ? currentRef.type.parent : nil
+        }
+        return typeRef
     }
 
     /// Type reference to an idiomatic Swift type used for a Swift function return value
     @inlinable
     var swiftReturnRef: TypeReference {
-        guard var replacement = GIR.swiftReturnTypeReplacements[typeRef] else {
-            if typeRef.indirectionLevel == 1 && typeRef.type.typeName.hasSuffix("char") && !typeRef.type.typeName.hasSuffix("unichar") {
-                return GIR.stringRef
+        var ref: TypeReference? = typeRef
+        while let currentRef = ref {
+            if var replacement = GIR.swiftReturnTypeReplacements[typeRef] {
+                replacement.isConst = currentRef.isConst || typeRef.isConst
+                replacement.isOptional = currentRef.isOptional || typeRef.isOptional
+                return replacement
             }
-            return typeRef
+            ref = currentRef.type.isAlias ? currentRef.type.parent : nil
         }
-        replacement.isConst = typeRef.isConst
-        replacement.isOptional = typeRef.isOptional
-        return replacement
+        if typeRef.indirectionLevel == 1 && typeRef.type.typeName.hasSuffix("char") && !typeRef.type.typeName.hasSuffix("unichar") {
+            return GIR.stringRef
+        }
+        return typeRef
     }
 
     /// Type reference to an idiomatic Swift type used for a Swift signals. This property is copy of `swiftReturnRef` with a different domain. The domain for this property was modified to include support for unsigned ints.
