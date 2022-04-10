@@ -45,8 +45,9 @@ public class GIRType: Hashable {
     /// Convenience property, returning the normalised, dotted prefix
     ///  - Note: this prefix is empty if the type is in the global namespace
     @inlinable public var normalisedDottedPrefix: String {
-        guard !namespace.isEmpty else { return namespace }
-        return namespace.asNormalisedPrefix + "."
+        let prefix = namespace.asNormalisedPrefix
+        guard !prefix.isEmpty else { return prefix }
+        return prefix + "."
     }
 
     /// Swift name to use for casting: removes trailing `!` and `?`
