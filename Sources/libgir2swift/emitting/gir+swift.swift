@@ -267,10 +267,12 @@ public func namespacedAliasCode(for dataType: GIR.Datatype, prefix: String, inde
 
 /// Swift code representation of a callback as a type alias
 public func swiftCallbackAliasCode(callback: GIR.Callback) -> String {
-    let original = callback.typeRef.type.typeName.swift
+    let alias = callback.escapedName.swift
+    let underlying = callback.typeRef.type.typeName.swift
     let parent = callback.typeRef.type.parent?.type.typeName ?? callback.typeRef.type.ctype
+    let original = alias == underlying ? parent : underlying
     let comment = original == parent ? "" : (" // " + parent)
-    let code = swiftCode(callback, "public typealias " + callback.escapedName.swift + " = " + original + comment)
+    let code = swiftCode(callback, "public typealias " + alias + " = " + original + comment)
     return code + "\n"
 }
 
