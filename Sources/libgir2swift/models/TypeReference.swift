@@ -162,13 +162,16 @@ public struct TypeReference: Hashable {
     }
 
     /// Test whether the receiver references the given type
-    /// - Parameter type: The type to test for
+    /// - Parameter otherType: The type to test for
     /// - Returns: `true` if the receiver references the given type
     @inlinable
-    public func references(_ type: GIRType) -> Bool {
-        if self.type === type { return true }
-        guard let supertype = self.type.parent else { return false }
-        return self.type.isAlias && supertype.references(type)
+    public func references(_ otherType: GIRType) -> Bool {
+        if type === otherType { return true }
+        guard type.isAlias, let supertype = type.parent else {
+            guard otherType.isAlias, let supertype = otherType.parent else { return false }
+            return references(supertype)
+        }
+        return supertype.references(otherType)
     }
 
     /// Test whether the receiver references the given type reference
@@ -176,19 +179,25 @@ public struct TypeReference: Hashable {
     /// - Returns: `true` if the receiver references the given type reference
     @inlinable
     public func references(_ ref: TypeReference) -> Bool {
-        if self.type === ref.type && self.indirectionLevel >= ref.indirectionLevel { return true }
-        guard let supertype = self.type.parent else { return false }
-        return self.type.isAlias && supertype.references(type)
+        if type === ref.type && self.indirectionLevel >= ref.indirectionLevel { return true }
+        guard type.isAlias, let supertype = type.parent else {
+            guard ref.type.isAlias, let supertype = ref.type.parent else { return false }
+            return isSomePointer(to: supertype)
+        }
+        return supertype.references(ref.type)
     }
 
     /// Test whether the receiver is a pointer at some level to the given type
-    /// - Parameter type: The type to test for
+    /// - Parameter otherType: The type to test for
     /// - Returns: `true` if the receiver is some pointer to the given type
     @inlinable
-    public func isSomePointer(to type: GIRType) -> Bool {
-        if self.type === type && indirectionLevel > 0 { return true }
-        guard let supertype = self.type.parent else { return false }
-        return self.type.isAlias && supertype.isSomePointer(to: type)
+    public func isSomePointer(to otherType: GIRType) -> Bool {
+        if type === otherType && indirectionLevel > 0 { return true }
+        guard type.isAlias, let supertype = type.parent else {
+            guard otherType.isAlias, let supertype = otherType.parent else { return false }
+            return isSomePointer(to: supertype)
+        }
+        return supertype.isSomePointer(to: otherType)
     }
 
     /// Test whether the receiver is a pointer at some level to the given type reference
@@ -196,19 +205,25 @@ public struct TypeReference: Hashable {
     /// - Returns: `true` if the receiver is some pointer to the given type reference
     @inlinable
     public func isSomePointer(to ref: TypeReference) -> Bool {
-        if self.type === ref.type && self.indirectionLevel > ref.indirectionLevel { return true }
-        guard let supertype = self.type.parent else { return false }
-        return self.type.isAlias && supertype.isSomePointer(to: type)
+        if type === ref.type && indirectionLevel > ref.indirectionLevel { return true }
+        guard let supertype = type.parent else {
+            guard ref.type.isAlias, let supertype = ref.type.parent else { return false }
+            return isSomePointer(to: supertype)
+        }
+        return type.isAlias && supertype.isSomePointer(to: ref.type)
     }
 
     /// Test whether the receiver is a direct pointer to the given type
-    /// - Parameter type: The type to test for
+    /// - Parameter otherType: The type to test for
     /// - Returns: `true` if the receiver  is a direct pointer to the given type
     @inlinable
-    public func isDirectPointer(to type: GIRType) -> Bool {
-        if self.type === type && indirectionLevel == 1 { return true }
-        guard let supertype = self.type.parent else { return false }
-        return self.type.isAlias && supertype.isDirectPointer(to: type)
+    public func isDirectPointer(to otherType: GIRType) -> Bool {
+        if type === otherType && indirectionLevel == 1 { return true }
+        guard type.isAlias, let supertype = type.parent else {
+            guard otherType.isAlias, let supertype = otherType.parent else { return false }
+            return isDirectPointer(to: supertype)
+        }
+        return supertype.isDirectPointer(to: otherType)
     }
 
     /// Test whether the receiver is a direct pointer to the given type reference
@@ -216,19 +231,25 @@ public struct TypeReference: Hashable {
     /// - Returns: `true` if the receiver  is a direct pointer to the given type reference
     @inlinable
     public func isDirectPointer(to ref: TypeReference) -> Bool {
-        if self.type === ref.type && self.indirectionLevel == ref.indirectionLevel + 1 { return true }
-        guard let supertype = self.type.parent else { return false }
-        return self.type.isAlias && supertype.isDirectPointer(to: type)
+        if type === ref.type && indirectionLevel == ref.indirectionLevel + 1 { return true }
+        guard type.isAlias, let supertype = type.parent else {
+            guard ref.type.isAlias, let supertype = ref.type.parent else { return false }
+            return isDirectPointer(to: supertype)
+        }
+        return supertype.isDirectPointer(to: ref.type)
     }
 
     /// Test whether the receiver is an alias of the given type
-    /// - Parameter type: The type to test for
+    /// - Parameter otherType: The type to test for
     /// - Returns: `true` if the receiver is an alias of the passed-in type
     @inlinable
-    public func isAlias(of type: GIRType) -> Bool {
-        if self.type === type && indirectionLevel == 0 { return true }
-        guard let supertype = self.type.parent else { return false }
-        return self.type.isAlias && supertype.isAlias(of: type)
+    public func isAlias(of otherType: GIRType) -> Bool {
+        if type === otherType && indirectionLevel == 0 { return true }
+        guard type.isAlias, let supertype = type.parent else {
+            guard otherType.isAlias, let supertype = otherType.parent else { return false }
+            return isAlias(of: supertype)
+        }
+        return supertype.isAlias(of: otherType)
     }
 
     /// Test whether the receiver is an alias of the given type reference
@@ -236,9 +257,12 @@ public struct TypeReference: Hashable {
     /// - Returns: `true` if the receiver is an alias of the passed-in type
     @inlinable
     public func isAlias(of ref: TypeReference) -> Bool {
-        if self.type === ref.type && indirectionLevel == ref.indirectionLevel { return true }
-        guard let supertype = self.type.parent else { return false }
-        return self.type.isAlias && supertype.isAlias(of: ref)
+        if type === ref.type && indirectionLevel == ref.indirectionLevel { return true }
+        guard let supertype = type.parent else {
+            guard ref.type.isAlias, let supertype = ref.type.parent else { return false }
+            return isAlias(of: supertype)
+        }
+        return type.isAlias && supertype.isAlias(of: ref)
             || ref.type.isAlias && ref.type.parent.map { isAlias(of: $0) } ?? false
     }
 }
