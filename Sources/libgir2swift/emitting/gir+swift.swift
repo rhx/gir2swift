@@ -461,8 +461,10 @@ public func bitfieldValueCode(_ bf: GIR.Bitfield, _ indentation: String) -> (GIR
 /// Swift protocol representation of a record/class as a wrapper of a pointer
 public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: String = "    ", ptr: String = "ptr") -> String {
     let p = (parent.isEmpty ? "" : ": \(parent)")
-    let typeName = e.typeRef.type.typeName.swift
-    let cOriginalType = typeName.isEmpty ? e.typeRef.type.swiftName.swift : typeName
+    let type = e.typeRef.type
+    let underlyingCType = type.ctype
+    let typeName = type.typeName.swift
+    let cOriginalType = underlyingCType.isEmpty || underlyingCType.hasSuffix("*") ? (typeName.isEmpty ? e.typeRef.type.swiftName.swift : typeName) : underlyingCType
     let ctype = cOriginalType.isEmpty ? e.name.swift : cOriginalType
     let subTypeAliases = e.records.map { subTypeAlias(e, $0, publicDesignation: "") }.joined()
     let documentation = commentCode(e)
@@ -503,8 +505,9 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
     let methods = allMethods.filter { method in
         !method.name.hasPrefix("is_") || !gsPairs.contains { $0.getter === method } }
     let t = e.typeRef.type
+    let underlyingCType = t.ctype
     let typeName = t.typeName.swift
-    let cOriginalType = typeName.isEmpty ? t.swiftName.swift : typeName
+    let cOriginalType = underlyingCType.isEmpty || underlyingCType.hasSuffix("*") ? (typeName.isEmpty ? t.swiftName.swift : typeName) : underlyingCType
     let ctype = cOriginalType.isEmpty ? t.name.swift : cOriginalType
     let subTypeProperties = e.records.map { subRecordProperty(e, ptr: ptrName, $0, indentation: indentation, publicDesignation: "") }.joined()
     let code = "// MARK: \(e.name) \(e.kind): \(e.protocolName) extension (methods and fields)\n" +
