@@ -237,10 +237,12 @@ public func swiftCode(_ thing: GIR.Thing, _ postfix: String = "", indentation: S
 ///   - prefix: A prefix to use for the public typealias
 /// - Returns: The Swift code representingg the type alias
 public func typeAliasCode(for dataType: GIR.Datatype, prefix: String = "") -> String {
-    let original = dataType.typeRef.type.typeName.swift
+    let alias = dataType.escapedName.swift
+    let underlying = dataType.typeRef.type.typeName.swift
     let parent = dataType.typeRef.type.parent?.fullCType ?? dataType.typeRef.fullCType
+    let original = alias == underlying ? parent : underlying
     let comment = original == parent ? "" : (" // " + parent)
-    let code = swiftCode(dataType, "public typealias " + prefix + dataType.escapedName.swift + " = " + original + comment)
+    let code = swiftCode(dataType, "public typealias " + prefix + alias + " = " + original + comment)
     return code + "\n"
 }
 
