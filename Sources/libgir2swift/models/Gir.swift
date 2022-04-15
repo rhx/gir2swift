@@ -86,7 +86,7 @@ public final class GIR {
 
     /// Dotted namespace replacements
     public static var namespaceReplacements: [ Substring : Substring ] = [
-        "GObject." : "GLibObject.", "Gio." : "GIO.", "GdkPixbuf." : "", "cairo." : "Cairo."
+        "GObject." : "GLibObject.", "Gio." : "GIO.", "cairo." : "Cairo."
     ]
 
     /// designated constructor
