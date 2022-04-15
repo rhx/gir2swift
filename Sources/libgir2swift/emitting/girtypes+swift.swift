@@ -234,7 +234,7 @@ public extension GIR.CType {
             let unprefixedName = knownRef.forceUnwrappedName
             if useStruct || beingIdiomatic {
                 let dottedPrefix = prefixedTypeName.dottedPrefix
-                if dottedPrefix.isEmpty || unprefixedName.firstIndex(of: ".") != nil {
+                if dottedPrefix.isEmpty || dottedPrefix == GIR.dottedPrefix || unprefixedName.firstIndex(of: ".") != nil {
                     name = unprefixedName
                 } else {
                     name = dottedPrefix + unprefixedName
