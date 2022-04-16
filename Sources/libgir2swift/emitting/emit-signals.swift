@@ -293,15 +293,14 @@ private extension GIR.Argument {
     func swiftIdiomaticType() -> String {
         switch knownType {
         case is GIR.Record:
-            return typeRef.type.swiftName + "Ref" + ((isNullable || isOptional) ? "?" : "")
+            let typeName = knownRecordArgumentTypeName
+            return typeName
         case is GIR.Alias: // use containedTypes
             return ""
-        case is GIR.Bitfield:
-            return self.argumentTypeName + ((isNullable || isOptional) ? "?" : "")
-        case is GIR.Enumeration:
-            return self.argumentTypeName + ((isNullable || isOptional) ? "?" : "")
+        case is GIR.Bitfield, is GIR.Enumeration:
+            return optionalIfNullableOrOptional(argumentTypeName)
         default: // Treat as fundamental (if not a fundamental, report error)
-            return self.swiftSignalRef.fullSwiftTypeName + ((isNullable || isOptional) ? "?" : "")
+            return optionalIfNullableOrOptional(swiftSignalRef.fullSwiftTypeName)
         }
     }
 
@@ -309,13 +308,11 @@ private extension GIR.Argument {
     func swiftCCompatibleType() -> String {
         switch knownType {
         case is GIR.Record:
-            return GIR.gpointerType.typeName + ((isNullable || isOptional) ? "?" : "")
+            return optionalIfNullableOrOptional(GIR.gpointerType.typeName)
         case is GIR.Alias: // use containedTypes
             return ""
-        case is GIR.Bitfield:
-            return GIR.uint32Type.typeName + ((isNullable || isOptional) ? "?" : "")
-        case is GIR.Enumeration:
-            return GIR.uint32Type.typeName + ((isNullable || isOptional) ? "?" : "")
+        case is GIR.Bitfield, is GIR.Enumeration:
+            return optionalIfNullableOrOptional(GIR.uint32Type.typeName)
         default: // Treat as fundamental (if not a fundamental, report error)
             return self.callbackArgumentTypeName
         }
@@ -326,9 +323,9 @@ private extension GIR.Argument {
         switch knownType {
         case is GIR.Record:
             if (isNullable || isOptional) {
-                return "arg\(index).flatMap(\(typeRef.type.swiftName)Ref.init(raw:))"
+                return "arg\(index).flatMap(\(knownRecordStructName).init(raw:))"
             }
-            return typeRef.type.swiftName + "Ref" + "(raw: arg\(index))"
+            return knownRecordStructName + "(raw: arg\(index))"
         case is GIR.Alias: // use containedTypes
             return ""
         case is GIR.Bitfield:
