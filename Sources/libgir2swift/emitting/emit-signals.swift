@@ -293,7 +293,8 @@ private extension GIR.Argument {
     func swiftIdiomaticType() -> String {
         switch knownType {
         case is GIR.Record:
-            let typeName = knownRecordArgumentTypeName
+            let type = typeRef.type
+            let typeName = optionalIfNullableOrOptional(type.prefixedWhereNecessary(type.swiftName + "Ref"))
             return typeName
         case is GIR.Alias: // use containedTypes
             return ""
@@ -322,10 +323,12 @@ private extension GIR.Argument {
     func swiftSignalArgumentConversion(at index: Int) -> String {
         switch knownType {
         case is GIR.Record:
+            let type = typeRef.type
+            let refName = type.prefixedWhereNecessary(type.swiftName) + "Ref"
             if (isNullable || isOptional) {
-                return "arg\(index).flatMap(\(knownRecordStructName).init(raw:))"
+                return "arg\(index).flatMap(\(refName).init(raw:))"
             }
-            return knownRecordStructName + "(raw: arg\(index))"
+            return refName + "(raw: arg\(index))"
         case is GIR.Alias: // use containedTypes
             return ""
         case is GIR.Bitfield:
