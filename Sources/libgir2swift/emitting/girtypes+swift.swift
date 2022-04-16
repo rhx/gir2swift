@@ -286,9 +286,10 @@ public extension GIR.Argument {
     var argumentTypeName: String {
         let swiftRef = swiftParamRef
         let name = swiftRef.fullUnderlyingTypeName(asOptional: containsGPointer ? true : nil).withNormalisedPrefix
-        guard typeRef.type === swiftRef.type && (isScalarArray || swiftRef.indirectionLevel > 0) else {
+        let type = typeRef.type
+        guard type === swiftRef.type && (isScalarArray || swiftRef.indirectionLevel > 0) else {
             guard typeRef.knownIndirectionLevel != 0 || !isKnownBitfield else {
-                return typeRef.type.name.withNormalisedPrefix.swift
+                return type.namePrefixedWhereNecessary.swift
             }
             let optionalName = ((isNullable || isOptional) && !name.isOptional) ? (name + "!") : name
             return optionalName
