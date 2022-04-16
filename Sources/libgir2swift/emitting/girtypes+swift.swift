@@ -298,6 +298,30 @@ public extension GIR.Argument {
     }
 
     /// return the swift (known) type of the receiver when passed as an argument
+    /// Returns a struct `Ref` name in case of a known record
+    /// - Note this gets prefixed if the record is in a different namespace
+    @inlinable
+    var knownRecordStructName: String {
+        guard let record = knownRecordReference else {
+            return argumentTypeName
+        }
+        let typeName = record.structNamePrefixedIfNecessary
+        return typeName
+    }
+
+    /// return the swift (known) type of the receiver when passed as an argument
+    /// Returns a(n optional, if nullable) struct `Ref` name in case of a known record
+    /// - Note this gets prefixed if the record is in a different namespace
+    @inlinable
+    var knownRecordArgumentTypeName: String {
+        guard let record = knownRecordReference else {
+            return argumentTypeName
+        }
+        let typeName = optionalIfNullableOrOptional(record.structNamePrefixedIfNecessary)
+        return typeName
+    }
+
+    /// return the swift (known) type of the receiver when passed as an argument
     /// for a `@convention(c)` callback
     @inlinable
     var callbackArgumentTypeName: String {
@@ -333,17 +357,7 @@ public extension GIR.Argument {
         guard let record = knownRecordReference else {
             return argumentTypeName
         }
-        let className = record.className
-        let prefix = typeRef.type.dottedPrefix
-        let normalisedPrefix = prefix.asNormalisedPrefix
-        let templatePrefix: String
-        if GIR.dottedPrefix != prefix && GIR.dottedPrefix != normalisedPrefix {
-            templatePrefix = typeRef.type.namespace + className.capitalised
-        } else {
-            templatePrefix = className
-        }
-        let templateName = templatePrefix + "T"
-        let typeName = isNullable ? (templateName + "?") : templateName
+        let typeName = optionalIfNullableOrOptional(templateName(for: record))
         return typeName
     }
 
@@ -356,21 +370,38 @@ public extension GIR.Argument {
         }
         let templateName: String
         if allowNone {
-            let refName = record.structName
-            templateName = record.typeRef.type.prefixedWhereNecessary(refName)
+            templateName = record.structNamePrefixedIfNecessary
         } else {
-            let className = record.className
-            let prefix = typeRef.type.dottedPrefix
-            let normalisedPrefix = prefix.asNormalisedPrefix
-            let templatePrefix: String
-            if GIR.dottedPrefix != prefix && GIR.dottedPrefix != normalisedPrefix {
-                templatePrefix = typeRef.type.namespace + className.capitalised
-            } else {
-                templatePrefix = className
-            }
-            templateName = templatePrefix + "T"
+            templateName = self.templateName(for: record)
         }
-        let typeName = isNullable ? (templateName + "?") : templateName
+        let typeName = optionalIfNullableOrOptional(templateName)
+        return typeName
+    }
+
+    /// Return the name of a templated type correspondingg to a given record
+    /// - Note this gets prefixed if the record is in a different namespace
+    /// - Parameter record: A record for which to create a template name
+    /// - Returns: A string representing a template type for the given record
+    @inlinable
+    func templateName(for record: GIR.Record) -> String {
+        let className = record.className
+        let prefix = typeRef.type.dottedPrefix
+        let normalisedPrefix = prefix.asNormalisedPrefix
+        let templatePrefix: String
+        if GIR.dottedPrefix != prefix && GIR.dottedPrefix != normalisedPrefix {
+            templatePrefix = typeRef.type.namespace + className.capitalised
+        } else {
+            templatePrefix = className
+        }
+        let templateName = templatePrefix + "T"
+        return templateName
+    }
+
+    /// Append a question mark if the receiver is nullable
+    /// - Parameter templateName: The string to optionally turn into an optional
+    /// - Returns: The original string, with or without a `?` appended
+    @inlinable func optionalIfNullableOrOptional(_ typeName: String) -> String {
+        let typeName = isNullable || isOptional ? (typeName + "?") : typeName
         return typeName
     }
 }
@@ -385,4 +416,12 @@ public extension GIR.Record {
     /// swift class name for this record
     @inlinable
     var className: String { return swift }
+
+    /// Return the name of the `Ref` struct type correspondingg to the receiver
+    /// - Note this gets prefixed if the record is in a different namespace
+    @inlinable
+    var structNamePrefixedIfNecessary: String {
+        let name = typeRef.type.prefixedWhereNecessary(structName)
+        return name
+    }
 }
