@@ -79,7 +79,7 @@ struct Plan {
     /// a plan from a manifest
     enum Error: Swift.Error {
         case girNotFound(named: String)
-        case girParsingFailed(path: String)
+        case girParsingFailed(path: String, reason: String)
     }
 
     /// The path to `.gir` file that shall be generated
@@ -301,45 +301,21 @@ struct Plan {
         guard let xml = XMLDocument(fromFile: gir.path) else {
             throw Error.girNotFound(named: gir.lastPathComponent)
         }
-
-        // @rhx please check this code
-        // This operation might be expansive, however the element `repository` is usualy the first.
-        // We need to do this, because before namespaces are loaded, the xpath does not work.
-        if let repository = xml.first(where: { $0.name == "repository" }) {
-            // Load namespaces
-            let namespaces = repository.namespaces
-
-            // Search for first occurance of `package` element. We expect only one package - we do not expect that a `.gir` file describes multiple pkg-config packages.
-            guard 
-                let packageName = xml.xpath(
-                    "/gir:repository/gir:package", 
-                    namespaces: namespaces, 
-                    defaultPrefix: "gir"
-                )?.first?.attribute(named: "name") 
-            else { 
-                throw Error.girParsingFailed(path: gir.path) 
-            }
-
-            // Search for all occurances of `include` element. We expect, that the attributes of the element represent an existing `.gir` file.
-            let dependencies = xml.xpath(
-                "/gir:repository/gir:include", 
-                namespaces: namespaces, 
-                defaultPrefix: "gir"
-            )?.lazy.compactMap { node -> GirPackageMetadata.Dependency? in
-                guard
-                    let name = node.attribute(named: "name"),
-                    let version = node.attribute(named: "version")
-                else { return nil }
-                return GirPackageMetadata.Dependency(name: name, version: version)
-            }
-
-            return GirPackageMetadata(
-                pkgName: packageName,
-                dependency: dependencies.flatMap(Array.init(_:)) ?? []
-            )
-
+        guard let repository = xml.first(where: { $0.name == "repository" }) else {
+            throw Error.girParsingFailed(path: gir.path, reason: "Could not find 'repository'")
         }
+        // Load namespaces
+        let namespaces = repository.namespaces
 
-        throw Error.girParsingFailed(path: gir.path)
+        // Search for first occurance of `package` element. We expect only one package - we do not expect that a `.gir` file describes multiple pkg-config packages.
+        let packageName = xml.xpath("/gir:repository/gir:package", namespaces: namespaces, defaultPrefix: "gir")?.first?.attribute(named: "name") ?? ""
+
+        // Search for all occurances of `include` element. We expect, that the attributes of the element represent an existing `.gir` file.
+        let dependencies = xml.xpath("/gir:repository/gir:include", namespaces: namespaces, defaultPrefix: "gir")?.lazy.compactMap { node -> GirPackageMetadata.Dependency? in
+            guard let name = node.attribute(named: "name"),
+                  let version = node.attribute(named: "version") else { return nil }
+            return GirPackageMetadata.Dependency(name: name, version: version)
+        }
+        return GirPackageMetadata(pkgName: packageName, dependency: dependencies.flatMap(Array.init(_:)) ?? [])
     }
 }
