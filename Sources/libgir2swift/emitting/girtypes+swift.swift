@@ -298,30 +298,6 @@ public extension GIR.Argument {
     }
 
     /// return the swift (known) type of the receiver when passed as an argument
-    /// Returns a struct `Ref` name in case of a known record
-    /// - Note this gets prefixed if the record is in a different namespace
-    @inlinable
-    var knownRecordStructName: String {
-        guard let record = knownRecordReference else {
-            return argumentTypeName
-        }
-        let typeName = record.structNamePrefixedIfNecessary
-        return typeName
-    }
-
-    /// return the swift (known) type of the receiver when passed as an argument
-    /// Returns a(n optional, if nullable) struct `Ref` name in case of a known record
-    /// - Note this gets prefixed if the record is in a different namespace
-    @inlinable
-    var knownRecordArgumentTypeName: String {
-        guard let record = knownRecordReference else {
-            return argumentTypeName
-        }
-        let typeName = optionalIfNullableOrOptional(record.structNamePrefixedIfNecessary)
-        return typeName
-    }
-
-    /// return the swift (known) type of the receiver when passed as an argument
     /// for a `@convention(c)` callback
     @inlinable
     var callbackArgumentTypeName: String {
@@ -357,7 +333,7 @@ public extension GIR.Argument {
         guard let record = knownRecordReference else {
             return argumentTypeName
         }
-        let typeName = optionalIfNullableOrOptional(templateName(for: record))
+        let typeName = optionalIfNullable(templateName(for: record))
         return typeName
     }
 
@@ -374,7 +350,7 @@ public extension GIR.Argument {
         } else {
             templateName = self.templateName(for: record)
         }
-        let typeName = optionalIfNullableOrOptional(templateName)
+        let typeName = optionalIfNullable(templateName)
         return typeName
     }
 
@@ -398,6 +374,14 @@ public extension GIR.Argument {
     }
 
     /// Append a question mark if the receiver is nullable
+    /// - Parameter templateName: The string to optionally turn into an optional
+    /// - Returns: The original string, with or without a `?` appended
+    @inlinable func optionalIfNullable(_ typeName: String) -> String {
+        let typeName = isNullable ? (typeName + "?") : typeName
+        return typeName
+    }
+
+    /// Append a question mark if the receiver is nullable or optionial
     /// - Parameter templateName: The string to optionally turn into an optional
     /// - Returns: The original string, with or without a `?` appended
     @inlinable func optionalIfNullableOrOptional(_ typeName: String) -> String {
