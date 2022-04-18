@@ -94,6 +94,7 @@ func getGirDirectory(containing girFiles: [String]) throws -> Path {
         var arguments = [
             "--alpha-names",
             "-w", targetPackageDirectory.string,
+            "-t", target.directory.string,
             "-o", outputDir.string,
             "--manifest", "\(gir2swiftManifest)",
         ]

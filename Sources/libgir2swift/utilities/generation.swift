@@ -33,15 +33,20 @@ private func load_gir(_ file: String, quiet q: Bool = false, process: (GIR) -> V
 }
 
 /// process blacklist and verbatim constants information
-private func processSpecialCases(_ gir: GIR, forFile node: String) {
-    let preamble = node + ".preamble"
-    gir.preamble = (try? String(contentsOfFile: preamble)) ?? ""
-    let blacklist = node + ".blacklist"
-    GIR.blacklist = (try? String(contentsOfFile: blacklist)).flatMap { Set($0.nonEmptyComponents(separatedBy: "\n")) } ?? []
-    let verbatimConstants = node + ".verbatim"
-    GIR.verbatimConstants = (try? String(contentsOfFile: verbatimConstants)).flatMap { Set($0.nonEmptyComponents(separatedBy: "\n")) } ?? []
-    let overrideFile = node + ".override"
-    GIR.overrides = (try? String(contentsOfFile: overrideFile)).flatMap { Set($0.nonEmptyComponents(separatedBy: "\n")) } ?? []
+/// - Parameters:
+///   - gir: The in-memory object representing the `.gir` file
+///   - targetDirectoryURL: URL representing the target source directory containing the module configuration files
+///   - node: File name node of the `.gir` file without extension
+private func processSpecialCases(_ gir: GIR, for targetDirectoryURL: URL, node: String) {
+    let prURL = targetDirectoryURL.appendingPathComponent(node + ".preamble")
+    gir.preamble = (try? String(contentsOf: prURL)) ?? ""
+    let exURL = targetDirectoryURL.appendingPathComponent(node + ".exclude")
+    let blURL = targetDirectoryURL.appendingPathComponent(node + ".blacklist")
+    GIR.blacklist = ((try? String(contentsOf: exURL)) ?? (try? String(contentsOf: blURL))).flatMap { Set($0.nonEmptyComponents(separatedBy: "\n")) } ?? []
+    let vbURL = targetDirectoryURL.appendingPathComponent(node + ".verbatim")
+    GIR.verbatimConstants = (try? String(contentsOf: vbURL)).flatMap { Set($0.nonEmptyComponents(separatedBy: "\n")) } ?? []
+    let ovURL = targetDirectoryURL.appendingPathComponent(node + ".override")
+    GIR.overrides = (try? String(contentsOf: ovURL)).flatMap { Set($0.nonEmptyComponents(separatedBy: "\n")) } ?? []
 }
 
 extension Gir2Swift {
@@ -52,30 +57,40 @@ extension Gir2Swift {
     }
 
     /// process a GIR file
-    func process_gir(file: String, boilerPlate: String, to outputDirectory: String? = nil, split singleFilePerClass: Bool = false, generateAll: Bool = false, useAlphaNames: Bool = false, postProcess: [String]) {
+    /// - Parameters:
+    ///   - file: The `.gir` file to proces
+    ///   - targetDirectoryURL: URL representing the target source directory containing the module configuration files
+    ///   - boilerPlate: A string containing the boilerplate to use for the generated module file, `<node>.module` file if empty
+    ///   - outputDirectory: The directory to output generated files in, `stdout` if `nil`
+    ///   - singleFilePerClass: Flag indicating whether a separate output file should be created per class
+    ///   - generateAll: Flag indicating whether private members should be emitted
+    ///   - useAlphaNames: Flag indicating whether a fixed number of output files should be generated
+    ///   - postProcess: Array of additional file names to include in post-processing
+    func process_gir(file: String, for targetDirectoryURL: URL, boilerPlate: String, to outputDirectory: String? = nil, split singleFilePerClass: Bool = false, generateAll: Bool = false, useAlphaNames: Bool = false, postProcess: [String]) {
         let node = file.components(separatedBy: "/").last?.stringByRemoving(suffix: ".gir") ?? file
         let modulePrefix: String
         if boilerPlate.isEmpty {
-            let bpfile = node + ".module"
-            modulePrefix = (try? String(contentsOfFile: bpfile)) ?? boilerPlate
+            let bpURL = targetDirectoryURL.appendingPathComponent(node + ".module")
+            modulePrefix = (try? String(contentsOf: bpURL)) ?? boilerPlate
         } else {
             modulePrefix = boilerPlate
         }
         let pkgConfigArg = pkgConfigName ?? node.lowercased()
-        let wlfile = node + ".whitelist"
-        if let whitelist = (try? String(contentsOfFile: wlfile)).flatMap({ Set($0.nonEmptyComponents(separatedBy: "\n")) }) {
-            for name in whitelist {
+        let inURL = targetDirectoryURL.appendingPathComponent(node + ".include")
+        let wlURL = targetDirectoryURL.appendingPathComponent(node + ".whitelist")
+        if let inclusionList = ((try? String(contentsOf: inURL)) ?? (try? String(contentsOf: wlURL))).flatMap({ Set($0.nonEmptyComponents(separatedBy: "\n")) }) {
+            for name in inclusionList {
                 GIR.knownDataTypes.removeValue(forKey: name)
                 GIR.knownRecords.removeValue(forKey: name)
                 GIR.KnownFunctions.removeValue(forKey: name)
             }
         }
-        let escfile = node + ".callbackSuffixes"
-        GIR.callbackSuffixes = (try? String(contentsOfFile: escfile))?.nonEmptyComponents(separatedBy: "\n") ?? [
+        let escURL = targetDirectoryURL.appendingPathComponent(node + ".callbackSuffixes")
+        GIR.callbackSuffixes = (try? String(contentsOf: escURL))?.nonEmptyComponents(separatedBy: "\n") ?? [
             "Notify", "Func", "Marshaller", "Callback"
         ]
-        let nsfile = node + ".namespaceReplacements"
-        if let ns = (try? String(contentsOfFile: nsfile)).flatMap({Set($0.nonEmptyComponents(separatedBy: "\n"))}) {
+        let nsURL = targetDirectoryURL.appendingPathComponent(node + ".namespaceReplacements")
+        if let ns = (try? String(contentsOf: nsURL)).flatMap({Set($0.nonEmptyComponents(separatedBy: "\n"))}) {
             for line in ns {
                 let keyValues: [Substring]
                 let tabbedKeyValues: [Substring] = line.split(separator: "\t")
@@ -95,7 +110,7 @@ extension Gir2Swift {
         var outputString = ""
 
         load_gir(file) { gir in
-            processSpecialCases(gir, forFile: node)
+            processSpecialCases(gir, for: targetDirectoryURL, node: node)
             let blacklist = GIR.blacklist
             let boilerplate = gir.boilerPlate
             let preamble = gir.preamble
@@ -323,7 +338,7 @@ extension Gir2Swift {
                 }
             }
             queues.wait()
-            libgir2swift.postProcess(node, pkgConfigName: pkgConfigArg, outputString: outputString, outputDirectory: outputDirectory, outputFiles: outputFiles)
+            libgir2swift.postProcess(node, for: targetDirectoryURL, pkgConfigName: pkgConfigArg, outputString: outputString, outputDirectory: outputDirectory, outputFiles: outputFiles)
             if verbose {
                 let pf = outputString.isEmpty ? "** " : "// "
                 let nl = outputString.isEmpty ? "\n"  : "\n// "
@@ -334,18 +349,19 @@ extension Gir2Swift {
     }
 
     /// create opaque pointer declarations
-    func process_gir_to_opaque_decls(file: String, generateAll: Bool = false) {
+    func process_gir_to_opaque_decls(file: String, in targetDirectoryURL: URL, generateAll: Bool = false) {
         let node = file.components(separatedBy: "/").last?.stringByRemoving(suffix: ".gir") ?? file
-        let wlfile = node + ".whitelist"
-        if let whitelist = (try? String(contentsOfFile: wlfile)).flatMap({ Set($0.nonEmptyComponents(separatedBy: "\n")) }) {
-            for name in whitelist {
+        let inURL = targetDirectoryURL.appendingPathComponent(node + ".include")
+        let wlURL = targetDirectoryURL.appendingPathComponent(node + ".whitelist")
+        if let inclusionList = ((try? String(contentsOf: inURL)) ?? (try? String(contentsOf: wlURL))).flatMap({ Set($0.nonEmptyComponents(separatedBy: "\n")) }) {
+            for name in inclusionList {
                 GIR.knownDataTypes.removeValue(forKey: name)
                 GIR.knownRecords.removeValue(forKey: name)
                 GIR.KnownFunctions.removeValue(forKey: name)
             }
         }
-        let nsfile = node + ".namespaceReplacements"
-        if let ns = (try? String(contentsOfFile: nsfile)).flatMap({Set($0.nonEmptyComponents(separatedBy: "\n"))}) {
+        let nsURL = targetDirectoryURL.appendingPathComponent(node + ".namespaceReplacements")
+        if let ns = (try? String(contentsOf: nsURL)).flatMap({Set($0.nonEmptyComponents(separatedBy: "\n"))}) {
             for line in ns {
                 let keyValues: [Substring]
                 let tabbedKeyValues: [Substring] = line.split(separator: "\t")
@@ -362,7 +378,7 @@ extension Gir2Swift {
         }
 
         load_gir(file) { gir in
-            processSpecialCases(gir, forFile: node)
+            processSpecialCases(gir, for: targetDirectoryURL, node: node)
             let blacklist = GIR.blacklist
             let classes = generateAll ? [:] : Dictionary(gir.classes.map { ($0.name, $0) }) { lhs, _ in lhs}
             let records = gir.records.filter { r in

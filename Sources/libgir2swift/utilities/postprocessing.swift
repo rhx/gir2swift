@@ -3,7 +3,7 @@
 //  libgir2swift
 //
 //  Created by Rene Hexel on 23/7/21.
-//  Copyright © 2021 Rene Hexel. All rights reserved.
+//  Copyright © 2021, 2022 Rene Hexel. All rights reserved.
 //
 
 import Foundation
@@ -11,22 +11,25 @@ import Foundation
 /// Post-process the output
 /// - Parameters:
 ///   - node: Name of the gir node to post-process
+///   - targetDirectoryURL: URL representing the target source directory containing the module configuration files
 ///   - pkgConfigName: Name of the library to pass to pkg-config
 ///   - outputString: The output string to post-process (if not empty)
+///   - outputDirectory: The directory to output generated files in, `stdout` if `nil`
 ///   - outputFiles: The output files to post-process
-func postProcess(_ node: String, pkgConfigName: String, outputString: String, outputDirectory: String?, outputFiles: Set<String>) {
+func postProcess(_ node: String, for targetDirectoryURL: URL, pkgConfigName: String, outputString: String, outputDirectory: String?, outputFiles: Set<String>) {
     var pipeCommands = [CommandArguments]()
     let postProcessors = ["sed", "awk"]
     let fm = FileManager.default
     postProcessors.forEach {
         let script = node + "." + $0
-        if fm.fileExists(atPath: script) {
+        let scriptURL = targetDirectoryURL.appendingPathComponent(script)
+        if fm.fileExists(atPath: scriptURL.path) {
             pipeCommands.append(.init(command: $0, arguments: ["-f", script]))
         }
     }
     let cwd = fm.currentDirectoryPath
     let cwdURL = URL(fileURLWithPath: cwd)
-    let nodeFiles = ((try? fm.contentsOfDirectory(atPath: cwd)) ?? []).filter { $0.hasPrefix(node) }
+    let nodeFiles = ((try? fm.contentsOfDirectory(atPath: targetDirectoryURL.path)) ?? (try? fm.contentsOfDirectory(atPath: cwd)) ?? []).filter { $0.hasPrefix(node) }
     let cmds = postProcessors.flatMap { command in
         nodeFiles.filter {
             guard $0.hasSuffix("." + command), let i = $0.index($0.startIndex, offsetBy: node.count, limitedBy: $0.endIndex), let e = $0.index($0.endIndex, offsetBy: -(command.count+1), limitedBy: $0.startIndex) else { return false }

@@ -47,6 +47,11 @@ public struct Gir2Swift: ParsableCommand {
     @Option(name: .short, help: "Specify the output directory to put the generated files into.")
     var outputDirectory: String = ""
 
+    /// Name of the target source code directory to read configurations from.
+    /// - Note: Will use the current working directory if empty
+    @Option(name: .shortAndLong, help: "Specify the target source directory to read the manifest and configurations from.")
+    var targetDirectory: String = ""
+
     /// Name of the working directory to operate within.
     /// - Note: Will use the current working directory if empty
     @Option(name: .shortAndLong, help: "Specify the working directory (package directory of the target) to change into.")
@@ -103,12 +108,17 @@ public struct Gir2Swift: ParsableCommand {
 
         let manifestPlan: Plan?
         let manifestURL: URL
+        let targetURL: URL
         let wd = fileManager.currentDirectoryPath
         let wdURL = URL(fileURLWithPath: wd)
         if #available(macOS 10.11, *) {
-            manifestURL = URL(fileURLWithPath: manifest, relativeTo: wdURL)
+            targetURL = targetDirectory.isEmpty ? wdURL : URL(fileURLWithPath: targetDirectory, relativeTo: wdURL)
+            let targetManifest = URL(fileURLWithPath: manifest, relativeTo: targetURL)
+            manifestURL = fileManager.fileExists(atPath: targetManifest.path) ? targetManifest : URL(fileURLWithPath: manifest, relativeTo: wdURL)
         } else {
-            manifestURL = wdURL.appendingPathComponent(manifest)
+            targetURL = targetDirectory.isEmpty ? wdURL : wdURL.appendingPathComponent(targetDirectory)
+            let targetManifest = targetURL.appendingPathComponent(manifest)
+            manifestURL = fileManager.fileExists(atPath: targetManifest.path) ? targetManifest : wdURL.appendingPathComponent(manifest)
         }
         do {
             let plan = try Plan(using: manifestURL, isVerbose: verbose)
@@ -136,11 +146,11 @@ public struct Gir2Swift: ParsableCommand {
         switch opaqueDeclarations {
         case true:
             for girFile in girFilesToGenerate {
-                process_gir_to_opaque_decls(file: girFile, generateAll: allFilesGenerate)
+                process_gir_to_opaque_decls(file: girFile, in: targetURL, generateAll: allFilesGenerate)
             }
         case false:
             for girFile in girFilesToGenerate {
-                process_gir(file: girFile, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: generateAlphaFiles, postProcess: postProcess + (manifestPlan?.postProcess ?? []))
+                process_gir(file: girFile, for: targetURL, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: generateAlphaFiles, postProcess: postProcess + (manifestPlan?.postProcess ?? []))
             }
         }
 
