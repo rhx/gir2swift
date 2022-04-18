@@ -108,17 +108,29 @@ public struct Gir2Swift: ParsableCommand {
 
         let manifestPlan: Plan?
         let manifestURL: URL
-        let targetURL: URL
+        let targetDirectoryURL: URL
         let wd = fileManager.currentDirectoryPath
         let wdURL = URL(fileURLWithPath: wd)
         if #available(macOS 10.11, *) {
-            targetURL = targetDirectory.isEmpty ? wdURL : URL(fileURLWithPath: targetDirectory, relativeTo: wdURL)
+            let targetURL = targetDirectory.isEmpty ? wdURL : URL(fileURLWithPath: targetDirectory, relativeTo: wdURL)
             let targetManifest = URL(fileURLWithPath: manifest, relativeTo: targetURL)
-            manifestURL = fileManager.fileExists(atPath: targetManifest.path) ? targetManifest : URL(fileURLWithPath: manifest, relativeTo: wdURL)
+            if fileManager.fileExists(atPath: targetManifest.path) {
+                targetDirectoryURL = targetURL
+                manifestURL = targetManifest
+            } else {
+                targetDirectoryURL = wdURL
+                manifestURL = URL(fileURLWithPath: manifest, relativeTo: wdURL)
+            }
         } else {
-            targetURL = targetDirectory.isEmpty ? wdURL : wdURL.appendingPathComponent(targetDirectory)
+            let targetURL = targetDirectory.isEmpty ? wdURL : wdURL.appendingPathComponent(targetDirectory)
             let targetManifest = targetURL.appendingPathComponent(manifest)
-            manifestURL = fileManager.fileExists(atPath: targetManifest.path) ? targetManifest : wdURL.appendingPathComponent(manifest)
+            if fileManager.fileExists(atPath: targetManifest.path) {
+                targetDirectoryURL = targetURL
+                manifestURL = targetManifest
+            } else {
+                targetDirectoryURL = wdURL
+                manifestURL = wdURL.appendingPathComponent(manifest)
+            }
         }
         do {
             let plan = try Plan(using: manifestURL, isVerbose: verbose)
@@ -146,11 +158,11 @@ public struct Gir2Swift: ParsableCommand {
         switch opaqueDeclarations {
         case true:
             for girFile in girFilesToGenerate {
-                process_gir_to_opaque_decls(file: girFile, in: targetURL, generateAll: allFilesGenerate)
+                process_gir_to_opaque_decls(file: girFile, in: targetDirectoryURL, generateAll: allFilesGenerate)
             }
         case false:
             for girFile in girFilesToGenerate {
-                process_gir(file: girFile, for: targetURL, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: generateAlphaFiles, postProcess: postProcess + (manifestPlan?.postProcess ?? []))
+                process_gir(file: girFile, for: targetDirectoryURL, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: generateAlphaFiles, postProcess: postProcess + (manifestPlan?.postProcess ?? []))
             }
         }
 
