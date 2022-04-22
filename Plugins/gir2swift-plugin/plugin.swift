@@ -71,7 +71,7 @@ func getGirDirectory(containing girFiles: [String]) throws -> Path {
 
         // Determine the list of input files
         let targetDir = URL(fileURLWithPath: target.directory.string)
-        let contents = try fileManager.contentsOfDirectory(at: targetDir, includingPropertiesForKeys: nil)
+        let contents = try fileManager.contentsOfDirectory(at: targetDir, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles, .skipsPackageDescendants])
 
         var inputFiles = contents.filter { file in
             file.lastPathComponent.hasPrefix(girName)
@@ -110,7 +110,7 @@ func getGirDirectory(containing girFiles: [String]) throws -> Path {
         })
 
         return [.buildCommand(
-            displayName: "Running gir2swift for \(target.directory.lastComponent)",
+            displayName: "Converting \(girName) for \(target.directory.lastComponent) \(inputFiles.map(\.string).joined(separator: " "))",
             executable: try context.tool(named: "gir2swift").path,
             arguments: arguments,
             inputFiles: inputFiles,
