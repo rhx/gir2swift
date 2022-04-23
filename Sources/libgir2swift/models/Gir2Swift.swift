@@ -144,7 +144,7 @@ public struct Gir2Swift: ParsableCommand {
             manifestPlan = plan
         } catch {
             manifestPlan = nil
-            print("Failed to load \(girFilesToGenerate.map { ($0.split(separator: "/").last ?? "").split(separator: ".").first ?? "" }.joined(separator: ", ")) manifest\(girFilesToGenerate.count > 1 ? "s" : ""):\n    \(error)", to: &Streams.stdErr)
+            print("Failed to load \(manifestURL.path) for \(girFilesToGenerate.map { ($0.split(separator: "/").last ?? "").split(separator: ".").first ?? "" }.joined(separator: ", ")) manifest\(girFilesToGenerate.count > 1 ? "s" : ""):\n    \(error)", to: &Streams.stdErr)
         }
 
         // pre-load gir files to ensure pre-requisite types are known
