@@ -24,14 +24,11 @@ func postProcess(_ node: String, for targetDirectoryURL: URL, pkgConfigName: Str
     let cwdURL = URL(fileURLWithPath: cwd)
     postProcessors.forEach {
         let script = node + "." + $0
-        let scriptURL = targetDirectoryURL.appendingPathComponent(script)
-        if fm.fileExists(atPath: scriptURL.path) {
-            pipeCommands.append(.init(command: $0, arguments: ["-f", scriptURL.path]))
-        } else {
-            let scriptURL = cwdURL.appendingPathComponent(script)
-            if fm.fileExists(atPath: scriptURL.path) {
-                pipeCommands.append(.init(command: $0, arguments: ["-f", scriptURL.path]))
-            }
+        let scriptPath = targetDirectoryURL.appendingPathComponent(script).path
+        if fm.fileExists(atPath: scriptPath) {
+            pipeCommands.append(.init(command: $0, arguments: ["-f", scriptPath]))
+        } else if fm.fileExists(atPath: script) {
+            pipeCommands.append(.init(command: $0, arguments: ["-f", script]))
         }
     }
     let nodeFiles = ((try? fm.contentsOfDirectory(atPath: targetDirectoryURL.path)) ?? (try? fm.contentsOfDirectory(atPath: cwd)) ?? []).filter { $0.hasPrefix(node) }
@@ -59,7 +56,8 @@ func postProcess(_ node: String, for targetDirectoryURL: URL, pkgConfigName: Str
         }.map { (f: String) -> CommandArguments in
             let d = f.lastIndex(of: ".") ?? f.index(f.endIndex, offsetBy: -4)
             let s = f.index(after: d)
-            return .init(command: String(f[s..<f.endIndex]), arguments: ["-f", f])
+            let script = targetDirectoryURL.appendingPathComponent(f).path
+            return .init(command: String(f[s..<f.endIndex]), arguments: ["-f", fm.fileExists(atPath: script ? script : f])
         }
     }
     pipeCommands += cmds
