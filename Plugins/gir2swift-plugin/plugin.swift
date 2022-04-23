@@ -7,12 +7,7 @@ enum Gir2SwiftError: LocalizedError {
     case failedToGetGirDirectory(containing: [String])
 }
 
-/// The file name of the gir2swift manifest
-private let gir2swiftManifestYaml = "gir2swift-manifest.yaml"
-
-func getGirName(_ target: Target) throws -> String {
-    let targetPackageDirectory = target.directory.removingLastComponent().removingLastComponent()
-    let manifest = targetPackageDirectory.appending(gir2swiftManifestYaml)
+func getGirName(for manifest: Path) throws -> String {
     let lines = try String(contentsOf: URL(fileURLWithPath: manifest.string)).split(separator: "\n")
     var girName: String? = nil
     for line in lines {
@@ -26,6 +21,13 @@ func getGirName(_ target: Target) throws -> String {
     } else {
         throw Gir2SwiftError.failedToGetGirNameFromManifest
     }
+}
+
+func girManifestName(for target: Target, in targetPackageDirectory: Path) -> Path {
+    let gir2swiftManifestYaml = "gir2swift-manifest.yaml"
+    let gir2swiftTargetDirectoryManifest = target.directory.appending(gir2swiftManifestYaml)
+    return FileManager.default.fileExists(atPath: gir2swiftTargetDirectoryManifest.string) ?
+            gir2swiftTargetDirectoryManifest : targetPackageDirectory.appending(gir2swiftManifestYaml)
 }
 
 func getGirDirectory(containing girFiles: [String]) throws -> Path {
@@ -51,13 +53,12 @@ func getGirDirectory(containing girFiles: [String]) throws -> Path {
     /// - Returns: the commands to run during the build
     func createBuildCommands(context: PluginContext, target: Target) throws -> [Command] {
         let targetPackageDirectory = context.package.directory
-        let gir2swiftPackageDirectoryManifest = targetPackageDirectory.appending(gir2swiftManifestYaml)
-        let gir2swiftTargetDirectoryManifest = target.directory.appending(gir2swiftManifestYaml)
+        let gir2swiftManifest = girManifestName(for: target, in: targetPackageDirectory)
         let outputDir = context.pluginWorkDirectory.appending("gir2swift-generated").appending(target.name)
         let fileManager = FileManager.default
         try fileManager.createDirectory(atPath: outputDir.string, withIntermediateDirectories: true)
 
-        let girName = try getGirName(target)
+        let girName = try getGirName(for: gir2swiftManifest)
 
         // Determine the list of output files
         let atChar = Character("@").utf8.first!
@@ -72,22 +73,16 @@ func getGirDirectory(containing girFiles: [String]) throws -> Path {
         // Determine the list of input files
         let targetDir = URL(fileURLWithPath: target.directory.string)
         let contents = try fileManager.contentsOfDirectory(at: targetDir, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles, .skipsPackageDescendants])
-
-        var inputFiles = contents.filter { file in
+        let inputFiles = contents.filter { file in
             file.lastPathComponent.hasPrefix(girName)
         }.map { file in
             Path(file.path)
-        }
-
-        if fileManager.fileExists(atPath: gir2swiftTargetDirectoryManifest.string) {
-            inputFiles.append(gir2swiftTargetDirectoryManifest)
-        } else {
-            inputFiles.append(gir2swiftPackageDirectoryManifest)
-        }
+        } + [gir2swiftManifest]
 
         // Find all girs that this library depends on
         let girFiles = target.recursiveTargetDependencies.compactMap {
-            try? getGirName($0)
+            let manifest = girManifestName(for: $0, in: targetPackageDirectory)
+            return try? getGirName(for: manifest)
         }.filter {
             $0 != girName
         }.map {
@@ -102,7 +97,6 @@ func getGirDirectory(containing girFiles: [String]) throws -> Path {
             "-w", targetPackageDirectory.string,
             "-t", target.directory.string,
             "-o", outputDir.string,
-            "--manifest", "\(gir2swiftManifestYaml)",
         ]
 
         arguments.append(contentsOf: girFiles.flatMap { girFile in
