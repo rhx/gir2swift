@@ -24,7 +24,7 @@ func postProcess(_ node: String, for targetDirectoryURL: URL, pkgConfigName: Str
         let script = node + "." + $0
         let scriptURL = targetDirectoryURL.appendingPathComponent(script)
         if fm.fileExists(atPath: scriptURL.path) {
-            pipeCommands.append(.init(command: $0, arguments: ["-f", script]))
+            pipeCommands.append(.init(command: $0, arguments: ["-f", scriptURL.path]))
         }
     }
     let cwd = fm.currentDirectoryPath

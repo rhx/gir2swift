@@ -66,7 +66,7 @@ extension Gir2Swift {
     ///   - generateAll: Flag indicating whether private members should be emitted
     ///   - useAlphaNames: Flag indicating whether a fixed number of output files should be generated
     ///   - postProcess: Array of additional file names to include in post-processing
-    func process_gir(file: String, for targetDirectoryURL: URL, boilerPlate: String, to outputDirectory: String? = nil, split singleFilePerClass: Bool = false, generateAll: Bool = false, useAlphaNames: Bool = false, postProcess: [String]) {
+    func process_gir(file: String, for targetDirectoryURL: URL, boilerPlate: String, to outputDirectory: String? = nil, split singleFilePerClass: Bool = false, generateAll: Bool = false, useAlphaNames: Bool = false, postProcess additionalFilesToPostProcess: [String]) {
         let node = file.components(separatedBy: "/").last?.stringByRemoving(suffix: ".gir") ?? file
         let modulePrefix: String
         if boilerPlate.isEmpty {
@@ -106,7 +106,7 @@ extension Gir2Swift {
             }
         }
         let fileManager = FileManager.default
-        var outputFiles = Set(postProcess)
+        var outputFiles = Set(additionalFilesToPostProcess)
         var outputString = ""
 
         load_gir(file) { gir in
@@ -338,7 +338,7 @@ extension Gir2Swift {
                 }
             }
             queues.wait()
-            libgir2swift.postProcess(node, for: targetDirectoryURL, pkgConfigName: pkgConfigArg, outputString: outputString, outputDirectory: outputDirectory, outputFiles: outputFiles)
+            postProcess(node, for: targetDirectoryURL, pkgConfigName: pkgConfigArg, outputString: outputString, outputDirectory: outputDirectory, outputFiles: outputFiles)
             if verbose {
                 let pf = outputString.isEmpty ? "** " : "// "
                 let nl = outputString.isEmpty ? "\n"  : "\n// "
