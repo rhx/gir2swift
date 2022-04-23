@@ -112,7 +112,7 @@ public struct Gir2Swift: ParsableCommand {
         let wd = fileManager.currentDirectoryPath
         let wdURL = URL(fileURLWithPath: wd)
         if #available(macOS 10.11, *) {
-            let targetURL = targetDirectory.isEmpty ? wdURL : URL(fileURLWithPath: targetDirectory, relativeTo: wdURL)
+            let targetURL = targetDirectory.isEmpty ? wdURL : URL(fileURLWithPath: targetDirectory, isDirectory: true, relativeTo: wdURL)
             let targetManifest = URL(fileURLWithPath: manifest, relativeTo: targetURL)
             if fileManager.fileExists(atPath: targetManifest.path) {
                 targetDirectoryURL = targetURL

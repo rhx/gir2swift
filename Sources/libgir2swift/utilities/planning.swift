@@ -168,7 +168,7 @@ struct Plan {
                 let libDirURL = URL(fileURLWithPath: $0, isDirectory: true)
                 let manifestURL: URL?
                 if #available(macOS 10.11, *) {
-                    manifestURL = URL(fileURLWithPath: homebrewRelativeGirLocation, relativeTo: libDirURL)
+                    manifestURL = URL(fileURLWithPath: homebrewRelativeGirLocation, isDirectory: true, relativeTo: libDirURL)
                 } else {
                     manifestURL = URL(string: homebrewRelativeGirLocation, relativeTo: libDirURL)
                 }

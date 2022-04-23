@@ -21,7 +21,7 @@ func postProcess(_ node: String, for targetDirectoryURL: URL, pkgConfigName: Str
     let postProcessors = ["sed", "awk"]
     let fm = FileManager.default
     let cwd = fm.currentDirectoryPath
-    let cwdURL = URL(fileURLWithPath: cwd)
+    let cwdURL = URL(fileURLWithPath: cwd, isDirectory: true)
     postProcessors.forEach {
         let script = node + "." + $0
         let scriptPath = targetDirectoryURL.appendingPathComponent(script).path
