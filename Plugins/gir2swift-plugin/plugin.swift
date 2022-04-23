@@ -104,7 +104,7 @@ func getGirDirectory(containing girFiles: [String]) throws -> Path {
         })
 
         return [.buildCommand(
-            displayName: "Converting \(target.directory.lastComponent) \(girName).gir",
+            displayName: "Converting \(target.directory.string) \(girName).gir",
             executable: try context.tool(named: "gir2swift").path,
             arguments: arguments,
             inputFiles: inputFiles,
