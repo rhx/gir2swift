@@ -57,7 +57,7 @@ func postProcess(_ node: String, for targetDirectoryURL: URL, pkgConfigName: Str
             let d = f.lastIndex(of: ".") ?? f.index(f.endIndex, offsetBy: -4)
             let s = f.index(after: d)
             let script = targetDirectoryURL.appendingPathComponent(f).path
-            return .init(command: String(f[s..<f.endIndex]), arguments: ["-f", fm.fileExists(atPath: script ? script : f])
+            return .init(command: String(f[s..<f.endIndex]), arguments: ["-f", (fm.fileExists(atPath: script) ? script : f)])
         }
     }
     pipeCommands += cmds
