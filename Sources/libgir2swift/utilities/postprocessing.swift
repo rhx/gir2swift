@@ -20,15 +20,20 @@ func postProcess(_ node: String, for targetDirectoryURL: URL, pkgConfigName: Str
     var pipeCommands = [CommandArguments]()
     let postProcessors = ["sed", "awk"]
     let fm = FileManager.default
+    let cwd = fm.currentDirectoryPath
+    let cwdURL = URL(fileURLWithPath: cwd)
     postProcessors.forEach {
         let script = node + "." + $0
         let scriptURL = targetDirectoryURL.appendingPathComponent(script)
         if fm.fileExists(atPath: scriptURL.path) {
             pipeCommands.append(.init(command: $0, arguments: ["-f", scriptURL.path]))
+        } else {
+            let scriptURL = cwdURL.appendingPathComponent(script)
+            if fm.fileExists(atPath: scriptURL.path) {
+                pipeCommands.append(.init(command: $0, arguments: ["-f", scriptURL.path]))
+            }
         }
     }
-    let cwd = fm.currentDirectoryPath
-    let cwdURL = URL(fileURLWithPath: cwd)
     let nodeFiles = ((try? fm.contentsOfDirectory(atPath: targetDirectoryURL.path)) ?? (try? fm.contentsOfDirectory(atPath: cwd)) ?? []).filter { $0.hasPrefix(node) }
     let cmds = postProcessors.flatMap { command in
         nodeFiles.filter {

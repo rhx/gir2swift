@@ -338,7 +338,7 @@ extension Gir2Swift {
                 }
             }
             queues.wait()
-            postProcess(node, for: targetDirectoryURL, pkgConfigName: pkgConfigArg, outputString: outputString, outputDirectory: outputDirectory, outputFiles: outputFiles)
+            libgir2swift.postProcess(node, for: targetDirectoryURL, pkgConfigName: pkgConfigArg, outputString: outputString, outputDirectory: outputDirectory, outputFiles: outputFiles)
             if verbose {
                 let pf = outputString.isEmpty ? "** " : "// "
                 let nl = outputString.isEmpty ? "\n"  : "\n// "
