@@ -4,16 +4,14 @@ name: gtk Ubuntu
 env:
   UBUNTU_APT: ${{ 'libpango1.0-dev libglib2.0-dev libgdk-pixbuf2.0-dev gobject-introspection libcairo2-dev libatk1.0-dev glib-networking libgtk-3-dev libgirepository1.0-dev jq' }}
   
-
 on:
   push:
     branches:
-      - development
-      - main
+      - swift52
   pull_request:
     branches:
-      - development
-      - main
+      - swift52
+
 jobs:
   # Ubuntu tasks
   build-ubuntu-swift-latest:
@@ -34,7 +32,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: rhx/SwiftGtk
-          ref: development
+          ref: swift52
           path: SwiftGtk
 
       - name: Build current gir2swift
@@ -61,12 +59,3 @@ jobs:
           swift package clean
           rm -rf .build/repositories
           cd ..
-
-      - name: 'Upload Artefact'
-        uses: actions/upload-artifact@v2
-        with:
-          name: build-artefact-ubuntu
-          path: |
-            gir2swift/
-            SwiftGtk/Sources/
-          retention-days: 1
