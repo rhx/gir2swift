@@ -1,8 +1,9 @@
 //
-//  File.swift
-//  
+//  GirArgument.swift
+//  gir2swift
 //
-//  Created by Mikoláš Stuchlík on 17.11.2020.
+//  Created by Rene Hexel on 25/03/2016.
+//  Copyright © 2016, 2017, 2018, 2019, 2020, 2022 Rene Hexel. All rights reserved.
 //
 import SwiftLibXML
 
@@ -10,14 +11,22 @@ extension GIR {
     /// data type representing a function/method argument or return type
     public class Argument: CType {
         public override var kind: String { return "Argument" }
-        public let instance: Bool           ///< is this an instance parameter or return type?
-        public let _varargs: Bool           ///< is this a varargs (...) parameter?
-        public let isNullable: Bool         ///< is this a nullable parameter or return type?
-        public let allowNone: Bool          ///< is this a parameter that can be ommitted?
-        public let isOptional: Bool         ///< is this an optional (out) parameter?
-        public let callerAllocates: Bool    ///< is this a caller-allocated (out) parameter?
-        public let ownershipTransfer: OwnershipTransfer ///< model of ownership transfer used
-        public let direction: ParameterDirection        ///< whether this is an `in`, `out`, or `inout` parameter
+        /// is this an instance parameter or return type?
+        public let instance: Bool
+        /// is this a varargs (...) parameter?
+        public let _varargs: Bool
+        /// is this a nullable parameter or return type?
+        public let isNullable: Bool
+        /// is this a parameter that can be ommitted?
+        public let allowNone: Bool
+        /// is this an optional (out) parameter?
+        public let isOptional: Bool
+        /// is this a caller-allocated (out) parameter?
+        public let callerAllocates: Bool
+        /// model of ownership transfer used
+        public let ownershipTransfer: OwnershipTransfer
+        /// whether this is an `in`, `out`, or `inout` parameter
+        public let direction: ParameterDirection
 
         /// indicate whether the given parameter is varargs
         public var varargs: Bool {
@@ -25,7 +34,22 @@ extension GIR {
         }
 
         /// default constructor
-        public init(name: String, type: TypeReference, instance: Bool, comment: String, introspectable: Bool = false, deprecated: String? = nil, varargs: Bool = false, isNullable: Bool = false, allowNone: Bool = false, isOptional: Bool = false, callerAllocates: Bool = false, ownershipTransfer: OwnershipTransfer = .none, direction: ParameterDirection = .in) {
+        /// - Parameters:
+        ///   - name: The name of the `Argument` to initialise
+        ///   - cname: C identifier
+        ///   - type: The corresponding, underlying GIR type
+        ///   - instance: `true` if this is an instance parameter
+        ///   - comment: Documentation text for the type
+        ///   - introspectable: Set to `true` if introspectable
+        ///   - deprecated: Documentation on deprecation status if non-`nil`
+        ///   - varargs: `true` if this is a varargs `(...)` parameter
+        ///   - isNullable: `true` if this is a nullable parameter or return type
+        ///   - allowNone: `true` if this parameter can be omitted
+        ///   - isOptional: `true` if this is an optional (out) parameter
+        ///   - callerAllocates: `true` if this is caller allocated
+        ///   - ownershipTransfer: model of ownership transfer used
+        ///   - direction: whether this is an `in`, `out`, or `inout` paramete
+        public init(name: String, cname:String, type: TypeReference, instance: Bool, comment: String, introspectable: Bool = false, deprecated: String? = nil, varargs: Bool = false, isNullable: Bool = false, allowNone: Bool = false, isOptional: Bool = false, callerAllocates: Bool = false, ownershipTransfer: OwnershipTransfer = .none, direction: ParameterDirection = .in) {
             self.instance = instance
             _varargs = varargs
             self.isNullable = isNullable
@@ -34,7 +58,7 @@ extension GIR {
             self.callerAllocates = callerAllocates
             self.ownershipTransfer = ownershipTransfer
             self.direction = direction
-            super.init(name: name, type: type, comment: comment, introspectable: introspectable, deprecated: deprecated)
+            super.init(name: name, cname: cname, type: type, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
         /// XML constructor

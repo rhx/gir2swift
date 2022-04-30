@@ -352,8 +352,9 @@ public func swiftCode(_ e: GIR.Enumeration) -> String {
 public func valueCode(_ indentation: String) -> (GIR.Enumeration.Member) -> String {
     return { (m: GIR.Enumeration.Member) -> String in
         let value = String(m.value)
+        let id = m.typeRef.identifier ?? m.cname
         let cID: String
-        if let id = m.typeRef.identifier, !id.isEmpty {
+        if !id.isEmpty {
             cID = id
         } else {
             cID = value

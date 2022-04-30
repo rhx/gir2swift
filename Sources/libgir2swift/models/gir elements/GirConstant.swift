@@ -1,8 +1,9 @@
 //
-//  File.swift
-//  
+//  GirConstant.swift
+//  gir2swift
 //
-//  Created by Mikoláš Stuchlík on 17.11.2020.
+//  Created by Rene Hexel on 25/03/2016.
+//  Copyright © 2016, 2017, 2018, 2019, 2020, 2022 Rene Hexel. All rights reserved.
 //
 import SwiftLibXML
 
@@ -18,15 +19,16 @@ extension GIR {
         /// Designated initialiser
         /// - Parameters:
         ///   - name: The name of the `Constant` to initialise
+        ///   - cname: C identifier
         ///   - type: The type of the enum
         ///   - ctype: underlying C type
         ///   - value: the value of the constant
         ///   - comment: Documentation text for the constant
         ///   - introspectable: Set to `true` if introspectable
         ///   - deprecated: Documentation on deprecation status if non-`nil`
-        public init(name: String, type: TypeReference, value: Int, comment: String, introspectable: Bool = false, deprecated: String? = nil) {
+        public init(name: String, cname: String, type: TypeReference, value: Int, comment: String, introspectable: Bool = false, deprecated: String? = nil) {
             self.value = value
-            super.init(name: name, type: type, comment: comment, introspectable: introspectable, deprecated: deprecated)
+            super.init(name: name, cname: cname, type: type, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
         /// Initialiser to construct a constant from XML

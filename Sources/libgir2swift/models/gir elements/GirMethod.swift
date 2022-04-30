@@ -1,19 +1,17 @@
 //
-//  File.swift
-//  
+//  GirMethod.swift
+//  gir2swift
 //
-//  Created by Mikoláš Stuchlík on 17.11.2020.
+//  Created by Rene Hexel on 25/03/2016.
+//  Copyright © 2016, 2017, 2018, 2019, 2020, 2022 Rene Hexel. All rights reserved.
 //
 import SwiftLibXML
 
 extension GIR {
-
     /// data type representing a function/method
     public class Method: Argument {     // superclass type is return type
         /// String representation of member `Method`s
         public override var kind: String { return "Method" }
-        /// Original C function name
-        public let cname: String
         /// Return type
         public let returns: Argument
         /// All associated arguments (parameters) in order
@@ -32,11 +30,10 @@ extension GIR {
         ///   - deprecated: Documentation on deprecation status if non-`nil`
         ///   - throwsAnError: Set to `true` if this method can throw an error
         public init(name: String, cname: String, returns: Argument, args: [Argument] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil, throwsAnError: Bool = false) {
-            self.cname = cname
             self.returns = returns
             self.args = args
             throwsError = throwsAnError
-            super.init(name: name, type: returns.typeRef, instance: returns.instance, comment: comment, introspectable: introspectable, deprecated: deprecated)
+            super.init(name: name, cname: cname, type: returns.typeRef, instance: returns.instance, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
         /// Initialiser to construct a method type from XML
@@ -44,7 +41,6 @@ extension GIR {
         ///   - node: `XMLElement` to construct this constant from
         ///   - index: Index within the siblings of the `node`
         public init(node: XMLElement, at index: Int) {
-            cname = node.attribute(named: "identifier") ?? ""
             let thrAttr = node.attribute(named: "throws") ?? "0"
             throwsError = (Int(thrAttr) ?? 0) != 0
             let children = node.children.lazy
@@ -52,7 +48,7 @@ extension GIR {
                 let arg = Argument(node: ret, at: -1)
                 returns = arg
             } else {
-                returns = Argument(name: "", type: .void, instance: false, comment: "")
+                returns = Argument(name: "", cname: "", type: .void, instance: false, comment: "")
             }
             if let params = children.first(where: { $0.name == "parameters"}) {
                 let children = params.children.lazy

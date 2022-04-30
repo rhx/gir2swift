@@ -1,5 +1,5 @@
 //
-//  gir.swift
+//  GirRecord.swift
 //  gir2swift
 //
 //  Created by Rene Hexel on 25/03/2016.
@@ -61,6 +61,7 @@ extension GIR {
         /// Designated initialiser
         /// - Parameters:
         ///   - name: The name of the record to initialise
+        ///   - cname: C identifier
         ///   - type: C typedef name of the constant
         ///   - ctype: underlying C type
         ///   - cprefix: prefix used for C language free functions that implement methods for this record
@@ -75,7 +76,7 @@ extension GIR {
         ///   - comment: Documentation text for the constant
         ///   - introspectable: Set to `true` if introspectable
         ///   - deprecated: Documentation on deprecation status if non-`nil`
-        public init(name: String, type: TypeReference, cprefix: String, correspondingCType: String? = nil, typegetter: String? = nil, isGTypeStructForType: String? = nil, methods: [Method] = [], functions: [Function] = [], constructors: [Method] = [], properties: [Property] = [], fields: [Field] = [], signals: [Signal] = [], interfaces: [String] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
+        public init(name: String, cname: String, type: TypeReference, cprefix: String, correspondingCType: String? = nil, typegetter: String? = nil, isGTypeStructForType: String? = nil, methods: [Method] = [], functions: [Function] = [], constructors: [Method] = [], properties: [Property] = [], fields: [Field] = [], signals: [Signal] = [], interfaces: [String] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
             self.cprefix = cprefix
             self.correspondingCType = correspondingCType
             self.typegetter = typegetter
@@ -87,7 +88,7 @@ extension GIR {
             self.fields = fields
             self.signals = signals
             self.implements = interfaces
-            super.init(name: name, type: type, comment: comment, introspectable: introspectable, deprecated: deprecated)
+            super.init(name: name, cname: cname, type: type, comment: comment, introspectable: introspectable, deprecated: deprecated)
         }
 
         /// Initialiser to construct a record type from XML

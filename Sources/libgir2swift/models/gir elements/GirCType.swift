@@ -1,8 +1,9 @@
 //
-//  File.swift
-//  
+//  GirCType.swift
+//  gir2swift
 //
-//  Created by Mikoláš Stuchlík on 17.11.2020.
+//  Created by Rene Hexel on 25/03/2016.
+//  Copyright © 2016, 2017, 2018, 2019, 2020, 2022 Rene Hexel. All rights reserved.
 //
 import SwiftLibXML
 
@@ -10,6 +11,8 @@ extension GIR {
 
     /// a type with an underlying C type entry
     public class CType: Datatype {
+        /// Original C identifier
+        public let cname: String
         /// String representation of the `CType` thing
         public override var kind: String { return "CType" }
         /// list of contained types
@@ -33,6 +36,7 @@ extension GIR {
         /// Designated initialiser
         /// - Parameters:
         ///   - name: The name of the `Datatype` to initialise
+        ///   - cname: C identifier
         ///   - type: The corresponding, underlying GIR type
         ///   - comment: Documentation text for the data type
         ///   - introspectable: Set to `true` if introspectable
@@ -41,7 +45,8 @@ extension GIR {
         ///   - contains: Array of C types contained within this type
         ///   - tupleSize: Size of the given tuple if non-`nil`
         ///   - scope: The scope this type belongs in
-        public init(name: String, type: TypeReference, comment: String, introspectable: Bool = false, deprecated: String? = nil, isPrivate: Bool = false, isReadable: Bool = true, isWritable: Bool = false, contains: [CType] = [], tupleSize: Int? = nil, scope: String? = nil) {
+        public init(name: String, cname: String, type: TypeReference, comment: String, introspectable: Bool = false, deprecated: String? = nil, isPrivate: Bool = false, isReadable: Bool = true, isWritable: Bool = false, contains: [CType] = [], tupleSize: Int? = nil, scope: String? = nil) {
+            self.cname = cname
             self.isPrivate  = isPrivate
             self.isReadable = isReadable
             self.isWritable = isWritable
@@ -61,8 +66,9 @@ extension GIR {
         ///   - writableAttr: Key for the attribute to extract the writability status from
         ///   - scopeAttr: Key for the attribute to extract the  scope string from
         public init(node: XMLElement, at index: Int, nameAttr: String = "name", privateAttr: String = "private", readableAttr: String = "readable", writableAttr: String = "writable", scopeAttr: String = "scope") {
+            cname = node.attribute(named: "identifier") ?? ""
             containedTypes = node.containedTypes
-            
+
             // Since not all "priv" values are marked as private by gi, all properties names "priv" which type has suffic "Private" are deemed as private.
             let isAttributedPrivate = node.attribute(named: privateAttr).flatMap({ Int($0) }).map({ $0 != 0 }) ?? false
             let isPresumedPrivate = node.attribute(named: nameAttr) == "priv"
@@ -83,6 +89,8 @@ extension GIR {
         ///   - typeAttr: Key for the attribute to extract the `type` property from
         ///   - scopeAttr: Key for the attribute to extract the  scope string from
         public init(fromChildrenOf node: XMLElement, at index: Int, nameAttr: String = "name", privateAttr: String = "private", readableAttr: String = "readable", writableAttr: String = "writable", scopeAttr: String = "scope") {
+            cname = node.attribute(named: "identifier") ?? ""
+
             let type: TypeReference
 
             // Since not all "priv" values are marked as private by gi, all properties names "priv" which type has suffic "Private" are deemed as private.
