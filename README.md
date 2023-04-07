@@ -205,13 +205,13 @@ An [awk](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/awk.html) sc
 To build, you need at least Swift 5.6; download from https://swift.org/download/ -- if you are using macOS, make sure you have the command line tools installed as well).  Test that your compiler works using `swift --version`, which should give you something like
 
 	$ swift --version
-	swift-driver version: 1.45.2 Apple Swift version 5.6 (swiftlang-5.6.0.323.62 clang-1316.0.20.8)
-    Target: x86_64-apple-darwin21.0.0
+	swift-driver version: 1.75.2 Apple Swift version 5.8 (swiftlang-5.8.0.124.2 clang-1403.0.22.11.100)
+    Target: arm64-apple-macosx13.0
 
 on macOS, or on Linux you should get something like:
 
 	$ swift --version
-	Swift version 5.6.1 (swift-5.6.1-RELEASE)
+	Swift version 5.8 (swift-5.8-RELEASE)
 	Target: x86_64-unknown-linux-gnu
 
 ### LibXML 2.9.4 or higher
