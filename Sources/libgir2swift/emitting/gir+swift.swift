@@ -1070,10 +1070,11 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
 public func typedCollection(for prefixedTypeName: String, containedTypes: [GIR.CType], unwrappedName: String, typeRef: TypeReference) -> TypeReference? {
     guard GIR.typedCollections.contains(prefixedTypeName),
           let containedType = containedTypes.first else { return nil }
+    let name = unwrappedName.hasPrefix("PtrArray") ? "Array" : unwrappedName
     if containedType.isGPointer {
-        return genericReference(for: "Reference" + unwrappedName, containedTypeName: containedType.name, in: typeRef.namespace, containedNamespace: typeRef.namespace, cType: GIR.gpointer, isOptional: typeRef.isOptional)
+        return genericReference(for: "Reference" + name, containedTypeName: containedType.name, in: typeRef.namespace, containedNamespace: typeRef.namespace, cType: GIR.gpointer, isOptional: typeRef.isOptional)
     } else if let containedRecord = containedType.knownNameRecord {
-        return genericReference(for: "Ref" + unwrappedName, containedTypeName: containedRecord.structName, in: "GLibObject", containedNamespace: typeRef.namespace, cType: GIR.gpointer, isOptional: typeRef.isOptional)
+        return genericReference(for: "Ref" + name, containedTypeName: containedRecord.structName, in: "GLibObject", containedNamespace: typeRef.namespace, cType: GIR.gpointer, isOptional: typeRef.isOptional)
     }
     return nil
 }
