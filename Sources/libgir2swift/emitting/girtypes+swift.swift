@@ -231,16 +231,23 @@ public extension GIR.CType {
         let name: String
         if pointers == 1, let knownRecord = GIR.knownRecords[prefixedTypeName] ?? GIR.knownRecords[ref.type.name] {
             let knownRef = useStruct ? knownRecord.structRef : (beingIdiomatic ? knownRecord.classRef : knownRecord.typeRef)
-            let unprefixedName = knownRef.forceUnwrappedName
-            if useStruct || beingIdiomatic {
-                let dottedPrefix = prefixedTypeName.dottedPrefix
-                if dottedPrefix.isEmpty || dottedPrefix == GIR.dottedPrefix || unprefixedName.firstIndex(of: ".") != nil {
-                    name = unprefixedName
-                } else {
-                    name = dottedPrefix + unprefixedName
-                }
+            let unwrappedName = knownRef.forceUnwrappedName
+            let unprefixedName: String
+            if let typedColl = typedCollection(for: prefixedTypeName, containedTypes: containedTypes, unwrappedName: unwrappedName, typeRef: knownRef) {
+                unprefixedName = typedColl.type.name
+                name = typedColl.type.swiftName
             } else {
-                name = unprefixedName
+                unprefixedName = unwrappedName
+                if useStruct || beingIdiomatic {
+                    let dottedPrefix = prefixedTypeName.dottedPrefix
+                    if dottedPrefix.isEmpty || dottedPrefix == GIR.dottedPrefix || unprefixedName.firstIndex(of: ".") != nil {
+                        name = unprefixedName
+                    } else {
+                        name = dottedPrefix + unprefixedName
+                    }
+                } else {
+                    name = unprefixedName
+                }
             }
         } else if pointers == 0 && isKnownBitfield {
             name = prefixedTypeName
@@ -255,7 +262,6 @@ public extension GIR.CType {
         }
     }
 }
-
 
 /// Swift extension for methods
 public extension GIR.Method {

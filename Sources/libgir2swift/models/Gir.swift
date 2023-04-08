@@ -62,15 +62,15 @@ public final class GIR {
     /// Callbacs defined by this GIR file
     public var callbacks: [Callback] = []
 
-    /// names of black-listed identifiers
-    public static var blacklist: Set<String> = []
+    /// Names of excluded identifiers.
+    public static var excludeList: Set<String> = []
 
     /// names of constants to be taken verbatim
     public static var verbatimConstants: Set<String> = []
 
     /// names of override initialisers
     public static var overrides: Set<String> = []
-    
+
     /// context of known types
     public static var knownDataTypes:   [ String : Datatype ] = [:]
     /// context of known records
@@ -87,6 +87,11 @@ public final class GIR {
     /// Dotted namespace replacements
     public static var namespaceReplacements: [ Substring : Substring ] = [
         "GObject." : "GLibObject.", "Gio." : "GIO.", "GdkPixbuf." : "GdkPixBuf.", "cairo." : "Cairo."
+    ]
+
+    /// Names of typed collections.
+    public static var typedCollections: Set<String> = [
+        "GLib.List", "GLib.SList", "GLib.PtrArray"
     ]
 
     /// designated constructor

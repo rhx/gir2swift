@@ -576,7 +576,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
         if existingNames.contains(potentiallyClashingName) {
             name = "get" + potentiallyClashingName.capitalised
         } else { name = potentiallyClashingName }
-        guard !GIR.blacklist.contains(rawName) && !GIR.blacklist.contains(name) else {
+        guard !GIR.excludeList.contains(rawName) && !GIR.excludeList.contains(name) else {
             return "\n\(indent)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
         }
         guard !method.varargs else {
@@ -659,7 +659,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoi
         if existingNames.contains(pair.name) {
             name = "_" + pair.name
         } else { name = pair.name.swiftQuoted }
-        guard !GIR.blacklist.contains(name) else {
+        guard !GIR.excludeList.contains(name) else {
             return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
         }
         let getter = pair.getter
@@ -728,7 +728,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
                 swname = underscored
             }
         } else { swname = potentiallyClashingName.swiftQuoted }
-        guard !GIR.blacklist.contains(name) && !GIR.blacklist.contains(swname) else {
+        guard !GIR.excludeList.contains(name) && !GIR.excludeList.contains(swname) else {
             return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
         }
         guard !field.isPrivate else { return indentation + "// var \(swname) is unavailable because \(name) is private\n" }
@@ -830,7 +830,7 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
                 nameWithoutPostFix = rawName
             }
             let name = convertName(nameWithoutPostFix)
-            guard !GIR.blacklist.contains(rawName) && !GIR.blacklist.contains(name) else {
+            guard !GIR.excludeList.contains(rawName) && !GIR.excludeList.contains(name) else {
                 return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
             }
             guard !method.varargs else {
@@ -1019,7 +1019,17 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
             rvSwiftRef = rv.typeRef
         } else {
             rvRef = rv.typeRef
-            rvSwiftRef = !isConstructor ? (useRef ? rv.prefixedIdiomaticWrappedRef : rv.prefixedIdiomaticClassRef ) : rvRef
+            if isConstructor {
+                rvSwiftRef = rvRef
+            } else if useRef {
+                if let typedColl = typedCollection(for: rvRef.type.prefixedName, containedTypes: rv.containedTypes, unwrappedName: rvRef.type.swiftName, typeRef: rvRef) {
+                    rvSwiftRef = typedColl
+                } else {
+                    rvSwiftRef = rv.prefixedIdiomaticWrappedRef
+                }
+            } else {
+                rvSwiftRef = rv.prefixedIdiomaticClassRef
+            }
         }
         let invocationStart = method.cname.swift + "(\(args.map(toSwift).joined(separator: ", "))"
         let invocation = invocationStart + invocationTail
@@ -1043,6 +1053,29 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         }
         return code
     }
+}
+
+/// Return a typed collection reference for the given, prefixed type name.
+///
+/// This function thecks wthether the given type name is a known typed collection
+/// and, if so, returns the appropriate type reference for a typed collection.
+///
+/// - Parameters:
+///   - prefixedTypeName: The prefixed type name to check.
+///   - containedTypes: The contained types of the given type.
+///   - unwrappedName: The name of the unwrapped type.
+///   - typeRef: The type reference for the given type
+/// - Returns: The type reference for the typed collection, or `nil` if the given type name is not a known typed collection.
+@inlinable
+public func typedCollection(for prefixedTypeName: String, containedTypes: [GIR.CType], unwrappedName: String, typeRef: TypeReference) -> TypeReference? {
+    guard GIR.typedCollections.contains(prefixedTypeName),
+          let containedType = containedTypes.first else { return nil }
+    if containedType.isGPointer {
+        return genericReference(for: "Reference" + unwrappedName, containedTypeName: containedType.name, in: typeRef.namespace, containedNamespace: typeRef.namespace, cType: GIR.gpointer, isOptional: typeRef.isOptional)
+    } else if let containedRecord = containedType.knownNameRecord {
+        return genericReference(for: "Ref" + unwrappedName, containedTypeName: containedRecord.structName, in: "GLibObject", containedNamespace: typeRef.namespace, cType: GIR.gpointer, isOptional: typeRef.isOptional)
+    }
+    return nil
 }
 
 
