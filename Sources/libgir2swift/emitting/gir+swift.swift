@@ -972,7 +972,7 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         } else {
             argPtrName = ""
         }
-        let varName = instance ? ptr : (name + argPtrName)
+        let varName = instance ? record?.ptrName ?? ptr : (name + argPtrName)
         let ref = arg.typeRef
         let param = ref.cast(expression: varName, from: arg.swiftParamRef)
         return param
