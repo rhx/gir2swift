@@ -471,7 +471,7 @@ public final class GIRGenericType: GIRType {
     /// - Returns: The cast expression string
     @inlinable
     public override func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false) -> String {
-        let expression = castName + "(raw: UnsafeMutableRawPointer(" + e + "))"
+        let expression = e + ".map({ " + castName + "(raw: UnsafeMutableRawPointer($0)) })"
         return expression
     }
 }
