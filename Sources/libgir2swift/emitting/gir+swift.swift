@@ -809,7 +809,7 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
     let useRef = factory && publicDesignation == "" // Only use Ref type for structs/protocols
     return { (record: GIR.Record) -> (GIR.Method) -> String in
         let doubleIndent = indentation + indentation
-        let call = callCode(doubleIndent, isConstructor: !factory, useStruct: useRef)
+        let call = callCode(doubleIndent, record, isConstructor: !factory, useStruct: useRef)
         let returnDeclaration = returnDeclarationCode((typeRef: typeRef, record: record, isConstructor: !factory), useStruct: useRef)
         let ret = returnCode(indentation, (typeRef: typeRef, record: record, isConstructor: !factory, isConvenience: isConv), hasParent: hasParent)
         let isGObject = record.rootType.name == "Object" && record.ref != nil && shouldSink
