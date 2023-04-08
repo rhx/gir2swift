@@ -233,7 +233,8 @@ public extension GIR.CType {
             let knownRef = useStruct ? knownRecord.structRef : (beingIdiomatic ? knownRecord.classRef : knownRecord.typeRef)
             let unwrappedName = knownRef.forceUnwrappedName
             let unprefixedName: String
-            if let typedColl = typedCollection(for: prefixedTypeName, containedTypes: containedTypes, unwrappedName: unwrappedName, typeRef: knownRef) {
+            if !isInstanceOf(record),
+               let typedColl = typedCollection(for: prefixedTypeName, containedTypes: containedTypes, unwrappedName: unwrappedName, typeRef: knownRef) {
                 unprefixedName = typedColl.type.name
                 name = typedColl.type.swiftName
             } else {
