@@ -565,7 +565,7 @@ public func functionCode(_ f: GIR.Function, indentation: String = "    ", initia
 public func methodCode(_ indentation: String, initialIndentation: String? = nil, record: GIR.Record? = nil, functionPrefix: String = "", avoiding existingNames: Set<String> = [], publicDesignation: String = "public ", convertName: @escaping (String) -> String = { $0.snakeCase2camelCase }, ptr ptrName: String = "ptr") -> (GIR.Method) -> String {
     let indent = initialIndentation ?? indentation
     let doubleIndent = indent + indentation
-    let invocationCodeFor = callCode(doubleIndent, record, ptr: ptrName)
+    let invocationCodeFor = functionCallCode(doubleIndent, record, constructedRecord: record, ptr: ptrName)
     let returnDeclarationCodeFor = returnDeclarationCode()
     let ret = returnCode(indentation, ptr: ptrName)
     return { (method: GIR.Method) -> String in
@@ -651,7 +651,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
 public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoiding existingNames: Set<String> = [], publicDesignation: String = "public ", ptr ptrName: String = "ptr") -> (GetterSetterPair) -> String {
     let doubleIndent = indentation + indentation
     let tripleIndent = doubleIndent + indentation
-    let gcall = callCode(doubleIndent, record, ptr: ptrName, doThrow: false)
+    let gcall = functionCallCode(doubleIndent, record, constructedRecord: record, ptr: ptrName, doThrow: false)
     let scall = callSetter(doubleIndent, record, ptr: ptrName)
     let ret = returnCode(doubleIndent, ptr: ptrName)
     return { (pair: GetterSetterPair) -> String in
@@ -809,7 +809,7 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
     let useRef = factory && publicDesignation == "" // Only use Ref type for structs/protocols
     return { (record: GIR.Record) -> (GIR.Method) -> String in
         let doubleIndent = indentation + indentation
-        let call = callCode(doubleIndent, record, isConstructor: !factory, useStruct: useRef)
+        let call = functionCallCode(doubleIndent, constructedRecord: record, isConstructor: !factory, useStruct: useRef)
         let returnDeclaration = returnDeclarationCode((typeRef: typeRef, record: record, isConstructor: !factory), useStruct: useRef)
         let ret = returnCode(indentation, (typeRef: typeRef, record: record, isConstructor: !factory, isConvenience: isConv), hasParent: hasParent)
         let isGObject = record.rootType.name == "Object" && record.ref != nil && shouldSink
@@ -957,7 +957,17 @@ public func returnCode<T>(_ indentation: String, _ tr: (typeRef: TypeReference, 
 
 
 /// Swift code for calling the underlying function and assigning the raw return value
-public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: String = "ptr", rvVar: String = "rv", doThrow: Bool = true, isConstructor: Bool = false, useStruct useRef: Bool = true) -> (GIR.Method) -> String {
+/// - Parameters:
+///   - indentation: The indentation string prefix to prepend.
+///   - record: The record any parameters may refer to.
+///   - constructedRecord: The record the return type may refer to.
+///   - ptr: The fallback pointer name, if the corresponding record is `nil`.
+///   - rvVar: The name of the variable containing the return value.
+///   - doThrow: `true` if the method may throw.
+///   - isConstructor: `true` if the method is a constructor.
+///   - useRef: Use the corresponding `Ref` instead of a reference-counted class.
+/// - Returns: The Swift code for calling the underlying function.
+public func functionCallCode(_ indentation: String, _ record: GIR.Record? = nil, constructedRecord: GIR.Record? = nil, ptr: String = "ptr", rvVar: String = "rv", doThrow: Bool = true, isConstructor: Bool = false, useStruct useRef: Bool = true) -> (GIR.Method) -> String {
     var hadInstance = false
     let toSwift: (GIR.Argument) -> String = { arg in
         let name = arg.argumentName
@@ -1022,7 +1032,13 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
             if isConstructor {
                 rvSwiftRef = rvRef
             } else if useRef {
-                if !rv.isInstanceOf(record), let typedColl = typedCollection(for: rvRef.type.prefixedName, containedTypes: rv.containedTypes, unwrappedName: rvRef.type.swiftName, typeRef: rvRef) {
+                if !rv.isInstanceOf(constructedRecord),
+                   let typedColl = typedCollection(
+                    for: rvRef.type.prefixedName,
+                    containedTypes: rv.containedTypes,
+                    unwrappedName: rvRef.type.swiftName,
+                    typeRef: rvRef
+                ) {
                     rvSwiftRef = typedColl
                 } else {
                     rvSwiftRef = rv.prefixedIdiomaticWrappedRef
