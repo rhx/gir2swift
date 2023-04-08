@@ -1022,7 +1022,7 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
             if isConstructor {
                 rvSwiftRef = rvRef
             } else if useRef {
-                if let typedColl = typedCollection(for: rvRef.type.prefixedName, containedTypes: rv.containedTypes, unwrappedName: rvRef.type.swiftName, typeRef: rvRef) {
+                if !rv.isInstanceOf(record), let typedColl = typedCollection(for: rvRef.type.prefixedName, containedTypes: rv.containedTypes, unwrappedName: rvRef.type.swiftName, typeRef: rvRef) {
                     rvSwiftRef = typedColl
                 } else {
                     rvSwiftRef = rv.prefixedIdiomaticWrappedRef
