@@ -268,7 +268,7 @@ public extension GIR.CType {
             name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : ref.fullUnderlyingTypeName(asOptional: underlyingType.isGPointer)
         }
         let normalisedName = name.withNormalisedPrefix
-        if (typeRef.isOptional || maybeOptional(for: record) || name.maybeCallback) && !name.isOptional {
+        if (typeRef.isOptional || ((self as? GIR.Argument)?.maybeOptional() ?? false) || maybeOptional(for: record) || name.maybeCallback) && !name.isOptional {
             return normalisedName + "!"
         } else {
             return normalisedName
