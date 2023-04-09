@@ -566,7 +566,6 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
     let indent = initialIndentation ?? indentation
     let doubleIndent = indent + indentation
     let invocationCodeFor = functionCallCode(doubleIndent, record, constructedRecord: record, ptr: ptrName)
-    let returnDeclarationCodeFor = returnDeclarationCode()
     let ret = returnCode(indentation, ptr: ptrName)
     return { (method: GIR.Method) -> String in
         let rawName = method.name.isEmpty ? method.cname : method.name
@@ -591,6 +590,8 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
             if instance { hadInstance = true }
             return !instance
         }
+        let returnDeclarationTuple = record.map { (typeRef: method.returns.typeRef, record: $0, isConstructor: method.isConstructorOf(record)) }
+        let returnDeclarationCodeFor = returnDeclarationCode(returnDeclarationTuple)
         let templateTypes = Set(arguments.compactMap(\.templateDecl)).sorted().joined(separator: ", ")
         let nonNullableTemplates = Set(arguments.compactMap(\.nonNullableTemplateDecl)).sorted().joined(separator: ", ")
         let defaultArgsCode: String
@@ -900,6 +901,7 @@ public func returnTypeCode(for method: GIR.Method, _ tr: (typeRef: TypeReference
 
 
 /// Return code declaration for functions/methods/convenience constructors
+@inlinable
 public func returnDeclarationCode(_ tr: (typeRef: TypeReference, record: GIR.Record, isConstructor: Bool)? = nil, useStruct useRef: Bool = true) -> (GIR.Method) -> String {
     return { method in
         let throwCode = method.throwsError ? " throws" : ""
@@ -910,12 +912,14 @@ public func returnDeclarationCode(_ tr: (typeRef: TypeReference, record: GIR.Rec
 
 
 /// Return code for functions/methods/convenience constructors
+@inlinable
 public func returnCode(_ indentation: String, _ tr: (typeRef: TypeReference, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil,
                        ptr: String = "ptr", hasParent: Bool = false, useIdiomaticSwift beIdiomatic: Bool = true, noCast: Bool = false) -> (GIR.Method) -> String {
     returnCode(indentation, tr, ptr: ptr, hasParent: hasParent, useIdiomaticSwift: beIdiomatic, noCast: noCast) { $0.returns }
 }
 
 /// Return code for instances (e.g. fields)
+@inlinable
 public func instanceReturnCode(_ indentation: String, _ tr: (typeRef: TypeReference, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil,
                                ptr: String = "ptr", castVar: String = "rv", hasParent: Bool = false, forceCast doForce: Bool = true, noCast: Bool = true,
                                convertToSwiftTypes doConvert: Bool = false, useIdiomaticSwift beIdiomatic: Bool = true) -> (GIR.CType) -> String {
@@ -923,6 +927,7 @@ public func instanceReturnCode(_ indentation: String, _ tr: (typeRef: TypeRefere
 }
 
 /// Generic return code for methods/types
+@inlinable
 public func returnCode<T>(_ indentation: String, _ tr: (typeRef: TypeReference, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil,
                           ptr: String = "ptr", rv: String = "rv", hasParent: Bool = false, forceCast doForce: Bool = false,
                           convertToSwiftTypes doConvert: Bool = true, useIdiomaticSwift beIdiomatic: Bool = true, noCast: Bool = true,
