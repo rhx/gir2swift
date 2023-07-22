@@ -211,7 +211,7 @@ To build, you need at least Swift 5.6; download from https://swift.org/download/
 on macOS, or on Linux you should get something like:
 
 	$ swift --version
-	Swift version 5.8 (swift-5.8-RELEASE)
+	Swift version 5.8.1 (swift-5.8.1-RELEASE)
 	Target: x86_64-unknown-linux-gnu
 
 ### LibXML 2.9.4 or higher
