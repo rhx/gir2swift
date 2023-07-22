@@ -1732,7 +1732,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     // and call buildCodeForClassMetaType with the metaType and this record as the classInstance
     if let typeStructName = e.typeStruct,
        let metaType = GIR.knownRecords[typeStructName] {
-        metaTypeCode = buildCodeForClassMetaType(for: metaType, classInstance: e)
+        metaTypeCode = buildCodeForClassMetaType(for: metaType, classInstance: e, override: hasParent ? "override" : "")
     } else {
         metaTypeCode = ""
     }

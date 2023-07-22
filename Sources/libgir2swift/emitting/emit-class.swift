@@ -44,18 +44,19 @@ func buildClassTypeDeclaration(for record: GIR.Record, classInstance: GIR.Record
 /// - Parameters:
 ///   - metaType: The class metatype for the given class instance.
 ///   - classInstance: The class instance to create the metatype properties for.
+///   - override: An optional override keyword to use for the metatype getter.
 /// - Returns: The code that needs to go inside the `classInstance` class definition.
-func buildCodeForClassMetaType(for metaType: GIR.Record, classInstance: GIR.Record) -> String {
+func buildCodeForClassMetaType(for metaType: GIR.Record, classInstance: GIR.Record, override: String = "") -> String {
     Code.block {
         if let getTypeId = classInstance.typegetter {
             "/// This getter returns the GLib type identifier registered for `\(classInstance.name)`"
-            "static var metatypeReference: GType { \(getTypeId)() }"
+            "static " + override + " var metatypeReference: GType { \(getTypeId)() }"
             ""
             "private static var metatypePointer: UnsafeMutablePointer<\(metaType.typeRef.type.ctype)>? { g_type_class_peek_static(metatypeReference)?.assumingMemoryBound(to: \(metaType.typeRef.type.ctype).self) }"
             ""
-            "static var metatype: \(metaType.typeRef.type.ctype)? { metatypePointer?.pointee } "
+            "static " + override + " var metatype: \(metaType.typeRef.type.ctype)? { metatypePointer?.pointee } "
             ""
-            "static var wrapper: \(metaType.structRef.type.swiftName)? { \(metaType.structRef.type.swiftName)(metatypePointer) }"
+            "static " + override + " var wrapper: \(metaType.structRef.type.swiftName)? { \(metaType.structRef.type.swiftName)(metatypePointer) }"
             ""
             "/// Creates a new instance of `\(classInstance.name)` and sets its properties using"
             "/// the provided dictionary."
@@ -65,7 +66,7 @@ func buildCodeForClassMetaType(for metaType: GIR.Record, classInstance: GIR.Reco
             "///"
             "/// - Parameter properties: Dictionary of name/value pairs representing the properties of the type"
             "/// - Returns: A new `\(classInstance.name)` with the given properties"
-            "static func new(with properties: [String: Any] = [:]) -> \(classInstance.name) {"
+            "static " + override + " func new(with properties: [String: Any] = [:]) -> \(classInstance.name) {"
             Code.block {
                 "let type = \(getTypeId)()"
                 "var keys = properties.keys.map { $0.withCString { UnsafePointer(strdup($0)) } }"
@@ -89,4 +90,3 @@ func buildCodeForClassMetaType(for metaType: GIR.Record, classInstance: GIR.Reco
         }
     }
 }
-
