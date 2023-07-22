@@ -489,7 +489,18 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
 }
 
 
-/// Default implementation for record methods as protocol extension
+/// Default implementation for record methods as protocol extension.
+///
+/// This function generates the default implementation code
+/// for the methods and properties of the given record.
+///
+/// - Parameters:
+///  - globalFunctions: Global functions that might take the record as one of their parameters.
+///  - e: The record for which to generate the code.
+///  - indentation: The indentation (string of spaces) to use for the code.
+///  - ptrName: The name of the pointer property that points to the underlying C record.
+///
+///  - Returns: The Swift code for the default implementation of the record's methods and properties.
 public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: GIR.Record, indentation: String = "    ", ptr ptrName: String = "ptr") -> String {
     let vcode = computedPropertyCode(indentation, record: e, publicDesignation: "", ptr: ptrName)
     let allFunctions = e.functions + globalFunctions
@@ -501,7 +512,7 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
     let allMethods: [GIR.Method] = e.methods + instanceMethods
     let gsPairs = getterSetterPairs(for: allMethods)
     let propertyNames = Set(gsPairs.map { $0.name })
-    let mcode = methodCode(indentation, record: e, avoiding: propertyNames, publicDesignation: "", ptr: ptrName)
+    let mcode = methodCode(indentation, record: e, allowConstructor: false, avoiding: propertyNames, publicDesignation: "", ptr: ptrName)
     let fcode = fieldCode(indentation, record: e, avoiding: propertyNames, publicDesignation: "", ptr: ptrName)
     let methods = allMethods.filter { method in
         !method.name.hasPrefix("is_") || !gsPairs.contains { $0.getter === method } }
@@ -562,7 +573,23 @@ public func functionCode(_ f: GIR.Function, indentation: String = "    ", initia
 
 
 /// Swift code for methods (with a given indentation)
-public func methodCode(_ indentation: String, initialIndentation: String? = nil, record: GIR.Record? = nil, functionPrefix: String = "", avoiding existingNames: Set<String> = [], publicDesignation: String = "public ", convertName: @escaping (String) -> String = { $0.snakeCase2camelCase }, ptr ptrName: String = "ptr") -> (GIR.Method) -> String {
+///
+/// This function generates Swift code for a method, including the
+/// function declaration, the invocation of the underlying C function,
+/// and the return statement.
+///
+/// - Parameters:
+///  - indentation: The indentation (string of spaces) to use for the code.
+///  - initialIndentation: The indentation (string of spaces) to use for the first line of the code.
+///  - record: The record (class) to which the method belongs (if any).
+///  - allowConstructor: Whether to allow the method to be a constructor (should be `false` for instance methods and protocol extensions).
+///  - functionPrefix: The prefix to use for the function name (e.g. "new" for constructors).
+///  - existingNames: A set of names that are already used (to avoid name clashes).
+///  - publicDesignation: The designation to use for the method (e.g. "public ", or "" for public protocol extensions).
+///  - convertName: A function to convert the name of the method to a Swift name).
+///  - ptrName: The name of the pointer to the underlying C record.
+/// - Returns: The Swift code for the method.
+public func methodCode(_ indentation: String, initialIndentation: String? = nil, record: GIR.Record? = nil, allowConstructor: Bool = true, functionPrefix: String = "", avoiding existingNames: Set<String> = [], publicDesignation: String = "public ", convertName: @escaping (String) -> String = { $0.snakeCase2camelCase }, ptr ptrName: String = "ptr") -> (GIR.Method) -> String {
     let indent = initialIndentation ?? indentation
     let doubleIndent = indent + indentation
     let invocationCodeFor = functionCallCode(doubleIndent, record, constructedRecord: record, ptr: ptrName)
@@ -590,7 +617,9 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
             if instance { hadInstance = true }
             return !instance
         }
-        let returnDeclarationTuple = record.map { (typeRef: method.returns.typeRef, record: $0, isConstructor: method.isConstructorOf(record)) }
+        let returnDeclarationTuple = record.map {
+            (typeRef: method.returns.typeRef, record: $0, isConstructor: allowConstructor && method.isConstructorOf(record))
+        }
         let returnDeclarationCodeFor = returnDeclarationCode(returnDeclarationTuple)
         let templateTypes = Set(arguments.compactMap(\.templateDecl)).sorted().joined(separator: ", ")
         let nonNullableTemplates = Set(arguments.compactMap(\.nonNullableTemplateDecl)).sorted().joined(separator: ", ")
