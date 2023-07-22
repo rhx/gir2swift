@@ -21,6 +21,8 @@ To start a project that uses Swift wrappers around low-level libraries that util
 
 ## What is new?
 
+Version 16 provides metadata properties and typed generics for collection types such as Lists and Arrays.
+
 Version 15 provides a Package Manager Plugin.  This requires Swift 5.6 or higher
 (older versions can be used via the [swift52](https://github.com/rhx/gir2swift/tree/swift52) branch).
 
