@@ -1740,7 +1740,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     //        "public typealias Class = \(protocolName)\n") +
         signals.map(scode).joined(separator: "\n") + "\n" +
         properties.map(ncode).joined(separator: "\n") + "\n}\n\n")
-    return code1 + code2 + code3 + metaTypeCode + signalEnumCode + buildSignalExtension(for: e)
+    return code1 + metaTypeCode + code2 + code3 + signalEnumCode + buildSignalExtension(for: e)
 }
 
 // MARK: - Swift code for Record/Class methods
