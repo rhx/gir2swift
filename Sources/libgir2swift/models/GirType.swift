@@ -284,20 +284,24 @@ public class GIRType: Hashable {
     ///   - target: The target type to cast to
     ///   - pointerLevel: The number of indirection levels (pointers)
     ///   - const: An indicator whether the cast is to a `const` value
+    ///   - isConstSource: An indicator whether the source expression is a `const` value
     /// - Returns: The cast expression string
     @inlinable
-    public func cast(expression: String, to target: GIRType, pointerLevel: Int = 0, const: Bool = false) -> String {
+    public func cast(expression: String, to target: GIRType, pointerLevel: Int = 0, const: Bool = false, isConstSource: Bool = false) -> String {
         if let castExpr = knownCast(expression: expression, to: target, pointerLevel: pointerLevel, const: const) {
             return castExpr
         }
         let prefix: String
+        let mutating: String
         if pointerLevel == 0 {
             prefix = target.castName
+            mutating = ""
         } else {
             let ptr = const ? "UnsafePointer" : "UnsafeMutablePointer"
             prefix = ptr + "<" + target.castName + ">"
+            mutating = !const && isConstSource ? "mutating: " : ""
         }
-        return prefix + "(" + expression + ")"
+        return prefix + "(" + mutating + expression + ")"
     }
 
     /// Return the default cast to convert the given expression from the source type
@@ -306,13 +310,14 @@ public class GIRType: Hashable {
     ///   - source: The source type to cast from
     ///   - pointerLevel: The number of indirection levels (pointers)
     ///   - const: An indicator whether the cast is to a `const` value
+    ///   - isConstSource: An indicator whether the source expression is a `const` value
     /// - Returns: The cast expression string
     @inlinable
-    public func cast(expression e: String, from source: GIRType, pointerLevel indirection: Int = 0, const isConst: Bool = false) -> String {
+    public func cast(expression e: String, from source: GIRType, pointerLevel indirection: Int = 0, const isConst: Bool = false, isConstSource: Bool = false) -> String {
         if let castExpr = knownCast(expression: e, from: source, pointerLevel: indirection, const: isConst) {
             return castExpr
         }
-        let castExpr = cast(expression: e, pointerLevel: indirection, const: isConst)
+        let castExpr = cast(expression: e, pointerLevel: indirection, const: isConst, isConstSource: isConstSource)
         return castExpr
     }
 
@@ -322,19 +327,24 @@ public class GIRType: Hashable {
     ///   - source: The source type to cast from
     ///   - pointerLevel: The number of indirection levels (pointers)
     ///   - const: An indicator whether the cast is to a `const` value
+    ///   - isConstSource: An indicator whether the source expression is a `const` value
     /// - Returns: The cast expression string
     @inlinable
-    public func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false) -> String {
+    public func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false, isConstSource: Bool = false) -> String {
         let prefix: String
+        let mutating: String
         if pointerLevel == 0 {
             prefix = castName
+            mutating = ""
         } else if GIR.rawPointerTypes.contains(self) {
+            // FIXME: This needs to be a mutating cast if `isConstSource` is true, but `const` is not.
             return RawPointerConversion(source: self, target: self).castFromTarget(expression: e)
         } else {
             let ptr = const ? "UnsafePointer" : "UnsafeMutablePointer"
             prefix = ptr + "<" + castTypeName + ">"
+            mutating = !const && isConstSource ? "mutating: " : ""
         }
-        return prefix + "(" + e + ")"
+        return prefix + "(" + mutating + e + ")"
     }
 
     /// Equality check for a type.
@@ -376,9 +386,10 @@ public final class GIRStringType: GIRType {
     ///   - source: The source type to cast from
     ///   - pointerLevel: The number of indirection levels (pointers)
     ///   - const: An indicator whether the cast is to a `const` value
+    ///   - isConstSource: An indicator whether the source expression is a `const` value
     /// - Returns: The cast expression string
     @inlinable
-    override public func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false) -> String {
+    override public func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false, isConstSource: Bool = false) -> String {
         let cast = e + ".map({ " + castName + "(cString: $0) })"
         return cast
     }
@@ -393,9 +404,11 @@ public final class GIRRawPointerType: GIRType {
     ///   - source: The source type to cast from
     ///   - pointerLevel: The number of indirection levels (pointers)
     ///   - const: An indicator whether the cast is to a `const` value
+    ///   - isConstSource: An indicator whether the source expression is a `const` value
     /// - Returns: The cast expression string
     @inlinable
-    public override func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false) -> String {
+    public override func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false, isConstSource: Bool = false) -> String {
+        // FIXME: This needs to be a mutating cast if `isConstSource` is true, but `const` is not.
         let expression = castName + "(" + e + ")"
         return expression
     }
@@ -410,9 +423,10 @@ public final class GIRRecordType: GIRType {
     ///   - source: The source type to cast from
     ///   - pointerLevel: The number of indirection levels (pointers)
     ///   - const: An indicator whether the cast is to a `const` value
+    ///   - isConstSource: An indicator whether the source expression is a `const` value
     /// - Returns: The cast expression string
     @inlinable
-    public override func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false) -> String {
+    public override func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false, isConstSource: Bool = false) -> String {
         let expression = castName + "(" + GIR.gconstpointer + ": " + GIR.gconstpointer + "(" + e + "))"
         return expression
     }
@@ -468,10 +482,12 @@ public final class GIRGenericType: GIRType {
     ///   - source: The source type to cast from
     ///   - pointerLevel: The number of indirection levels (pointers)
     ///   - const: An indicator whether the cast is to a `const` value
+    ///   - isConstSource: Indicator whether the source is a constant pointer.
     /// - Returns: The cast expression string
     @inlinable
-    public override func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false) -> String {
-        let expression = e + ".map({ " + castName + "(raw: UnsafeMutableRawPointer($0)) })"
+    public override func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false, isConstSource: Bool = false) -> String {
+        let mapArgument = !const && isConstSource ? "mutating: $0" : "$0"
+        let expression = e + ".map({ " + castName + "(raw: UnsafeMutableRawPointer(" + mapArgument + ")) })"
         return expression
     }
 }
@@ -484,9 +500,10 @@ public final class GIROpaquePointerType: GIRType {
     ///   - source: The source type to cast from
     ///   - pointerLevel: The number of indirection levels (pointers)
     ///   - const: An indicator whether the cast is to a `const` value
+    ///   - isConstSource: Indicator whether the source is a constant pointer.
     /// - Returns: The cast expression string
     @inlinable
-    public override func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false) -> String {
+    public override func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false, isConstSource: Bool = false) -> String {
         let expression = castName + "(" + e + ")"
         return expression
     }
