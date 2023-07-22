@@ -83,8 +83,9 @@ public class GIRType: Hashable {
     @inlinable public func prefixedWhereNecessary(_ name: String) -> String {
         guard !namespace.isEmpty && namespace != GIR.prefix else { return name }
         let prefix = namespace.asNormalisedPrefix
-        guard !prefix.isEmpty && prefix != GIR.prefix else { return name }
-        return prefix + "." + name
+        let dottedPrefix = prefix + "."
+        guard !prefix.isEmpty && prefix != GIR.prefix && !name.hasPrefix(dottedPrefix) else { return name }
+        return dottedPrefix + name
     }
 
     /// Return the normalised, fully qualified name, if necessary
@@ -417,6 +418,63 @@ public final class GIRRecordType: GIRType {
     }
 }
 
+/// Representation of a generic type (struct or class), its relationship to other types,
+/// and casting operations
+public final class GIRGenericType: GIRType {
+    /// The contained type.
+    public var containedType: GIRType
+
+    /// Return the bracketed suffix.
+    @inlinable public var genericSuffix: String {
+        "<" + (
+            containedType.swiftName.isEmpty ?
+            containedType.typeNamePrefixedWhereNecessary :
+                containedType.swiftName
+        ) + ">"
+    }
+
+    /// Swift name to use for casting: removes trailing `!` and `?`
+    @inlinable public override var castName: String {
+        guard !swiftName.isEmpty else { return swiftName }
+        let e = swiftName.index(before: swiftName.endIndex)
+        let lastChar = swiftName[e]
+        guard lastChar == "!" || lastChar == "?" else {
+            let refName = swiftName.contains("Ref<") ? swiftName : typeNamePrefixedWhereNecessary
+            return refName.hasSuffix(genericSuffix) ? refName : ( refName + genericSuffix )
+        }
+        let s = swiftName.startIndex
+        return prefixedWhereNecessary(String(swiftName[s..<e])) + genericSuffix
+    }
+
+    /// Designated initialiser for a generic GIR type
+    /// - Parameters:
+    ///   - name: The name of the type without a namespace
+    ///   - namespace: The namespace (empty if top-level C)
+    ///   - swiftName: The name of the type in Swift (empty or `nil` if same as `name`)
+    ///   - typeName: The name of the underlying type (empty or `nil` if same as `swiftName`)
+    ///   - ctype: The name of the type in C
+    ///   - superType: The parent or alias type (or `nil` if fundamental)
+    ///   - isAlias: An indicator whether the type is an alias of its supertype that does not need casting
+    ///   - conversions: Conversion dictionary to use
+    @inlinable
+    public init(name: String, containedType: GIRType, in namespace: String, swiftName: String? = nil, typeName: String? = nil, ctype: String, superType: TypeReference? = nil, isAlias: Bool = false, conversions: [GIRType : [TypeConversion]] = [:]) {
+        self.containedType = containedType
+        super.init(name: name, in: namespace, swiftName: swiftName, typeName: typeName, ctype: ctype, superType: superType, isAlias: isAlias, conversions: conversions)
+    }
+
+    /// Return the default cast to convert the given expression to an opaque pointer
+    /// - Parameters:
+    ///   - expression: The expression to cast
+    ///   - source: The source type to cast from
+    ///   - pointerLevel: The number of indirection levels (pointers)
+    ///   - const: An indicator whether the cast is to a `const` value
+    /// - Returns: The cast expression string
+    @inlinable
+    public override func cast(expression e: String, pointerLevel: Int = 0, const: Bool = false) -> String {
+        let expression = e + ".map({ " + castName + "(raw: UnsafeMutableRawPointer($0)) })"
+        return expression
+    }
+}
 /// Representation of a opaque pointer type, its relationship to other types,
 /// and casting operations
 public final class GIROpaquePointerType: GIRType {
@@ -470,6 +528,49 @@ func typeReference(original: GIRType, named identifier: String? = nil, for name:
     let type = maybeType ?? GIRType(aliasOf: original, name: name, in: namespace ?? "", swiftName: swiftName, ctype: info.innerType)
     let t = addType(type)
     return TypeReference(type: t, in: namespace, identifier: identifier, isConst: info.isConst, isOptional: isOptional, constPointers: info.indirection)
+}
+
+/// Return a known or new generic type reference for a given name and C type
+/// - Parameters:
+///   - identifier: The identifier of this type reference
+///   - name: The name of the type without a namespace
+///   - containedTypeName: The name of the inner element type of the generic.
+///   - namespace: The namespace this type is in
+///   - containedNamespace: The namespace this inner type is in
+///   - swiftName: The name of the type to use in Swift (same as name if `nil`)
+///   - typeName: The name of the underlying type (same as cType if `nil`)
+///   - cType: The underlying C type
+///   - isOptional: `true` if the reference is an optional
+/// - Returns: A type reference
+@usableFromInline
+func genericReference(named identifier: String? = nil, for name: String, containedTypeName: String, in namespace: String? = nil, containedNamespace: String? = nil, swiftName: String? = nil, typeName: String? = nil, cType: String, isOptional: Bool? = nil) -> TypeReference {
+    let suffix = name.last
+    let pureTypeName: Substring
+    let optionalSuffix: String
+    if suffix == "?" || suffix == "!" {
+        pureTypeName = name[..<name.index(before: name.endIndex)]
+        optionalSuffix = String(suffix!)
+    } else {
+        pureTypeName = name[...]
+        optionalSuffix = ""
+    }
+    let refName = String(pureTypeName.hasSuffix("Ref") ? pureTypeName : (pureTypeName + "Ref"))
+    let prefixedName = namespace.map { $0 + "." + refName } ?? refName
+    let info = decodeIndirection(for: cType)
+    let inner = "<" + containedTypeName + ">"
+    let nonOptionalName = String(prefixedName) + inner
+    let suffixedName = nonOptionalName + optionalSuffix
+    let maybeType = GIR.namedTypes[suffixedName]?.first { $0.ctype == info.innerType }
+    let maybeInnerType = GIR.namedTypes[containedTypeName]?.first
+    let innerType: GIRType
+    if let inner = maybeInnerType {
+        innerType = inner
+    } else {
+        innerType = addType(GIRType(name: containedTypeName, in: containedNamespace ?? "", swiftName: containedTypeName, typeName: containedTypeName, ctype: containedTypeName))
+    }
+    let type = maybeType ?? GIRGenericType(name: refName, containedType: innerType, in: namespace ?? "", swiftName: swiftName ?? nonOptionalName, typeName: typeName, ctype: info.innerType)
+    let t = addType(type)
+    return TypeReference(type: t, in: namespace, identifier: identifier, isConst: info.isConst, isOptional: isOptional ?? !optionalSuffix.isEmpty, constPointers: info.indirection)
 }
 
 /// Add a new type to the list of known types

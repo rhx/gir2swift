@@ -565,8 +565,7 @@ public func functionCode(_ f: GIR.Function, indentation: String = "    ", initia
 public func methodCode(_ indentation: String, initialIndentation: String? = nil, record: GIR.Record? = nil, functionPrefix: String = "", avoiding existingNames: Set<String> = [], publicDesignation: String = "public ", convertName: @escaping (String) -> String = { $0.snakeCase2camelCase }, ptr ptrName: String = "ptr") -> (GIR.Method) -> String {
     let indent = initialIndentation ?? indentation
     let doubleIndent = indent + indentation
-    let invocationCodeFor = callCode(doubleIndent, record, ptr: ptrName)
-    let returnDeclarationCodeFor = returnDeclarationCode()
+    let invocationCodeFor = functionCallCode(doubleIndent, record, constructedRecord: record, ptr: ptrName)
     let ret = returnCode(indentation, ptr: ptrName)
     return { (method: GIR.Method) -> String in
         let rawName = method.name.isEmpty ? method.cname : method.name
@@ -576,7 +575,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
         if existingNames.contains(potentiallyClashingName) {
             name = "get" + potentiallyClashingName.capitalised
         } else { name = potentiallyClashingName }
-        guard !GIR.blacklist.contains(rawName) && !GIR.blacklist.contains(name) else {
+        guard !GIR.excludeList.contains(rawName) && !GIR.excludeList.contains(name) else {
             return "\n\(indent)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
         }
         guard !method.varargs else {
@@ -591,6 +590,8 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
             if instance { hadInstance = true }
             return !instance
         }
+        let returnDeclarationTuple = record.map { (typeRef: method.returns.typeRef, record: $0, isConstructor: method.isConstructorOf(record)) }
+        let returnDeclarationCodeFor = returnDeclarationCode(returnDeclarationTuple)
         let templateTypes = Set(arguments.compactMap(\.templateDecl)).sorted().joined(separator: ", ")
         let nonNullableTemplates = Set(arguments.compactMap(\.nonNullableTemplateDecl)).sorted().joined(separator: ", ")
         let defaultArgsCode: String
@@ -651,7 +652,7 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
 public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoiding existingNames: Set<String> = [], publicDesignation: String = "public ", ptr ptrName: String = "ptr") -> (GetterSetterPair) -> String {
     let doubleIndent = indentation + indentation
     let tripleIndent = doubleIndent + indentation
-    let gcall = callCode(doubleIndent, record, ptr: ptrName, doThrow: false)
+    let gcall = functionCallCode(doubleIndent, record, constructedRecord: record, ptr: ptrName, doThrow: false)
     let scall = callSetter(doubleIndent, record, ptr: ptrName)
     let ret = returnCode(doubleIndent, ptr: ptrName)
     return { (pair: GetterSetterPair) -> String in
@@ -659,7 +660,7 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoi
         if existingNames.contains(pair.name) {
             name = "_" + pair.name
         } else { name = pair.name.swiftQuoted }
-        guard !GIR.blacklist.contains(name) else {
+        guard !GIR.excludeList.contains(name) else {
             return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
         }
         let getter = pair.getter
@@ -728,7 +729,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
                 swname = underscored
             }
         } else { swname = potentiallyClashingName.swiftQuoted }
-        guard !GIR.blacklist.contains(name) && !GIR.blacklist.contains(swname) else {
+        guard !GIR.excludeList.contains(name) && !GIR.excludeList.contains(swname) else {
             return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
         }
         guard !field.isPrivate else { return indentation + "// var \(swname) is unavailable because \(name) is private\n" }
@@ -809,7 +810,7 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
     let useRef = factory && publicDesignation == "" // Only use Ref type for structs/protocols
     return { (record: GIR.Record) -> (GIR.Method) -> String in
         let doubleIndent = indentation + indentation
-        let call = callCode(doubleIndent, isConstructor: !factory, useStruct: useRef)
+        let call = functionCallCode(doubleIndent, constructedRecord: record, isConstructor: !factory, useStruct: useRef)
         let returnDeclaration = returnDeclarationCode((typeRef: typeRef, record: record, isConstructor: !factory), useStruct: useRef)
         let ret = returnCode(indentation, (typeRef: typeRef, record: record, isConstructor: !factory, isConvenience: isConv), hasParent: hasParent)
         let isGObject = record.rootType.name == "Object" && record.ref != nil && shouldSink
@@ -830,7 +831,7 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
                 nameWithoutPostFix = rawName
             }
             let name = convertName(nameWithoutPostFix)
-            guard !GIR.blacklist.contains(rawName) && !GIR.blacklist.contains(name) else {
+            guard !GIR.excludeList.contains(rawName) && !GIR.excludeList.contains(name) else {
                 return "\n\(indentation)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
             }
             guard !method.varargs else {
@@ -900,6 +901,7 @@ public func returnTypeCode(for method: GIR.Method, _ tr: (typeRef: TypeReference
 
 
 /// Return code declaration for functions/methods/convenience constructors
+@inlinable
 public func returnDeclarationCode(_ tr: (typeRef: TypeReference, record: GIR.Record, isConstructor: Bool)? = nil, useStruct useRef: Bool = true) -> (GIR.Method) -> String {
     return { method in
         let throwCode = method.throwsError ? " throws" : ""
@@ -910,12 +912,14 @@ public func returnDeclarationCode(_ tr: (typeRef: TypeReference, record: GIR.Rec
 
 
 /// Return code for functions/methods/convenience constructors
+@inlinable
 public func returnCode(_ indentation: String, _ tr: (typeRef: TypeReference, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil,
                        ptr: String = "ptr", hasParent: Bool = false, useIdiomaticSwift beIdiomatic: Bool = true, noCast: Bool = false) -> (GIR.Method) -> String {
     returnCode(indentation, tr, ptr: ptr, hasParent: hasParent, useIdiomaticSwift: beIdiomatic, noCast: noCast) { $0.returns }
 }
 
 /// Return code for instances (e.g. fields)
+@inlinable
 public func instanceReturnCode(_ indentation: String, _ tr: (typeRef: TypeReference, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil,
                                ptr: String = "ptr", castVar: String = "rv", hasParent: Bool = false, forceCast doForce: Bool = true, noCast: Bool = true,
                                convertToSwiftTypes doConvert: Bool = false, useIdiomaticSwift beIdiomatic: Bool = true) -> (GIR.CType) -> String {
@@ -923,6 +927,7 @@ public func instanceReturnCode(_ indentation: String, _ tr: (typeRef: TypeRefere
 }
 
 /// Generic return code for methods/types
+@inlinable
 public func returnCode<T>(_ indentation: String, _ tr: (typeRef: TypeReference, record: GIR.Record, isConstructor: Bool, isConvenience: Bool)? = nil,
                           ptr: String = "ptr", rv: String = "rv", hasParent: Bool = false, forceCast doForce: Bool = false,
                           convertToSwiftTypes doConvert: Bool = true, useIdiomaticSwift beIdiomatic: Bool = true, noCast: Bool = true,
@@ -957,7 +962,17 @@ public func returnCode<T>(_ indentation: String, _ tr: (typeRef: TypeReference, 
 
 
 /// Swift code for calling the underlying function and assigning the raw return value
-public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: String = "ptr", rvVar: String = "rv", doThrow: Bool = true, isConstructor: Bool = false, useStruct useRef: Bool = true) -> (GIR.Method) -> String {
+/// - Parameters:
+///   - indentation: The indentation string prefix to prepend.
+///   - record: The record any parameters may refer to.
+///   - constructedRecord: The record the return type may refer to.
+///   - ptr: The fallback pointer name, if the corresponding record is `nil`.
+///   - rvVar: The name of the variable containing the return value.
+///   - doThrow: `true` if the method may throw.
+///   - isConstructor: `true` if the method is a constructor.
+///   - useRef: Use the corresponding `Ref` instead of a reference-counted class.
+/// - Returns: The Swift code for calling the underlying function.
+public func functionCallCode(_ indentation: String, _ record: GIR.Record? = nil, constructedRecord: GIR.Record? = nil, ptr: String = "ptr", rvVar: String = "rv", doThrow: Bool = true, isConstructor: Bool = false, useStruct useRef: Bool = true) -> (GIR.Method) -> String {
     var hadInstance = false
     let toSwift: (GIR.Argument) -> String = { arg in
         let name = arg.argumentName
@@ -972,7 +987,7 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         } else {
             argPtrName = ""
         }
-        let varName = instance ? ptr : (name + argPtrName)
+        let varName = instance ? record?.ptrName ?? ptr : (name + argPtrName)
         let ref = arg.typeRef
         let param = ref.cast(expression: varName, from: arg.swiftParamRef)
         return param
@@ -1019,7 +1034,23 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
             rvSwiftRef = rv.typeRef
         } else {
             rvRef = rv.typeRef
-            rvSwiftRef = !isConstructor ? (useRef ? rv.prefixedIdiomaticWrappedRef : rv.prefixedIdiomaticClassRef ) : rvRef
+            if isConstructor {
+                rvSwiftRef = rvRef
+            } else if useRef {
+                if !rv.isInstanceOf(constructedRecord),
+                   let typedColl = typedCollection(
+                    for: rvRef.type.prefixedName,
+                    containedTypes: rv.containedTypes,
+                    unwrappedName: rvRef.type.swiftName,
+                    typeRef: rvRef
+                ) {
+                    rvSwiftRef = typedColl
+                } else {
+                    rvSwiftRef = rv.prefixedIdiomaticWrappedRef
+                }
+            } else {
+                rvSwiftRef = rv.prefixedIdiomaticClassRef
+            }
         }
         let invocationStart = method.cname.swift + "(\(args.map(toSwift).joined(separator: ", "))"
         let invocation = invocationStart + invocationTail
@@ -1043,6 +1074,30 @@ public func callCode(_ indentation: String, _ record: GIR.Record? = nil, ptr: St
         }
         return code
     }
+}
+
+/// Return a typed collection reference for the given, prefixed type name.
+///
+/// This function thecks wthether the given type name is a known typed collection
+/// and, if so, returns the appropriate type reference for a typed collection.
+///
+/// - Parameters:
+///   - prefixedTypeName: The prefixed type name to check.
+///   - containedTypes: The contained types of the given type.
+///   - unwrappedName: The name of the unwrapped type.
+///   - typeRef: The type reference for the given type
+/// - Returns: The type reference for the typed collection, or `nil` if the given type name is not a known typed collection.
+@inlinable
+public func typedCollection(for prefixedTypeName: String, containedTypes: [GIR.CType], unwrappedName: String, typeRef: TypeReference) -> TypeReference? {
+    guard GIR.typedCollections.contains(prefixedTypeName),
+          let containedType = containedTypes.first else { return nil }
+    let name = unwrappedName.hasPrefix("PtrArray") ? "Array" : unwrappedName
+    if containedType.isGPointer {
+        return genericReference(for: "Reference" + name, containedTypeName: containedType.name, in: typeRef.namespace, containedNamespace: typeRef.namespace, cType: GIR.gpointer, isOptional: typeRef.isOptional)
+    } else if let containedRecord = containedType.knownNameRecord {
+        return genericReference(for: "Ref" + name, containedTypeName: containedRecord.structName, in: "GLibObject", containedNamespace: typeRef.namespace, cType: GIR.gpointer, isOptional: typeRef.isOptional)
+    }
+    return nil
 }
 
 

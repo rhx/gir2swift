@@ -153,8 +153,11 @@ public extension GIR.CType {
         return prefixed(ref: record.structRef)
     }
 
-    /// return a prefixed ref for a given TypeReference
-    @inlinable func prefixed(ref: TypeReference) -> TypeReference {
+    /// Return a prefixed ref for a given TypeReference.
+    /// - Parameter ref: The type reference in question.
+    /// - Returns: A prefixed version of the typereference (inchanged if `namespace` wasn't empty).
+    @inlinable
+    func prefixed(ref: TypeReference) -> TypeReference {
         let type = ref.type
         guard type.namespace.isEmpty else { return ref }
         let namespace = typeRef.type.namespace.asNormalisedPrefix
@@ -164,7 +167,7 @@ public extension GIR.CType {
         return prefixedRef
     }
 
-    /// explicit, idiomatic type reference (class if pointer to record)
+    /// Explicit, idiomatic type reference (class if pointer to record)
     @inlinable var idiomaticClassRef: TypeReference {
         guard let record = knownRecordReference else {
             return swiftReturnRef
@@ -215,14 +218,23 @@ public extension GIR.CType {
 
     /// Check whether the return type may need to be optional,
     /// e.g. when derived from a pointer that may be `nil`
-    @inlinable func maybeOptional(for record: GIR.Record? = nil) -> Bool {
+    /// - Parameter record: The record the receiver is associated with.
+    /// - Returns: `true` if this may be an optional.
+    @inlinable
+    func maybeOptional(for record: GIR.Record? = nil) -> Bool {
         let isPointer = isAnyKindOfPointer
         guard let record = record else { return isPointer }
         return isInstanceOfHierarchy(record)
     }
 
     /// return the idiomatic/non-idiomatic return type name
-    @inlinable func returnTypeName(for record: GIR.Record? = nil, beingIdiomatic: Bool = true, useStruct: Bool = true) -> String {
+    /// - Parameters:
+    ///   - record: The record this belongs to (`nil`, if this is a return type of a freestanding function).
+    ///   - beingIdiomatic: Whether to create idiomatic Swift.
+    ///   - useStruct: Whether to use the corresponding `Ref` struct as the return type,
+    /// - Returns: The Swift code corresponding to the return type.
+    @inlinable
+    func returnTypeName(for record: GIR.Record? = nil, beingIdiomatic: Bool = true, useStruct: Bool = true) -> String {
         let idiomaticName = prefixedIdiomaticWrappedTypeName
         let ref = typeRef
         let pointers = ref.knownIndirectionLevel
@@ -231,16 +243,24 @@ public extension GIR.CType {
         let name: String
         if pointers == 1, let knownRecord = GIR.knownRecords[prefixedTypeName] ?? GIR.knownRecords[ref.type.name] {
             let knownRef = useStruct ? knownRecord.structRef : (beingIdiomatic ? knownRecord.classRef : knownRecord.typeRef)
-            let unprefixedName = knownRef.forceUnwrappedName
-            if useStruct || beingIdiomatic {
-                let dottedPrefix = prefixedTypeName.dottedPrefix
-                if dottedPrefix.isEmpty || dottedPrefix == GIR.dottedPrefix || unprefixedName.firstIndex(of: ".") != nil {
-                    name = unprefixedName
-                } else {
-                    name = dottedPrefix + unprefixedName
-                }
+            let unwrappedName = knownRef.forceUnwrappedName
+            let unprefixedName: String
+            if !isInstanceOf(record),
+               let typedColl = typedCollection(for: prefixedTypeName, containedTypes: containedTypes, unwrappedName: unwrappedName, typeRef: knownRef) {
+                unprefixedName = typedColl.type.name
+                name = typedColl.type.swiftName
             } else {
-                name = unprefixedName
+                unprefixedName = unwrappedName
+                if useStruct || beingIdiomatic {
+                    let dottedPrefix = prefixedTypeName.dottedPrefix
+                    if dottedPrefix.isEmpty || dottedPrefix == GIR.dottedPrefix || unprefixedName.firstIndex(of: ".") != nil {
+                        name = unprefixedName
+                    } else {
+                        name = dottedPrefix + unprefixedName
+                    }
+                } else {
+                    name = unprefixedName
+                }
             }
         } else if pointers == 0 && isKnownBitfield {
             name = prefixedTypeName
@@ -248,14 +268,13 @@ public extension GIR.CType {
             name = beingIdiomatic && !idiomaticName.isEmpty ? idiomaticName : ref.fullUnderlyingTypeName(asOptional: underlyingType.isGPointer)
         }
         let normalisedName = name.withNormalisedPrefix
-        if (typeRef.isOptional || maybeOptional(for: record) || name.maybeCallback) && !name.isOptional {
+        if (typeRef.isOptional || ((self as? GIR.Argument)?.maybeOptional() ?? false) || maybeOptional(for: record) || name.maybeCallback) && !name.isOptional {
             return normalisedName + "!"
         } else {
             return normalisedName
         }
     }
 }
-
 
 /// Swift extension for methods
 public extension GIR.Method {

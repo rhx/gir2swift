@@ -106,9 +106,15 @@ extension GIR {
                 tupleSize = array.attribute(named: "fixed-size").flatMap(Int.init)
                 containedTypes = array.containedTypes
             } else {
-                containedTypes = []
-                tupleSize = nil
                 type = GIR.typeOf(node: node)
+                if GIR.typedCollections.contains(type.type.prefixedName),
+                   let container = node.children.filter({ $0.name == "type" }).first {
+                    containedTypes = container.containedTypes
+                    tupleSize = container.attribute(named: "fixed-size").flatMap(Int.init)
+                } else {
+                    containedTypes = []
+                    tupleSize = nil
+                }
             }
                 
             super.init(node: node, at: index, with: type, nameAttr: nameAttr)
@@ -184,23 +190,27 @@ extension GIR {
             return na
         }
 
-        //// return the known type of the argument (nil if not known)
-        @inlinable
-        public var knownType: GIR.Datatype? { return GIR.knownDataTypes[typeRef.type.name] }
-        
-        //// return the known class/record of the argument (nil if not known)
-        @inlinable
-        public var knownRecord: GIR.Record? {
-            typeRef.knownIndirectionLevel == 1 ? GIR.knownRecords[typeRef.type.prefixedName] ?? GIR.knownRecords[typeRef.type.name] : nil
+        /// Return the known type of the argument (nil if not known).
+        @inlinable public var knownType: GIR.Datatype? { return GIR.knownDataTypes[typeRef.type.name] }
+
+        /// Return the known record for the receiver (nil if not known).
+        ///
+        /// - Note: This will return a value regardless of indirection level.
+        @inlinable public var knownNameRecord: GIR.Record? {
+            GIR.knownRecords[typeRef.type.prefixedName] ?? GIR.knownRecords[typeRef.type.name]
+        }
+        /// Return the known class/record of the argument (nil if not known).
+        @inlinable public var knownRecord: GIR.Record? {
+            typeRef.knownIndirectionLevel == 1 ? knownNameRecord : nil
         }
         
-        //// return the known bitfield the argument represents (nil if not known)
-        @inlinable
-        public var knownBitfield: GIR.Bitfield? { return GIR.knownBitfields[typeRef.type.prefixedName] ?? GIR.knownBitfields[typeRef.type.name] }
+        /// Return the known bitfield the argument represents (nil if not known).
+        @inlinable public var knownBitfield: GIR.Bitfield? {
+            GIR.knownBitfields[typeRef.type.prefixedName] ?? GIR.knownBitfields[typeRef.type.name]
+        }
 
-        /// indicates whether the receiver is a known type
-        @inlinable
-        public var isKnownType: Bool { return knownType != nil }
+        /// Indicates whether the receiver is a known type.
+        @inlinable public var isKnownType: Bool { return knownType != nil }
 
         /// indicates whether the receiver is a known class or record
         @inlinable

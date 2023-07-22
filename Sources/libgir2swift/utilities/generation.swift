@@ -32,7 +32,11 @@ private func load_gir(_ file: String, quiet q: Bool = false, process: (GIR) -> V
     }
 }
 
-/// process blacklist and verbatim constants information
+/// Process exclusions and verbatim constants information.
+///
+/// This function will parse the content of various special files
+/// that modify the behaviour of `gir2swift`.
+///
 /// - Parameters:
 ///   - gir: The in-memory object representing the `.gir` file
 ///   - targetDirectoryURL: URL representing the target source directory containing the module configuration files
@@ -42,11 +46,13 @@ private func processSpecialCases(_ gir: GIR, for targetDirectoryURL: URL, node: 
     gir.preamble = (try? String(contentsOf: prURL)) ?? ""
     let exURL = targetDirectoryURL.appendingPathComponent(node + ".exclude")
     let blURL = targetDirectoryURL.appendingPathComponent(node + ".blacklist")
-    GIR.blacklist = ((try? String(contentsOf: exURL)) ?? (try? String(contentsOf: blURL))).flatMap { Set($0.nonEmptyComponents(separatedBy: "\n")) } ?? []
+    GIR.excludeList = ((try? String(contentsOf: exURL)) ?? (try? String(contentsOf: blURL))).flatMap { Set($0.nonEmptyComponents(separatedBy: "\n")) } ?? []
     let vbURL = targetDirectoryURL.appendingPathComponent(node + ".verbatim")
     GIR.verbatimConstants = (try? String(contentsOf: vbURL)).flatMap { Set($0.nonEmptyComponents(separatedBy: "\n")) } ?? []
     let ovURL = targetDirectoryURL.appendingPathComponent(node + ".override")
     GIR.overrides = (try? String(contentsOf: ovURL)).flatMap { Set($0.nonEmptyComponents(separatedBy: "\n")) } ?? []
+    let tcURL = targetDirectoryURL.appendingPathComponent(node + ".typedCollections")
+    GIR.typedCollections = (try? String(contentsOf: tcURL)).flatMap { Set($0.nonEmptyComponents(separatedBy: "\n")) } ?? GIR.typedCollections
 }
 
 extension Gir2Swift {
@@ -111,7 +117,7 @@ extension Gir2Swift {
 
         load_gir(file) { gir in
             processSpecialCases(gir, for: targetDirectoryURL, node: node)
-            let blacklist = GIR.blacklist
+            let exclusions = GIR.excludeList
             let boilerplate = gir.boilerPlate
             let preamble = gir.preamble
             let modulePrefix = modulePrefix + boilerplate
@@ -212,7 +218,7 @@ extension Gir2Swift {
             }
 
             background.async(group: queues) {
-                let aliases = gir.aliases.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
+                let aliases = gir.aliases.filter{!exclusions.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-aliases.swift"
                     write(aliases, to: f)
@@ -220,28 +226,28 @@ extension Gir2Swift {
                     outq.async(group: queues) { outputString += aliases } }
             }
             background.async(group: queues) {
-                let callbacks = gir.callbacks.filter{!blacklist.contains($0.name)}.map(swiftCallbackAliasCode).joined(separator: "\n\n")
+                let callbacks = gir.callbacks.filter{!exclusions.contains($0.name)}.map(swiftCallbackAliasCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-callbacks.swift"
                     write(callbacks, to: f)
                 } else { outq.async(group: queues) { outputString += callbacks } }
             }
             background.async(group: queues) {
-                let constants = gir.constants.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
+                let constants = gir.constants.filter{!exclusions.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-constants.swift"
                     write(constants, to: f)
                 } else {  outq.async(group: queues) { outputString += constants } }
             }
             background.async(group: queues) {
-                let enumerations = gir.enumerations.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
+                let enumerations = gir.enumerations.filter{!exclusions.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-enumerations.swift"
                     write(enumerations, to: f)
                 } else { outq.async(group: queues) { outputString += enumerations } }
             }
             background.async(group: queues) {
-                let bitfields = gir.bitfields.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
+                let bitfields = gir.bitfields.filter{!exclusions.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-bitfields.swift"
                     write(bitfields, to: f)
@@ -249,7 +255,7 @@ extension Gir2Swift {
             }
             background.async(group: queues) {
                 let convert = swiftUnionsConversion(gir.functions)
-                let unions = gir.unions.filter {!blacklist.contains($0.name)}.map(convert).joined(separator: "\n\n")
+                let unions = gir.unions.filter {!exclusions.contains($0.name)}.map(convert).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-unions.swift"
                     write(unions, to: f)
@@ -257,14 +263,14 @@ extension Gir2Swift {
             }
             background.async(group: queues) {
                 let convert = swiftCode(gir.functions)
-                let types = gir.interfaces.filter {!blacklist.contains($0.name)}
+                let types = gir.interfaces.filter {!exclusions.contains($0.name)}
                 write(types, using: convert)
             }
             background.async(group: queues) {
                 let convert = swiftCode(gir.functions)
                 let classes = generateAll ? [:] : Dictionary(gir.classes.map { ($0.name, $0) }) { lhs, _ in lhs}
                 let records = gir.records.filter { r in
-                    !blacklist.contains(r.name) 
+                    !exclusions.contains(r.name) 
                     &&
                     (
                         generateAll 
@@ -276,11 +282,11 @@ extension Gir2Swift {
             }
             background.async(group: queues) {
                 let convert = swiftCode(gir.functions)
-                let types = gir.classes.filter{!blacklist.contains($0.name)}
+                let types = gir.classes.filter{!exclusions.contains($0.name)}
                 write(types, using: convert)
             }
             background.async(group: queues) {
-                let functions = gir.functions.filter{!blacklist.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
+                let functions = gir.functions.filter{!exclusions.contains($0.name)}.map(swiftCode).joined(separator: "\n\n")
                 if let dir = outputDirectory {
                     let f = "\(dir)/\(node)-functions.swift"
                     write(functions, to: f)
@@ -292,11 +298,11 @@ extension Gir2Swift {
                 background.async(group: queues) {
                     let privatePrefix = "_" + gir.prefix + "_"
                     let prefixedAliasSwiftCode = typeAliasSwiftCode(prefixedWith: privatePrefix)
-                    let privateRecords = gir.records.filter{!blacklist.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
-                    let privateAliases = gir.aliases.filter{!blacklist.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
-                    let privateEnumerations = gir.enumerations.filter{!blacklist.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
-                    let privateBitfields = gir.bitfields.filter{!blacklist.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
-                    let privateUnions = gir.unions.filter {!blacklist.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
+                    let privateRecords = gir.records.filter{!exclusions.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
+                    let privateAliases = gir.aliases.filter{!exclusions.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
+                    let privateEnumerations = gir.enumerations.filter{!exclusions.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
+                    let privateBitfields = gir.bitfields.filter{!exclusions.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
+                    let privateUnions = gir.unions.filter {!exclusions.contains($0.name)}.map(prefixedAliasSwiftCode).joined(separator: "\n")
                     let code = [privateRecords, privateAliases, privateEnumerations, privateBitfields, privateUnions].joined(separator: "\n\n") + "\n"
                     let outputFile = outputDirectory.map { "\($0)/\(node)-namespaces.swift" }
                     if let f = outputFile {
@@ -307,14 +313,14 @@ extension Gir2Swift {
                     let indent = "    "
                     let constSwiftCode = constantSwiftCode(indentedBy: indent, scopePrefix: "static")
                     let datatypeSwiftCode = namespacedAliasSwiftCode(prefixedWith: privatePrefix, indentation: indent)
-                    let constants = gir.constants.filter{!blacklist.contains($0.name)}.map(constSwiftCode).joined(separator: "\n")
-                    let aliases = gir.aliases.filter{!blacklist.contains($0.name)}.map(datatypeSwiftCode).joined(separator: "\n")
-                    let enumerations = gir.enumerations.filter{!blacklist.contains($0.name)}.map(datatypeSwiftCode).joined(separator: "\n")
-                    let bitfields = gir.bitfields.filter{!blacklist.contains($0.name)}.map(datatypeSwiftCode).joined(separator: "\n")
-                    let unions = gir.unions.filter {!blacklist.contains($0.name)}.map(datatypeSwiftCode).joined(separator: "\n")
+                    let constants = gir.constants.filter{!exclusions.contains($0.name)}.map(constSwiftCode).joined(separator: "\n")
+                    let aliases = gir.aliases.filter{!exclusions.contains($0.name)}.map(datatypeSwiftCode).joined(separator: "\n")
+                    let enumerations = gir.enumerations.filter{!exclusions.contains($0.name)}.map(datatypeSwiftCode).joined(separator: "\n")
+                    let bitfields = gir.bitfields.filter{!exclusions.contains($0.name)}.map(datatypeSwiftCode).joined(separator: "\n")
+                    let unions = gir.unions.filter {!exclusions.contains($0.name)}.map(datatypeSwiftCode).joined(separator: "\n")
                     let classes = generateAll ? [:] : Dictionary(gir.classes.map { ($0.name, $0) }) { lhs, _ in lhs}
                     let records = gir.records.filter { r in
-                        !blacklist.contains(r.name) &&
+                        !exclusions.contains(r.name) &&
                         (generateAll || !r.name.hasSuffix("Private") ||
                          r.name.stringByRemoving(suffix: "Private").flatMap { classes[$0] }.flatMap {
                             $0.fields.allSatisfy { $0.isPrivate || $0.typeRef.type.name != r.name }
@@ -343,7 +349,7 @@ extension Gir2Swift {
                 let pf = outputString.isEmpty ? "** " : "// "
                 let nl = outputString.isEmpty ? "\n"  : "\n// "
                 print("\(pf)Verbatim: \(GIR.verbatimConstants.count)\(nl)\(GIR.verbatimConstants.joined(separator: nl))\n", to: &Streams.stdErr)
-                print("\(pf)Blacklisted: \(blacklist.count)\(nl)\(blacklist.joined(separator: "\n" + nl))\n", to: &Streams.stdErr)
+                print("\(pf)Blacklisted: \(exclusions.count)\(nl)\(exclusions.joined(separator: "\n" + nl))\n", to: &Streams.stdErr)
             }
         }
     }
@@ -379,7 +385,7 @@ extension Gir2Swift {
 
         load_gir(file) { gir in
             processSpecialCases(gir, for: targetDirectoryURL, node: node)
-            let blacklist = GIR.blacklist
+            let blacklist = GIR.excludeList
             let classes = generateAll ? [:] : Dictionary(gir.classes.map { ($0.name, $0) }) { lhs, _ in lhs}
             let records = gir.records.filter { r in
                 !blacklist.contains(r.name) 
