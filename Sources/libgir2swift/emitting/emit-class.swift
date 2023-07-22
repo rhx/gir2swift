@@ -16,17 +16,50 @@ func buildClassTypeDeclaration(for record: GIR.Record, classInstance: GIR.Record
         Code.block {
             ""
             if let getTypeId = classInstance.typegetter {
-                "/// This getter returns the GLib type identifier registered for `\(classInstance.name)`"
+                "/// Return the GLib type identifier registered for `\(classInstance.name)`"
+                "@inlinable"
                 "static var metatypeReference: GType { \(getTypeId)() }"
                 ""
+                "@usableFromInline"
                 "private static var metatypePointer: UnsafeMutablePointer<\(record.typeRef.type.ctype)>? { g_type_class_peek_static(metatypeReference)?.assumingMemoryBound(to: \(record.typeRef.type.ctype).self) }"
                 ""
+                "/// Return a `\(record.typeRef.type.ctype)` reference to the underlying class instance."
+                "@inlinable"
                 "static var metatype: \(record.typeRef.type.ctype)? { metatypePointer?.pointee } "
                 ""
+                "/// Return the `\(record.typeRef.type.swiftName)` wrapper referencing the metatype."
+                "@inlinable"
                 "static var wrapper: \(record.structRef.type.swiftName)? { \(record.structRef.type.swiftName)(metatypePointer) }"
                 ""
+                "/// Creates a new instance of `\(classInstance.name)` and sets its properties using"
+                "/// the provided dictionary."
+                "///"
+                "/// Construction parameters (see `G_PARAM_CONSTRUCT`, `G_PARAM_CONSTRUCT_ONLY`)"
+                "/// which are not explicitly specified are set to their default values."
+                "///"
+                "/// - Parameter properties: Dictionary of name/value pairs representing the properties of the type"
+                "/// - Returns: A new `\(classInstance.name)` with the given properties"
+                "static func newClassInstance(with properties: [String: Any] = [:]) -> \(classInstance.name) {"
+                Code.block {
+                    "let type = \(getTypeId)()"
+                    "var keys = properties.keys.map { $0.withCString { UnsafePointer(strdup($0)) } }"
+                    "let vals = properties.values.map { Value($0) }"
+                    "let obj = keys.withUnsafeMutableBufferPointer { keys in"
+                    Code.block {
+                        "withExtendedLifetime(vals) {"
+                        Code.block {
+                            "let gvalues = vals.map { $0.value_ptr.pointee }"
+                            "return \(classInstance.name)(properties: type, nProperties: keys.count, names: keys.baseAddress, values: gvalues)"
+                        }
+                        "}"
+                    }
+                    "}"
+                    "keys.forEach { free(UnsafeMutableRawPointer(mutating: $0)) }"
+                    "return obj"
+                }
+                "}"
             } else {
-                "/// A Type getter could not be found for this class"
+                "// A Type getter could not be found for this class"
             }
             ""
         }
@@ -50,13 +83,18 @@ func buildCodeForClassMetaType(for metaType: GIR.Record, classInstance: GIR.Reco
     Code.block {
         if let getTypeId = classInstance.typegetter {
             "/// This getter returns the GLib type identifier registered for `\(classInstance.name)`"
-            "static " + override + " var metatypeReference: GType { \(getTypeId)() }"
+            "///"
+            "/// - Note: to get the type identifier through the static type, use `\(metaType.structRef.type.swiftName).metatypeReference`"
+            "@inlinable"
+            override + "public var metatypeReference: GType { \(getTypeId)() }"
             ""
-            "private static var metatypePointer: UnsafeMutablePointer<\(metaType.typeRef.type.ctype)>? { g_type_class_peek_static(metatypeReference)?.assumingMemoryBound(to: \(metaType.typeRef.type.ctype).self) }"
+            "/// Return a `\(metaType.typeRef.type.ctype)` reference to the underlying class instance."
+            "@inlinable"
+            "public static var metatypeFor\(classInstance.name): \(metaType.typeRef.type.ctype)? { \(metaType.structRef.type.swiftName).metatypePointer?.pointee } "
             ""
-            "static " + override + " var metatype: \(metaType.typeRef.type.ctype)? { metatypePointer?.pointee } "
-            ""
-            "static " + override + " var wrapper: \(metaType.structRef.type.swiftName)? { \(metaType.structRef.type.swiftName)(metatypePointer) }"
+            "/// Return the `\(metaType.typeRef.type.swiftName)` wrapper referencing the metatype of the receiver."
+            "@inlinable"
+            "public var wrapperFor\(classInstance.name): \(metaType.structRef.type.swiftName)? { \(metaType.structRef.type.swiftName)(metatypePointer) }"
             ""
             "/// Creates a new instance of `\(classInstance.name)` and sets its properties using"
             "/// the provided dictionary."
@@ -66,7 +104,7 @@ func buildCodeForClassMetaType(for metaType: GIR.Record, classInstance: GIR.Reco
             "///"
             "/// - Parameter properties: Dictionary of name/value pairs representing the properties of the type"
             "/// - Returns: A new `\(classInstance.name)` with the given properties"
-            "static " + override + " func new(with properties: [String: Any] = [:]) -> \(classInstance.name) {"
+            "static func new\(classInstance.name)(with properties: [String: Any] = [:]) -> \(classInstance.name) {"
             Code.block {
                 "let type = \(getTypeId)()"
                 "var keys = properties.keys.map { $0.withCString { UnsafePointer(strdup($0)) } }"
@@ -86,7 +124,7 @@ func buildCodeForClassMetaType(for metaType: GIR.Record, classInstance: GIR.Reco
             }
             "}"
         } else {
-            "/// A Type getter could not be found for `\(classInstance.name.swift)`"
+            "// A Type getter could not be found for `\(classInstance.name.swift)`"
         }
     }
 }
