@@ -1726,11 +1726,21 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     "@inlinable func set(property: \(className)PropertyName, value v: GLibObject.Value) {\n" + doubleIndentation +
         "g_object_set_property(ptr.assumingMemoryBound(to: GObject.self), property.rawValue, v.value_ptr)\n" + indentation +
     "}\n}\n\n"))
+    let metaTypeCode: String
+    // Check if a type-struct entry exists for the record,
+    // if so, get the record for the name stored in typeStruct
+    // and call buildCodeForClassMetaType with the metaType and this record as the classInstance
+    if let typeStructName = e.typeStruct,
+       let metaType = GIR.knownRecords[typeStructName] {
+        metaTypeCode = buildCodeForClassMetaType(for: metaType, classInstance: e)
+    } else {
+        metaTypeCode = ""
+    }
     let signalEnumCode = (noSignals ? "// MARK: no \(className) signals\n\n" : "public enum \(className)SignalName: String, SignalNameProtocol {\n" +
     //        "public typealias Class = \(protocolName)\n") +
         signals.map(scode).joined(separator: "\n") + "\n" +
         properties.map(ncode).joined(separator: "\n") + "\n}\n\n")
-    return code1 + code2 + code3 + signalEnumCode + buildSignalExtension(for: e)
+    return code1 + code2 + code3 + metaTypeCode + signalEnumCode + buildSignalExtension(for: e)
 }
 
 // MARK: - Swift code for Record/Class methods
@@ -1758,7 +1768,7 @@ public func swiftCode(_ funcs: [GIR.Function]) -> (String) -> (GIR.Record) -> St
             } else {
                 classDefinition = recordClassCode(r, parent: cl?.parent.withNormalisedPrefix ?? "", ptr: ptrName)
             }
-            
+
             let e = recordProtocolExtensionCode(funcs, r, ptr: ptrName)
             let code = instanceTypeDescriptor + p + s + classDefinition + e
             return code
