@@ -174,7 +174,7 @@ extension Gir2Swift {
                             }
                             f = "\(dir)/\(node)-\(firstName)\(name).swift"
                         }
-                        writebg(queue: alphaq, output, to: f, append: alphaNames)
+                        writebg(queue: alphaq, output, to: f, append: useAlphaNames)
                         output = ""
                         first = nil
                     }
@@ -187,7 +187,7 @@ extension Gir2Swift {
                         } else {
                             f = "\(dir)/\(node)-\(firstName)\(name).swift"
                         }
-                        writebg(queue: alphaq, output, to: f, append: alphaNames)
+                        writebg(queue: alphaq, output, to: f, append: useAlphaNames)
                     }
                 } else {
                     let code = types.map { type in
@@ -204,7 +204,7 @@ extension Gir2Swift {
                     let ascii = atChar + UInt8(i)
                     let f = "\(dir)/\(node)-\(Character(UnicodeScalar(ascii))).swift"
                     try? fileManager.removeItem(atPath: f)
-                    if alphaNames {
+                    if useAlphaNames {
                         try? preamble.write(toFile: f, atomically: true, encoding: .utf8)
                         outq.async(group: queues) { outputFiles.insert(f) }
                     }
