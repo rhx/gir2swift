@@ -40,7 +40,7 @@ func buildClassTypeDeclaration(for record: GIR.Record, classInstance: GIR.Record
                 "/// - Parameter properties: Dictionary of name/value pairs representing the properties of the type"
                 "/// - Returns: A new `\(classInstance.name)` with the given properties"
                 "@inlinable"
-                "static func new\(classInstance.name)(properties objectType: GType, nProperties: Int, names: UnsafeMutablePointer<UnsafePointer<CChar>?>!, values: UnsafePointer<GValue>!) -> \(classInstance.name) {"
+                "static func new\(classInstance.name)(properties objectType: GType, nProperties: Int, names: UnsafeMutablePointer<UnsafePointer<CChar>?>!, values: UnsafePointer<GValue>!) -> \(classInstance.name)! {"
                 Code.block {
                     "\(classInstance.name)(gpointer: GLibObject.ObjectRef(properties: type, nProperties: nProperties, names: names, values: values)?.ptr)"
                 }
@@ -54,7 +54,7 @@ func buildClassTypeDeclaration(for record: GIR.Record, classInstance: GIR.Record
                 "///"
                 "/// - Parameter properties: Dictionary of name/value pairs representing the properties of the type"
                 "/// - Returns: A new `\(classInstance.name)` with the given properties"
-                "static func newClassInstance(with properties: [String: Any] = [:]) -> \(classInstance.name) {"
+                "static func newClassInstance(with properties: [String: Any] = [:]) -> \(classInstance.name)! {"
                 Code.block {
                     "let type = \(getTypeId)()"
                     "var keys = properties.keys.map { $0.withCString { UnsafePointer(strdup($0)) } }"
@@ -119,7 +119,7 @@ func buildCodeForClassMetaType(for metaType: GIR.Record, classInstance: GIR.Reco
             "///"
             "/// - Parameter properties: Dictionary of name/value pairs representing the properties of the type"
             "/// - Returns: A new `\(classInstance.name)` with the given properties"
-            "static func new\(classInstance.name)(with properties: [String: Any] = [:]) -> \(classInstance.name) {"
+            "static func new\(classInstance.name)(with properties: [String: Any] = [:]) -> \(classInstance.name)! {"
             Code.block {
                 "let type = \(getTypeId)()"
                 "var keys = properties.keys.map { $0.withCString { UnsafePointer(strdup($0)) } }"
