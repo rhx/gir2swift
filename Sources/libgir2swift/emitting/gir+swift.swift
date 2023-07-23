@@ -476,14 +476,14 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
         "/// Alternatively, use `\(e.structName)` as a lighweight, `unowned` reference if you already have an instance you just want to use.\n///\n" +
         "public protocol \(e.protocolName)\(p) {\n" + indentation +
             subTypeAliases + indentation +
-            "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
-            "var ptr: UnsafeMutableRawPointer! { get }\n\n" + indentation +
+//            "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
+//            "var ptr: UnsafeMutableRawPointer! { get }\n\n" + indentation +
             "/// Typed pointer to the underlying `\(ctype)` instance.\n" + indentation +
             "var \(ptr): " + (e.introspectable || !e.disguised ?
                                 "UnsafeMutablePointer<\(ctype)>! { get }\n\n" :
-                                "\(ctype)! { get }\n\n") + indentation +
-            "/// Required Initialiser for types conforming to `\(e.protocolName)`\n" + indentation +
-            "init(raw: UnsafeMutableRawPointer)\n" +
+                                "\(ctype)! { get }\n\n") + // indentation +
+//            "/// Required Initialiser for types conforming to `\(e.protocolName)`\n" + indentation +
+//            "init(raw: UnsafeMutableRawPointer)\n" +
         "}\n\n"
     return code
 }
