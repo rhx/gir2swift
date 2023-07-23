@@ -42,7 +42,7 @@ func buildClassTypeDeclaration(for record: GIR.Record, classInstance: GIR.Record
                 "@inlinable"
                 "static func new\(classInstance.name)(properties objectType: GType, nProperties: Int, names: UnsafeMutablePointer<UnsafePointer<CChar>?>!, values: UnsafePointer<GValue>!) -> \(classInstance.name) {"
                 Code.block {
-                    "\(classInstance.name)(gpointer: GLibObject.ObjectRef(properties: type, nProperties: keys.count, names: keys.baseAddress, values: gvalues)?.ptr)"
+                    "\(classInstance.name)(gpointer: GLibObject.ObjectRef(properties: type, nProperties: nProperties, names: names, values: values)?.ptr)"
                 }
                 "}"
                 ""
