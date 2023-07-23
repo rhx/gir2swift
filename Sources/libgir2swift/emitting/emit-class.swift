@@ -93,16 +93,15 @@ func buildClassTypeDeclaration(for record: GIR.Record, classInstance: GIR.Record
 /// - Parameters:
 ///   - metaType: The class metatype for the given class instance.
 ///   - classInstance: The class instance to create the metatype properties for.
-///   - override: An optional override keyword to use for the metatype getter.
 /// - Returns: The code that needs to go inside the `classInstance` class definition.
-func buildCodeForClassMetaType(for metaType: GIR.Record, classInstance: GIR.Record, override: String = "") -> String {
+func buildCodeForClassMetaType(for metaType: GIR.Record, classInstance: GIR.Record) -> String {
     Code.block {
         if let getTypeId = classInstance.typegetter {
             "/// This getter returns the GLib type identifier registered for `\(classInstance.name)`"
             "///"
             "/// - Note: to get the type identifier through the static type, use `\(metaType.structRef.type.swiftName).metatypeReference`"
             "@inlinable"
-            override + "public var metatypeReference: GType { \(getTypeId)() }"
+            "public var metatypeReferenceFor\(classInstance.name): GType { \(getTypeId)() }"
             ""
             "/// Return a `\(metaType.typeRef.type.ctype)` reference to the underlying class instance."
             "@inlinable"
