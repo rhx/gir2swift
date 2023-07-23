@@ -1124,7 +1124,7 @@ public func typedCollection(for prefixedTypeName: String, containedTypes: [GIR.C
     if containedType.isGPointer {
         return genericReference(for: "Reference" + name, containedTypeName: containedType.name, in: typeRef.namespace, containedNamespace: typeRef.namespace, cType: GIR.gpointer, isOptional: typeRef.isOptional)
     } else if let containedRecord = containedType.knownNameRecord {
-        return genericReference(for: "Ref" + name, containedTypeName: containedRecord.structName, in: "GLibObject", containedNamespace: typeRef.namespace, cType: GIR.gpointer, isOptional: typeRef.isOptional)
+        return genericReference(for: "Ref" + name, containedTypeName: containedRecord.structName, in: "GLib", containedNamespace: typeRef.namespace, cType: GIR.gpointer, isOptional: typeRef.isOptional)
     }
     return nil
 }
