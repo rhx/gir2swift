@@ -574,14 +574,8 @@ func genericReference(named identifier: String? = nil, for name: String, contain
     let refName = String(pureTypeName.hasSuffix("Ref") ? pureTypeName : (pureTypeName + "Ref"))
     let prefixedName = namespace.map { $0 + "." + refName } ?? refName
     let info = decodeIndirection(for: cType)
-    let prefixedContainedType: String
-    if let ns = containedNamespace, !ns.isEmpty {
-        prefixedContainedType = ns + "." + containedTypeName
-    } else {
-        prefixedContainedType = containedTypeName
-    }
-    let templateInstantiation = "<" + prefixedContainedType + ">"
-    let nonOptionalName = String(prefixedName) + templateInstantiation
+    let inner = "<" + containedTypeName + ">"
+    let nonOptionalName = String(prefixedName) + inner
     let suffixedName = nonOptionalName + optionalSuffix
     let maybeType = GIR.namedTypes[suffixedName]?.first { $0.ctype == info.innerType }
     let maybeInnerType = GIR.namedTypes[containedTypeName]?.first
