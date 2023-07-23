@@ -21,7 +21,7 @@ func buildClassTypeDeclaration(for record: GIR.Record, classInstance: GIR.Record
                 "static var metatypeReference: GType { \(getTypeId)() }"
                 ""
                 "@usableFromInline"
-                "private static var metatypePointer: UnsafeMutablePointer<\(record.typeRef.type.ctype)>? { g_type_class_peek_static(metatypeReference)?.assumingMemoryBound(to: \(record.typeRef.type.ctype).self) }"
+                "static var metatypePointer: UnsafeMutablePointer<\(record.typeRef.type.ctype)>? { g_type_class_peek_static(metatypeReference)?.assumingMemoryBound(to: \(record.typeRef.type.ctype).self) }"
                 ""
                 "/// Return a `\(record.typeRef.type.ctype)` reference to the underlying class instance."
                 "@inlinable"
