@@ -43,7 +43,7 @@ func buildClassTypeDeclaration(for record: GIR.Record, classInstance: GIR.Record
                 "static func new\(classInstance.name)(properties objectType: GType, nProperties: Int, names: UnsafeMutablePointer<UnsafePointer<CChar>?>!, values: UnsafePointer<GValue>!) -> \(classInstance.name)! {"
                 Code.block {
                     "let ref = GLibObject.ObjectRef(properties: objectType, nProperties: nProperties, names: names, values: values)"
-                    "return \(classInstance.name)(gpointer: ref?.ptr)"
+                    "return \(classInstance.name)(raw: ref.ptr)"
                 }
                 "}"
                 ""
