@@ -94,6 +94,9 @@ public final class GIR {
         "GLib.List", "GLib.SList", "GLib.PtrArray"
     ]
 
+    /// Name of the GLib pointer wrapper that every type conforms to.
+    public static var glibPointerWrapper = "GLib.PointerWrapper"
+
     /// designated constructor
     public init(xmlDocument: XMLDocument, quiet: Bool = false) {
         xml = xmlDocument
