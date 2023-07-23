@@ -40,7 +40,7 @@ func buildClassTypeDeclaration(for record: GIR.Record, classInstance: GIR.Record
                 "/// - Parameter properties: Dictionary of name/value pairs representing the properties of the type"
                 "/// - Returns: A new `\(classInstance.name)` with the given properties"
                 "@inlinable"
-                "static func new\(classInstance.name)(properties objectType: GType, nProperties: Int, names: UnsafeMutablePointer<UnsafePointer<CChar>?>!, values: UnsafePointer<GValue>!) {"
+                "static func new\(classInstance.name)(properties objectType: GType, nProperties: Int, names: UnsafeMutablePointer<UnsafePointer<CChar>?>!, values: UnsafePointer<GValue>!) -> \(classInstance.name) {"
                 Code.block {
                     "\(classInstance.name)(gpointer: GLibObject.ObjectRef(properties: type, nProperties: keys.count, names: keys.baseAddress, values: gvalues)?.ptr)"
                 }
