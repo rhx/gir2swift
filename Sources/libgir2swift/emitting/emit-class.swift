@@ -80,6 +80,7 @@ func buildClassTypeDeclaration(for record: GIR.Record, classInstance: GIR.Record
             ""
         }
         "}"
+        ""
     }
 }
 
@@ -138,8 +139,10 @@ func buildCodeForClassMetaType(for metaType: GIR.Record, classInstance: GIR.Reco
                 "return obj"
             }
             "}"
+            ""
         } else {
             "// A Type getter could not be found for `\(classInstance.name.swift)`"
+            ""
         }
     }
 }
