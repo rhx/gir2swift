@@ -23,6 +23,21 @@ func buildClassTypeDeclaration(for record: GIR.Record, classInstance: GIR.Record
                 "@usableFromInline"
                 "internal static var metatypePointer: UnsafeMutablePointer<\(record.typeRef.type.ctype)>? { g_type_class_peek_static(metatypeReference)?.assumingMemoryBound(to: \(record.typeRef.type.ctype).self) }"
                 ""
+                "/// Creates a new instance of `\(classInstance.name)` and sets its properties using"
+                "/// the provided dictionary."
+                "///"
+                "/// Construction parameters (see `G_PARAM_CONSTRUCT`, `G_PARAM_CONSTRUCT_ONLY`)"
+                "/// which are not explicitly specified are set to their default values."
+                "///"
+                "/// - Parameter properties: Dictionary of name/value pairs representing the properties of the type"
+                "/// - Returns: A new `\(classInstance.name)` with the given properties"
+                "@inlinable"
+                "new\(classInstance.name)(properties objectType: GType, nProperties: Int, names: UnsafeMutablePointer<UnsafePointer<CChar>?>!, values: UnsafePointer<GValue>!) {"
+                Code.block {
+                    "\(classInstance.name)(gpointer: GLibObject.ObjectRef(properties: type, nProperties: keys.count, names: keys.baseAddress, values: gvalues)?.ptr)"
+                }
+                "}"
+                ""
                 "/// Return a `\(record.typeRef.type.ctype)` reference to the underlying class instance."
                 "@inlinable"
                 "static var metatype: \(record.typeRef.type.ctype)? { metatypePointer?.pointee } "
@@ -49,7 +64,7 @@ func buildClassTypeDeclaration(for record: GIR.Record, classInstance: GIR.Record
                         "withExtendedLifetime(vals) {"
                         Code.block {
                             "let gvalues = vals.map { $0.value_ptr.pointee }"
-                            "return \(classInstance.name)(properties: type, nProperties: keys.count, names: keys.baseAddress, values: gvalues)"
+                            "return new\(classInstance.name)(properties: type, nProperties: keys.count, names: keys.baseAddress, values: gvalues)"
                         }
                         "}"
                     }
@@ -114,7 +129,7 @@ func buildCodeForClassMetaType(for metaType: GIR.Record, classInstance: GIR.Reco
                     "withExtendedLifetime(vals) {"
                     Code.block {
                         "let gvalues = vals.map { $0.value_ptr.pointee }"
-                        "return \(classInstance.name)(properties: type, nProperties: keys.count, names: keys.baseAddress, values: gvalues)"
+                        "return \(metaType.structRef.type.swiftName).new\(classInstance.name)(properties: type, nProperties: keys.count, names: keys.baseAddress, values: gvalues)"
                     }
                     "}"
                 }
