@@ -94,7 +94,7 @@ func buildCodeForClassMetaType(for metaType: GIR.Record, classInstance: GIR.Reco
             ""
             "/// Return the `\(metaType.typeRef.type.swiftName)` wrapper referencing the metatype of the receiver."
             "@inlinable"
-            "public var wrapperFor\(classInstance.name): \(metaType.structRef.type.swiftName)? { \(metaType.structRef.type.swiftName)(metatypePointer) }"
+            "public var wrapperFor\(classInstance.name): \(metaType.structRef.type.swiftName)? { \(metaType.structRef.type.swiftName)(\(metaType.structRef.type.swiftName).metatypePointer) }"
             ""
             "/// Creates a new instance of `\(classInstance.name)` and sets its properties using"
             "/// the provided dictionary."
