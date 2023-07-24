@@ -46,7 +46,7 @@ extension SwiftLibXML.XMLElement {
         // if so, create a namespaced alias
         //
         if oldN == 0, let unprefixedType = (GIR.namedTypes[rawName] ?? []).lazy.filter({
-            $0.ctype == cName
+            $0.ctype == cName || $0.ctype == innerName
         }).first {
             rawTypeRef = typeReference(original: unprefixedType, named: identifier, for: name, in: namespace, swiftName: unprefixedType.swiftName, cType: cName, isOptional: isNullable)
         } else {
