@@ -523,6 +523,11 @@ func typeReference(named identifier: String? = nil, for name: String, in namespa
     let info = decodeIndirection(for: cType)
     let prefixedName = namespace.map { $0 + "." + name } ?? name
     let maybeType = GIR.namedTypes[prefixedName]?.first { $0.ctype == info.innerType }
+    if maybeType == nil, let unprefixedType = (GIR.namedTypes[name] ?? []).lazy.filter({
+        $0.ctype == cType || $0.ctype == info.innerType
+    }).first {
+        return typeReference(original: unprefixedType, named: identifier, for: name, in: namespace, swiftName: swiftName, cType: cType, isOptional: isOptional)
+    }
     let type = maybeType ?? GIRType(name: name, in: namespace ?? "", swiftName: swiftName, typeName: typeName, ctype: info.innerType)
     let t = addType(type)
     return TypeReference(type: t, in: namespace, identifier: identifier, isConst: info.isConst, isOptional: isOptional, constPointers: info.indirection)
