@@ -60,7 +60,7 @@ func buildClassTypeDeclaration(for record: GIR.Record, classInstance: GIR.Record
                     "let type = \(getTypeId)()"
                     "var keys = properties.keys.map { $0.withCString { UnsafePointer(strdup($0)) } }"
                     "let vals = properties.values.map { GLibObject.Value($0) }"
-                    "let obj = keys.withUnsafeMutableBufferPointer { keys in"
+                    "let obj = keys.withUnsafeMutableBufferPointer { (keys: inout UnsafeMutableBufferPointer<UnsafePointer<CChar>?>) -> \(classInstance.name)? in"
                     Code.block {
                         "withExtendedLifetime(vals) {"
                         Code.block {
@@ -125,7 +125,7 @@ func buildCodeForClassMetaType(for metaType: GIR.Record, classInstance: GIR.Reco
                 "let type = \(getTypeId)()"
                 "var keys = properties.keys.map { $0.withCString { UnsafePointer(strdup($0)) } }"
                 "let vals = properties.values.map { GLibObject.Value($0) }"
-                "let obj = keys.withUnsafeMutableBufferPointer { keys in"
+                "let obj = keys.withUnsafeMutableBufferPointer { (keys: inout UnsafeMutableBufferPointer<UnsafePointer<CChar>?>) -> \(classInstance.name)? in"
                 Code.block {
                     "withExtendedLifetime(vals) {"
                     Code.block {
