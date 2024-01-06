@@ -68,11 +68,12 @@ extension Gir2Swift {
     ///   - targetDirectoryURL: URL representing the target source directory containing the module configuration files
     ///   - boilerPlate: A string containing the boilerplate to use for the generated module file, `<node>.module` file if empty
     ///   - outputDirectory: The directory to output generated files in, `stdout` if `nil`
+    ///   - docCHostingBasePath: The base URL for the documentation comments.
     ///   - singleFilePerClass: Flag indicating whether a separate output file should be created per class
     ///   - generateAll: Flag indicating whether private members should be emitted
     ///   - useAlphaNames: Flag indicating whether a fixed number of output files should be generated
     ///   - postProcess: Array of additional file names to include in post-processing
-    func process_gir(file: String, for targetDirectoryURL: URL, boilerPlate: String, to outputDirectory: String? = nil, split singleFilePerClass: Bool = false, generateAll: Bool = false, useAlphaNames: Bool = false, postProcess additionalFilesToPostProcess: [String]) {
+    func process_gir(file: String, for targetDirectoryURL: URL, boilerPlate: String, to outputDirectory: String? = nil, docCHostingBasePath: String, split singleFilePerClass: Bool = false, generateAll: Bool = false, useAlphaNames: Bool = false, postProcess additionalFilesToPostProcess: [String]) {
         let node = file.components(separatedBy: "/").last?.stringByRemoving(suffix: ".gir") ?? file
         let modulePrefix: String
         if boilerPlate.isEmpty {
@@ -81,6 +82,7 @@ extension Gir2Swift {
         } else {
             modulePrefix = boilerPlate
         }
+        GIR.docCHostingBasePath = docCHostingBasePath
         let pkgConfigArg = pkgConfigName ?? node.lowercased()
         let inURL = targetDirectoryURL.appendingPathComponent(node + ".include")
         let wlURL = targetDirectoryURL.appendingPathComponent(node + ".whitelist")

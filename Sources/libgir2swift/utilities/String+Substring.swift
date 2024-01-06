@@ -3,10 +3,9 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 25/04/2016.
-//  Copyright © 2016, 2017, 2018, 2019, 2020, 2021 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018, 2019, 2020, 2021, 2024 Rene Hexel. All rights reserved.
 //
 //
-
 import Foundation
 
 public extension StringProtocol {
@@ -130,6 +129,11 @@ public extension StringProtocol {
     /// Converts combination of *snake_case* and *kebab-case* to *PascalCase*
     @inlinable var kebabSnakeCase2pascalCase: String {
         return camelise { $0 == "-" || $0 == "_" }.capitalised
+    }
+
+    /// Convers combination of *snake_case* and *kebab-case* to *camelCase*
+    @inlinable var kebabSnakeCase2lowerCase: String {
+        return split { $0 == "-" || $0 == "_" }.joined().lowercased()
     }
 
     /// Converts any arbitrary string to *camelCase*.
@@ -271,6 +275,4 @@ public extension StringProtocol {
                 ns.without(suffix: $0)
             }?.without(suffixes: suffixes) ?? ns
     }
-
 }
-

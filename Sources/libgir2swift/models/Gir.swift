@@ -62,6 +62,9 @@ public final class GIR {
     /// Callbacs defined by this GIR file
     public var callbacks: [Callback] = []
 
+    /// DocC hosting base path relative to `/`.
+    public static var docCHostingBasePath = ""
+
     /// Names of excluded identifiers.
     public static var excludeList: Set<String> = []
 
@@ -71,6 +74,8 @@ public final class GIR {
     /// names of override initialisers
     public static var overrides: Set<String> = []
 
+    /// known types indexed by C identifier.
+    public static var knownCTypes: [ String : CType ] = [:]
     /// context of known types
     public static var knownDataTypes:   [ String : Datatype ] = [:]
     /// context of known records
@@ -133,7 +138,14 @@ public final class GIR {
                     return true
                 }
             }
-            let setKnownType   = setKnown(knownTypes)
+            let setKnownTypeFunc = setKnown(knownTypes)
+            let setKnownType = { (name: String, type: Datatype) -> Bool in
+                if let cType = type as? CType, !cType.cname.isEmpty,
+                   GIR.knownCTypes[cType.cname] == nil {
+                    GIR.knownCTypes[cType.cname] = cType
+                }
+                return setKnownTypeFunc(name, type)
+            }
             let setKnownRecord = setKnown(knownRecords)
             let setKnownBitfield = setKnown(knownBitfields)
             //
