@@ -310,18 +310,25 @@ public func swiftCallbackAliasCode(callback: GIR.Callback) -> String {
         let comment = " // " + (original == parent ? "" : (parent + " value "))
         let value = "\(constant.value)"
         let girName = constant.escapedName.swift
+        let idiomaticName = constant.swiftCamelCaseName.swiftQuoted
         func codeForConstant(named name: String, deprecation: String = "") -> String {
+            let deprecationMarker: String
+            if deprecation.isEmpty {
+                deprecationMarker = ""
+            } else {
+                deprecationMarker = indent + "@available(*, deprecated, renamed: \"" + idiomaticName + "\")\n"
+            }
             guard !GIR.verbatimConstants.contains(girName) && !GIR.verbatimConstants.contains(name) && !GIR.verbatimConstants.contains(original) else {
-                let code = swiftCode(constant, indent + "public " + prefix + "let " + name +
+                let code = swiftCode(constant, deprecationMarker + indent + "public " + prefix + "let " + name +
                                      (parentRef == nil ? "" : (": " + parent.swift)) + " = " + value + comment + original)
                 return code
             }
-            let code = swiftCode(constant, deprecation + indent + "public " + prefix + "let \(name) = \(name == original ? value : original)" + comment + (name == original ? "" : value), indentation: indent)
+            let code = swiftCode(constant, deprecation + deprecationMarker + indent + "public " + prefix +
+                                 "let \(name) = \(name == original ? value : original)" + comment + (name == original ? "" : value), indentation: indent)
             return code + "\n"
         }
-        let name = constant.swiftCamelCaseName.swiftQuoted
-        let idiomaticCode = codeForConstant(named: name)
-        let deprecationComment = swiftDeprecationComment(for: girName, content: indent + "/// Use ``\(name)`` instead.")
+        let idiomaticCode = codeForConstant(named: idiomaticName)
+        let deprecationComment = swiftDeprecationComment(for: girName, content: indent + "/// Use ``\(idiomaticName)`` instead.")
         let deprecatedCode = codeForConstant(named: girName, deprecation: deprecationComment)
         let code = idiomaticCode + deprecatedCode
         return code
