@@ -187,7 +187,7 @@ public extension Substring {
 public func commentCode(_ thing: GIR.Thing, indentation: String = "") -> String {
     let prefix = indentation + "/// "
     let comment = thing.comment
-    let documentation = gtkDoc2SwiftDoc(comment, linePrefix: prefix)
+    let documentation = gtkDoc2SwiftDoc(for: thing, comment, linePrefix: prefix)
     return documentation
 }
 
@@ -208,11 +208,25 @@ public func swiftCode(_ thing: GIR.Thing, _ postfix: String = "", indentation: S
     let s = commentCode(thing, indentation: indentation)
     let t: String
     if let d = deprecatedCode(thing, indentation: indentation) {
-        t = s + "\n\(indentation)///\n\(indentation)/// **\(thing.name) is deprecated:**\n" + d + "\n"
+        t = s + "\n" + indentation + "///" + swiftDeprecationComment(for: thing.name, content: d, indentation: indentation)
     } else {
         t = s
     }
     return t + ((t.isEmpty || t.hasSuffix("\n")) ? "" : "\n") + postfix
+}
+
+/// Return a Swift deprecation string.
+///
+/// This constructs a DocC Swift deprecation comment.
+///
+/// - Parameters:
+///   - name: The name of the thing that's deprecated.
+///   - content: The description/code that's deprecated.
+///   - indentation: The indentation to use for the comments.
+/// - Returns: The constructed deprecation comment string.
+@inlinable
+func swiftDeprecationComment(for name: String, content: String = "", indentation: String = "") -> String {
+    return "\n" + indentation + "/// **" + name + " is deprecated:**\n" + content + "\n"
 }
 
 // MARK: - Swift code for Aliases
@@ -295,14 +309,22 @@ public func swiftCallbackAliasCode(callback: GIR.Callback) -> String {
         let parent = parentRef?.type.typeName ?? constant.typeRef.type.ctype
         let comment = " // " + (original == parent ? "" : (parent + " value "))
         let value = "\(constant.value)"
-        let name = constant.escapedName.swift
-        guard !GIR.verbatimConstants.contains(name) else {
-            let code = swiftCode(constant, indent + "public " + prefix + "let " + name +
-                                 (parentRef == nil ? "" : (": " + parent.swift)) + " = " + value + comment + original)
-            return code
+        func codeForConstant(named name: String, deprecation: String = "") -> String {
+            guard !GIR.verbatimConstants.contains(name) else {
+                let code = swiftCode(constant, indent + "public " + prefix + "let " + name +
+                                     (parentRef == nil ? "" : (": " + parent.swift)) + " = " + value + comment + original)
+                return code
+            }
+            let code = swiftCode(constant, deprecation + indent + "public " + prefix + "let \(name) = \(name == original ? value : original)" + comment + (name == original ? "" : value), indentation: indent)
+            return code + "\n"
         }
-        let code = swiftCode(constant, indent + "public " + prefix + "let \(name) = \(name == original ? value : original)" + comment + (name == original ? "" : value), indentation: indent)
-        return code + "\n"
+        let deprecatedName = constant.escapedName.swift
+        let name = constant.swiftCamelCaseName.swiftQuoted
+        let idiomaticCode = codeForConstant(named: name)
+        let deprecationComment = swiftDeprecationComment(for: deprecatedName, content: indent + "/// Use ``\(name)`` instead.\n")
+        let deprecatedCode = codeForConstant(named: deprecatedName, deprecation: deprecationComment)
+        let code = idiomaticCode + deprecatedCode
+        return code
     }
 }
 
@@ -360,7 +382,7 @@ public func valueCode(_ indentation: String) -> (GIR.Enumeration.Member) -> Stri
             cID = value
         }
         let comment = cID == value ? "" : (" // " + value)
-        let code = swiftCode(m, indentation + "static let " + m.name.snakeCase2camelCase.swiftQuoted + " = " + cID + comment, indentation: indentation)
+        let code = swiftCode(m, indentation + "static let " + m.swiftCamelCaseName.swiftQuoted + " = " + cID + comment, indentation: indentation)
         return code + "\n"
     }
 }
@@ -443,7 +465,7 @@ public func bitfieldValueCode(_ bf: GIR.Bitfield, _ indentation: String) -> (GIR
         }
         let comment = cID == value ? "" : (" // " + cID)
         let cast = type + "(" + value + ")"
-        let code = swiftCode(m, indentation + "public static let " + m.name.snakeCase2camelCase.swiftQuoted + " = " + cast + comment, indentation: indentation)
+        let code = swiftCode(m, indentation + "public static let " + m.swiftCamelCaseName.swiftQuoted + " = " + cast + comment, indentation: indentation)
         return code + "\n"
     }
 }
@@ -748,7 +770,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
     let ret = instanceReturnCode(doubleIndent, ptr: "rv", castVar: "rv")
     return { (field: GIR.Field) -> String in
         let name = field.name
-        let potentiallyClashingName = name.snakeCase2camelCase
+        let potentiallyClashingName = field.swiftCamelCaseName
         let swname: String
         if existingNames.contains(potentiallyClashingName) {
             let underscored = "_" + potentiallyClashingName

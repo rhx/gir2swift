@@ -30,10 +30,12 @@ fileprivate enum State: Equatable {
 }
 
 /// Convert the given String to SwiftDoc
-/// - Parameter gtkDoc: String in `gtk-doc` format
-/// - Parameter linePrefix: string to prefix each line with (e.g. indentation and/or "///")
 /// - Returns: String in SwiftDoc format
-public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> String {
+/// - Parameters:
+///   - thing: The GIR thing to generate documentation for
+///   - gtkDoc: String in `gtk-doc` format
+///   - linePrefix: String to prefix each line with (e.g. indentation and/or "///")
+public func gtkDoc2SwiftDoc(for thing: GIR.Thing, _ gtkDoc: String, linePrefix: String = "/// ") -> String {
     var output = ""
     var language: Substring = "" // language name for a ``` quoted language block
     var state = State.passThrough
@@ -97,13 +99,10 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
             case "@", "#":
                 guard j != e else { flush() ; continue }
                 let next = gtkDoc[j]
-                guard next != "_" && !next.isLetter && !next.isNumber &&
-                        !(c == "%" && next != "." && !next.isWhitespace && !next.isNewline) else {
-                    output.append(contentsOf: gtkDoc[idStart..<i])
-                    idStart = j
-                    state = .passThrough
-                    break
-                }
+                guard next == "_" || next.isLetter || next.isNumber ||
+                        (c == "%" && next != "." && !next.isWhitespace && !next.isNewline) else { break }
+                output.append(contentsOf: gtkDoc[idStart..<i])
+                idStart = j
                 state = .docCSymbol
             case "(":
                 let previous = gtkDoc[p]
@@ -300,7 +299,7 @@ func appendDocC(_ symbol: String, to output: inout String) {
         identifier = String(name[..<e])
         signal = ""
     }
-    if let type = GIR.knownCTypes[identifier] ?? GIR.knownDataTypes[GIR.dottedPrefix + identifier] ?? GIR.knownDataTypes[identifier] {
+    if let type = GIR.knownCIdentifiers[identifier] ?? GIR.knownDataTypes[GIR.dottedPrefix + identifier] ?? GIR.knownDataTypes[identifier] {
         let possiblyEmptyNamespace = type.typeRef.namespace
         let namespace = possiblyEmptyNamespace.isEmpty ? GIR.prefix : possiblyEmptyNamespace
         guard signal.isEmpty && namespace == GIR.prefix else {
@@ -316,7 +315,7 @@ func appendDocC(_ symbol: String, to output: inout String) {
             output.append("[\(swiftName)](\(typePath)\(methodSuffix)")
             return
         }
-        output.append("``" + type.name.swift + "``")
+        output.append("``" + type.swiftCamelCaseName + "``")
         return
     }
     output.append("`" + symbol + "`")
