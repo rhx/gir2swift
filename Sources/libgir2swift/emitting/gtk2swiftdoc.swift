@@ -168,7 +168,7 @@ public func gtkDoc2SwiftDoc(for thing: GIR.Thing, _ gtkDoc: String, linePrefix: 
                 output.append(contentsOf: gtkDoc[idStart..<i])
                 output.append("`")
             } else {
-                appendDocC(String(gtkDoc[idStart..<i]), to: &output)
+                appendDocC(for: thing, String(gtkDoc[idStart..<i]), to: &output)
             }
             idStart = i
             state = .passThrough
@@ -286,7 +286,7 @@ public func gtkDoc2SwiftDoc(for thing: GIR.Thing, _ gtkDoc: String, linePrefix: 
 /// - Parameters:
 ///   - symbol: The C symbol to convert to DocC and append.
 ///   - output: The output string to append to.
-func appendDocC(_ symbol: String, to output: inout String) {
+func appendDocC(for thing: GIR.Thing, _ symbol: String, to output: inout String) {
     let identifier: String
     let signal: String
     let memberComponents = symbol.split(separator: ":", omittingEmptySubsequences: false)
@@ -299,13 +299,13 @@ func appendDocC(_ symbol: String, to output: inout String) {
         identifier = String(name[..<e])
         signal = ""
     }
+    let hostingPrefix = "/" + GIR.docCHostingBasePath + (GIR.docCHostingBasePath.isEmpty ? "" : "/")
     if let type = GIR.knownCIdentifiers[identifier] ?? GIR.knownDataTypes[GIR.dottedPrefix + identifier] ?? GIR.knownDataTypes[identifier] {
         let possiblyEmptyNamespace = type.typeRef.namespace
         let namespace = possiblyEmptyNamespace.isEmpty ? GIR.prefix : possiblyEmptyNamespace
         guard signal.isEmpty && namespace == GIR.prefix else {
             let swiftName = type.name.swift
-            let prefix = "/" + GIR.docCHostingBasePath + (GIR.docCHostingBasePath.isEmpty ? "" : "/")
-            let typePath = prefix + "/documentation/" + namespace.lowercased() + "/" + type.name.swift.lowercased()
+            let typePath = hostingPrefix + "/documentation/" + namespace.lowercased() + "/" + type.name.swift.lowercased()
             let methodSuffix: String
             if signal.isEmpty {
                 methodSuffix = ""
@@ -318,6 +318,15 @@ func appendDocC(_ symbol: String, to output: inout String) {
         output.append("``" + type.swiftCamelCaseName + "``")
         return
     }
+    if let enumeration = thing as? GIR.Enumeration {
+        let thingName = thing.swiftCamelCaseName
+        for value in enumeration.members {
+            if value.name.swift == identifier {
+                let swiftName = value.swiftCamelCaseName
+                output.append("``" + thingName + "/" + swiftName + "``")
+                return
+            }
+        }
+    }
     output.append("`" + symbol + "`")
-    return
 }
