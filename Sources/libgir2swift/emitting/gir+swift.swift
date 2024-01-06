@@ -208,7 +208,7 @@ public func swiftCode(_ thing: GIR.Thing, _ postfix: String = "", indentation: S
     let s = commentCode(thing, indentation: indentation)
     let t: String
     if let d = deprecatedCode(thing, indentation: indentation) {
-        t = s + "\n" + indentation + "///" + swiftDeprecationComment(for: thing.name, content: d, indentation: indentation)
+        t = s + "\n" + indentation + "///\n" + swiftDeprecationComment(for: thing.name, content: d, indentation: indentation)
     } else {
         t = s
     }
@@ -226,7 +226,7 @@ public func swiftCode(_ thing: GIR.Thing, _ postfix: String = "", indentation: S
 /// - Returns: The constructed deprecation comment string.
 @inlinable
 func swiftDeprecationComment(for name: String, content: String = "", indentation: String = "") -> String {
-    return "\n" + indentation + "/// **" + name + " is deprecated:**\n" + content + "\n"
+    return indentation + "/// **" + name + " is deprecated:**\n" + content + "\n"
 }
 
 // MARK: - Swift code for Aliases
@@ -309,8 +309,9 @@ public func swiftCallbackAliasCode(callback: GIR.Callback) -> String {
         let parent = parentRef?.type.typeName ?? constant.typeRef.type.ctype
         let comment = " // " + (original == parent ? "" : (parent + " value "))
         let value = "\(constant.value)"
+        let girName = constant.escapedName.swift
         func codeForConstant(named name: String, deprecation: String = "") -> String {
-            guard !GIR.verbatimConstants.contains(name) else {
+            guard !GIR.verbatimConstants.contains(girName) && !GIR.verbatimConstants.contains(name) && !GIR.verbatimConstants.contains(original) else {
                 let code = swiftCode(constant, indent + "public " + prefix + "let " + name +
                                      (parentRef == nil ? "" : (": " + parent.swift)) + " = " + value + comment + original)
                 return code
@@ -318,11 +319,10 @@ public func swiftCallbackAliasCode(callback: GIR.Callback) -> String {
             let code = swiftCode(constant, deprecation + indent + "public " + prefix + "let \(name) = \(name == original ? value : original)" + comment + (name == original ? "" : value), indentation: indent)
             return code + "\n"
         }
-        let deprecatedName = constant.escapedName.swift
         let name = constant.swiftCamelCaseName.swiftQuoted
         let idiomaticCode = codeForConstant(named: name)
-        let deprecationComment = swiftDeprecationComment(for: deprecatedName, content: indent + "/// Use ``\(name)`` instead.\n")
-        let deprecatedCode = codeForConstant(named: deprecatedName, deprecation: deprecationComment)
+        let deprecationComment = swiftDeprecationComment(for: girName, content: indent + "/// Use ``\(name)`` instead.")
+        let deprecatedCode = codeForConstant(named: girName, deprecation: deprecationComment)
         let code = idiomaticCode + deprecatedCode
         return code
     }
