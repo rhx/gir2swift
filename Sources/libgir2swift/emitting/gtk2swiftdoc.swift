@@ -319,11 +319,19 @@ func appendDocC(for thing: GIR.Thing, _ symbol: String, to output: inout String)
         return
     }
     if let enumeration = thing as? GIR.Enumeration {
-        let thingName = thing.swiftCamelCaseName
         for value in enumeration.members {
             if value.name.swift == identifier {
                 let swiftName = value.swiftCamelCaseName
-                output.append("``" + thingName + "/" + swiftName + "``")
+                output.append("``" + thing.swiftCamelCaseName + "/" + swiftName + "``")
+                return
+            }
+        }
+    }
+    if let method = thing as? GIR.Method {
+        for argument in method.args {
+            if argument.name.swift == identifier {
+                let swiftName = argument.swiftCamelCaseName
+                output.append("`" + swiftName + "`")
                 return
             }
         }
