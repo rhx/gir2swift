@@ -34,7 +34,13 @@ func postProcess(_ node: String, for targetDirectoryURL: URL, pkgConfigName: Str
     let nodeFiles = ((try? fm.contentsOfDirectory(atPath: targetDirectoryURL.path)) ?? (try? fm.contentsOfDirectory(atPath: cwd)) ?? []).filter { $0.hasPrefix(node) }
     let cmds = postProcessors.flatMap { command in
         nodeFiles.filter {
-            guard $0.hasSuffix("." + command), let i = $0.index($0.startIndex, offsetBy: node.count, limitedBy: $0.endIndex), let e = $0.index($0.endIndex, offsetBy: -(command.count+1), limitedBy: $0.startIndex) else { return false }
+            let start = $0.startIndex
+            let end = $0.endIndex
+            guard $0.hasSuffix("." + command),
+                  let i = $0.index($0.startIndex, offsetBy: node.count, limitedBy: $0.endIndex), i != end,
+                  let e = $0.index($0.endIndex, offsetBy: -(command.count+1), limitedBy: $0.startIndex), e != start else {
+                      return false
+            }
             let j = $0.index(after: i)
             let k = $0.index(after: j)
             let sep = $0[i] // first separator character
@@ -56,17 +62,24 @@ func postProcess(_ node: String, for targetDirectoryURL: URL, pkgConfigName: Str
             let result = test("pkg-config", arg, pkgConfigName)
             return result
         }.map { (f: String) -> CommandArguments in
-            let d = f.lastIndex(of: ".") ?? f.index(f.endIndex, offsetBy: -4)
+            let end = f.endIndex
+            let d = f.lastIndex(of: ".") ?? f.index(end, offsetBy: -4)
             let s = f.index(after: d)
             let script = targetDirectoryURL.appendingPathComponent(f).path
-            return .init(command: String(f[s..<f.endIndex]), arguments: ["-f", (fm.fileExists(atPath: script) ? script : f)])
+            return .init(command: String(f[s..<end]), arguments: ["-f", (fm.fileExists(atPath: script) ? script : f)])
         }
     }
     pipeCommands += cmds
     let swiftSuffix = ".swift"
     let n = swiftSuffix.count
     let inputFiles = nodeFiles.filter {
-        guard $0.hasSuffix(swiftSuffix), let j = $0.lastIndex(of: "=") ?? $0.lastIndex(of: "-"), let e = $0.index($0.endIndex, offsetBy: -(n+1), limitedBy: $0.startIndex) else { return false }
+        let start = $0.startIndex
+        let end = $0.endIndex
+        guard $0.hasSuffix(swiftSuffix),
+              let j = $0.lastIndex(of: "=") ?? $0.lastIndex(of: "-"), j != start,
+              let e = $0.index(end, offsetBy: -(n+1), limitedBy: start), e != start else {
+            return false
+        }
         let i = $0.index(before: j)
         let k = $0.index(after: j)
         let sep = $0[i] // first separator character
