@@ -3,7 +3,7 @@
 //  libgir2swift
 //
 //  Created by Rene Hexel on 23/7/21.
-//  Copyright © 2021, 2022 Rene Hexel. All rights reserved.
+//  Copyright © 2021, 2022, 2024 Rene Hexel. All rights reserved.
 //
 
 import Foundation
@@ -37,16 +37,18 @@ func postProcess(_ node: String, for targetDirectoryURL: URL, pkgConfigName: Str
             guard $0.hasSuffix("." + command), let i = $0.index($0.startIndex, offsetBy: node.count, limitedBy: $0.endIndex), let e = $0.index($0.endIndex, offsetBy: -(command.count+1), limitedBy: $0.startIndex) else { return false }
             let j = $0.index(after: i)
             let k = $0.index(after: j)
+            let sep = $0[i] // first separator character
+            let nxt = $0[j] // next character after the separator
             let arg: String
-            if $0[i] == "-" && $0[j].isDigit {
+            if sep == "-" && nxt.isDigit {
                 arg = "--atleast-version=" + $0[j..<e]
-            } else if $0[i...j] == ">=" && $0[k].isDigit {
+            } else if (sep == ">" || sep == "+") && nxt == "=" && $0[k].isDigit {
                 arg = "--atleast-version=" + $0[k..<e]
-            } else if $0[i...j] == "<=" && $0[k].isDigit {
+            } else if (sep == "<" || sep == "-") && nxt == "=" && $0[k].isDigit {
                 arg = "--max-version=" + $0[k..<e]
-            } else if $0[i] == "=" && $0[j].isDigit {
+            } else if sep == "=" && nxt.isDigit {
                 arg = "--exact-version=" + $0[j..<e]
-            } else if $0[i...j] == "==" && $0[k].isDigit {
+            } else if sep == "=" && nxt == "=" && $0[k].isDigit {
                 arg = "--exact-version=" + $0[k..<e]
             } else {
                 return false
@@ -67,16 +69,18 @@ func postProcess(_ node: String, for targetDirectoryURL: URL, pkgConfigName: Str
         guard $0.hasSuffix(swiftSuffix), let j = $0.lastIndex(of: "=") ?? $0.lastIndex(of: "-"), let e = $0.index($0.endIndex, offsetBy: -(n+1), limitedBy: $0.startIndex) else { return false }
         let i = $0.index(before: j)
         let k = $0.index(after: j)
+        let sep = $0[i] // first separator character
+        let nxt = $0[j] // next character after the separator
         let arg: String
-        if $0[i] == "-" && $0[j].isDigit {
+        if sep == "-" && nxt.isDigit {
             arg = "--atleast-version=" + $0[j..<e]
-        } else if $0[i...j] == ">=" && $0[k].isDigit {
+        } else if (sep == ">" || sep == "+") && nxt == "=" && $0[k].isDigit {
             arg = "--atleast-version=" + $0[k..<e]
-        } else if $0[i...j] == "<=" && $0[k].isDigit {
+        } else if (sep == "<" || sep == "-") && nxt == "=" && $0[k].isDigit {
             arg = "--max-version=" + $0[k..<e]
-        } else if $0[i] == "=" && $0[j].isDigit {
+        } else if sep == "=" && nxt.isDigit {
             arg = "--exact-version=" + $0[j..<e]
-        } else if $0[i...j] == "==" && $0[k].isDigit {
+        } else if sep == "=" && nxt == "=" && $0[k].isDigit {
             arg = "--exact-version=" + $0[k..<e]
         } else {
             return false
