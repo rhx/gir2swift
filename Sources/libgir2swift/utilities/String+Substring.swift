@@ -125,7 +125,7 @@ public extension StringProtocol {
     @inlinable var snakeCASE2camelCase: String {
         split(separator: "_").map {
             $0 == $0.uppercased() ? $0.lowercased() : String($0)
-        }.joined().snakeCase2camelCase
+        }.joined(separator: "_").snakeCase2camelCase
     }
 
     /// Convers combination of *snake_case* and *kebab-case* to *camelCase*
