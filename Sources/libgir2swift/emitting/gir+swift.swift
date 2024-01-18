@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 2/04/2016.
-//  Copyright © 2016, 2017, 2018, 2019, 2020, 2021, 2022 Rene Hexel.
+//  Copyright © 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2024 Rene Hexel.
 //  All rights reserved.
 //
 import Foundation
@@ -304,6 +304,7 @@ public func swiftCallbackAliasCode(callback: GIR.Callback) -> String {
 ///   - scopePrefix: A scope prefix to add to the constant declaration, such as `"static"
 @inlinable public func constantSwiftCode(indentedBy indent: String = "", scopePrefix: String = "") -> (GIR.Constant) -> String {
     let prefix = scopePrefix.isEmpty ? scopePrefix : (scopePrefix + " ")
+    var createdConstants = Set<String>()
     return { constant in
         let original = constant.typeRef.type.typeName.swift
         let parentRef = constant.typeRef.type.parent
@@ -328,8 +329,8 @@ public func swiftCallbackAliasCode(callback: GIR.Callback) -> String {
                                  "let \(name) = \(name == original ? value : original)" + comment + (name == original ? "" : value), indentation: indent)
             return code + "\n"
         }
-        let isIdiomaticNameClashing = GIR.KnownFunctions[idiomaticName] != nil
-        let isGIRNameClashing = GIR.KnownFunctions[girName] != nil
+        let isIdiomaticNameClashing = createdConstants.contains(idiomaticName)
+        let isGIRNameClashing = createdConstants.contains(girName)
         let idiomaticCode: String
         let deprecationComment: String
         let deprecatedCode: String
@@ -340,11 +341,19 @@ public func swiftCallbackAliasCode(callback: GIR.Callback) -> String {
                 idiomaticCode = indent + "// *** Skipping constant as both \(idiomaticName) and \(girName) clash with existing names ***\n"
             } else {
                 idiomaticCode = codeForConstant(named: girName)
+                createdConstants.insert(girName)
             }
         } else {
             idiomaticCode = codeForConstant(named: idiomaticName)
-            deprecationComment = swiftDeprecationComment(for: girName, content: indent + "/// Use ``\(idiomaticName)`` instead.")
-            deprecatedCode = codeForConstant(named: girName, deprecation: deprecationComment)
+            createdConstants.insert(idiomaticName)
+            if isGIRNameClashing {
+                deprecationComment = ""
+                deprecatedCode = ""
+            } else {
+                deprecationComment = swiftDeprecationComment(for: girName, content: indent + "/// Use ``\(idiomaticName)`` instead.")
+                deprecatedCode = codeForConstant(named: girName, deprecation: deprecationComment)
+                createdConstants.insert(girName)
+            }
         }
         let code = idiomaticCode + deprecatedCode
         return code
@@ -643,10 +652,14 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
         let rawName = method.name.isEmpty ? method.cname : method.name
         let prefixedRawName = functionPrefix.isEmpty ? rawName : (functionPrefix + rawName.capitalised)
         let potentiallyClashingName = convertName(prefixedRawName)
+        let maybeFunction = method as? GIR.Function
         let name: String
-        if existingNames.contains(potentiallyClashingName) {
+        if existingNames.contains(potentiallyClashingName) ||
+            maybeFunction != nil && GIR.knownDataTypes[potentiallyClashingName] != nil {
             name = "get" + potentiallyClashingName.capitalised
-        } else { name = potentiallyClashingName }
+        } else {
+            name = potentiallyClashingName // not clashing
+        }
         guard !GIR.excludeList.contains(rawName) && !GIR.excludeList.contains(name) else {
             return "\n\(indent)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
         }

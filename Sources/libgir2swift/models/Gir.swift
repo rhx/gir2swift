@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 25/03/2016.
-//  Copyright © 2016, 2017, 2018, 2019, 2020, 2022 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018, 2019, 2020, 2022, 2024 Rene Hexel. All rights reserved.
 //
 import SwiftLibXML
 
@@ -168,9 +168,15 @@ public final class GIR {
                     return true
                 }
             }
-            /// closure for recording known types
+            /// function for recording known types
             func notKnownType<T: Datatype>(_ e: T) -> Bool {
                 return setKnownType(e.name, e)
+            }
+            /// function for recording known constants
+            func notKnownConstant(_ constant: Constant) -> Bool {
+                let idiomaticName = constant.swiftCamelCaseName
+                let idiomaticNameWorks = setKnownType(idiomaticName, constant) && GIR.KnownFunctions[idiomaticName] == nil
+                return notKnownType(constant) || idiomaticNameWorks
             }
             let notKnownRecord: (Record) -> Bool = {
                 $0.constructors.forEach { setKnownCIdentifier(ofType: $0) }
@@ -189,6 +195,10 @@ public final class GIR {
                 let name = $0.name
                 guard GIR.KnownFunctions[name] == nil else { return false }
                 GIR.KnownFunctions[name] = $0
+                let idiomaticSwiftName = name.snakeCase2camelCase
+                if GIR.KnownFunctions[idiomaticSwiftName] == nil {
+                    GIR.KnownFunctions[idiomaticSwiftName] = $0
+                }
                 return true
             }
             /// Record known enums and their values
@@ -200,7 +210,7 @@ public final class GIR {
             //
             // get all constants, enumerations, records, classes, and functions
             //
-            constants    = enumerate(xml, path: "/*/*/gir:constant",    inNS: namespaces, quiet: quiet, construct: { Constant(node: $0, at: $1) },    check: notKnownType)
+            constants    = enumerate(xml, path: "/*/*/gir:constant",    inNS: namespaces, quiet: quiet, construct: { Constant(node: $0, at: $1) },    check: notKnownConstant)
             enumerations = enumerate(xml, path: "/*/*/gir:enumeration", inNS: namespaces, quiet: quiet, construct: { Enumeration(node: $0, at: $1) }, check: notKnownEnum)
             bitfields    = enumerate(xml, path: "/*/*/gir:bitfield",    inNS: namespaces, quiet: quiet, construct: { Bitfield(node: $0, at: $1) },    check: notKnownBitfield)
             interfaces   = enumerate(xml, path: "/*/*/gir:interface",   inNS: namespaces, quiet: quiet, construct: { Interface(node: $0, at: $1) }, check: notKnownRecord)
