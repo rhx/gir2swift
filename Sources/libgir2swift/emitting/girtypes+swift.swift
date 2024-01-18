@@ -30,6 +30,21 @@ public extension GIR.Thing {
         }
         return normalisedName.snakeCase2camelCase
     }
+
+    /// Return an idiomatic, de-uppercased Swift name.
+    ///
+    /// This method returns the name in Swift-style camelCase.
+    /// Before doing so, it checks whether the name is all uppercase,
+    /// in which case it converts it to lowercase first.
+    @inlinable var swiftCamelCASEName: String {
+        let normalisedName: String
+        if name == name.uppercased() {
+            normalisedName = name.lowercased()
+        } else {
+            normalisedName = name
+        }
+        return normalisedName.snakeCASE2camelCase
+    }
 }
 
 

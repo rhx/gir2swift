@@ -121,6 +121,13 @@ public extension StringProtocol {
     /// Converts *snake_case* to *camelCase*
     @inlinable var snakeCase2camelCase: String { return camelise { $0 == "_" } }
 
+    /// Converts *snake_CASE* to *camelCase*
+    @inlinable var snakeCASE2camelCase: String {
+        split(separator: "_").map {
+            $0 == $0.uppercased() ? $0.lowercased() : String($0)
+        }.joined().snakeCase2camelCase
+    }
+
     /// Convers combination of *snake_case* and *kebab-case* to *camelCase*
     @inlinable var kebabSnakeCase2camelCase: String {
         return camelise { $0 == "-" || $0 == "_" }.deCapitalised

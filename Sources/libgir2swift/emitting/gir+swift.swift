@@ -312,7 +312,7 @@ public func swiftCallbackAliasCode(callback: GIR.Callback) -> String {
         let comment = " // " + (original == parent ? "" : (parent + " value "))
         let value = "\(constant.value)"
         let girName = constant.escapedName.swift
-        let idiomaticName = constant.swiftCamelCaseName.swiftQuoted
+        let idiomaticName = constant.swiftCamelCASEName.swiftQuoted
         func codeForConstant(named name: String, deprecation: String = "") -> String {
             let deprecationMarker: String
             if deprecation.isEmpty {

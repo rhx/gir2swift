@@ -174,7 +174,7 @@ public final class GIR {
             }
             /// function for recording known constants
             func notKnownConstant(_ constant: Constant) -> Bool {
-                let idiomaticName = constant.swiftCamelCaseName
+                let idiomaticName = constant.swiftCamelCASEName
                 let idiomaticNameWorks = setKnownType(idiomaticName, constant) && GIR.KnownFunctions[idiomaticName] == nil
                 return notKnownType(constant) || idiomaticNameWorks
             }
