@@ -124,8 +124,8 @@ public extension StringProtocol {
     /// Converts *snake_CASE* to *camelCase*
     @inlinable var snakeCASE2camelCase: String {
         split(separator: "_").map {
-            $0 == $0.uppercased() ? $0.lowercased() : String($0)
-        }.joined(separator: "_").snakeCase2camelCase
+            $0.count > 1 && $0 == $0.uppercased() ? $0.lowercased() : String($0)
+        }.joined(separator: "_").cameliseConstant { $0 == "_" }
     }
 
     /// Convers combination of *snake_case* and *kebab-case* to *camelCase*
@@ -145,6 +145,7 @@ public extension StringProtocol {
 
     /// Converts any arbitrary string to *camelCase*.
     /// - Parameter isSeparator: return true if an element is separator
+    /// - Returns: camelised String.
     @inlinable func camelise(_ isSeparator: (Element) -> Bool) -> String {
         var result: String = String()
         result.reserveCapacity(self.count)
@@ -160,6 +161,42 @@ public extension StringProtocol {
             result.append(
                 previousCharacterWasSeparator ? character.uppercased().first! : character
             )
+
+            previousCharacterWasSeparator = false
+        }
+
+        return result
+    }
+
+    /// Converts any arbitrary constant name to *camelCase*.
+    ///
+    /// This method works similar to `camelise`
+    /// but leaves single-character components as-is.
+    ///
+    /// - Parameter isSeparator: return true if an element is separator
+    /// - Returns: camelised String.
+    @inlinable func cameliseConstant(_ isSeparator: (Element) -> Bool) -> String {
+        var result: String = String()
+        result.reserveCapacity(self.count)
+
+        var previousCharacterWasSeparator: Bool = false
+        var i = startIndex
+        var nextCharacter = i == endIndex ? nil : self[i]
+        while let character = nextCharacter {
+            let j = index(after: i)
+            nextCharacter = j == endIndex ? nil : self[j]
+            i = j
+            guard !isSeparator(character) else {
+                previousCharacterWasSeparator = true
+                continue
+            }
+
+            if previousCharacterWasSeparator,
+               let nextCharacter, !isSeparator(nextCharacter) {
+                result.append(character.uppercased().first!)
+            } else {
+                result.append(character)
+            }
 
             previousCharacterWasSeparator = false
         }
