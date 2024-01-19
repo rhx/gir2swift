@@ -123,9 +123,20 @@ public extension StringProtocol {
 
     /// Converts *snake_CASE* to *camelCase*
     @inlinable var snakeCASE2camelCase: String {
-        split(separator: "_").map {
-            $0.count > 1 && $0 == $0.uppercased() ? $0.lowercased() : String($0)
-        }.joined(separator: "_").cameliseConstant { $0 == "_" }
+        let idiomaticName: String
+        if count == 1 {
+            idiomaticName = lowercased()
+        } else if self == uppercased() {
+            idiomaticName = split(separator: "_").map {
+                $0.count > 1 ? $0.lowercased() : String($0)
+            }.joined(separator: "_").cameliseConstant { $0 == "_" }
+        } else {
+            idiomaticName = split(separator: "_").enumerated().map {
+                $0.offset == 0 && $0.element.count > 1 && $0.element == $0.element.uppercased() ?
+                $0.element.lowercased() : String($0.element)
+            }.joined()
+        }
+        return idiomaticName
     }
 
     /// Convers combination of *snake_case* and *kebab-case* to *camelCase*
