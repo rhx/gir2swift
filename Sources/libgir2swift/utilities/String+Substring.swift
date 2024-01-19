@@ -192,7 +192,7 @@ public extension StringProtocol {
             }
 
             if previousCharacterWasSeparator,
-               let nextCharacter, !isSeparator(nextCharacter) {
+               let nextCharacter, !isSeparator(nextCharacter) && nextCharacter == nextCharacter.uppercased().first {
                 result.append(character.uppercased().first!)
             } else {
                 result.append(character)
