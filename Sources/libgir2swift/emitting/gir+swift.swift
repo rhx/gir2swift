@@ -330,7 +330,7 @@ public func swiftCallbackAliasCode(callback: GIR.Callback) -> String {
             return code + "\n"
         }
         let isIdiomaticNameClashing = createdConstants.contains(idiomaticName)
-        let isGIRNameClashing = createdConstants.contains(girName)
+        let isGIRNameClashing = createdConstants.contains(girName) || girName == idiomaticName
         let idiomaticCode: String
         let deprecationComment: String
         let deprecatedCode: String
