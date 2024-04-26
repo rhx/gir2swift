@@ -73,7 +73,8 @@ extension Gir2Swift {
     ///   - generateAll: Flag indicating whether private members should be emitted
     ///   - useAlphaNames: Flag indicating whether a fixed number of output files should be generated
     ///   - postProcess: Array of additional file names to include in post-processing
-    func process_gir(file: String, for targetDirectoryURL: URL, boilerPlate: String, to outputDirectory: String? = nil, docCHostingBasePath: String, split singleFilePerClass: Bool = false, generateAll: Bool = false, useAlphaNames: Bool = false, postProcess additionalFilesToPostProcess: [String]) {
+    ///   - pkgConfig: Optional package configuration name
+    func process_gir(file: String, for targetDirectoryURL: URL, boilerPlate: String, to outputDirectory: String? = nil, docCHostingBasePath: String, split singleFilePerClass: Bool = false, generateAll: Bool = false, useAlphaNames: Bool = false, postProcess additionalFilesToPostProcess: [String], pkgConfig: String? = nil) {
         let node = file.components(separatedBy: "/").last?.stringByRemoving(suffix: ".gir") ?? file
         let modulePrefix: String
         if boilerPlate.isEmpty {
@@ -83,7 +84,7 @@ extension Gir2Swift {
             modulePrefix = boilerPlate
         }
         GIR.docCHostingBasePath = docCHostingBasePath
-        let pkgConfigArg = pkgConfigName ?? node.lowercased()
+        let pkgConfigArg = pkgConfig ?? pkgConfigName ?? node.lowercased()
         let inURL = targetDirectoryURL.appendingPathComponent(node + ".include")
         let wlURL = targetDirectoryURL.appendingPathComponent(node + ".whitelist")
         if let inclusionList = ((try? String(contentsOf: inURL)) ?? (try? String(contentsOf: wlURL))).flatMap({ Set($0.nonEmptyComponents(separatedBy: "\n")) }) {

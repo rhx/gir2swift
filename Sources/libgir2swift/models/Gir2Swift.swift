@@ -171,7 +171,7 @@ public struct Gir2Swift: ParsableCommand {
             }
         case false:
             for girFile in girFilesToGenerate {
-                process_gir(file: girFile, for: targetDirectoryURL, boilerPlate: moduleBoilerPlate, to: target, docCHostingBasePath: docCHostingBasePath, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: generateAlphaFiles, postProcess: postProcess + (manifestPlan?.postProcess ?? []))
+                process_gir(file: girFile, for: targetDirectoryURL, boilerPlate: moduleBoilerPlate, to: target, docCHostingBasePath: docCHostingBasePath, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: generateAlphaFiles, postProcess: postProcess + (manifestPlan?.postProcess ?? []), pkgConfig: pkgConfig)
             }
         }
 
