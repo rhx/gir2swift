@@ -22,6 +22,44 @@ func postProcess(_ node: String, for targetDirectoryURL: URL, pkgConfigName: Str
     let fm = FileManager.default
     let cwd = fm.currentDirectoryPath
     let cwdURL = URL(fileURLWithPath: cwd, isDirectory: true)
+    let nodeFiles = ((try? fm.contentsOfDirectory(atPath: targetDirectoryURL.path)) ?? (try? fm.contentsOfDirectory(atPath: cwd)) ?? []).filter { $0.hasPrefix(node) }
+    let nodeSwiftOutputFile = outputFiles.first { $0.hasSuffix(node + ".swift") }
+    nodeFiles.filter {
+        $0.hasSuffix(".cat") &&
+        (nodeSwiftOutputFile != nil || outputDirectory == nil ) &&
+        pkgConfigMatchesVersion(for: $0, command: "cat", node: node, pkgConfigFile: pkgConfigName)
+    }.forEach {
+        let sourcePath = targetDirectoryURL.appendingPathComponent($0).path
+        let fullPath = fm.fileExists(atPath: sourcePath) ? sourcePath : $0
+        guard outputDirectory != nil else {
+            pipeCommands.append(.init(command: "cat", arguments: ["-", fullPath]))
+            return
+        }
+        let o = nodeSwiftOutputFile! + ".out"
+        guard fm.createFile(atPath: o, contents: nil, attributes: nil),
+              let outFile = FileHandle(forWritingAtPath: o) else {
+            perror("Cannot create " + o)
+            return
+        }
+        do {
+            let catCommand = [CommandArguments(command: "cat", arguments: [nodeSwiftOutputFile!, fullPath])]
+            let catProcess = try pipe(catCommand, input: nodeSwiftOutputFile, output: outFile)
+            catProcess[0].waitUntilExit()
+            do {
+                try fm.removeItem(atPath: nodeSwiftOutputFile!)
+            } catch {
+                print("Cannot remove '\(nodeSwiftOutputFile!)': \(error)", to: &Streams.stdErr)
+            }
+            do {
+                try? fm.removeItem(atPath: nodeSwiftOutputFile!)
+                try fm.moveItem(atPath: o, toPath: nodeSwiftOutputFile!)
+            } catch {
+                print("Cannot move '\(o)' to '\(nodeSwiftOutputFile!)': \(error)", to: &Streams.stdErr)
+            }
+        } catch {
+            print("Cannot append '" + fullPath + "' to '" + nodeSwiftOutputFile! + "': \(error)", to: &Streams.stdErr)
+        }
+    }
     postProcessors.forEach {
         let script = node + "." + $0
         let scriptPath = targetDirectoryURL.appendingPathComponent(script).path
@@ -31,7 +69,6 @@ func postProcess(_ node: String, for targetDirectoryURL: URL, pkgConfigName: Str
             pipeCommands.append(.init(command: $0, arguments: ["-f", script]))
         }
     }
-    let nodeFiles = ((try? fm.contentsOfDirectory(atPath: targetDirectoryURL.path)) ?? (try? fm.contentsOfDirectory(atPath: cwd)) ?? []).filter { $0.hasPrefix(node) }
     let cmds = postProcessors.flatMap { command in
         nodeFiles.filter {
             pkgConfigMatchesVersion(for: $0, command: command, node: node, pkgConfigFile: pkgConfigName)
