@@ -34,33 +34,7 @@ func postProcess(_ node: String, for targetDirectoryURL: URL, pkgConfigName: Str
     let nodeFiles = ((try? fm.contentsOfDirectory(atPath: targetDirectoryURL.path)) ?? (try? fm.contentsOfDirectory(atPath: cwd)) ?? []).filter { $0.hasPrefix(node) }
     let cmds = postProcessors.flatMap { command in
         nodeFiles.filter {
-            let start = $0.startIndex
-            let end = $0.endIndex
-            guard $0.hasSuffix("." + command),
-                  let i = $0.index($0.startIndex, offsetBy: node.count, limitedBy: $0.endIndex), i != end,
-                  let e = $0.index($0.endIndex, offsetBy: -(command.count+1), limitedBy: $0.startIndex), e != start else {
-                      return false
-            }
-            let j = $0.index(after: i)
-            let k = $0.index(after: j)
-            let sep = $0[i] // first separator character
-            let nxt = $0[j] // next character after the separator
-            let arg: String
-            if sep == "-" && nxt.isDigit {
-                arg = "--atleast-version=" + $0[j..<e]
-            } else if (sep == ">" || sep == "+") && nxt == "=" && $0[k].isDigit {
-                arg = "--atleast-version=" + $0[k..<e]
-            } else if (sep == "<" || sep == "-") && nxt == "=" && $0[k].isDigit {
-                arg = "--max-version=" + $0[k..<e]
-            } else if sep == "=" && nxt.isDigit {
-                arg = "--exact-version=" + $0[j..<e]
-            } else if sep == "=" && nxt == "=" && $0[k].isDigit {
-                arg = "--exact-version=" + $0[k..<e]
-            } else {
-                return false
-            }
-            let result = test("pkg-config", arg, pkgConfigName)
-            return result
+            pkgConfigMatchesVersion(for: $0, command: command, node: node, pkgConfigFile: pkgConfigName)
         }.map { (f: String) -> CommandArguments in
             let end = f.endIndex
             let d = f.lastIndex(of: ".") ?? f.index(end, offsetBy: -4)
@@ -82,23 +56,7 @@ func postProcess(_ node: String, for targetDirectoryURL: URL, pkgConfigName: Str
         }
         let i = $0.index(before: j)
         let k = $0.index(after: j)
-        let sep = $0[i] // first separator character
-        let nxt = $0[j] // next character after the separator
-        let arg: String
-        if sep == "-" && nxt.isDigit {
-            arg = "--atleast-version=" + $0[j..<e]
-        } else if (sep == ">" || sep == "+") && nxt == "=" && $0[k].isDigit {
-            arg = "--atleast-version=" + $0[k..<e]
-        } else if (sep == "<" || sep == "-") && nxt == "=" && $0[k].isDigit {
-            arg = "--max-version=" + $0[k..<e]
-        } else if sep == "=" && nxt.isDigit {
-            arg = "--exact-version=" + $0[j..<e]
-        } else if sep == "=" && nxt == "=" && $0[k].isDigit {
-            arg = "--exact-version=" + $0[k..<e]
-        } else {
-            return false
-        }
-        let result = test("pkg-config", arg, pkgConfigName)
+        let result = pkgConfigMatchesVersion(for: $0, pkgConfigFile: pkgConfigName, separatorIndex: i, indexAfterSeparator: j, versionStart: k, versionEnd: e)
         return result
     }
     if pipeCommands.isEmpty {
@@ -185,4 +143,39 @@ func postProcess(_ node: String, for targetDirectoryURL: URL, pkgConfigName: Str
         }
         inputFileProcesses.forEach { $0.waitUntilExit() }
     }
+}
+
+private func pkgConfigMatchesVersion<S: StringProtocol>(for file: S, command: String, node: String, pkgConfigFile: String) -> Bool {
+    let start = file.startIndex
+    let end = file.endIndex
+    guard file.hasSuffix("." + command),
+          let i = file.index(file.startIndex, offsetBy: node.count, limitedBy: file.endIndex), i != end,
+          let e = file.index(file.endIndex, offsetBy: -(command.count+1), limitedBy: file.startIndex), e != start else {
+        return false
+    }
+    let j = file.index(after: i)
+    let k = file.index(after: j)
+    return pkgConfigMatchesVersion(for: file, pkgConfigFile: pkgConfigFile, separatorIndex: i, indexAfterSeparator: j, versionStart: k, versionEnd: e)
+}
+
+private func pkgConfigMatchesVersion<S: StringProtocol>(for file: S, pkgConfigFile: String, separatorIndex i: S.Index, indexAfterSeparator j: S.Index, versionStart k: S.Index, versionEnd e: S.Index) -> Bool {
+    let sep = file[i] // first separator character
+    let nxt = file[j] // next character after the separator
+    let arg: String
+    if sep == "-" && nxt.isDigit {
+        arg = "--atleast-version=" + file[j..<e]
+    } else if (sep == ">" || sep == "+") && nxt == "=" && file[k].isDigit {
+        arg = "--atleast-version=" + file[k..<e]
+    } else if (sep == "<" || sep == "-") && nxt == "=" && file[k].isDigit {
+        arg = "--max-version=" + file[k..<e]
+    } else if sep == "=" && nxt.isDigit {
+        arg = "--exact-version=" + file[j..<e]
+    } else if sep == "=" && nxt == "=" && file[k].isDigit {
+        arg = "--exact-version=" + file[k..<e]
+    } else {
+        return false
+    }
+    let result = test("pkg-config", arg, pkgConfigFile)
+    return result
+
 }
