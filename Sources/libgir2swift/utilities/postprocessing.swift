@@ -41,23 +41,19 @@ func postProcess(_ node: String, for targetDirectoryURL: URL, pkgConfigName: Str
             perror("Cannot create " + o)
             return
         }
+        guard run(standardOutput: outFile, "cat", arguments: [nodeSwiftOutputFile!, fullPath]) == 0 else {
+            return
+        }
         do {
-            let catCommand = [CommandArguments(command: "cat", arguments: [nodeSwiftOutputFile!, fullPath])]
-            let catProcess = try pipe(catCommand, input: nodeSwiftOutputFile, output: outFile)
-            catProcess[0].waitUntilExit()
-            do {
-                try fm.removeItem(atPath: nodeSwiftOutputFile!)
-            } catch {
-                print("Cannot remove '\(nodeSwiftOutputFile!)': \(error)", to: &Streams.stdErr)
-            }
-            do {
-                try? fm.removeItem(atPath: nodeSwiftOutputFile!)
-                try fm.moveItem(atPath: o, toPath: nodeSwiftOutputFile!)
-            } catch {
-                print("Cannot move '\(o)' to '\(nodeSwiftOutputFile!)': \(error)", to: &Streams.stdErr)
-            }
+            try fm.removeItem(atPath: nodeSwiftOutputFile!)
         } catch {
-            print("Cannot append '" + fullPath + "' to '" + nodeSwiftOutputFile! + "': \(error)", to: &Streams.stdErr)
+            print("Cannot remove '\(nodeSwiftOutputFile!)': \(error)", to: &Streams.stdErr)
+        }
+        do {
+            try? fm.removeItem(atPath: nodeSwiftOutputFile!)
+            try fm.moveItem(atPath: o, toPath: nodeSwiftOutputFile!)
+        } catch {
+            print("Cannot move '\(o)' to '\(nodeSwiftOutputFile!)': \(error)", to: &Streams.stdErr)
         }
     }
     postProcessors.forEach {
@@ -214,5 +210,4 @@ private func pkgConfigMatchesVersion<S: StringProtocol>(for file: S, pkgConfigFi
     }
     let result = test("pkg-config", arg, pkgConfigFile)
     return result
-
 }
