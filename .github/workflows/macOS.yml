@@ -2,7 +2,7 @@ name: macOS
 
 # Dependencies of this package
 env:
-  MACOS_BREW: ${{ 'libxml2 gobject-introspection jq' }}
+  MACOS_BREW: ${{ 'libxml2 gobject-introspection' }}
 
 on:
   push:

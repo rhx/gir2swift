@@ -2,7 +2,7 @@ name: Linux
 
 # Dependencies of this package
 env:
-  UBUNTU_APT: ${{ 'libxml2-dev gobject-introspection libgirepository1.0-dev jq' }}
+  UBUNTU_APT: ${{ 'libxml2-dev gobject-introspection libgirepository1.0-dev' }}
 
 on:
   push:
