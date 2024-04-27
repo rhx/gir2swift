@@ -1,0 +1,62 @@
+name: Linux
+
+# Dependencies of this package
+env:
+  UBUNTU_APT: ${{ 'libxml2-dev gobject-introspection libgirepository1.0-dev jq' }}
+
+on:
+  push:
+    branches:
+      - development
+      - main
+  pull_request:
+    branches:
+      - development
+      - main
+
+jobs:
+  build-linux:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ubuntu-22.04, ubuntu-20.04]
+        swift: ["5.9", "5.7"]
+    name: Swift ${{ matrix.swift }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: swift-actions/setup-swift@v1
+        with:
+          swift-version: ${{ matrix.swift }}
+
+      - name: Print Linux and Swift version
+        run: |
+          lsb_release -d
+          swift --version
+
+      - name: Fetch Linux dependencies
+        if: ${{ runner.os == 'Linux' }}
+        run: sudo apt-get install $UBUNTU_APT
+
+      - name: Checkout gir2swift
+        uses: actions/checkout@v4
+        with:
+          path: gir2swift
+
+      - name: Build gir2swift
+        run: |
+          cd gir2swift
+          swift build
+          cd ..
+
+      - name: Test gir2swift
+        run: |
+          cd gir2swift
+          swift test
+          cd ..
+
+      - name: Remove unneeded files and archive artefacts
+        run: |
+          rm -rf _tempGTK
+          cd gir2swift
+          swift package clean
+          rm -rf .build/repositories
+          cd ..
