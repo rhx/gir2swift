@@ -57,7 +57,7 @@ jobs:
       - name: Remove unneeded files and archive artefacts
         run: |
           rm -rf _tempGTK
-          cd SwiftGLib
+          cd gir2swift
           swift package clean
           rm -rf .build/repositories
           cd ..
