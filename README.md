@@ -1,12 +1,8 @@
 # gir2swift
 A simple GIR parser in Swift for creating Swift types for a .gir file
 
-![macOS 11 build](https://github.com/rhx/gir2swift/workflows/macOS%2011/badge.svg)
-![macOS 10.15 build](https://github.com/rhx/gir2swift/workflows/macOS%2010.15/badge.svg)
-![Ubuntu 20.04 build](https://github.com/rhx/gir2swift/workflows/Ubuntu%2020.04/badge.svg)
-![Ubuntu 18.04 build](https://github.com/rhx/gir2swift/workflows/Ubuntu%2018.04/badge.svg)
-![gtk macOS](https://github.com/rhx/gir2swift/workflows/gtk%20macOS/badge.svg)
-![gtk Ubuntu](https://github.com/rhx/gir2swift/workflows/gtk%20Ubuntu/badge.svg)
+![macOS](https://github.com/rhx/gir2swift/actions/workflows/macOS.yml/badge.svg)
+![Linux](https://github.com/rhx/gir2swift/actions/workflows/Linux.yml/badge.svg)
 
 ## Getting Started
 To start a project that uses Swift wrappers around low-level libraries that utilise gobject-introspection, you need to create some scripts that use `gir2swift` to convert the information within gobject-introspection XML (`.gir`) files into Swift.  Here is a brief overview of the basic steps:
