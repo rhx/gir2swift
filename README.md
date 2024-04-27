@@ -35,28 +35,33 @@ Normally, you don't build this package directly (but for testing you can - see '
 ### Swift Package Manager plugin
 
 ```Swift
-// swift-tools-version:5.6
+// swift-tools-version: 5.10
 
 import PackageDescription
 
-let package = Package(name: "MyPackage",
+let package = Package(
+    name: "MyPackage",
+    products: [
+        .library(
+            name: "MyLibrary",
+            targets: ["MyLibraryTarget"]),
+    ],
     dependencies: [
-        .package(url: "https://github.com/rhx/gir2swift.git", branch: "main"),
-    ],    
+        .package(url: "https://github.com/rhx/gir2swift.git", branch: "main")
+    ],
     targets: [
         .target(
-            name: "MyPackage",
+            name: "MyLibraryTarget",
             dependencies: [
                 .product(name: "gir2swift", package: "gir2swift"),
-            ],
-            swiftSettings: [
-                .unsafeFlags(["-suppress-warnings"], .when(configuration: .release)),
-                .unsafeFlags(["-suppress-warnings", "-Xfrontend", "-serialize-debugging-options"], .when(configuration: .debug)),
             ],
             plugins: [
                 .plugin(name: "gir2swift-plugin", package: "gir2swift")
             ]
-        )
+        ),
+        .testTarget(
+            name: "MyLibraryTargetTests",
+            dependencies: ["MyLibraryTarget"]),
     ]
 )
 ```
@@ -74,6 +79,7 @@ alpha-names: true
 
     gir2-swift [<options>] [<gir-files> ...]
 
+
 #### Arguments
 ```
   <gir-files>             The .gir metadata files to process. Gir files
@@ -86,6 +92,8 @@ alpha-names: true
   -a                      Disables all filters. Wrappers for all C types will
                           be generated.
   --alpha-names           Create a fixed set of output files ending in A-Z.
+  -d, --doc-c-hosting-base-path <doc-c-hosting-base-path>
+                          URL for hosting DocC documentation.
   -e, --extension-namespace <extension-namespace>
                           Add a namespace extension with the given name.
   -n, --namespace <namespace>
@@ -111,25 +119,13 @@ alpha-names: true
                           Swift file for your library target.
   --manifest <manifest>   Custom path to manifest. (default:
                           gir2swift-manifest.yaml)
-  --opaque-declarations   Skips all other generation steps and prints opaque
+  --opaque-declarations   Skips all other generations steps and prints opaque
                           struct stylized declarations for each record and
                           class to stdout.
   -h, --help              Show help information.
 ```
 ### Description
 `gir2swift` takes the information from a gobject-introspection XML (`file.gir`) file and creates corresponding Swift wrappers.  When reading the `.gir` file, `gir2swift` also reads a number of [Module Files](#Module-Files) that you create with additional information.
-
-The following options are available:
-
-> `-m Module.swift` Add `Module.swift` as the main (hand-crafted) Swift file for your library target.
-
-> `-o directory` Specify the output directory to put the generated files into.
-
-> `-p pre.gir` Add `pre.gir` as a pre-requisite `.gir` file to ensure the types in `file.gir` are known
-
-> `-s` Create a single `.swift` file per class
-
-> `-v` Produce verbose output.
 
 ### Examples
 The following command generates a Swift Wrapper in `Sources/GIO` from the information in `/usr/share/gir-1.0/Gio-2.0.gir`, copying the content from `Gio-2.0.module` and taking into account information in `GLib-2.0.gir` and `GObject-2.0.gir`:
@@ -202,6 +198,11 @@ A [sed](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/sed.html) scr
 ### `Module.awk`
 An [awk](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/awk.html) script for post-processing generated files.
 
+### `Module.cat`
+A Swift file to append to the main, generated `Module.swift` file.
+This is useful for conditional compilation for code that only should be present for specific versions of an installed package.
+E.g. a file named `Gtk-4.0-4.10.cat` only gets appended to `Gtk-4.0.swift` if `pkg-config --atleast-version=4.10 gtk4` succeeds.
+
 ## Prerequisites
 
 ### Swift
@@ -209,13 +210,13 @@ An [awk](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/awk.html) sc
 To build, you need at least Swift 5.6; download from https://swift.org/download/ -- if you are using macOS, make sure you have the command line tools installed as well).  Test that your compiler works using `swift --version`, which should give you something like
 
 	$ swift --version
-	swift-driver version: 1.75.2 Apple Swift version 5.8 (swiftlang-5.8.0.124.2 clang-1403.0.22.11.100)
-    Target: arm64-apple-macosx13.0
+	swift-driver version: 1.90.11.1 Apple Swift version 5.10 (swiftlang-5.10.0.13 clang-1500.3.9.4)
+    Target: arm64-apple-macosx14.0
 
 on macOS, or on Linux you should get something like:
 
 	$ swift --version
-	Swift version 5.8.1 (swift-5.8.1-RELEASE)
+	Swift version 5.10 (swift-5.10-RELEASE)
 	Target: x86_64-unknown-linux-gnu
 
 ### LibXML 2.9.4 or higher
