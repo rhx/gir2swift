@@ -13,6 +13,8 @@ fileprivate enum State: Equatable {
     case backtickedIdentifier
     /// inside an `@` or `#` symbol to be converted for DocC
     case docCSymbol
+    /// Inside a markdown link (e.g. to an external http/https page).
+    case link
     /// inside a list of function arguments
     case functionArguments
     /// at the beginning of a language block to be quoted
@@ -106,6 +108,10 @@ public func gtkDoc2SwiftDoc(for thing: GIR.Thing, _ gtkDoc: String, linePrefix: 
                 state = .docCSymbol
             case "(":
                 let previous = gtkDoc[p]
+                if previous == "]" {
+                    state = .link
+                    continue
+                }
                 guard previous == "_" || previous.isLetter || previous.isNumber else {
                     flush() ; continue
                 }
@@ -185,6 +191,10 @@ public func gtkDoc2SwiftDoc(for thing: GIR.Thing, _ gtkDoc: String, linePrefix: 
             output.append("`")
             state = .passThrough
             continue
+        case .link:
+            guard c == ")" else { break }
+            flush()
+            state = .passThrough
         case .quotedLanguagePreamble:
             guard !c.isWhitespace else { break }
             guard c == "<" && j < e && gtkDoc[j] == "!" else {
