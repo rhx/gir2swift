@@ -192,9 +192,12 @@ public func gtkDoc2SwiftDoc(for thing: GIR.Thing, _ gtkDoc: String, linePrefix: 
             state = .passThrough
             continue
         case .link:
-            guard c == ")" || c.isWhitespace || c.isNewline else { break }
+            let nl = c.isNewline
+            guard c == ")" || nl || c.isWhitespace else { break }
+            wasNewLine = nl
             flush()
             state = .passThrough
+            continue
         case .quotedLanguagePreamble:
             guard !c.isWhitespace else { break }
             guard c == "<" && j < e && gtkDoc[j] == "!" else {
