@@ -1,4 +1,4 @@
-name: Ubuntu 18.04
+name: Linux
 
 # Dependencies of this package
 env:
@@ -7,49 +7,55 @@ env:
 on:
   push:
     branches:
-      - main
       - development
+      - main
   pull_request:
     branches:
-      - main
       - development
+      - main
 
 jobs:
-  # Ubuntu 18.04 tasks
-  build-ubuntu-18_04-swift-latest:
-    runs-on: ubuntu-18.04
+  build-linux:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ubuntu-22.04, ubuntu-20.04]
+        swift: ["5.9", "5.7"]
+    name: Swift ${{ matrix.swift }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: YOCKOW/Action-setup-swift@v1
+      - uses: swift-actions/setup-swift@v1
         with:
-          swift-version: '5.6.1'
+          swift-version: ${{ matrix.swift }}
 
-      - name: Print Swift version to confirm
-        run: swift --version
+      - name: Print Linux and Swift version
+        run: |
+          lsb_release -d
+          swift --version
 
-      - name: Fetch dependencies for general repository
+      - name: Fetch Linux dependencies
+        if: ${{ runner.os == 'Linux' }}
         run: sudo apt-get install $UBUNTU_APT
 
       - name: Checkout gir2swift
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           path: gir2swift
 
-      - name: Build current gir2swift
+      - name: Build gir2swift
         run: |
           cd gir2swift
-          ./build.sh
-          echo "GIR2SWIFT_PATH=${PWD}/.build/release/gir2swift" >> $GITHUB_ENV
+          swift build
           cd ..
 
       - name: Test gir2swift
         run: |
           cd gir2swift
-          ./test.sh
+          swift test
           cd ..
 
       - name: Remove unneeded files and archive artefacts
         run: |
+          rm -rf _tempGTK
           cd gir2swift
           swift package clean
           rm -rf .build/repositories

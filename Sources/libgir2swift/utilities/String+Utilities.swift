@@ -54,6 +54,21 @@ extension StringProtocol {
     var doForceOptional: Bool {
         return GIR.forceUnwrapped.contains(String(self)) || maybeCallback
     }
+
+    /// Return an idiomatic Swift name.
+    ///
+    /// This method returns the receiver in Swift-style camelCase.
+    /// Before doing so, it checks whether the name is all uppercase,
+    /// in which case it converts it to lowercase first.
+    @inlinable var swiftCamelCase: String {
+        let normalisedName: String
+        if self == uppercased() {
+            normalisedName = lowercased().snakeCase2camelCase
+        } else {
+            normalisedName = snakeCase2camelCase
+        }
+        return normalisedName
+    }
 }
 
 /// Return a string of (leading) spaces preceding (and followed by) the given string

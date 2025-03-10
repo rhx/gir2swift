@@ -3,7 +3,7 @@
 //  libgir2swift
 //
 //  Created by Rene Hexel on 20/5/21.
-//  Copyright © 2021, 2022 Rene Hexel. All rights reserved.
+//  Copyright © 2021, 2022, 2024 Rene Hexel. All rights reserved.
 //
 import ArgumentParser
 import Foundation
@@ -21,6 +21,15 @@ public struct Gir2Swift: ParsableCommand {
     /// Create a fixed set of output files ending in A-Z if `true`
     @Flag(name: .long, help: "Create a fixed set of output files ending in A-Z.")
     var alphaNames = false
+
+    /// The base path for hosting DocC documentation.
+    ///
+    /// This is the relative path that will be used as the base path
+    /// for hosting DocC documentation.
+    ///
+    /// - Note: Creates relative links if empty.
+    @Option(name: .shortAndLong, help: "URL for hosting DocC documentation.")
+    var docCHostingBasePath: String = ""
 
     /// Array of namespaces (implemented as extensions to existing types) to add global structs, classes, and protocols to.
     @Option(name: .shortAndLong, help: "Add a namespace extension with the given name.")
@@ -162,7 +171,7 @@ public struct Gir2Swift: ParsableCommand {
             }
         case false:
             for girFile in girFilesToGenerate {
-                process_gir(file: girFile, for: targetDirectoryURL, boilerPlate: moduleBoilerPlate, to: target, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: generateAlphaFiles, postProcess: postProcess + (manifestPlan?.postProcess ?? []))
+                process_gir(file: girFile, for: targetDirectoryURL, boilerPlate: moduleBoilerPlate, to: target, docCHostingBasePath: docCHostingBasePath, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: generateAlphaFiles, postProcess: postProcess + (manifestPlan?.postProcess ?? []), pkgConfig: pkgConfig)
             }
         }
 

@@ -11,6 +11,10 @@ fileprivate enum State: Equatable {
     case passThrough
     /// inside an identifier escaped with a backtick
     case backtickedIdentifier
+    /// inside an `@` or `#` symbol to be converted for DocC
+    case docCSymbol
+    /// Inside a markdown link (e.g. to an external http/https page).
+    case link
     /// inside a list of function arguments
     case functionArguments
     /// at the beginning of a language block to be quoted
@@ -28,10 +32,12 @@ fileprivate enum State: Equatable {
 }
 
 /// Convert the given String to SwiftDoc
-/// - Parameter gtkDoc: String in `gtk-doc` format
-/// - Parameter linePrefix: string to prefix each line with (e.g. indentation and/or "///")
 /// - Returns: String in SwiftDoc format
-public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> String {
+/// - Parameters:
+///   - thing: The GIR thing to generate documentation for
+///   - gtkDoc: String in `gtk-doc` format
+///   - linePrefix: String to prefix each line with (e.g. indentation and/or "///")
+public func gtkDoc2SwiftDoc(for thing: GIR.Thing, _ gtkDoc: String, linePrefix: String = "/// ") -> String {
     var output = ""
     var language: Substring = "" // language name for a ``` quoted language block
     var state = State.passThrough
@@ -96,13 +102,16 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
                 guard j != e else { flush() ; continue }
                 let next = gtkDoc[j]
                 guard next == "_" || next.isLetter || next.isNumber ||
-                    (c == "%" && next != "." && !next.isWhitespace && !next.isNewline) else { break }
+                        (c == "%" && next != "." && !next.isWhitespace && !next.isNewline) else { break }
                 output.append(contentsOf: gtkDoc[idStart..<i])
-                output.append("`")
                 idStart = j
-                state = .backtickedIdentifier
+                state = .docCSymbol
             case "(":
                 let previous = gtkDoc[p]
+                if previous == "]" {
+                    state = .link
+                    continue
+                }
                 guard previous == "_" || previous.isLetter || previous.isNumber else {
                     flush() ; continue
                 }
@@ -110,7 +119,7 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
                 output.append("`")
                 flush()
                 continue
-            case ":":
+            case ":": // possibly a signal denoted by `::`
                 guard j < e && gtkDoc[j] == ":" else { flush() ; continue }
                 output.append(contentsOf: gtkDoc[idStart..<i])
                 i = gtkDoc.index(after: j)
@@ -144,25 +153,29 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
             case "<":
                 i = p
                 flush()
-                output.append("&lt;")
+                output.append("<")
                 continue
             case ">":
                 i = p
                 flush()
-                output.append("&gt;")
+                output.append(">")
                 continue
             default:
                 break
             }
-        case .backtickedIdentifier:
+        case .backtickedIdentifier, .docCSymbol:
             if c == "_" || c == "-" || c == ":" || c.isLetter || c.isNumber { break }
             if c == "." {
                 guard j == e else { break }
                 p = i
             }
             if gtkDoc[p] == "." { prev() }
-            output.append(contentsOf: gtkDoc[idStart..<i])
-            output.append("`")
+            if state == .backtickedIdentifier {
+                output.append(contentsOf: gtkDoc[idStart..<i])
+                output.append("`")
+            } else {
+                appendDocC(for: thing, String(gtkDoc[idStart..<i]), to: &output)
+            }
             idStart = i
             state = .passThrough
             continue
@@ -176,6 +189,13 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
             guard c == ")" else { break }
             flush()
             output.append("`")
+            state = .passThrough
+            continue
+        case .link:
+            let nl = c.isNewline
+            guard c == ")" || nl || c.isWhitespace else { break }
+            wasNewLine = nl
+            flush()
             state = .passThrough
             continue
         case .quotedLanguagePreamble:
@@ -269,4 +289,65 @@ public func gtkDoc2SwiftDoc(_ gtkDoc: String, linePrefix: String = "/// ") -> St
         output.append(")`")
     }
     return output
+}
+
+/// Append a docC constant to the output string.
+///
+/// This function searches the known constants for the given constant and appends the
+/// corresponding DocC reference to the output string.
+///
+/// - Parameters:
+///   - symbol: The C symbol to convert to DocC and append.
+///   - output: The output string to append to.
+func appendDocC(for thing: GIR.Thing, _ symbol: String, to output: inout String) {
+    let identifier: String
+    let signal: String
+    let memberComponents = symbol.split(separator: ":", omittingEmptySubsequences: false)
+    if memberComponents.count == 3 && memberComponents[1].isEmpty { // a signal
+        identifier = String(memberComponents[0])
+        signal = String(memberComponents[2])
+    } else {
+        let name = memberComponents[0]
+        let e = name.firstIndex(of: "(") ?? name.endIndex
+        identifier = String(name[..<e])
+        signal = ""
+    }
+    let hostingPrefix = "/" + GIR.docCHostingBasePath + (GIR.docCHostingBasePath.isEmpty ? "" : "/")
+    if let type = GIR.knownCIdentifiers[identifier] ?? GIR.knownDataTypes[GIR.dottedPrefix + identifier] ?? GIR.knownDataTypes[identifier] {
+        let possiblyEmptyNamespace = type.typeRef.namespace
+        let namespace = possiblyEmptyNamespace.isEmpty ? GIR.prefix : possiblyEmptyNamespace
+        guard signal.isEmpty && namespace == GIR.prefix else {
+            let swiftName = type.name.swift
+            let typePath = hostingPrefix + "/documentation/" + namespace.lowercased() + "/" + type.name.swift.lowercased()
+            let methodSuffix: String
+            if signal.isEmpty {
+                methodSuffix = ""
+            } else {
+                methodSuffix = "/on" + signal.kebabSnakeCase2lowerCase + "(flags:handler:)"
+            }
+            output.append("[\(swiftName)](\(typePath)\(methodSuffix)")
+            return
+        }
+        output.append("``" + type.swiftCamelCaseName + "``")
+        return
+    }
+    if let enumeration = thing as? GIR.Enumeration {
+        for value in enumeration.members {
+            if value.name.swift == identifier {
+                let swiftName = value.swiftCamelCaseName
+                output.append("``" + thing.swiftCamelCaseName + "/" + swiftName + "``")
+                return
+            }
+        }
+    }
+    if let method = thing as? GIR.Method {
+        for argument in method.args {
+            if argument.name.swift == identifier {
+                let swiftName = argument.swiftCamelCaseName
+                output.append("`" + swiftName + "`")
+                return
+            }
+        }
+    }
+    output.append("`" + symbol + "`")
 }

@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 25/03/2016.
-//  Copyright © 2016, 2017, 2018, 2019, 2020, 2022 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018, 2019, 2020, 2022, 2024 Rene Hexel. All rights reserved.
 //
 import SwiftLibXML
 
@@ -62,6 +62,9 @@ public final class GIR {
     /// Callbacs defined by this GIR file
     public var callbacks: [Callback] = []
 
+    /// DocC hosting base path relative to `/`.
+    public static var docCHostingBasePath = ""
+
     /// Names of excluded identifiers.
     public static var excludeList: Set<String> = []
 
@@ -71,6 +74,8 @@ public final class GIR {
     /// names of override initialisers
     public static var overrides: Set<String> = []
 
+    /// known types indexed by C identifier.
+    public static var knownCIdentifiers: [ String : Datatype ] = [:]
     /// context of known types
     public static var knownDataTypes:   [ String : Datatype ] = [:]
     /// context of known records
@@ -133,7 +138,21 @@ public final class GIR {
                     return true
                 }
             }
-            let setKnownType   = setKnown(knownTypes)
+            func setKnownCIdentifier(ofType type: Datatype) {
+                let maybeCType = type as? CType
+                let isCTypeNameEmpty = maybeCType?.cname.isEmpty ?? true
+                if !isCTypeNameEmpty || !type.typeRef.type.ctype.isEmpty {
+                    let cName = isCTypeNameEmpty ? type.typeRef.type.ctype : maybeCType!.cname
+                    if GIR.knownCIdentifiers[cName] == nil {
+                        GIR.knownCIdentifiers[cName] = type
+                    }
+                }
+            }
+            let setKnownTypeFunc = setKnown(knownTypes)
+            let setKnownType = {
+                setKnownCIdentifier(ofType: $1)
+                return setKnownTypeFunc($0, $1)
+            }
             let setKnownRecord = setKnown(knownRecords)
             let setKnownBitfield = setKnown(knownBitfields)
             //
@@ -149,30 +168,50 @@ public final class GIR {
                     return true
                 }
             }
-            // closure for recording known types
-            func notKnownType<T>(_ e: T) -> Bool where T: Datatype {
+            /// function for recording known types
+            func notKnownType<T: Datatype>(_ e: T) -> Bool {
                 return setKnownType(e.name, e)
             }
-            let notKnownRecord: (Record) -> Bool     = {
+            /// function for recording known constants
+            func notKnownConstant(_ constant: Constant) -> Bool {
+                let idiomaticName = constant.swiftCamelCASEName
+                let idiomaticNameWorks = setKnownType(idiomaticName, constant) && GIR.KnownFunctions[idiomaticName] == nil
+                return notKnownType(constant) || idiomaticNameWorks
+            }
+            let notKnownRecord: (Record) -> Bool = {
+                $0.constructors.forEach { setKnownCIdentifier(ofType: $0) }
+                $0.methods.forEach { setKnownCIdentifier(ofType: $0) }
+                $0.functions.forEach { setKnownCIdentifier(ofType: $0) }
                 guard notKnownType($0) else { return false }
                 return setKnownRecord($0.name, $0)
             }
             let notKnownBitfield: (Bitfield) -> Bool     = {
+                $0.members.forEach { setKnownCIdentifier(ofType: $0) }
                 guard notKnownType($0) else { return false }
                 return setKnownBitfield($0.name, $0)
             }
             let notKnownFunction: (Function) -> Bool = {
+                setKnownCIdentifier(ofType: $0)
                 let name = $0.name
                 guard GIR.KnownFunctions[name] == nil else { return false }
                 GIR.KnownFunctions[name] = $0
+                let idiomaticSwiftName = name.snakeCase2camelCase
+                if GIR.KnownFunctions[idiomaticSwiftName] == nil {
+                    GIR.KnownFunctions[idiomaticSwiftName] = $0
+                }
                 return true
+            }
+            /// Record known enums and their values
+            func notKnownEnum(_ e: Enumeration) -> Bool {
+                e.members.forEach { setKnownCIdentifier(ofType: $0) }
+                return notKnownType(e)
             }
 
             //
             // get all constants, enumerations, records, classes, and functions
             //
-            constants    = enumerate(xml, path: "/*/*/gir:constant",    inNS: namespaces, quiet: quiet, construct: { Constant(node: $0, at: $1) },    check: notKnownType)
-            enumerations = enumerate(xml, path: "/*/*/gir:enumeration", inNS: namespaces, quiet: quiet, construct: { Enumeration(node: $0, at: $1) }, check: notKnownType)
+            constants    = enumerate(xml, path: "/*/*/gir:constant",    inNS: namespaces, quiet: quiet, construct: { Constant(node: $0, at: $1) },    check: notKnownConstant)
+            enumerations = enumerate(xml, path: "/*/*/gir:enumeration", inNS: namespaces, quiet: quiet, construct: { Enumeration(node: $0, at: $1) }, check: notKnownEnum)
             bitfields    = enumerate(xml, path: "/*/*/gir:bitfield",    inNS: namespaces, quiet: quiet, construct: { Bitfield(node: $0, at: $1) },    check: notKnownBitfield)
             interfaces   = enumerate(xml, path: "/*/*/gir:interface",   inNS: namespaces, quiet: quiet, construct: { Interface(node: $0, at: $1) }, check: notKnownRecord)
             records      = enumerate(xml, path: "/*/*/gir:record",      inNS: namespaces, quiet: quiet, construct: { Record(node: $0, at: $1) },    check: notKnownRecord)

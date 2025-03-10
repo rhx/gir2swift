@@ -21,21 +21,21 @@ final class gir2swiftTests: XCTestCase {
     func testGtkDoc2SwiftDoc() throws {
         let input = "Test"
         let expected = "/// \(input)"
-        let output = gtkDoc2SwiftDoc(input)
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input)
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocNewline() throws {
         let input = "1\n2\n"
         let expected = "/// 1\n/// 2\n"
-        let output = gtkDoc2SwiftDoc(input)
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input)
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocHTMLNewline() throws {
         let input = "1<example>\n<example>2\n"
-        let expected = "/// 1&lt;example&gt;\n/// &lt;example&gt;2\n"
-        let output = gtkDoc2SwiftDoc(input)
+        let expected = "/// 1<example>\n/// <example>2\n"
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input)
         XCTAssertEqual(output, expected)
     }
 
@@ -50,11 +50,11 @@ final class gir2swiftTests: XCTestCase {
         let expected =
             """
             /// A `some_function()` will
-            /// expect a &lt;template&gt; tag inheriting from the &lt;interface&gt;
-            /// tag. The &lt;template&gt; tag must specify “class” which
+            /// expect a <template> tag inheriting from the <interface>
+            /// tag. The <template> tag must specify “class” which
             /// has some other criteria
             """
-        let output = gtkDoc2SwiftDoc(input)
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input)
         XCTAssertEqual(output, expected)
     }
 
@@ -62,182 +62,182 @@ final class gir2swiftTests: XCTestCase {
     func testGtkDoc2SwiftDocFunction() throws {
         let input = "Test function() example"
         let expected = "Test `function()` example"
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocFunctionParameters() throws {
         let input = "Test function(int x,\n    char *j) example"
         let expected = "Test `function(int x,     char *j)` example"
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
     
     func testGtkDoc2SwiftDocParam() throws {
         let input = "Test @param example"
         let expected = "Test `param` example"
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocConst() throws {
         let input = "Test %CONSTANT example"
         let expected = "Test `CONSTANT` example"
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocNullConstant() throws {
         let input = "Test %NULL example"
         let expected = "Test `nil` example"
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocTrueConstant() throws {
         let input = "Test %TRUE example"
         let expected = "Test `true` example"
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocFalseConstant() throws {
         let input = "Test %FALSE example"
         let expected = "Test `false` example"
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocSignal() throws {
         let input = "Test ::SIGNAL example"
         let expected = "Test `SIGNAL` example"
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocDashedSignal() throws {
         let input = "Test ::DASHED-SIGNAL example"
         let expected = "Test `DASHED-SIGNAL` example"
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocObjectSignal() throws {
         let input = "Test #Object::SIGNAL example"
         let expected = "Test `Object::SIGNAL` example"
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocObjectProperty() throws {
         let input = "Test #Object:property example"
         let expected = "Test `Object:property` example"
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocStructField() throws {
         let input = "Test #Struct.field example"
         let expected = "Test `Struct.field` example"
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocStructEndOfSentence() throws {
         let input = "Test for #Struct. Example"
         let expected = "Test for `Struct`. Example"
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocStructEndOfFile() throws {
         let input = "Test for #Struct."
         let expected = "Test for `Struct`."
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocMarkdownHash() throws {
         let input = "# Hash example"
         let expected = input
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocMarkdownHashHash() throws {
         let input = "## HashHash example"
         let expected = input
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocMarkdownHashHashHash() throws {
         let input = "### HashHashHash example"
         let expected = input
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocMarkdownAnchor() throws {
         let input = "Anchor {#anchor-test} test"
         let expected = "Anchor <a name=\"anchor-test\"></a> test"
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocMarkdownHREF() throws {
         let input = "Anchor [anchor test][anchor-test] test"
         let expected = "Anchor [anchor test](#anchor-test) test"
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocTripleQuoted() throws {
         let input = "Test |[block]| example"
         let expected = "Test \n```\nblock\n```\n example"
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocTripleQuotedLinePrefix() throws {
         let input = "Test |[block]| example"
         let expected = "/// Test \n/// ```\n/// block\n/// ```\n///  example"
-        let output = gtkDoc2SwiftDoc(input)
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input)
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocTripleQuotedNewline() throws {
         let input = "Test \n|[\nblock\n]|\n example"
         let expected = "Test \n```\nblock\n```\n example"
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocTripleQuotedNewlineLinePrefix() throws {
         let input = "Test \n|[\nblock\n]|\n example"
         let expected = "/// Test \n/// ```\n/// block\n/// ```\n///  example"
-        let output = gtkDoc2SwiftDoc(input)
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input)
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocTripleQuotedNewlinesLinePrefix() throws {
         let input = "Test \n|[\nA\nB\n]|\n example"
         let expected = "/// Test \n/// ```\n/// A\n/// B\n/// ```\n///  example"
-        let output = gtkDoc2SwiftDoc(input)
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input)
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocTripleQuotedLanguage() throws {
         let input = "Test \n|[<!-- language=\"C\" -->\nblock\n]|\n example"
         let expected = "Test \n(C Language Example):\n```C\nblock\n```\n example"
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
     func testGtkDoc2SwiftDocTripleQuotedLanguageWhitespace() throws {
         let input = "Test \n|[  <!-- language=\"CSS\" -->\nblock\n]|\n example"
         let expected = "Test \n(CSS Language Example):\n```CSS\nblock\n```\n example"
-        let output = gtkDoc2SwiftDoc(input, linePrefix: "")
+        let output = gtkDoc2SwiftDoc(for: emptyThing, input, linePrefix: "")
         XCTAssertEqual(output, expected)
     }
 
@@ -417,3 +417,5 @@ final class gir2swiftTests: XCTestCase {
         XCTAssertEqual(fi, si)
     }
 }
+
+fileprivate let emptyThing = GIR.Thing(name: "EmptyThing", comment: "")

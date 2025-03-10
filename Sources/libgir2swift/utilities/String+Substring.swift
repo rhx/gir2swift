@@ -3,10 +3,9 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 25/04/2016.
-//  Copyright © 2016, 2017, 2018, 2019, 2020, 2021 Rene Hexel. All rights reserved.
+//  Copyright © 2016, 2017, 2018, 2019, 2020, 2021, 2024 Rene Hexel. All rights reserved.
 //
 //
-
 import Foundation
 
 public extension StringProtocol {
@@ -122,6 +121,24 @@ public extension StringProtocol {
     /// Converts *snake_case* to *camelCase*
     @inlinable var snakeCase2camelCase: String { return camelise { $0 == "_" } }
 
+    /// Converts *snake_CASE* to *camelCase*
+    @inlinable var snakeCASE2camelCase: String {
+        let idiomaticName: String
+        if count == 1 {
+            idiomaticName = lowercased()
+        } else if self == uppercased() {
+            idiomaticName = split(separator: "_").map {
+                $0.count > 1 ? $0.lowercased() : String($0)
+            }.joined(separator: "_").cameliseConstant { $0 == "_" }
+        } else {
+            idiomaticName = split(separator: "_").enumerated().map {
+                $0.offset == 0 && $0.element.count > 1 && $0.element == $0.element.uppercased() ?
+                $0.element.lowercased() : String($0.element)
+            }.joined()
+        }
+        return idiomaticName
+    }
+
     /// Convers combination of *snake_case* and *kebab-case* to *camelCase*
     @inlinable var kebabSnakeCase2camelCase: String {
         return camelise { $0 == "-" || $0 == "_" }.deCapitalised
@@ -132,8 +149,14 @@ public extension StringProtocol {
         return camelise { $0 == "-" || $0 == "_" }.capitalised
     }
 
+    /// Convers combination of *snake_case* and *kebab-case* to *camelCase*
+    @inlinable var kebabSnakeCase2lowerCase: String {
+        return split { $0 == "-" || $0 == "_" }.joined().lowercased()
+    }
+
     /// Converts any arbitrary string to *camelCase*.
     /// - Parameter isSeparator: return true if an element is separator
+    /// - Returns: camelised String.
     @inlinable func camelise(_ isSeparator: (Element) -> Bool) -> String {
         var result: String = String()
         result.reserveCapacity(self.count)
@@ -149,6 +172,44 @@ public extension StringProtocol {
             result.append(
                 previousCharacterWasSeparator ? character.uppercased().first! : character
             )
+
+            previousCharacterWasSeparator = false
+        }
+
+        return result
+    }
+
+    /// Converts any arbitrary constant name to *camelCase*.
+    ///
+    /// This method works similar to `camelise`
+    /// but leaves single-character components as-is.
+    ///
+    /// - Parameter isSeparator: return true if an element is separator
+    /// - Returns: camelised String.
+    @inlinable func cameliseConstant(_ isSeparator: (Element) -> Bool) -> String {
+        var result: String = String()
+        result.reserveCapacity(self.count)
+
+        var previousCharacterWasSeparator: Bool = false
+        var i = startIndex
+        var nextCharacter = i == endIndex ? nil : self[i]
+        while let character = nextCharacter {
+            let j = index(after: i)
+            nextCharacter = j == endIndex ? nil : self[j]
+            i = j
+            guard !isSeparator(character) else {
+                previousCharacterWasSeparator = true
+                continue
+            }
+
+            if previousCharacterWasSeparator,
+               let upperCharacter = character.uppercased().first,
+               let nextCharacter, !isSeparator(nextCharacter) &&
+                (character != upperCharacter || nextCharacter == nextCharacter.uppercased().first) {
+                result.append(upperCharacter)
+            } else {
+                result.append(character)
+            }
 
             previousCharacterWasSeparator = false
         }
@@ -271,6 +332,4 @@ public extension StringProtocol {
                 ns.without(suffix: $0)
             }?.without(suffixes: suffixes) ?? ns
     }
-
 }
-

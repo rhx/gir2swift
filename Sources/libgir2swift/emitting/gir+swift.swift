@@ -3,7 +3,7 @@
 //  gir2swift
 //
 //  Created by Rene Hexel on 2/04/2016.
-//  Copyright © 2016, 2017, 2018, 2019, 2020, 2021, 2022 Rene Hexel.
+//  Copyright © 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2024 Rene Hexel.
 //  All rights reserved.
 //
 import Foundation
@@ -52,7 +52,7 @@ private let _U = "_".utf8.first!
 extension GetterSetterPair {
     /// name of the underlying property for a getter / setter pair
     var name: String {
-        let n = getter.name.utf8 
+        let n = getter.name.utf8
         let o = n.first == iU ? 0 : 4;  // no offset for "is_..."
 
         // convert the remainder to camel case
@@ -187,7 +187,7 @@ public extension Substring {
 public func commentCode(_ thing: GIR.Thing, indentation: String = "") -> String {
     let prefix = indentation + "/// "
     let comment = thing.comment
-    let documentation = gtkDoc2SwiftDoc(comment, linePrefix: prefix)
+    let documentation = gtkDoc2SwiftDoc(for: thing, comment, linePrefix: prefix)
     return documentation
 }
 
@@ -208,11 +208,25 @@ public func swiftCode(_ thing: GIR.Thing, _ postfix: String = "", indentation: S
     let s = commentCode(thing, indentation: indentation)
     let t: String
     if let d = deprecatedCode(thing, indentation: indentation) {
-        t = s + "\n\(indentation)///\n\(indentation)/// **\(thing.name) is deprecated:**\n" + d + "\n"
+        t = s + "\n" + indentation + "///\n" + swiftDeprecationComment(for: thing.name, content: d, indentation: indentation)
     } else {
         t = s
     }
     return t + ((t.isEmpty || t.hasSuffix("\n")) ? "" : "\n") + postfix
+}
+
+/// Return a Swift deprecation string.
+///
+/// This constructs a DocC Swift deprecation comment.
+///
+/// - Parameters:
+///   - name: The name of the thing that's deprecated.
+///   - content: The description/code that's deprecated.
+///   - indentation: The indentation to use for the comments.
+/// - Returns: The constructed deprecation comment string.
+@inlinable
+func swiftDeprecationComment(for name: String, content: String = "", indentation: String = "") -> String {
+    return indentation + "/// **" + name + " is deprecated:**\n" + content + "\n"
 }
 
 // MARK: - Swift code for Aliases
@@ -284,25 +298,65 @@ public func swiftCallbackAliasCode(callback: GIR.Callback) -> String {
 }
 
 /// Swift code representation of a constant
-/// - Parameter indent: The indentation prefix string to use
-/// - Parameter scopePrefix: A scope prefix to add to the constant declaration, such as `"static"`
 /// - Returns: a function that takes a constant and creates the corresponding Swift code indented by `indent`
+/// - Parameters:
+///   - indent: The indentation prefix string to use
+///   - scopePrefix: A scope prefix to add to the constant declaration, such as `"static"
 @inlinable public func constantSwiftCode(indentedBy indent: String = "", scopePrefix: String = "") -> (GIR.Constant) -> String {
     let prefix = scopePrefix.isEmpty ? scopePrefix : (scopePrefix + " ")
+    var createdConstants = Set<String>()
     return { constant in
         let original = constant.typeRef.type.typeName.swift
         let parentRef = constant.typeRef.type.parent
         let parent = parentRef?.type.typeName ?? constant.typeRef.type.ctype
         let comment = " // " + (original == parent ? "" : (parent + " value "))
         let value = "\(constant.value)"
-        let name = constant.escapedName.swift
-        guard !GIR.verbatimConstants.contains(name) else {
-            let code = swiftCode(constant, indent + "public " + prefix + "let " + name +
-                                 (parentRef == nil ? "" : (": " + parent.swift)) + " = " + value + comment + original)
-            return code
+        let girName = constant.escapedName.swift
+        let idiomaticName = constant.swiftCamelCASEName.swiftQuoted
+        func codeForConstant(named name: String, deprecation: String = "") -> String {
+            let deprecationMarker: String
+            if deprecation.isEmpty {
+                deprecationMarker = ""
+            } else {
+                deprecationMarker = indent + "@available(*, deprecated, renamed: \"" + idiomaticName + "\")\n"
+            }
+            guard !GIR.verbatimConstants.contains(girName) && !GIR.verbatimConstants.contains(name) && !GIR.verbatimConstants.contains(original) else {
+                let code = swiftCode(constant, deprecationMarker + indent + "public " + prefix + "let " + name +
+                                     (parentRef == nil ? "" : (": " + parent.swift)) + " = " + value + comment + original)
+                return code
+            }
+            let code = swiftCode(constant, deprecation + deprecationMarker + indent + "public " + prefix +
+                                 "let \(name) = \(name == original ? value : original)" + comment + (name == original ? "" : value), indentation: indent)
+            return code + "\n"
         }
-        let code = swiftCode(constant, indent + "public " + prefix + "let \(name) = \(name == original ? value : original)" + comment + (name == original ? "" : value), indentation: indent)
-        return code + "\n"
+        let isIdiomaticNameClashing = createdConstants.contains(idiomaticName)
+        let isGIRNameClashing = createdConstants.contains(girName) || girName == idiomaticName
+        let idiomaticCode: String
+        let deprecationComment: String
+        let deprecatedCode: String
+        if isIdiomaticNameClashing {
+            deprecationComment = ""
+            deprecatedCode = ""
+            if isGIRNameClashing {
+                idiomaticCode = indent + "// *** Skipping constant as both \(idiomaticName) and \(girName) clash with existing names ***\n"
+            } else {
+                idiomaticCode = codeForConstant(named: girName)
+                createdConstants.insert(girName)
+            }
+        } else {
+            idiomaticCode = codeForConstant(named: idiomaticName)
+            createdConstants.insert(idiomaticName)
+            if isGIRNameClashing {
+                deprecationComment = ""
+                deprecatedCode = ""
+            } else {
+                deprecationComment = swiftDeprecationComment(for: girName, content: indent + "/// Use ``\(idiomaticName)`` instead.")
+                deprecatedCode = codeForConstant(named: girName, deprecation: deprecationComment)
+                createdConstants.insert(girName)
+            }
+        }
+        let code = idiomaticCode + deprecatedCode
+        return code
     }
 }
 
@@ -322,16 +376,16 @@ public func swiftCode(_ e: GIR.Enumeration) -> String {
     let indentation = "    "
     let alias = typeAlias(e)
     let name = e.escapedName
-//    let swift = name.swift
-//    // FIXME: isErrorType never seems to be true
-//    let isErrorType = name == GIR.errorT || swift == GIR.errorT
-//    let ext = isErrorType ? ": \(GIR.errorProtocol.name)" : ""
-//    let pub = isErrorType ? "" : "public "
+    //    let swift = name.swift
+    //    // FIXME: isErrorType never seems to be true
+    //    let isErrorType = name == GIR.errorT || swift == GIR.errorT
+    //    let ext = isErrorType ? ": \(GIR.errorProtocol.name)" : ""
+    //    let pub = isErrorType ? "" : "public "
     let vcf = valueCode(indentation)
-//    let vdf = valueDeprecated(indentation, typeName: name)
+    //    let vdf = valueDeprecated(indentation, typeName: name)
     let values = e.members
-//    let names = Set(values.map(\.name.camelCase.swiftQuoted))
-//    let deprecated = values.lazy.filter { !names.contains($0.name.swiftName) }
+    //    let names = Set(values.map(\.name.camelCase.swiftQuoted))
+    //    let deprecated = values.lazy.filter { !names.contains($0.name.swiftName) }
     let head = "\n\npublic extension " + name + " {\n"
     let initialiser = """
         /// Cast constructor, converting any binary integer to a
@@ -360,7 +414,7 @@ public func valueCode(_ indentation: String) -> (GIR.Enumeration.Member) -> Stri
             cID = value
         }
         let comment = cID == value ? "" : (" // " + value)
-        let code = swiftCode(m, indentation + "static let " + m.name.snakeCase2camelCase.swiftQuoted + " = " + cID + comment, indentation: indentation)
+        let code = swiftCode(m, indentation + "static let " + m.swiftCamelCaseName.swiftQuoted + " = " + cID + comment, indentation: indentation)
         return code + "\n"
     }
 }
@@ -391,26 +445,26 @@ public func bitfieldTypeHead(_ bf: GIR.Bitfield, enumRawType: String = "UInt32",
     let doubleIndentation = indentation + indentation
     let tripleIndentation = indentation + doubleIndentation
     return swiftCode(bf, "public struct \(bf.escapedName.swift): OptionSet {\n" + indentation +
-        "/// The corresponding value of the raw type\n" + indentation +
-        "public var rawValue: \(enumRawType) = 0\n" + indentation +
-        "/// The equivalent raw Int value\n" + indentation +
-        "@inlinable public var intValue: Int { get { Int(rawValue) } set { rawValue = \(enumRawType)(newValue) } }\n" + indentation +
-        "/// The equivalent raw `gint` value\n" + indentation +
-        "@inlinable public var int: gint { get { gint(rawValue) } set { rawValue = \(enumRawType)(newValue) } }\n" + indentation +
-        "/// The equivalent underlying `\(ctype)` enum value\n" + indentation +
-        "@inlinable public var value: \(ctype) {\n" + doubleIndentation +
-          "get {\n" + tripleIndentation +
-            "func castTo\(ctype)Int<I: BinaryInteger, J: BinaryInteger>(_ param: I) -> J { J(param) }\n" + tripleIndentation +
-            "return " + ctype + "(rawValue: castTo\(ctype)Int(rawValue))\n" + doubleIndentation +
-          "}\n" + doubleIndentation +
-          "set { rawValue = \(enumRawType)(newValue.rawValue) }\n" + indentation +
-        "}\n\n" + indentation +
-        "/// Creates a new instance with the specified raw value\n" + indentation +
-        "@inlinable public init(rawValue: \(enumRawType)) { self.rawValue = rawValue }\n" + indentation +
-        "/// Creates a new instance with the specified `\(ctype)` enum value\n" + indentation +
-        "@inlinable public init(_ enumValue: \(ctype)) { self.rawValue = \(enumRawType)(enumValue.rawValue) }\n" + indentation +
-        "/// Creates a new instance with the specified Int value\n" + indentation +
-        "@inlinable public init<I: BinaryInteger>(_ intValue: I) { self.rawValue = \(enumRawType)(intValue)  }\n\n"
+                     "/// The corresponding value of the raw type\n" + indentation +
+                     "public var rawValue: \(enumRawType) = 0\n" + indentation +
+                     "/// The equivalent raw Int value\n" + indentation +
+                     "@inlinable public var intValue: Int { get { Int(rawValue) } set { rawValue = \(enumRawType)(newValue) } }\n" + indentation +
+                     "/// The equivalent raw `gint` value\n" + indentation +
+                     "@inlinable public var int: gint { get { gint(rawValue) } set { rawValue = \(enumRawType)(newValue) } }\n" + indentation +
+                     "/// The equivalent underlying `\(ctype)` enum value\n" + indentation +
+                     "@inlinable public var value: \(ctype) {\n" + doubleIndentation +
+                     "get {\n" + tripleIndentation +
+                     "func castTo\(ctype)Int<I: BinaryInteger, J: BinaryInteger>(_ param: I) -> J { J(param) }\n" + tripleIndentation +
+                     "return " + ctype + "(rawValue: castTo\(ctype)Int(rawValue))\n" + doubleIndentation +
+                     "}\n" + doubleIndentation +
+                     "set { rawValue = \(enumRawType)(newValue.rawValue) }\n" + indentation +
+                     "}\n\n" + indentation +
+                     "/// Creates a new instance with the specified raw value\n" + indentation +
+                     "@inlinable public init(rawValue: \(enumRawType)) { self.rawValue = rawValue }\n" + indentation +
+                     "/// Creates a new instance with the specified `\(ctype)` enum value\n" + indentation +
+                     "@inlinable public init(_ enumValue: \(ctype)) { self.rawValue = \(enumRawType)(enumValue.rawValue) }\n" + indentation +
+                     "/// Creates a new instance with the specified Int value\n" + indentation +
+                     "@inlinable public init<I: BinaryInteger>(_ intValue: I) { self.rawValue = \(enumRawType)(intValue)  }\n\n"
     )
 }
 
@@ -421,10 +475,10 @@ public func swiftCode(_ bf: GIR.Bitfield) -> String {
     let indent = "    "
     let head = bitfieldTypeHead(bf, indentation: indent)
     let bitfields = bf.members
-//    let names = Set(bitfields.map(\.name.camelCase.swiftQuoted))
-//    let deprecated = bitfields.lazy.filter { !names.contains($0.name.swiftName) }
+    //    let names = Set(bitfields.map(\.name.camelCase.swiftQuoted))
+    //    let deprecated = bitfields.lazy.filter { !names.contains($0.name.swiftName) }
     let fields = bitfields.map(bitfieldValueCode(bf, indent)).joined(separator: "\n") // + "\n\n"
-                    // + deprecated.map(bitfieldDeprecated(bf, indent)).joined(separator: "\n")
+    // + deprecated.map(bitfieldDeprecated(bf, indent)).joined(separator: "\n")
     let tail = "\n}\n\n"
     let code = head + fields + tail
     return code
@@ -443,7 +497,7 @@ public func bitfieldValueCode(_ bf: GIR.Bitfield, _ indentation: String) -> (GIR
         }
         let comment = cID == value ? "" : (" // " + cID)
         let cast = type + "(" + value + ")"
-        let code = swiftCode(m, indentation + "public static let " + m.name.snakeCase2camelCase.swiftQuoted + " = " + cast + comment, indentation: indentation)
+        let code = swiftCode(m, indentation + "public static let " + m.swiftCamelCaseName.swiftQuoted + " = " + cast + comment, indentation: indentation)
         return code + "\n"
     }
 }
@@ -470,21 +524,21 @@ public func recordProtocolCode(_ e: GIR.Record, parent: String, indentation: Str
     let subTypeAliases = e.records.map { subTypeAlias(e, $0, publicDesignation: "") }.joined()
     let documentation = commentCode(e)
     let code = "// MARK: - \(e.name) \(e.kind)\n\n" + documentation + "\n///\n" +
-        "/// The `\(e.protocolName)` protocol exposes the methods and properties of an underlying `\(ctype)` instance.\n" +
-        "/// The default implementation of these can be found in the protocol extension below.\n" +
-        "/// For a concrete class that implements these methods and properties, see `\(e.className)`.\n" +
-        "/// Alternatively, use `\(e.structName)` as a lighweight, `unowned` reference if you already have an instance you just want to use.\n///\n" +
-        "public protocol \(e.protocolName)\(p) {\n" + indentation +
-            subTypeAliases + indentation +
-//            "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
-//            "var ptr: UnsafeMutableRawPointer! { get }\n\n" + indentation +
-            "/// Typed pointer to the underlying `\(ctype)` instance.\n" + indentation +
-            "var \(ptr): " + (e.introspectable || !e.disguised ?
-                                "UnsafeMutablePointer<\(ctype)>! { get }\n\n" :
-                                "\(ctype)! { get }\n\n") + // indentation +
-//            "/// Required Initialiser for types conforming to `\(e.protocolName)`\n" + indentation +
-//            "init(raw: UnsafeMutableRawPointer)\n" +
-        "}\n\n"
+    "/// The ``\(e.protocolName)`` protocol exposes the methods and properties of an underlying `\(ctype)` instance.\n" +
+    "/// The default implementation of these can be found in the protocol extension below.\n" +
+    "/// For a concrete class that implements these methods and properties, see ``\(e.className)``.\n" +
+    "/// Alternatively, use ``\(e.structName)`` as a lighweight, `unowned` reference if you already have an instance you just want to use.\n///\n" +
+    "public protocol \(e.protocolName)\(p) {\n" + indentation +
+    subTypeAliases + indentation +
+    //            "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
+    //            "var ptr: UnsafeMutableRawPointer! { get }\n\n" + indentation +
+    "/// Typed pointer to the underlying `\(ctype)` instance.\n" + indentation +
+    "var \(ptr): " + (e.introspectable || !e.disguised ?
+                      "UnsafeMutablePointer<\(ctype)>! { get }\n\n" :
+                        "\(ctype)! { get }\n\n") + // indentation +
+    //            "/// Required Initialiser for types conforming to ``\(e.protocolName)``\n" + indentation +
+    //            "init(raw: UnsafeMutableRawPointer)\n" +
+    "}\n\n"
     return code
 }
 
@@ -523,16 +577,16 @@ public func recordProtocolExtensionCode(_ globalFunctions: [GIR.Function], _ e: 
     let ctype = cOriginalType.isEmpty ? t.name.swift : cOriginalType
     let subTypeProperties = e.records.map { subRecordProperty(e, ptr: ptrName, $0, indentation: indentation, publicDesignation: "") }.joined()
     let code = "// MARK: \(e.name) \(e.kind): \(e.protocolName) extension (methods and fields)\n" +
-        "public extension \(e.protocolName) {\n" + indentation +
-        "/// Return the stored, untyped pointer as a typed pointer to the `\(ctype)` instance.\n" + indentation +
-        "@inlinable var " + ptrName + ": " +
-        (e.introspectable || !e.disguised ?
-            "UnsafeMutablePointer<\(ctype)>! { return ptr?.assumingMemoryBound(to: \(ctype).self) }\n\n" :
-            "\(ctype)! { return \(ctype)(bitPattern: UInt(bitPattern: ptr)) }\n\n") +
-        methods.map(mcode).joined(separator: "\n") +
-        gsPairs.map(vcode).joined(separator: "\n") + "\n" +
-        e.fields.map(fcode).joined(separator: "\n") + "\n" +
-        subTypeProperties +
+    "public extension \(e.protocolName) {\n" + indentation +
+    "/// Return the stored, untyped pointer as a typed pointer to the `\(ctype)` instance.\n" + indentation +
+    "@inlinable var " + ptrName + ": " +
+    (e.introspectable || !e.disguised ?
+     "UnsafeMutablePointer<\(ctype)>! { return ptr?.assumingMemoryBound(to: \(ctype).self) }\n\n" :
+        "\(ctype)! { return \(ctype)(bitPattern: UInt(bitPattern: ptr)) }\n\n") +
+    methods.map(mcode).joined(separator: "\n") +
+    gsPairs.map(vcode).joined(separator: "\n") + "\n" +
+    e.fields.map(fcode).joined(separator: "\n") + "\n" +
+    subTypeProperties +
     "}\n\n"
     return code
 }
@@ -558,8 +612,8 @@ public func subRecordProperty(_ e: GIR.Record, ptr: String, _ r: GIR.Record, ind
     let classType = type.swift.capitalised
     let name = r.name.swift
     let typeDef = indentation + publicDesignation + "@inlinable var \(name): \(classType) {\n" +
-        doubleIndentation + "get { \(ptr).pointee.\(r.name) }\n" +
-        doubleIndentation + "set { \(ptr).pointee.\(r.name) = newValue }\n" + indentation +
+    doubleIndentation + "get { \(ptr).pointee.\(r.name) }\n" +
+    doubleIndentation + "set { \(ptr).pointee.\(r.name) = newValue }\n" + indentation +
     "}\n\n"
     return documentation + typeDef
 }
@@ -598,10 +652,14 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
         let rawName = method.name.isEmpty ? method.cname : method.name
         let prefixedRawName = functionPrefix.isEmpty ? rawName : (functionPrefix + rawName.capitalised)
         let potentiallyClashingName = convertName(prefixedRawName)
+        let maybeFunction = method as? GIR.Function
         let name: String
-        if existingNames.contains(potentiallyClashingName) {
+        if existingNames.contains(potentiallyClashingName) ||
+            maybeFunction != nil && GIR.knownDataTypes[potentiallyClashingName] != nil {
             name = "get" + potentiallyClashingName.capitalised
-        } else { name = potentiallyClashingName }
+        } else {
+            name = potentiallyClashingName // not clashing
+        }
         guard !GIR.excludeList.contains(rawName) && !GIR.excludeList.contains(name) else {
             return "\n\(indent)// *** \(name)() causes a syntax error and is therefore not available!\n\n"
         }
@@ -646,9 +704,9 @@ public func methodCode(_ indentation: String, initialIndentation: String? = nil,
             let callCode = invocationCodeFor(method)
             let returnCode = ret(method)
             let bodyCode = " {\n" +
-                indent + callCode +
-                indent + returnCode  + indent +
-                "}\n"
+            indent + callCode +
+            indent + returnCode  + indent +
+            "}\n"
             let fullFunction = indent + funcDecl + paramDecl + returnDecl + bodyCode
             defaultArgsCode = swiftCode(method, fullFunction, indentation: indent)
         }
@@ -717,9 +775,9 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoi
         let varDecl = swiftCode(property, indentation + "@inlinable \(publicDesignation)var \(name): \(idiomaticType) {\n", indentation: indentation)
         let deprecated = getter.deprecated != nil ? "@available(*, deprecated) " : ""
         let getterCode = swiftCode(getter, doubleIndent + "\(deprecated)get {\n" +
-            indentation + gcall(getter) +
-            indentation + ret(getter) + doubleIndent +
-            "}\n", indentation: doubleIndent)
+                                   indentation + gcall(getter) +
+                                   indentation + ret(getter) + doubleIndent +
+                                   "}\n", indentation: doubleIndent)
         let setterCode: String
         if let setter = pair.setter {
             let deprecated = setter.deprecated != nil ? "@available(*, deprecated) " : ""
@@ -729,8 +787,8 @@ public func computedPropertyCode(_ indentation: String, record: GIR.Record, avoi
             ) : "")
             let codeCall = scall(setter)
             let codeSuffix = (setter.throwsError ? ( doubleIndent +
-                                    "g_log(messagePtr: error?.pointee.message, level: .error)\n"
-                                  ) : "") +
+                                                     "g_log(messagePtr: error?.pointee.message, level: .error)\n"
+                                                   ) : "") +
             (doubleIndent + "}\n")
             setterCode = swiftCode(setter, codePrefix + codeError + codeCall + codeSuffix, indentation: doubleIndent)
         } else {
@@ -748,7 +806,7 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
     let ret = instanceReturnCode(doubleIndent, ptr: "rv", castVar: "rv")
     return { (field: GIR.Field) -> String in
         let name = field.name
-        let potentiallyClashingName = name.snakeCase2camelCase
+        let potentiallyClashingName = field.swiftCamelCaseName
         let swname: String
         if existingNames.contains(potentiallyClashingName) {
             let underscored = "_" + potentiallyClashingName
@@ -807,11 +865,11 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
         if field.isReadable {
             let cast = varRef.cast(expression: pointee, from: containedTypeRef)
             let head = doubleIndent + "\(deprecated)get {\n" + doubleIndent +
-                indentation + "let rv = "
+            indentation + "let rv = "
             let tail = "\n"
             getterCode = swiftCode(field, head + cast + tail +
-            indentation + ret(field) + doubleIndent +
-            "}\n", indentation: doubleIndent)
+                                   indentation + ret(field) + doubleIndent +
+                                   "}\n", indentation: doubleIndent)
         } else {
             getterCode = ""
         }
@@ -820,8 +878,8 @@ public func fieldCode(_ indentation: String, record: GIR.Record, avoiding existi
             let cast = fieldRef.isVoid ? setterExpression : fieldRef.cast(expression: setterExpression, from: varRef)
             let setterBody = pointee + " = " + cast
             setterCode = swiftCode(field, doubleIndent + "\(deprecated) set {\n" +
-                doubleIndent + indentation + setterBody + "\n" +
-                doubleIndent + "}\n", indentation: doubleIndent)
+                                   doubleIndent + indentation + setterBody + "\n" +
+                                   doubleIndent + "}\n", indentation: doubleIndent)
         } else {
             setterCode = ""
         }
@@ -897,16 +955,16 @@ public func convenienceConstructorCode(_ typeRef: TypeReference, indentation: St
             // This code will consume floating references upon instantiation. This is suggested by the GObject documentation since Floating references are C-specific syntactic sugar.
             // https://developer.gnome.org/gobject/stable/gobject-The-Base-Object-Type.html
             let retainBlock = isGObject ?
-                (indentation + "if typeIsA(type: \(factory ? "rv" : "self").type, isAType: InitiallyUnownedClassRef.metatypeReference) { _ = \(factory ? "rv" : "self").refSink() } \n")
-                : "" 
+            (indentation + "if typeIsA(type: \(factory ? "rv" : "self").type, isAType: InitiallyUnownedClassRef.metatypeReference) { _ = \(factory ? "rv" : "self").refSink() } \n")
+            : ""
 
             let code = swiftCode(method, indentation + "\(deprecated)@inlinable \(publicDesignation)\(fact)" +
-                constructorParam(method, prefix: p) + (")\(returnDeclaration(method)) {\n" +
-                    indentation + call(method)) +
-                    (factory ? retainBlock : "") +
-                               ret(method) +
-                    (!factory ? retainBlock : "") +
-                indentation + "}\n", indentation: indentation)
+                                 constructorParam(method, prefix: p) + (")\(returnDeclaration(method)) {\n" +
+                                                                        indentation + call(method)) +
+                                 (factory ? retainBlock : "") +
+                                 ret(method) +
+                                 (!factory ? retainBlock : "") +
+                                 indentation + "}\n", indentation: indentation)
             return code
         }
     }
@@ -1044,7 +1102,7 @@ public func functionCallCode(_ indentation: String, _ record: GIR.Record? = nil,
             errorVariableDeclaration = "var error: UnsafeMutablePointer<\(GIR.gerror)>?"
             invocationTail = (n == 0 ? "" : ", ") + "&error)"
             potentialThrow = (doThrow ?
-                                "if let error = error { throw GLibError(error) }\n" :
+                              "if let error = error { throw GLibError(error) }\n" :
                                 "g_log(messagePtr: error?.pointee.message, level: .error)\n")
             nilGuardCode = needsNilGuard ? "guard let " + rvVar + " = " + maybeRV + " else { return nil }\n" : CodeBuilder.unused
         } else {
@@ -1072,7 +1130,7 @@ public func functionCallCode(_ indentation: String, _ record: GIR.Record? = nil,
                     containedTypes: rv.containedTypes,
                     unwrappedName: rvRef.type.swiftName,
                     typeRef: rvRef
-                ) {
+                   ) {
                     rvSwiftRef = typedColl
                 } else {
                     rvSwiftRef = rv.prefixedIdiomaticWrappedRef
@@ -1136,8 +1194,8 @@ public func callSetter(_ indentation: String, _ record: GIR.Record? = nil, ptr p
     return { method in
         let args = method.args // not .lazy
         let code = ( method.returns.isVoid ? "" : "_ = " ) +
-            "\(method.cname.swift)(\(args.map(toSwift).joined(separator: ", "))" +
-            ( method.throwsError ? ", &error" : "" ) +
+        "\(method.cname.swift)(\(args.map(toSwift).joined(separator: ", "))" +
+        ( method.throwsError ? ", &error" : "" ) +
         ")\n"
         return code
     }
@@ -1363,6 +1421,7 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
     let structRef = e.structRef
     let structType = structRef.type
     let structName = structType.swiftName
+    let className = e.name.swift
     let protocolRef = e.protocolRef
     let protocolType = protocolRef.type
     let protocolName = protocolType.swiftName
@@ -1375,89 +1434,90 @@ public func recordStructCode(_ e: GIR.Record, indentation: String = "    ", ptr:
     let factories: [GIR.Method] = (e.constructors + allFunctions).filter { $0.isFactoryOf(e) }
     let subTypeAliases = e.records.map { subTypeAlias(e, $0, publicDesignation: "") }.joined()
     let documentation = commentCode(e)
-    
+
     // In case wrapped value supports GObject reference countin, add GWeakCapturing protocol conformance to support GWeak<T> requirements.
     let weakReferencable = e.rootType.name == "Object" && e.ref != nil
     let weakReferencingProtocol = weakReferencable ? ", GWeakCapturing" : ""
-    
-    let code = documentation + "\n///\n/// The `\(structName)` type acts as a lightweight Swift reference to an underlying `\(ctype)` instance.\n" +
-    "/// It exposes methods that can operate on this data type through `\(protocolName)` conformance.\n" +
-    "/// Use `\(structName)` only as an `unowned` reference to an existing `\(ctype)` instance.\n///\n" +
+
+    let code = documentation + "\n///\n/// The ``\(structName)`` type acts as a lightweight Swift reference to an underlying `\(ctype)` instance.\n" +
+    "/// It exposes methods that can operate on this data type through ``\(protocolName)`` conformance.\n" +
+    "/// Use ``\(structName)`` only as an `unowned` reference to an existing `\(ctype)` instance.\n///\n" +
+    "/// - Note: Use ``\(className)`` (instead of ``\(structName)``) if you want to use Automatic Reference Counting for memory management of the underlying `\(ctype)` instance.\n///\n" +
     "public struct \(structName): \(protocolName)\(weakReferencingProtocol) {\n" + indentation +
-        subTypeAliases + indentation +
-        "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
-        "/// For type-safe access, use the generated, typed pointer `\(ptr)` property instead.\n" + indentation +
-        "public let ptr: UnsafeMutableRawPointer!\n" +
+    subTypeAliases + indentation +
+    "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
+    "/// For type-safe access, use the generated, typed pointer ``\(protocolName)/\(ptr)`` property instead.\n" + indentation +
+    "public let ptr: UnsafeMutableRawPointer!\n" +
     "}\n\n" +
     "public extension \(structName) {\n" + indentation +
-        "/// Designated initialiser from the underlying `C` data type\n" + indentation +
-        "@inlinable init(_ p: UnsafeMutablePointer<\(ctype)>) {\n" + doubleIndentation +
-            "ptr = UnsafeMutableRawPointer(p)\n" + indentation +
-        "}\n\n" + indentation +
-        "/// Designated initialiser from a constant pointer to the underlying `C` data type\n" + indentation +
-        "@inlinable init(_ p: UnsafePointer<\(ctype)>) {\n" + doubleIndentation +
-            "ptr = UnsafeMutableRawPointer(UnsafeMutablePointer(mutating: p))\n" + indentation +
-        "}\n\n" + indentation +
-        "/// Conditional initialiser from an optional pointer to the underlying `C` data type\n" + indentation +
-        "@inlinable init!(_ maybePointer: UnsafeMutablePointer<\(ctype)>?) {\n" + doubleIndentation +
-        "guard let p = maybePointer else { return nil }\n" + doubleIndentation +
-        "ptr = UnsafeMutableRawPointer(p)\n" + indentation +
-        "}\n\n" + indentation +
-        "/// Conditional initialiser from an optional, non-mutable pointer to the underlying `C` data type\n" + indentation +
-        "@inlinable init!(_ maybePointer: UnsafePointer<\(ctype)>?) {\n" + doubleIndentation +
-        "guard let p = UnsafeMutablePointer(mutating: maybePointer) else { return nil }\n" + doubleIndentation +
-        "ptr = UnsafeMutableRawPointer(p)\n" + indentation +
-        "}\n\n" + indentation +
-        "/// Conditional initialiser from an optional `gpointer`\n" + indentation +
-        "@inlinable init!(" + GIR.gpointer + " g: " + GIR.gpointer + "?) {\n" + doubleIndentation +
-        "guard let p = g else { return nil }\n" + doubleIndentation +
-        "ptr = UnsafeMutableRawPointer(p)\n" + indentation +
-        "}\n\n" + indentation +
-        "/// Conditional initialiser from an optional, non-mutable `gconstpointer`\n" + indentation +
-        "@inlinable init!(" + GIR.gconstpointer + " g: " + GIR.gconstpointer + "?) {\n" + doubleIndentation +
-        "guard let p = UnsafeMutableRawPointer(mutating: g) else { return nil }\n" + doubleIndentation +
-        "ptr = p\n" + indentation +
-        "}\n\n" + indentation +
-        "/// Reference intialiser for a related type that implements `\(protocolName)`\n" + indentation +
-        "@inlinable init<T: \(protocolName)>(_ other: T) {\n" + doubleIndentation +
-            "ptr = other.ptr\n" + indentation +
-        "}\n\n" + indentation +
-        // This factory is syntactic sugar for conversion owning class wrapers to unowning structs. This feature was added to introduce better syntax for working with GWeak<T> class.
-        (weakReferencable 
-            ? 
-            (
-                "/// This factory is syntactic sugar for setting weak pointers wrapped in `GWeak<T>`\n" + indentation +
-                "@inlinable static func unowned<T: \(protocolName)>(_ other: T) -> \(structName) { \(structName)(other) }\n\n" + indentation
-            )
-            : ""
-        ) +
-        "/// Unsafe typed initialiser.\n" + indentation +
-        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "@inlinable init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
-            "ptr = UnsafeMutableRawPointer(cPointer)\n" + indentation +
-        "}\n\n" + indentation +
-        "/// Unsafe typed initialiser.\n" + indentation +
-        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "@inlinable init<T>(constPointer: UnsafePointer<T>) {\n" + doubleIndentation +
-            "ptr = UnsafeMutableRawPointer(mutating: UnsafeRawPointer(constPointer))\n" + indentation +
-        "}\n\n" + indentation +
-        "/// Unsafe untyped initialiser.\n" + indentation +
-        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "@inlinable init(mutating raw: UnsafeRawPointer) {\n" + doubleIndentation +
-            "ptr = UnsafeMutableRawPointer(mutating: raw)\n" + indentation +
-        "}\n\n" + indentation +
-        "/// Unsafe untyped initialiser.\n" + indentation +
-        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "@inlinable init(raw: UnsafeMutableRawPointer) {\n" + doubleIndentation +
-            "ptr = raw\n" + indentation +
-        "}\n\n" + indentation +
-        "/// Unsafe untyped initialiser.\n" + indentation +
-        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "@inlinable init(opaquePointer: OpaquePointer) {\n" + doubleIndentation +
-            "ptr = UnsafeMutableRawPointer(opaquePointer)\n" + indentation +
-        "}\n\n" + indentation +
-        constructors.map(ccode).joined(separator: "\n") +
-        factories.map(fcode).joined(separator: "\n") +
+    "/// Designated initialiser from the underlying `C` data type\n" + indentation +
+    "@inlinable init(_ p: UnsafeMutablePointer<\(ctype)>) {\n" + doubleIndentation +
+    "ptr = UnsafeMutableRawPointer(p)\n" + indentation +
+    "}\n\n" + indentation +
+    "/// Designated initialiser from a constant pointer to the underlying `C` data type\n" + indentation +
+    "@inlinable init(_ p: UnsafePointer<\(ctype)>) {\n" + doubleIndentation +
+    "ptr = UnsafeMutableRawPointer(UnsafeMutablePointer(mutating: p))\n" + indentation +
+    "}\n\n" + indentation +
+    "/// Conditional initialiser from an optional pointer to the underlying `C` data type\n" + indentation +
+    "@inlinable init!(_ maybePointer: UnsafeMutablePointer<\(ctype)>?) {\n" + doubleIndentation +
+    "guard let p = maybePointer else { return nil }\n" + doubleIndentation +
+    "ptr = UnsafeMutableRawPointer(p)\n" + indentation +
+    "}\n\n" + indentation +
+    "/// Conditional initialiser from an optional, non-mutable pointer to the underlying `C` data type\n" + indentation +
+    "@inlinable init!(_ maybePointer: UnsafePointer<\(ctype)>?) {\n" + doubleIndentation +
+    "guard let p = UnsafeMutablePointer(mutating: maybePointer) else { return nil }\n" + doubleIndentation +
+    "ptr = UnsafeMutableRawPointer(p)\n" + indentation +
+    "}\n\n" + indentation +
+    "/// Conditional initialiser from an optional `gpointer`\n" + indentation +
+    "@inlinable init!(" + GIR.gpointer + " g: " + GIR.gpointer + "?) {\n" + doubleIndentation +
+    "guard let p = g else { return nil }\n" + doubleIndentation +
+    "ptr = UnsafeMutableRawPointer(p)\n" + indentation +
+    "}\n\n" + indentation +
+    "/// Conditional initialiser from an optional, non-mutable `gconstpointer`\n" + indentation +
+    "@inlinable init!(" + GIR.gconstpointer + " g: " + GIR.gconstpointer + "?) {\n" + doubleIndentation +
+    "guard let p = UnsafeMutableRawPointer(mutating: g) else { return nil }\n" + doubleIndentation +
+    "ptr = p\n" + indentation +
+    "}\n\n" + indentation +
+    "/// Reference intialiser for a related type that implements ``\(protocolName)``\n" + indentation +
+    "@inlinable init<T: \(protocolName)>(_ other: T) {\n" + doubleIndentation +
+    "ptr = other.ptr\n" + indentation +
+    "}\n\n" + indentation +
+    // This factory is syntactic sugar for conversion owning class wrapers to unowning structs. This feature was added to introduce better syntax for working with GWeak<T> class.
+    (weakReferencable
+     ?
+     (
+        "/// This factory is syntactic sugar for setting weak pointers wrapped in `GWeak<T>`\n" + indentation +
+        "@inlinable static func unowned<T: \(protocolName)>(_ other: T) -> \(structName) { \(structName)(other) }\n\n" + indentation
+     )
+     : ""
+    ) +
+    "/// Unsafe typed initialiser.\n" + indentation +
+    "/// **Do not use unless you know the underlying data type the pointer points to conforms to ``\(protocolName)``.**\n" + indentation +
+    "@inlinable init<T>(cPointer: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
+    "ptr = UnsafeMutableRawPointer(cPointer)\n" + indentation +
+    "}\n\n" + indentation +
+    "/// Unsafe typed initialiser.\n" + indentation +
+    "/// **Do not use unless you know the underlying data type the pointer points to conforms to ``\(protocolName)``.**\n" + indentation +
+    "@inlinable init<T>(constPointer: UnsafePointer<T>) {\n" + doubleIndentation +
+    "ptr = UnsafeMutableRawPointer(mutating: UnsafeRawPointer(constPointer))\n" + indentation +
+    "}\n\n" + indentation +
+    "/// Unsafe untyped initialiser.\n" + indentation +
+    "/// **Do not use unless you know the underlying data type the pointer points to conforms to ``\(protocolName)``.**\n" + indentation +
+    "@inlinable init(mutating raw: UnsafeRawPointer) {\n" + doubleIndentation +
+    "ptr = UnsafeMutableRawPointer(mutating: raw)\n" + indentation +
+    "}\n\n" + indentation +
+    "/// Unsafe untyped initialiser.\n" + indentation +
+    "/// **Do not use unless you know the underlying data type the pointer points to conforms to ``\(protocolName)``.**\n" + indentation +
+    "@inlinable init(raw: UnsafeMutableRawPointer) {\n" + doubleIndentation +
+    "ptr = raw\n" + indentation +
+    "}\n\n" + indentation +
+    "/// Unsafe untyped initialiser.\n" + indentation +
+    "/// **Do not use unless you know the underlying data type the pointer points to conforms to ``\(protocolName)``.**\n" + indentation +
+    "@inlinable init(opaquePointer: OpaquePointer) {\n" + doubleIndentation +
+    "ptr = UnsafeMutableRawPointer(opaquePointer)\n" + indentation +
+    "}\n\n" + indentation +
+    constructors.map(ccode).joined(separator: "\n") +
+    factories.map(fcode).joined(separator: "\n") +
     "}\n\n"
     return code
 }
@@ -1469,6 +1529,9 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let tripleIndentation = indentation + doubleIndentation
     let className = e.name.swift
     let instance = className.deCapitalised
+    let structRef = e.structRef
+    let structType = structRef.type
+    let structName = structType.swiftName
     let typeRef = e.typeRef
     let t = typeRef.type
     let protocolRef = e.protocolRef
@@ -1477,7 +1540,7 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let cOriginalType = t.ctype.isEmpty ? t.typeName.swift : t.ctype.swift
     let ctype = cOriginalType.isEmpty ? t.name.swift : cOriginalType
     let cGIRType = GIRType(name: ctype, ctype: ctype)
-//    let ctypeRef = TypeReference.pointer(to: cGIRType)
+    //    let ctypeRef = TypeReference.pointer(to: cGIRType)
     let parentType = e.parentType
     let hasParent = parentType != nil || !parent.isEmpty
     let scode = signalNameCode(indentation: indentation)
@@ -1515,217 +1578,218 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
     let p = parentName.isEmpty ? "" : (parentName + ", ")
     let documentation = commentCode(e)
     let subTypeAliases = e.records.map { subTypeAlias(e, $0) }.joined()
-    let code1 = documentation + "\n///\n/// The `\(className)` type acts as a\(e.ref == nil ? "n" : " reference-counted") owner of an underlying `\(ctype)` instance.\n" +
-    "/// It provides the methods that can operate on this data type through `\(protocolName)` conformance.\n" +
-    "/// Use `\(className)` as a strong reference or owner of a `\(ctype)` instance.\n///\n" +
+    let code1 = documentation + "\n///\n/// The ``\(className)`` type acts as a\(e.ref == nil ? "n" : " reference-counted") owner of an underlying `\(ctype)` instance.\n" +
+    "/// It provides the methods that can operate on this data type through ``\(protocolName)`` conformance.\n" +
+    "/// Use ``\(className)`` as a strong reference or owner of a `\(ctype)` instance.\n///\n" +
+    "/// - Note: Use ``\(structName)`` (instead of ``\(className)``) for a lightweight Swift reference to an underlying `\(ctype)` instance.\n///\n" +
     "open class \(className): \(p)\(protocolName) {\n" + indentation +
-       subTypeAliases + indentation +
-        (hasParent ? "" : (
-            "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
-            "/// For type-safe access, use the generated, typed pointer `\(ptr)` property instead.\n" + indentation +
-            "public let ptr: UnsafeMutableRawPointer!\n\n" + indentation)
-        ) +
-        "/// Designated initialiser from the underlying `C` data type.\n" + indentation +
-        "/// This creates an instance without performing an unbalanced retain\n" + indentation +
-        "/// i.e., ownership is transferred to the `\(className)` instance.\n" + indentation +
-        "/// - Parameter op: pointer to the underlying object\n" + indentation +
-        "@inlinable public init(_ op: UnsafeMutablePointer<\(ctype)>) {\n" + doubleIndentation +
-            (hasParent ? "super.init(cPointer: op)\n" : "ptr = UnsafeMutableRawPointer(op)\n") + indentation +
-        "}\n\n" + (indentation +
-        "/// Designated initialiser from a constant pointer to the underlying `C` data type.\n" + indentation +
-        "/// This creates an instance without performing an unbalanced retain\n" + indentation +
-        "/// i.e., ownership is transferred to the `\(className)` instance.\n" + indentation +
-        "/// - Parameter op: pointer to the underlying object\n" + indentation +
-        "@inlinable public init(_ op: UnsafePointer<\(ctype)>) {\n" + doubleIndentation +
-            (hasParent ? "super.init(raw: UnsafeMutableRawPointer(UnsafeMutablePointer(mutating: op)))\n" : "ptr = UnsafeMutableRawPointer(UnsafeMutablePointer(mutating: op))\n") + indentation +
-        "}\n\n") + (indentation +
-        "/// Optional initialiser from a non-mutating `" + GIR.gpointer + "` to\n" + indentation +
-        "/// the underlying `C` data type.\n" + indentation +
-        "/// This creates an instance without performing an unbalanced retain\n" + indentation +
-        "/// i.e., ownership is transferred to the `\(className)` instance.\n" + indentation +
-        "/// - Parameter op: gpointer to the underlying object\n" + indentation + "@inlinable " +
-        (hasParent ? "override " : "") +
-        "public init!(" + GIR.gpointer + " op: " + GIR.gpointer + "?) {\n" + doubleIndentation +
-            "guard let p = UnsafeMutableRawPointer(op) else { return nil }\n" + doubleIndentation +
-            (hasParent ? "super.init(raw: p)\n" : "ptr = p\n") + indentation +
-        "}\n\n") + (indentation +
-        "/// Optional initialiser from a non-mutating `" + GIR.gconstpointer + "` to\n" + indentation +
-        "/// the underlying `C` data type.\n" + indentation +
-        "/// This creates an instance without performing an unbalanced retain\n" + indentation +
-        "/// i.e., ownership is transferred to the `\(className)` instance.\n" + indentation +
-        "/// - Parameter op: pointer to the underlying object\n" + indentation + "@inlinable " +
-        (hasParent ? "override " : "") +
-        "public init!(" + GIR.gconstpointer + " op: " + GIR.gconstpointer + "?) {\n" + doubleIndentation +
-            "guard let p = op else { return nil }\n" + doubleIndentation +
-            (hasParent ? "super.init(raw: p)\n" : "ptr = UnsafeMutableRawPointer(mutating: p)\n") + indentation +
-        "}\n\n") + (indentation +
+    subTypeAliases + indentation +
+    (hasParent ? "" : (
+        "/// Untyped pointer to the underlying `\(ctype)` instance.\n" + indentation +
+        "/// For type-safe access, use the generated, typed pointer ``\(protocolName)/\(ptr)`` property instead.\n" + indentation +
+        "public let ptr: UnsafeMutableRawPointer!\n\n" + indentation)
+    ) +
+    "/// Designated initialiser from the underlying `C` data type.\n" + indentation +
+    "/// This creates an instance without performing an unbalanced retain\n" + indentation +
+    "/// i.e., ownership is transferred to the `\(className)` instance.\n" + indentation +
+    "/// - Parameter op: pointer to the underlying object\n" + indentation +
+    "@inlinable public init(_ op: UnsafeMutablePointer<\(ctype)>) {\n" + doubleIndentation +
+    (hasParent ? "super.init(cPointer: op)\n" : "ptr = UnsafeMutableRawPointer(op)\n") + indentation +
+    "}\n\n" + (indentation +
+               "/// Designated initialiser from a constant pointer to the underlying `C` data type.\n" + indentation +
+               "/// This creates an instance without performing an unbalanced retain\n" + indentation +
+               "/// i.e., ownership is transferred to the ``\(className)`` instance.\n" + indentation +
+               "/// - Parameter op: pointer to the underlying object\n" + indentation +
+               "@inlinable public init(_ op: UnsafePointer<\(ctype)>) {\n" + doubleIndentation +
+               (hasParent ? "super.init(raw: UnsafeMutableRawPointer(UnsafeMutablePointer(mutating: op)))\n" : "ptr = UnsafeMutableRawPointer(UnsafeMutablePointer(mutating: op))\n") + indentation +
+               "}\n\n") + (indentation +
+                           "/// Optional initialiser from a non-mutating `" + GIR.gpointer + "` to\n" + indentation +
+                           "/// the underlying `C` data type.\n" + indentation +
+                           "/// This creates an instance without performing an unbalanced retain\n" + indentation +
+                           "/// i.e., ownership is transferred to the ``\(className)`` instance.\n" + indentation +
+                           "/// - Parameter op: gpointer to the underlying object\n" + indentation + "@inlinable " +
+                           (hasParent ? "override " : "") +
+                           "public init!(" + GIR.gpointer + " op: " + GIR.gpointer + "?) {\n" + doubleIndentation +
+                           "guard let p = UnsafeMutableRawPointer(op) else { return nil }\n" + doubleIndentation +
+                           (hasParent ? "super.init(raw: p)\n" : "ptr = p\n") + indentation +
+                           "}\n\n") + (indentation +
+                                       "/// Optional initialiser from a non-mutating `" + GIR.gconstpointer + "` to\n" + indentation +
+                                       "/// the underlying `C` data type.\n" + indentation +
+                                       "/// This creates an instance without performing an unbalanced retain\n" + indentation +
+                                       "/// i.e., ownership is transferred to the ``\(className)`` instance.\n" + indentation +
+                                       "/// - Parameter op: pointer to the underlying object\n" + indentation + "@inlinable " +
+                                       (hasParent ? "override " : "") +
+                                       "public init!(" + GIR.gconstpointer + " op: " + GIR.gconstpointer + "?) {\n" + doubleIndentation +
+                                       "guard let p = op else { return nil }\n" + doubleIndentation +
+                                       (hasParent ? "super.init(raw: p)\n" : "ptr = UnsafeMutableRawPointer(mutating: p)\n") + indentation +
+                                       "}\n\n") + (indentation +
 
-        "/// Optional initialiser from a constant pointer to the underlying `C` data type.\n" + indentation +
-        "/// This creates an instance without performing an unbalanced retain\n" + indentation +
-        "/// i.e., ownership is transferred to the `\(className)` instance.\n" + indentation +
-        "/// - Parameter op: pointer to the underlying object\n" + indentation +
-        "@inlinable public init!(_ op: UnsafePointer<\(ctype)>?) {\n" + doubleIndentation +
-            "guard let p = UnsafeMutablePointer(mutating: op) else { return nil }\n" + doubleIndentation +
-            (hasParent ? "super.init(cPointer: p)\n" : "ptr = UnsafeMutableRawPointer(p)\n") + indentation +
-        "}\n\n") + (indentation +
-        "/// Optional initialiser from the underlying `C` data type.\n" + indentation +
-        "/// This creates an instance without performing an unbalanced retain\n" + indentation +
-        "/// i.e., ownership is transferred to the `\(className)` instance.\n" + indentation +
-        "/// - Parameter op: pointer to the underlying object\n" + indentation +
-        "@inlinable public init!(_ op: UnsafeMutablePointer<\(ctype)>?) {\n" + doubleIndentation +
-            "guard let p = op else { return nil }\n" + doubleIndentation +
-            (hasParent ? "super.init(cPointer: p)\n" : "ptr = UnsafeMutableRawPointer(p)\n") + indentation +
-        "}\n\n") + (indentation +
+                                                   "/// Optional initialiser from a constant pointer to the underlying `C` data type.\n" + indentation +
+                                                   "/// This creates an instance without performing an unbalanced retain\n" + indentation +
+                                                   "/// i.e., ownership is transferred to the ``\(className)`` instance.\n" + indentation +
+                                                   "/// - Parameter op: pointer to the underlying object\n" + indentation +
+                                                   "@inlinable public init!(_ op: UnsafePointer<\(ctype)>?) {\n" + doubleIndentation +
+                                                   "guard let p = UnsafeMutablePointer(mutating: op) else { return nil }\n" + doubleIndentation +
+                                                   (hasParent ? "super.init(cPointer: p)\n" : "ptr = UnsafeMutableRawPointer(p)\n") + indentation +
+                                                   "}\n\n") + (indentation +
+                                                               "/// Optional initialiser from the underlying `C` data type.\n" + indentation +
+                                                               "/// This creates an instance without performing an unbalanced retain\n" + indentation +
+                                                               "/// i.e., ownership is transferred to the ``\(className)`` instance.\n" + indentation +
+                                                               "/// - Parameter op: pointer to the underlying object\n" + indentation +
+                                                               "@inlinable public init!(_ op: UnsafeMutablePointer<\(ctype)>?) {\n" + doubleIndentation +
+                                                               "guard let p = op else { return nil }\n" + doubleIndentation +
+                                                               (hasParent ? "super.init(cPointer: p)\n" : "ptr = UnsafeMutableRawPointer(p)\n") + indentation +
+                                                               "}\n\n") + (indentation +
 
-        "/// Designated initialiser from the underlying `C` data type.\n" + indentation +
-        "/// \(e.ref == nil ? "`\(ctype.swift)` does not allow reference counting, so despite the name no actual retaining will occur." : "Will retain `\(ctype.swift)`.")\n" + indentation +
-        "/// i.e., ownership is transferred to the `\(className)` instance.\n" + indentation +
-        "/// - Parameter op: pointer to the underlying object\n") + (indentation +
-        "@inlinable public init(retaining op: UnsafeMutablePointer<\(ctype)>) {\n" + doubleIndentation +
-            (hasParent ?
-                "super.init(retainingCPointer: op)\n" :
-                "ptr = UnsafeMutableRawPointer(op)\n" + doubleIndentation +
-                "\(retain)(\(retainPtr))\n") + indentation +
-        "}\n\n") + (indentation +
+                                                                           "/// Designated initialiser from the underlying `C` data type.\n" + indentation +
+                                                                           "/// \(e.ref == nil ? "`\(ctype.swift)` does not allow reference counting, so despite the name no actual retaining will occur." : "Will retain `\(ctype.swift)`.")\n" + indentation +
+                                                                           "/// i.e., ownership is transferred to the ``\(className)`` instance.\n" + indentation +
+                                                                           "/// - Parameter op: pointer to the underlying object\n") + (indentation +
+                                                                                                                                        "@inlinable public init(retaining op: UnsafeMutablePointer<\(ctype)>) {\n" + doubleIndentation +
+                                                                                                                                        (hasParent ?
+                                                                                                                                         "super.init(retainingCPointer: op)\n" :
+                                                                                                                                            "ptr = UnsafeMutableRawPointer(op)\n" + doubleIndentation +
+                                                                                                                                         "\(retain)(\(retainPtr))\n") + indentation +
+                                                                                                                                        "}\n\n") + (indentation +
 
-        "/// Reference intialiser for a related type that implements `\(protocolName)`\n" + indentation +
-        "/// \(e.ref == nil ? "`\(ctype.swift)` does not allow reference counting." : "Will retain `\(ctype.swift)`.")\n" + indentation +
-        "/// - Parameter other: an instance of a related type that implements `\(protocolName)`\n" + indentation +
-        "@inlinable public init<T: \(protocolName)>(\(hasParent ? instance : "_") other: T) {\n" + doubleIndentation +
-            (hasParent ? "super.init(retainingRaw: other.ptr)\n" :
-            "ptr = other.ptr\n" + doubleIndentation +
-            "\(retain)(\(retainPtr))\n") + indentation +
-        "}\n\n") + (hasParent ? "" : (indentation +
+                                                                                                                                                    "/// Reference intialiser for a related type that implements ``\(protocolName)``\n" + indentation +
+                                                                                                                                                    "/// \(e.ref == nil ? "`\(ctype.swift)` does not allow reference counting." : "Will retain `\(ctype.swift)`.")\n" + indentation +
+                                                                                                                                                    "/// - Parameter other: an instance of a related type that implements ``\(protocolName)``\n" + indentation +
+                                                                                                                                                    "@inlinable public init<T: \(protocolName)>(\(hasParent ? instance : "_") other: T) {\n" + doubleIndentation +
+                                                                                                                                                    (hasParent ? "super.init(retainingRaw: other.ptr)\n" :
+                                                                                                                                                        "ptr = other.ptr\n" + doubleIndentation +
+                                                                                                                                                     "\(retain)(\(retainPtr))\n") + indentation +
+                                                                                                                                                    "}\n\n") + (hasParent ? "" : (indentation +
 
-        "/// \(e.unref == nil ? "Do-nothing destructor for `\(ctype.swift)`." : "Releases the underlying `\(ctype.swift)` instance using `\(e.unref?.cname ?? "unref")`.")\n" + indentation +
-        "deinit {\n" + indentation + indentation +
-            "\(release)(\(releasePtr))\n" + indentation +
-        "}\n\n")) + ((indentation +
+                                                                                                                                                                                  "/// \(e.unref == nil ? "Do-nothing destructor for `\(ctype.swift)`." : "Releases the underlying `\(ctype.swift)` instance using `\(e.unref?.cname ?? "unref")`.")\n" + indentation +
+                                                                                                                                                                                  "deinit {\n" + indentation + indentation +
+                                                                                                                                                                                  "\(release)(\(releasePtr))\n" + indentation +
+                                                                                                                                                                                  "}\n\n")) + ((indentation +
 
-        "/// Unsafe typed initialiser.\n" + indentation +
-        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "/// - Parameter cPointer: pointer to the underlying object\n" + indentation + "@inlinable " +
-        (hasParent ? "override " : "") +
-        "public init<T>(cPointer p: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
-            (hasParent ? "super.init(cPointer: p)\n" : "ptr = UnsafeMutableRawPointer(p)\n") + indentation +
-        "}\n\n") + (indentation +
+                                                                                                                                                                                                "/// Unsafe typed initialiser.\n" + indentation +
+                                                                                                                                                                                                "/// **Do not use unless you know the underlying data type the pointer points to conforms to ``\(protocolName)``.**\n" + indentation +
+                                                                                                                                                                                                "/// - Parameter cPointer: pointer to the underlying object\n" + indentation + "@inlinable " +
+                                                                                                                                                                                                (hasParent ? "override " : "") +
+                                                                                                                                                                                                "public init<T>(cPointer p: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
+                                                                                                                                                                                                (hasParent ? "super.init(cPointer: p)\n" : "ptr = UnsafeMutableRawPointer(p)\n") + indentation +
+                                                                                                                                                                                                "}\n\n") + (indentation +
 
-        "/// Unsafe typed, retaining initialiser.\n" + indentation +
-        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "/// - Parameter cPointer: pointer to the underlying object\n" + indentation + "@inlinable " +
-        (hasParent ? "override " : "") +
-        "public init<T>(retainingCPointer cPointer: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
-            (hasParent ? "super.init(retainingCPointer: cPointer)\n" :
-            "ptr = UnsafeMutableRawPointer(cPointer)\n" + doubleIndentation +
-            "\(retain)(\(retainPtr))\n") + indentation +
-        "}\n\n") + (indentation +
+                                                                                                                                                                                                            "/// Unsafe typed, retaining initialiser.\n" + indentation +
+                                                                                                                                                                                                            "/// **Do not use unless you know the underlying data type the pointer points to conforms to ``\(protocolName)``.**\n" + indentation +
+                                                                                                                                                                                                            "/// - Parameter cPointer: pointer to the underlying object\n" + indentation + "@inlinable " +
+                                                                                                                                                                                                            (hasParent ? "override " : "") +
+                                                                                                                                                                                                            "public init<T>(retainingCPointer cPointer: UnsafeMutablePointer<T>) {\n" + doubleIndentation +
+                                                                                                                                                                                                            (hasParent ? "super.init(retainingCPointer: cPointer)\n" :
+                                                                                                                                                                                                                "ptr = UnsafeMutableRawPointer(cPointer)\n" + doubleIndentation +
+                                                                                                                                                                                                             "\(retain)(\(retainPtr))\n") + indentation +
+                                                                                                                                                                                                            "}\n\n") + (indentation +
 
-        "/// Unsafe untyped initialiser.\n" + indentation +
-        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "/// - Parameter p: raw pointer to the underlying object\n" + indentation + "@inlinable " +
-        (hasParent ? "override " : "") +
-        "public init(raw p: UnsafeRawPointer) {\n" + doubleIndentation +
-            (hasParent ? "super.init(raw: p)\n" : "ptr = UnsafeMutableRawPointer(mutating: p)\n") + indentation +
-        "}\n\n") + (indentation +
+                                                                                                                                                                                                                        "/// Unsafe untyped initialiser.\n" + indentation +
+                                                                                                                                                                                                                        "/// **Do not use unless you know the underlying data type the pointer points to conforms to ``\(protocolName)``.**\n" + indentation +
+                                                                                                                                                                                                                        "/// - Parameter p: raw pointer to the underlying object\n" + indentation + "@inlinable " +
+                                                                                                                                                                                                                        (hasParent ? "override " : "") +
+                                                                                                                                                                                                                        "public init(raw p: UnsafeRawPointer) {\n" + doubleIndentation +
+                                                                                                                                                                                                                        (hasParent ? "super.init(raw: p)\n" : "ptr = UnsafeMutableRawPointer(mutating: p)\n") + indentation +
+                                                                                                                                                                                                                        "}\n\n") + (indentation +
 
-        "/// Unsafe untyped, retaining initialiser.\n" + indentation +
-        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation + "@inlinable " +
-        (hasParent ? "override " : "") +
-        "public init(retainingRaw raw: UnsafeRawPointer) {\n" + doubleIndentation +
-            (hasParent ? "super.init(retainingRaw: raw)\n" :
-            "ptr = UnsafeMutableRawPointer(mutating: raw)\n" + doubleIndentation +
-            "\(retain)(\(retainPtr))\n") + indentation +
-        "}\n\n") + (indentation +
+                                                                                                                                                                                                                                    "/// Unsafe untyped, retaining initialiser.\n" + indentation +
+                                                                                                                                                                                                                                    "/// **Do not use unless you know the underlying data type the pointer points to conforms to ``\(protocolName)``.**\n" + indentation + "@inlinable " +
+                                                                                                                                                                                                                                    (hasParent ? "override " : "") +
+                                                                                                                                                                                                                                    "public init(retainingRaw raw: UnsafeRawPointer) {\n" + doubleIndentation +
+                                                                                                                                                                                                                                    (hasParent ? "super.init(retainingRaw: raw)\n" :
+                                                                                                                                                                                                                                        "ptr = UnsafeMutableRawPointer(mutating: raw)\n" + doubleIndentation +
+                                                                                                                                                                                                                                     "\(retain)(\(retainPtr))\n") + indentation +
+                                                                                                                                                                                                                                    "}\n\n") + (indentation +
 
-        "/// Unsafe untyped initialiser.\n" + indentation +
-        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "/// - Parameter p: mutable raw pointer to the underlying object\n" + indentation + "@inlinable " +
-        "public required init(raw p: UnsafeMutableRawPointer) {\n" + doubleIndentation +
-            (hasParent ? "super.init(raw: p)\n" : "ptr = p\n") + indentation +
-        "}\n\n") + (indentation +
+                                                                                                                                                                                                                                                "/// Unsafe untyped initialiser.\n" + indentation +
+                                                                                                                                                                                                                                                "/// **Do not use unless you know the underlying data type the pointer points to conforms to ``\(protocolName)``.**\n" + indentation +
+                                                                                                                                                                                                                                                "/// - Parameter p: mutable raw pointer to the underlying object\n" + indentation + "@inlinable " +
+                                                                                                                                                                                                                                                "public required init(raw p: UnsafeMutableRawPointer) {\n" + doubleIndentation +
+                                                                                                                                                                                                                                                (hasParent ? "super.init(raw: p)\n" : "ptr = p\n") + indentation +
+                                                                                                                                                                                                                                                "}\n\n") + (indentation +
 
-        "/// Unsafe untyped, retaining initialiser.\n" + indentation +
-        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "/// - Parameter raw: mutable raw pointer to the underlying object\n" + indentation + "@inlinable " +
-        // We add required to this initialiser on objects so that it can be used to instantiate generic types constrained to a subclass of object.
-        (isObject ? "required ": hasParent ? "override ": "") +
-        "public init(retainingRaw raw: UnsafeMutableRawPointer) {\n" + doubleIndentation +
-            (hasParent ? "super.init(retainingRaw: raw)\n" :
-            "ptr = raw\n" + doubleIndentation +
-            "\(retain)(\(retainPtr))\n") + indentation +
-        "}\n\n") + (indentation +
+                                                                                                                                                                                                                                                            "/// Unsafe untyped, retaining initialiser.\n" + indentation +
+                                                                                                                                                                                                                                                            "/// **Do not use unless you know the underlying data type the pointer points to conforms to ``\(protocolName)``.**\n" + indentation +
+                                                                                                                                                                                                                                                            "/// - Parameter raw: mutable raw pointer to the underlying object\n" + indentation + "@inlinable " +
+                                                                                                                                                                                                                                                            // We add required to this initialiser on objects so that it can be used to instantiate generic types constrained to a subclass of object.
+                                                                                                                                                                                                                                                            (isObject ? "required ": hasParent ? "override ": "") +
+                                                                                                                                                                                                                                                            "public init(retainingRaw raw: UnsafeMutableRawPointer) {\n" + doubleIndentation +
+                                                                                                                                                                                                                                                            (hasParent ? "super.init(retainingRaw: raw)\n" :
+                                                                                                                                                                                                                                                                "ptr = raw\n" + doubleIndentation +
+                                                                                                                                                                                                                                                             "\(retain)(\(retainPtr))\n") + indentation +
+                                                                                                                                                                                                                                                            "}\n\n") + (indentation +
 
-        "/// Unsafe untyped initialiser.\n" + indentation +
-        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "/// - Parameter p: opaque pointer to the underlying object\n" + indentation + "@inlinable " +
-        (hasParent ? "override " : "") +
-        "public init(opaquePointer p: OpaquePointer) {\n" + doubleIndentation +
-            (hasParent ? "super.init(opaquePointer: p)\n" : "ptr = UnsafeMutableRawPointer(p)\n") + indentation +
-        "}\n\n") + (indentation +
+                                                                                                                                                                                                                                                                        "/// Unsafe untyped initialiser.\n" + indentation +
+                                                                                                                                                                                                                                                                        "/// **Do not use unless you know the underlying data type the pointer points to conforms to ``\(protocolName)``.**\n" + indentation +
+                                                                                                                                                                                                                                                                        "/// - Parameter p: opaque pointer to the underlying object\n" + indentation + "@inlinable " +
+                                                                                                                                                                                                                                                                        (hasParent ? "override " : "") +
+                                                                                                                                                                                                                                                                        "public init(opaquePointer p: OpaquePointer) {\n" + doubleIndentation +
+                                                                                                                                                                                                                                                                        (hasParent ? "super.init(opaquePointer: p)\n" : "ptr = UnsafeMutableRawPointer(p)\n") + indentation +
+                                                                                                                                                                                                                                                                        "}\n\n") + (indentation +
 
-        "/// Unsafe untyped, retaining initialiser.\n" + indentation +
-        "/// **Do not use unless you know the underlying data type the pointer points to conforms to `\(protocolName)`.**\n" + indentation +
-        "/// - Parameter p: opaque pointer to the underlying object\n" + indentation + "@inlinable " +
-        (hasParent ? "override " : "") +
-        "public init(retainingOpaquePointer p: OpaquePointer) {\n" + doubleIndentation +
-            (hasParent ? "super.init(retainingOpaquePointer: p)\n" :
-            "ptr = UnsafeMutableRawPointer(p)\n" + doubleIndentation +
-            "\(retain)(\(retainPtr))\n") + indentation +
-        "}\n\n"))
+                                                                                                                                                                                                                                                                                    "/// Unsafe untyped, retaining initialiser.\n" + indentation +
+                                                                                                                                                                                                                                                                                    "/// **Do not use unless you know the underlying data type the pointer points to conforms to ``\(protocolName)``.**\n" + indentation +
+                                                                                                                                                                                                                                                                                    "/// - Parameter p: opaque pointer to the underlying object\n" + indentation + "@inlinable " +
+                                                                                                                                                                                                                                                                                    (hasParent ? "override " : "") +
+                                                                                                                                                                                                                                                                                    "public init(retainingOpaquePointer p: OpaquePointer) {\n" + doubleIndentation +
+                                                                                                                                                                                                                                                                                    (hasParent ? "super.init(retainingOpaquePointer: p)\n" :
+                                                                                                                                                                                                                                                                                        "ptr = UnsafeMutableRawPointer(p)\n" + doubleIndentation +
+                                                                                                                                                                                                                                                                                     "\(retain)(\(retainPtr))\n") + indentation +
+                                                                                                                                                                                                                                                                                    "}\n\n"))
     let code2 = constructors.map(ccode).joined(separator: "\n") + "\n" +
-        factories.map(fcode).joined(separator: "\n") + "\n" +
+    factories.map(fcode).joined(separator: "\n") + "\n" +
     "}\n\n"
     let code3 = String(noProperties ? "// MARK: no \(className) properties\n" : "public enum \(className)PropertyName: String, PropertyNameProtocol {\n") +
-//        "public typealias Class = \(protocolName)\n") +
-        properties.map(scode).joined(separator: "\n") + "\n" +
+    //        "public typealias Class = \(protocolName)\n") +
+    properties.map(scode).joined(separator: "\n") + "\n" +
     (noProperties ? "" : ("}\n\npublic extension \(protocolName) {\n" + indentation +
-        "/// Bind a `\(className)PropertyName` source property to a given target object.\n" + indentation +
-        "/// - Parameter source_property: the source property to bind\n" + indentation +
-        "/// - Parameter target: the target object to bind to\n" + indentation +
-        "/// - Parameter target_property: the target property to bind to\n" + indentation +
-        "/// - Parameter flags: the flags to pass to the `Binding`\n" + indentation +
-        "/// - Parameter transform_from: `ValueTransformer` to use for forward transformation\n" + indentation +
-        "/// - Parameter transform_to: `ValueTransformer` to use for backwards transformation\n" + indentation +
-        "/// - Returns: binding reference or `nil` in case of an error\n" + indentation +
-        "@discardableResult @inlinable func bind<Q: PropertyNameProtocol, T: GLibObject.ObjectProtocol>(property source_property: \(className)PropertyName, to target: T, _ target_property: Q, flags f: BindingFlags = .default, transformFrom transform_from: @escaping GLibObject.ValueTransformer = { $0.transform(destValue: $1) }, transformTo transform_to: @escaping GLibObject.ValueTransformer = { $0.transform(destValue: $1) }) -> BindingRef! {\n" + doubleIndentation +
-            "func _bind(_ source: UnsafePointer<gchar>, to t: T, _ target_property: UnsafePointer<gchar>, flags f: BindingFlags = .default, holder: BindingClosureHolder, transformFrom transform_from: @convention(c) @escaping (gpointer, gpointer, gpointer, gpointer) -> gboolean, transformTo transform_to: @convention(c) @escaping (gpointer, gpointer, gpointer, gpointer) -> gboolean) -> BindingRef! {\n" + tripleIndentation +
-                "let holder = UnsafeMutableRawPointer(Unmanaged.passRetained(holder).toOpaque())\n" + tripleIndentation +
-                "let from = unsafeBitCast(transform_from, to: BindingTransformFunc.self)\n" + tripleIndentation +
-                "let to   = unsafeBitCast(transform_to,   to: BindingTransformFunc.self)\n" + tripleIndentation +
-                "let rv = GLibObject.ObjectRef(raw: ptr).bindPropertyFull(sourceProperty: source, target: t, targetProperty: target_property, flags: f, transformTo: to, transformFrom: from, userData: holder) {\n" + tripleIndentation + indentation +
-                    "if let swift = UnsafeRawPointer($0) {\n" + tripleIndentation + doubleIndentation +
-                        "let holder = Unmanaged<GLibObject.SignalHandlerClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
-                        "holder.release()\n" + tripleIndentation + indentation +
-                    "}\n" + tripleIndentation +
-                "}\n" + tripleIndentation +
-                "return rv.map { BindingRef($0) }\n" + doubleIndentation +
-            "}\n\n" + doubleIndentation +
-            "let rv = _bind(source_property.name, to: target, target_property.name, flags: f, holder: BindingClosureHolder(transform_from, transform_to), transformFrom: {\n" + tripleIndentation +
-                "let ptr = UnsafeRawPointer($3)\n" + tripleIndentation +
-                "let holder = Unmanaged<BindingClosureHolder>.fromOpaque(ptr).takeUnretainedValue()\n" + tripleIndentation +
-                "return holder.transform_from(GLibObject.ValueRef(raw: $1), GLibObject.ValueRef(raw: $2)) ? 1 : 0\n" + doubleIndentation +
-        "}) {\n" + tripleIndentation +
-            "let ptr = UnsafeRawPointer($3)\n" + tripleIndentation +
-            "let holder = Unmanaged<BindingClosureHolder>.fromOpaque(ptr).takeUnretainedValue()\n" + tripleIndentation +
-            "return holder.transform_to(GLibObject.ValueRef(raw: $1), GLibObject.ValueRef(raw: $2)) ? 1 : 0\n" + doubleIndentation +
-        "}\n" + doubleIndentation +
-        "return rv\n" + indentation +
-    "}\n\n" + indentation +
-    "/// Get the value of a \(className) property\n" + indentation +
-    "/// - Parameter property: the property to get the value for\n" + indentation +
-    "/// - Returns: the value of the named property\n" + indentation +
-    "@inlinable func get(property: \(className)PropertyName) -> GLibObject.Value {\n" + doubleIndentation +
-        "let v = GLibObject.Value()\n" + doubleIndentation +
-        "g_object_get_property(ptr.assumingMemoryBound(to: GObject.self), property.rawValue, v.value_ptr)\n" + doubleIndentation +
-        "return v\n" + indentation +
-    "}\n\n" + indentation +
-    "/// Set the value of a \(className) property.\n" + indentation +
-    "/// *Note* that this will only have an effect on properties that are writable and not construct-only!\n" + indentation +
-    "/// - Parameter property: the property to get the value for\n" + indentation +
-    "/// - Returns: the value of the named property\n" + indentation +
-    "@inlinable func set(property: \(className)PropertyName, value v: GLibObject.Value) {\n" + doubleIndentation +
-        "g_object_set_property(ptr.assumingMemoryBound(to: GObject.self), property.rawValue, v.value_ptr)\n" + indentation +
-    "}\n}\n\n"))
+                          "/// Bind a ``\(className)PropertyName`` source property to a given target object.\n" + indentation +
+                          "/// - Parameter source_property: the source property to bind\n" + indentation +
+                          "/// - Parameter target: the target object to bind to\n" + indentation +
+                          "/// - Parameter target_property: the target property to bind to\n" + indentation +
+                          "/// - Parameter flags: the flags to pass to the ``Binding``\n" + indentation +
+                          "/// - Parameter transform_from: ``ValueTransformer`` to use for forward transformation\n" + indentation +
+                          "/// - Parameter transform_to: ``ValueTransformer`` to use for backwards transformation\n" + indentation +
+                          "/// - Returns: binding reference or `nil` in case of an error\n" + indentation +
+                          "@discardableResult @inlinable func bind<Q: PropertyNameProtocol, T: GLibObject.ObjectProtocol>(property source_property: \(className)PropertyName, to target: T, _ target_property: Q, flags f: BindingFlags = .default, transformFrom transform_from: @escaping GLibObject.ValueTransformer = { $0.transform(destValue: $1) }, transformTo transform_to: @escaping GLibObject.ValueTransformer = { $0.transform(destValue: $1) }) -> BindingRef! {\n" + doubleIndentation +
+                          "func _bind(_ source: UnsafePointer<gchar>, to t: T, _ target_property: UnsafePointer<gchar>, flags f: BindingFlags = .default, holder: BindingClosureHolder, transformFrom transform_from: @convention(c) @escaping (gpointer, gpointer, gpointer, gpointer) -> gboolean, transformTo transform_to: @convention(c) @escaping (gpointer, gpointer, gpointer, gpointer) -> gboolean) -> BindingRef! {\n" + tripleIndentation +
+                          "let holder = UnsafeMutableRawPointer(Unmanaged.passRetained(holder).toOpaque())\n" + tripleIndentation +
+                          "let from = unsafeBitCast(transform_from, to: BindingTransformFunc.self)\n" + tripleIndentation +
+                          "let to   = unsafeBitCast(transform_to,   to: BindingTransformFunc.self)\n" + tripleIndentation +
+                          "let rv = GLibObject.ObjectRef(raw: ptr).bindPropertyFull(sourceProperty: source, target: t, targetProperty: target_property, flags: f, transformTo: to, transformFrom: from, userData: holder) {\n" + tripleIndentation + indentation +
+                          "if let swift = UnsafeRawPointer($0) {\n" + tripleIndentation + doubleIndentation +
+                          "let holder = Unmanaged<GLibObject.SignalHandlerClosureHolder>.fromOpaque(swift)\n" + tripleIndentation + doubleIndentation +
+                          "holder.release()\n" + tripleIndentation + indentation +
+                          "}\n" + tripleIndentation +
+                          "}\n" + tripleIndentation +
+                          "return rv.map { BindingRef($0) }\n" + doubleIndentation +
+                          "}\n\n" + doubleIndentation +
+                          "let rv = _bind(source_property.name, to: target, target_property.name, flags: f, holder: BindingClosureHolder(transform_from, transform_to), transformFrom: {\n" + tripleIndentation +
+                          "let ptr = UnsafeRawPointer($3)\n" + tripleIndentation +
+                          "let holder = Unmanaged<BindingClosureHolder>.fromOpaque(ptr).takeUnretainedValue()\n" + tripleIndentation +
+                          "return holder.transform_from(GLibObject.ValueRef(raw: $1), GLibObject.ValueRef(raw: $2)) ? 1 : 0\n" + doubleIndentation +
+                          "}) {\n" + tripleIndentation +
+                          "let ptr = UnsafeRawPointer($3)\n" + tripleIndentation +
+                          "let holder = Unmanaged<BindingClosureHolder>.fromOpaque(ptr).takeUnretainedValue()\n" + tripleIndentation +
+                          "return holder.transform_to(GLibObject.ValueRef(raw: $1), GLibObject.ValueRef(raw: $2)) ? 1 : 0\n" + doubleIndentation +
+                          "}\n" + doubleIndentation +
+                          "return rv\n" + indentation +
+                          "}\n\n" + indentation +
+                          "/// Get the value of a \(className) property\n" + indentation +
+                          "/// - Parameter property: the property to get the value for\n" + indentation +
+                          "/// - Returns: the value of the named property\n" + indentation +
+                          "@inlinable func get(property: \(className)PropertyName) -> GLibObject.Value {\n" + doubleIndentation +
+                          "let v = GLibObject.Value()\n" + doubleIndentation +
+                          "g_object_get_property(ptr.assumingMemoryBound(to: GObject.self), property.rawValue, v.value_ptr)\n" + doubleIndentation +
+                          "return v\n" + indentation +
+                          "}\n\n" + indentation +
+                          "/// Set the value of a \(className) property.\n" + indentation +
+                          "/// *Note* that this will only have an effect on properties that are writable and not construct-only!\n" + indentation +
+                          "/// - Parameter property: the property to get the value for\n" + indentation +
+                          "/// - Returns: the value of the named property\n" + indentation +
+                          "@inlinable func set(property: \(className)PropertyName, value v: GLibObject.Value) {\n" + doubleIndentation +
+                          "g_object_set_property(ptr.assumingMemoryBound(to: GObject.self), property.rawValue, v.value_ptr)\n" + indentation +
+                          "}\n}\n\n"))
     let metaTypeCode: String
     // Check if a type-struct entry exists for the record,
     // if so, get the record for the name stored in typeStruct
@@ -1737,9 +1801,9 @@ public func recordClassCode(_ e: GIR.Record, parent: String, indentation: String
         metaTypeCode = ""
     }
     let signalEnumCode = (noSignals ? "// MARK: no \(className) signals\n\n" : "public enum \(className)SignalName: String, SignalNameProtocol {\n" +
-    //        "public typealias Class = \(protocolName)\n") +
-        signals.map(scode).joined(separator: "\n") + "\n" +
-        properties.map(ncode).joined(separator: "\n") + "\n}\n\n")
+                          //        "public typealias Class = \(protocolName)\n") +
+                          signals.map(scode).joined(separator: "\n") + "\n" +
+                          properties.map(ncode).joined(separator: "\n") + "\n}\n\n")
     return code1 + metaTypeCode + code2 + code3 + signalEnumCode + buildSignalExtension(for: e)
 }
 

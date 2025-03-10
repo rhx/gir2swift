@@ -222,10 +222,10 @@ private func addDocumentation(signal: GIR.Signal) -> String {
     "/// - Parameter flags: Flags"
     "/// - Parameter unownedSelf: Reference to instance of self"
     Code.loop(over: signal.args) { argument in
-        let comment = gtkDoc2SwiftDoc(argument.comment, linePrefix: "").replacingOccurrences(of: "\n", with: " ")
+        let comment = gtkDoc2SwiftDoc(for: signal, argument.comment, linePrefix: "").replacingOccurrences(of: "\n", with: " ")
         "/// - Parameter \(argument.prefixedArgumentName): \(comment.isEmpty ? "none" : comment)"
     }
-    let returnComment = gtkDoc2SwiftDoc(signal.returns.comment, linePrefix: "").replacingOccurrences(of: "\n", with: " ")
+    let returnComment = gtkDoc2SwiftDoc(for: signal, signal.returns.comment, linePrefix: "").replacingOccurrences(of: "\n", with: " ")
     "/// - Parameter handler: \(returnComment.isEmpty ? "The signal handler to call" : returnComment)"
 }
 
