@@ -206,13 +206,13 @@ E.g. a file named `Gtk-4.0-4.10.cat` only gets appended to `Gtk-4.0.swift` if `p
 To build, you need at least Swift 5.6; download from https://swift.org/download/ -- if you are using macOS, make sure you have the command line tools installed as well).  Test that your compiler works using `swift --version`, which should give you something like
 
 	$ swift --version
-	swift-driver version: 1.90.11.1 Apple Swift version 5.10 (swiftlang-5.10.0.13 clang-1500.3.9.4)
-    Target: arm64-apple-macosx14.0
+	swift-driver version: 1.127.15 Apple Swift version 6.2.4 (swiftlang-6.2.4.1.4 clang-1700.6.4.2)
+	Target: arm64-apple-macosx26.0
 
 on macOS, or on Linux you should get something like:
 
 	$ swift --version
-	Swift version 5.10 (swift-5.10-RELEASE)
+	Swift version 6.1 (swift-6.1-RELEASE)
 	Target: x86_64-unknown-linux-gnu
 
 ### LibXML 2.9.4 or higher
@@ -231,7 +231,7 @@ On current versions of macOS, you need to install `libxml2` using HomeBrew (the 
 
 ##### Ubuntu
 
-On Ubuntu 16.04, 18.04 and 20.04, you can use the gtk that comes with the distribution.  Just install with the `apt` package manager:
+On Ubuntu 18.04, 20.04, 22.04, and 24.04, you can use the gtk that comes with the distribution.  Just install with the `apt` package manager:
 
 	sudo apt update
 	sudo apt install libxml2-dev gobject-introspection libgirepository1.0-dev jq
