@@ -1,8 +1,6 @@
 # gir2swift
 A simple GIR parser in Swift for creating Swift types for a .gir file
 
-![macOS](https://github.com/rhx/gir2swift/actions/workflows/macOS.yml/badge.svg?branch=development)
-![Linux](https://github.com/rhx/gir2swift/actions/workflows/Linux.yml/badge.svg?branch=development)
 ![macOS](https://github.com/rhx/gir2swift/actions/workflows/macOS.yml/badge.svg?branch=main)
 ![Linux](https://github.com/rhx/gir2swift/actions/workflows/Linux.yml/badge.svg?branch=main)
 
