@@ -11,11 +11,68 @@ final class gir2swiftTests: XCTestCase {
     }
 
     func testArgumentParser() throws {
-        let args1 = ["gir2swift", "-o", "OutputDir", "-m", "ModuleName.module", "-p", "p1.gir", "-p", "p2.gir", "main.gir"]
+        let args1 = ["gir2swift", "--overwrite", "-o", "OutputDir", "-m", "ModuleName.module", "-p", "p1.gir", "-p", "p2.gir", "main.gir"]
         parseArguments(args: args1)
-        XCTAssertEqual(g2sArgs.outputDirectory, args1[2])
-        XCTAssertEqual(g2sArgs.moduleBoilerPlateFile, args1[4])
-        XCTAssertEqual(g2sArgs.prerequisiteGir, [args1[6], args1[8]])
+        XCTAssertTrue(g2sArgs.overwrite)
+        XCTAssertEqual(g2sArgs.outputDirectory, args1[3])
+        XCTAssertEqual(g2sArgs.moduleBoilerPlateFile, args1[5])
+        XCTAssertEqual(g2sArgs.prerequisiteGir, [args1[7], args1[9]])
+    }
+
+    func testShouldGenerateOutputsWhenMissingFile() throws {
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let input = directory.appendingPathComponent("input.gir")
+        let output = directory.appendingPathComponent("output.swift")
+        try Data("input".utf8).write(to: input)
+
+        XCTAssertTrue(shouldGenerateOutputs(inputFiles: [input], outputFiles: [output], overwrite: false))
+    }
+
+    func testShouldGenerateOutputsWhenInputIsNewer() throws {
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let input = directory.appendingPathComponent("input.gir")
+        let output = directory.appendingPathComponent("output.swift")
+        try Data("input".utf8).write(to: input)
+        try Data("output".utf8).write(to: output)
+        try setModificationDate(Date(timeIntervalSince1970: 100), for: output)
+        try setModificationDate(Date(timeIntervalSince1970: 200), for: input)
+
+        XCTAssertTrue(shouldGenerateOutputs(inputFiles: [input], outputFiles: [output], overwrite: false))
+    }
+
+    func testShouldSkipGenerationWhenOutputsAreNewer() throws {
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let input = directory.appendingPathComponent("input.gir")
+        let outputA = directory.appendingPathComponent("output-a.swift")
+        let outputB = directory.appendingPathComponent("output-b.swift")
+        try Data("input".utf8).write(to: input)
+        try Data("output-a".utf8).write(to: outputA)
+        try Data("output-b".utf8).write(to: outputB)
+        try setModificationDate(Date(timeIntervalSince1970: 100), for: input)
+        try setModificationDate(Date(timeIntervalSince1970: 200), for: outputA)
+        try setModificationDate(Date(timeIntervalSince1970: 300), for: outputB)
+
+        XCTAssertFalse(shouldGenerateOutputs(inputFiles: [input], outputFiles: [outputA, outputB], overwrite: false))
+    }
+
+    func testOverwriteAlwaysForcesGeneration() throws {
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let input = directory.appendingPathComponent("input.gir")
+        let output = directory.appendingPathComponent("output.swift")
+        try Data("input".utf8).write(to: input)
+        try Data("output".utf8).write(to: output)
+        try setModificationDate(Date(timeIntervalSince1970: 100), for: input)
+        try setModificationDate(Date(timeIntervalSince1970: 200), for: output)
+
+        XCTAssertTrue(shouldGenerateOutputs(inputFiles: [input], outputFiles: [output], overwrite: true))
     }
 
     func testGtkDoc2SwiftDoc() throws {
@@ -416,6 +473,16 @@ final class gir2swiftTests: XCTestCase {
         XCTAssertEqual(i1.indirection, ri.constPointers)
         XCTAssertEqual(fi, si)
     }
+}
+
+private func makeTemporaryDirectory() throws -> URL {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    return directory
+}
+
+private func setModificationDate(_ date: Date, for url: URL) throws {
+    try FileManager.default.setAttributes([.modificationDate: date], ofItemAtPath: url.path)
 }
 
 fileprivate let emptyThing = GIR.Thing(name: "EmptyThing", comment: "")

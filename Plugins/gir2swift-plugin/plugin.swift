@@ -44,6 +44,16 @@ func getGirDirectory(containing girFiles: [String]) throws -> Path {
     throw Gir2SwiftError.failedToGetGirDirectory(containing: girFiles)
 }
 
+func existingInputFiles(for girName: String, in directory: Path) throws -> [Path] {
+    let directoryURL = URL(fileURLWithPath: directory.string, isDirectory: true)
+    let files = try FileManager.default.contentsOfDirectory(
+        at: directoryURL,
+        includingPropertiesForKeys: nil,
+        options: [.skipsHiddenFiles, .skipsPackageDescendants]
+    )
+    return files.filter { $0.lastPathComponent.hasPrefix(girName) }.map { Path($0.path) }
+}
+
 /// The gir2swift build plugin
 @main struct Gir2SwiftPlugin: BuildToolPlugin {
     /// A Plugin that generates Swift code from a `.gir` FILE
@@ -71,14 +81,6 @@ func getGirDirectory(containing girFiles: [String]) throws -> Path {
         outputFiles.append(outputDir.appending("\(girName).swift"))
 
         // Determine the list of input files
-        let targetDir = URL(fileURLWithPath: target.directory.string)
-        let contents = try fileManager.contentsOfDirectory(at: targetDir, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles, .skipsPackageDescendants])
-        let inputFiles = contents.filter { file in
-            file.lastPathComponent.hasPrefix(girName)
-        }.map { file in
-            Path(file.path)
-        } + [gir2swiftManifest]
-
         // Find all girs that this library depends on
         let girFiles = target.recursiveTargetDependencies.compactMap {
             let manifest = girManifestName(for: $0, in: targetPackageDirectory)
@@ -89,7 +91,11 @@ func getGirDirectory(containing girFiles: [String]) throws -> Path {
             $0 + ".gir"
         }
 
-        let girDirectory = try getGirDirectory(containing: girFiles)
+        let allGirFiles = [girName + ".gir"] + girFiles
+        let girDirectory = try getGirDirectory(containing: allGirFiles)
+        let inputFiles = try existingInputFiles(for: girName, in: target.directory)
+            + [gir2swiftManifest]
+            + allGirFiles.map { girDirectory.appending($0) }
 
         // Construct the arguments
         var arguments = [
