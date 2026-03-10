@@ -6,6 +6,18 @@ let pkgName = "gir2swift"
 let libTarget = "lib\(pkgName)"
 let plugin = "\(pkgName)-plugin"
 
+var packageDependencies: [Package.Dependency] = [
+    .package(url: "https://github.com/jpsim/Yams.git", from: "4.0.6"),
+    .package(url: "https://github.com/rhx/SwiftLibXML.git", branch: "main"),
+    .package(url: "https://github.com/apple/swift-argument-parser", from: "1.1.1"),
+]
+
+#if compiler(>=6.2)
+packageDependencies.append(
+    .package(url: "https://github.com/mipalgu/swift-docc-static", branch: "main")
+)
+#endif
+
 let package = Package(
     name: pkgName,
     products: [
@@ -13,12 +25,7 @@ let package = Package(
         .library(name: libTarget, targets: [libTarget]),
         .plugin(name: plugin, targets: [plugin]),
     ],
-    dependencies: [ 
-        .package(url: "https://github.com/jpsim/Yams.git", from: "4.0.6"),
-        .package(url: "https://github.com/rhx/SwiftLibXML.git", branch: "main"),
-        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.1.1"),
-        .package(url: "https://github.com/mipalgu/swift-docc-static", branch: "main")
-    ],
+    dependencies: packageDependencies,
     targets: [
         .executableTarget(
             name: pkgName, 
