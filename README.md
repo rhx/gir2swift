@@ -3,6 +3,7 @@ A simple GIR parser in Swift for creating Swift types for a .gir file
 
 ![macOS](https://github.com/rhx/gir2swift/actions/workflows/macOS.yml/badge.svg?branch=development)
 ![Linux](https://github.com/rhx/gir2swift/actions/workflows/Linux.yml/badge.svg?branch=development)
+![Windows](https://github.com/rhx/gir2swift/actions/workflows/windows-ci.yml/badge.svg?branch=development)
 
 ## Getting Started
 To start a project that uses Swift wrappers around low-level libraries that utilise gobject-introspection, you need to create some scripts that use `gir2swift` to convert the information within gobject-introspection XML (`.gir`) files into Swift.  Here is a brief overview of the basic steps:
@@ -16,6 +17,8 @@ To start a project that uses Swift wrappers around low-level libraries that util
 6. If the build phase fails (more likely than not), add code that patches the generated Swift source files (e.g. using `awk` or `sed` [Module Files](#Module-Files) -- see blelow) to correct the errors the compiler complains about
 
 ## What is new?
+
+Version 18 adds the `--overwrite` switch for forcing regeneration of generated files and introduces experimental Windows support.
 
 Version 17 adds support for generating documentation using [DocC](https://www.swift.org/documentation/docc/).
 
@@ -113,6 +116,8 @@ alpha-names: true
                           specified in CLI trumps the one found in manifest.
   -m <m>                  Add the given .swift file as the main (hand-crafted)
                           Swift file for your library target.
+  --overwrite             Overwrite generated files even when they are newer
+                          than all inputs.
   --manifest <manifest>   Custom path to manifest. (default:
                           gir2swift-manifest.yaml)
   --opaque-declarations   Skips all other generations steps and prints opaque
@@ -120,6 +125,9 @@ alpha-names: true
                           class to stdout.
   -h, --help              Show help information.
 ```
+
+Use `--overwrite` to force regeneration when you want `gir2swift` to rebuild outputs even if the existing generated files are newer than the `.gir`, manifest, or post-processing inputs.
+
 ### Description
 `gir2swift` takes the information from a gobject-introspection XML (`file.gir`) file and creates corresponding Swift wrappers.  When reading the `.gir` file, `gir2swift` also reads a number of [Module Files](#Module-Files) that you create with additional information.
 
@@ -243,6 +251,10 @@ On Fedora, you can use the gtk that comes with the distribution.  Just install w
 
 	sudo dnf install libxml2-devel gobject-introspection-devel jq
 
+#### Windows
+
+Windows support is experimental and is validated in CI using Swift `6.2` together with MSYS2 packages for `libxml2` and `pkgconf`.  If you want to try a local Windows build, make sure `pkg-config` can find `libxml-2.0` before running `swift build`.
+
 
 ## Building
 
@@ -260,7 +272,6 @@ On macOS, you can build the project using Xcode instead.  To do this, simply ope
 	open Package.swift
 
 After that, use the (usual) Build and Test buttons to build/test this package.
-
 
 ## Troubleshooting
 Here are some common errors you might encounter and how to fix them.

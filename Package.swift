@@ -16,7 +16,8 @@ let package = Package(
     dependencies: [ 
         .package(url: "https://github.com/jpsim/Yams.git", from: "4.0.6"),
         .package(url: "https://github.com/rhx/SwiftLibXML.git", branch: "main"),
-        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.1.1")
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.1.1"),
+        .package(url: "https://github.com/mipalgu/swift-docc-static", branch: "main")
     ],
     targets: [
         .executableTarget(

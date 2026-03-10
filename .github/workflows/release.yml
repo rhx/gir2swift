@@ -1,0 +1,151 @@
+name: Homebrew Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish (for example 18.0.0)"
+        required: true
+
+jobs:
+  build-bottles:
+    name: Build Bottles
+    uses: ./.github/workflows/build-bottles.yml
+    with:
+      tag: ${{ github.event.inputs.tag || github.ref_name }}
+    secrets: inherit
+
+  update-formula:
+    name: Update Homebrew Formula
+    runs-on: ubuntu-latest
+    needs: [build-bottles]
+    steps:
+      - name: Checkout gir2swift
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calculate checksums and update formula
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          VERSION="${TAG#v}"
+          echo "VERSION=$VERSION"
+
+          wget -q "https://github.com/rhx/gir2swift/archive/refs/tags/${TAG}.tar.gz" -O source.tar.gz
+          SOURCE_SHA256=$(sha256sum source.tar.gz | cut -d' ' -f1)
+          echo "SOURCE_SHA256=$SOURCE_SHA256"
+
+          mkdir -p bottles
+          gh release download "${TAG}" --repo rhx/gir2swift --pattern "gir2swift-*.bottle.tar.gz" -D bottles/ || true
+
+          MACOS_ARM64_SHA256=""
+          LINUX_X86_64_SHA256=""
+
+          if [ -f "bottles/gir2swift-${VERSION}.arm64_sequoia.bottle.tar.gz" ]; then
+            MACOS_ARM64_SHA256=$(sha256sum "bottles/gir2swift-${VERSION}.arm64_sequoia.bottle.tar.gz" | cut -d' ' -f1)
+          fi
+
+          if [ -f "bottles/gir2swift-${VERSION}.x86_64_linux.bottle.tar.gz" ]; then
+            LINUX_X86_64_SHA256=$(sha256sum "bottles/gir2swift-${VERSION}.x86_64_linux.bottle.tar.gz" | cut -d' ' -f1)
+          fi
+
+          git clone https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/rhx/homebrew-tap.git homebrew-tap
+          cd homebrew-tap
+          mkdir -p Formula
+
+          cat > Formula/gir2swift.rb <<EOF
+          class Gir2swift < Formula
+            desc "A simple GIR parser in Swift for creating Swift types for a .gir file"
+            homepage "https://github.com/rhx/gir2swift"
+            url "https://github.com/rhx/gir2swift/archive/refs/tags/${TAG}.tar.gz"
+            sha256 "${SOURCE_SHA256}"
+            license "LGPL-3.0-or-later"
+            env :std
+            head "https://github.com/rhx/gir2swift.git", branch: "main"
+
+          EOF
+
+          if [ -n "$MACOS_ARM64_SHA256" ] || [ -n "$LINUX_X86_64_SHA256" ]; then
+            cat >> Formula/gir2swift.rb <<EOF
+              bottle do
+                root_url "https://github.com/rhx/gir2swift/releases/download/${TAG}"
+          EOF
+            if [ -n "$MACOS_ARM64_SHA256" ]; then
+              echo "    sha256 cellar: :any_skip_relocation, arm64_sequoia: \"${MACOS_ARM64_SHA256}\"" >> Formula/gir2swift.rb
+            fi
+            if [ -n "$LINUX_X86_64_SHA256" ]; then
+              echo "    sha256 cellar: :any_skip_relocation, x86_64_linux: \"${LINUX_X86_64_SHA256}\"" >> Formula/gir2swift.rb
+            fi
+            cat >> Formula/gir2swift.rb <<EOF
+              end
+
+          EOF
+          fi
+
+          cat >> Formula/gir2swift.rb <<'EOF'
+            depends_on "gobject-introspection"
+            depends_on "libxml2"
+            depends_on "pkgconf" => :build
+
+            on_macos do
+              depends_on :xcode => ["26.0", :build]
+            end
+
+            on_linux do
+              original_path = ENV["HOMEBREW_PATH"] || ENV["PATH"]
+              swift_found = original_path.split(File::PATH_SEPARATOR).any? do |dir|
+                File.exist?(File.join(dir, "swift"))
+              end
+              depends_on "swift" => :build unless swift_found
+            end
+
+            def install
+              original_path = ENV["HOMEBREW_PATH"] || ENV["PATH"]
+              swift_dir = original_path.split(File::PATH_SEPARATOR).find do |dir|
+                File.exist?(File.join(dir, "swift"))
+              end
+
+              if swift_dir && swift_dir.include?("swiftly")
+                ENV["SWIFTLY_BIN_DIR"] = swift_dir
+                ENV["SWIFTLY_HOME_DIR"] = File.dirname(swift_dir)
+              end
+
+              system "swift", "build", "--disable-sandbox", "-c", "release"
+              bin.install ".build/release/gir2swift"
+            end
+
+            test do
+              system "#{bin}/gir2swift", "--help"
+            end
+          end
+          EOF
+
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          git checkout -b "update-gir2swift-${TAG}"
+          git add Formula/gir2swift.rb
+          git commit -m "Update gir2swift to ${TAG}" -m "Release includes pre-built bottles for macOS and Linux"
+          git push origin "update-gir2swift-${TAG}"
+
+      - name: Create PR
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_GITHUB_TOKEN }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          cd homebrew-tap
+          gh pr create \
+            --title "Update gir2swift to ${TAG}" \
+            --body "Automated update of gir2swift formula for release ${TAG}.
+
+          Includes pre-built bottles for:
+          - macOS ARM64 (Sequoia)
+          - Linux x86_64" \
+            --base main \
+            --head "update-gir2swift-${TAG}" \
+            --repo rhx/homebrew-tap
