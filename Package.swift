@@ -20,7 +20,7 @@ var packageDependencies: [Package.Dependency] = [
 #else
 var packageDependencies: [Package.Dependency] = [
     .package(url: "https://github.com/jpsim/Yams.git", from: "4.0.6"),
-    .package(url: "https://github.com/rhx/SwiftLibXML.git", branch: "main"),
+    .package(url: "https://github.com/rhx/SwiftLibXML.git", from: "3.0.1"),
     .package(url: "https://github.com/apple/swift-argument-parser", from: "1.1.1"),
 ]
 #endif
