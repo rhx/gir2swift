@@ -20,9 +20,8 @@ extension GIR {
         /// - Parameters:
         ///   - name: The name of the `Constant` to initialise
         ///   - cname: C identifier
-        ///   - type: The type of the enum
-        ///   - ctype: underlying C type
-        ///   - value: the value of the constant
+        ///   - type: The type of the constant
+        ///   - value: The value of the constant
         ///   - comment: Documentation text for the constant
         ///   - introspectable: Set to `true` if introspectable
         ///   - deprecated: Documentation on deprecation status if non-`nil`

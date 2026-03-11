@@ -53,9 +53,8 @@ public struct TypeReference: Hashable {
         return fullUnderlyingTypeName(asOptional: false)
     }
 
-    /// returns the full type including pointers and  taking into account `const`
-    /// - Parameters:
-    ///   - isOptional: return an optional if `true`, otherwise will return an optional if a callback only
+    /// Returns the full type including pointers and taking into account `const`
+    /// - Parameter asOptional: Return an optional if `true`, otherwise return an optional only if it is a callback type
     /// - Returns: Full type, including pointers and taking into account `const`
     @inlinable public func fullUnderlyingTypeName(asOptional: Bool? = nil) -> String {
         let swiftType = type.typeName.validSwift
@@ -89,9 +88,7 @@ public struct TypeReference: Hashable {
     }
 
     /// Embed the given type in a layer of pointers as appropriate
-    /// - Parameters:
-    ///   - name: The inner type to wrap
-    ///   - makeInnermostOptional: make the innermost type an optional if `true`
+    /// - Parameter name: The inner type to wrap
     /// - Returns: The type wrapped in pointers as appropriate
     public func embeddedType(named name: String) -> String {
         let k = constPointers.count - 1
@@ -117,7 +114,7 @@ public struct TypeReference: Hashable {
 
     /// Cast from one type reference to another
     /// - Parameters:
-    ///   - expression: The expression to cast
+    ///   - e: The expression to cast
     ///   - source: The source type reference to cast from
     /// - Returns: The expression cast to the receiver type
     @inlinable public func cast(expression e: String, from source: TypeReference) -> String {
@@ -153,8 +150,8 @@ public struct TypeReference: Hashable {
     /// Create a single-indirection pointer to a given target
     /// - Parameter target: The target type to reference
     /// - Parameter namespace: The name space to use, `nil` if top level
-    /// - Parameter isConst: Whether the target is `const`
-    /// - Parameter pointerIsConst:Whether the pointer itself is `const`
+    /// - Parameter const: Whether the target is `const`
+    /// - Parameter pointerIsConst: Whether the pointer itself is `const`
     /// - Returns: A type reference representing a pointer to the target
     public static func pointer(to target: GIRType, in namespace: String? = nil, isConst const: Bool = false, pointerIsConst: Bool = false) -> TypeReference {
         TypeReference(type: target, in: namespace, isConst: const, constPointers: [pointerIsConst])

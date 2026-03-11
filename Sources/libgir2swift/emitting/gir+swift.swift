@@ -261,8 +261,10 @@ public func typeAliasCode(for dataType: GIR.Datatype, prefix: String = "") -> St
 }
 
 /// Swift code representation of a type alias
-/// - Parameter prefix: The prefix to use for the public typealias
-/// - Returns: The Swift code representingg the type alias
+/// - Parameters:
+///   - prefix: The prefix to use for the public typealias
+///   - indent: The indentation string to apply to the generated code
+/// - Returns: The Swift code representing the type alias
 @inlinable public func namespacedAliasSwiftCode(prefixedWith prefix: String, indentation indent: String) -> (GIR.Datatype) -> String {
     { alias in namespacedAliasCode(for: alias, prefix: prefix, indentation: indent) }
 }
@@ -272,7 +274,7 @@ public func typeAliasCode(for dataType: GIR.Datatype, prefix: String = "") -> St
 ///   - dataType: The data type that represents a typealias
 ///   - prefix: A prefix to use for the public typealias
 ///   - indent: The indentation string to use
-/// - Returns: The Swift code representingg the type alias
+/// - Returns: The Swift code representing the type alias
 public func namespacedAliasCode(for dataType: GIR.Datatype, prefix: String, indentation indent: String) -> String {
     let alias = dataType.escapedName.swift
     let code = swiftCode(dataType, indent + "public typealias " + alias + " = " + prefix + alias, indentation: indent)

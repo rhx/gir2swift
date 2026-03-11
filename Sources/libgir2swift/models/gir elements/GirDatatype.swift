@@ -33,7 +33,6 @@ extension GIR {
         ///   - comment: Documentation text for the data type
         ///   - introspectable: Set to `true` if introspectable
         ///   - deprecated: Documentation on deprecation status if non-`nil`
-        ///   - version: The version this data type is first available in
         public init(name: String, type: TypeReference, comment: String, introspectable: Bool = false, deprecated: String? = nil) {
             typeRef = type
             super.init(name: name, comment: comment, introspectable: introspectable, deprecated: deprecated)

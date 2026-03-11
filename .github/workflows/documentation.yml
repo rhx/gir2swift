@@ -43,7 +43,6 @@ jobs:
           .build/release/docc-static generate \
             --package-path . \
             --output .build/documentation \
-            --hosting-base-path gir2swift \
             --verbose
 
       - name: Setup Pages

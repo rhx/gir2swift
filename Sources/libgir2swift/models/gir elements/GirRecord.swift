@@ -62,10 +62,11 @@ extension GIR {
         /// - Parameters:
         ///   - name: The name of the record to initialise
         ///   - cname: C identifier
-        ///   - type: C typedef name of the constant
-        ///   - ctype: underlying C type
-        ///   - cprefix: prefix used for C language free functions that implement methods for this record
+        ///   - type: The underlying GIR type reference
+        ///   - cprefix: Prefix used for C language free functions that implement methods for this record
+        ///   - correspondingCType: The corresponding C type name, if any
         ///   - typegetter: C type getter function
+        ///   - isGTypeStructForType: Name of the GType this struct is the class struct for, if any
         ///   - methods: Methods associated with this record
         ///   - functions: Functions associated with this record
         ///   - constructors: Constructors for this record
@@ -73,7 +74,7 @@ extension GIR {
         ///   - fields: Fields of this record
         ///   - signals: List of signals for this record
         ///   - interfaces: Interfaces implemented by this record
-        ///   - comment: Documentation text for the constant
+        ///   - comment: Documentation text for the record
         ///   - introspectable: Set to `true` if introspectable
         ///   - deprecated: Documentation on deprecation status if non-`nil`
         public init(name: String, cname: String, type: TypeReference, cprefix: String, correspondingCType: String? = nil, typegetter: String? = nil, isGTypeStructForType: String? = nil, methods: [Method] = [], functions: [Function] = [], constructors: [Method] = [], properties: [Property] = [], fields: [Field] = [], signals: [Signal] = [], interfaces: [String] = [], comment: String = "", introspectable: Bool = false, deprecated: String? = nil) {
