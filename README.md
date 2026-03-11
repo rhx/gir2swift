@@ -1,9 +1,20 @@
 # gir2swift
 A simple GIR parser in Swift for creating Swift types for a .gir file
 
-![macOS](https://github.com/rhx/gir2swift/actions/workflows/macOS.yml/badge.svg?branch=development)
-![Linux](https://github.com/rhx/gir2swift/actions/workflows/Linux.yml/badge.svg?branch=development)
-![Windows](https://github.com/rhx/gir2swift/actions/workflows/windows-ci.yml/badge.svg?branch=development)
+![macOS](https://github.com/rhx/gir2swift/actions/workflows/macOS.yml/badge.svg?branch=main)
+![Linux](https://github.com/rhx/gir2swift/actions/workflows/Linux.yml/badge.svg?branch=main)
+![Windows](https://github.com/rhx/gir2swift/actions/workflows/windows-ci.yml/badge.svg?branch=main)
+
+## Installation
+
+### Homebrew
+
+The easiest way to install `gir2swift` on macOS or Linux is via [Homebrew](https://brew.sh):
+
+```sh
+brew tap rhx/tap
+brew install gir2swift
+```
 
 ## Getting Started
 To start a project that uses Swift wrappers around low-level libraries that utilise gobject-introspection, you need to create some scripts that use `gir2swift` to convert the information within gobject-introspection XML (`.gir`) files into Swift.  Here is a brief overview of the basic steps:
@@ -14,11 +25,11 @@ To start a project that uses Swift wrappers around low-level libraries that util
 4. Create the necessary Module files (see [Module Files](#Module-Files) below)
 5. Add `gir2swift` as a plugin to your `Package.swift` file (see [Usage](#Usage) below)
 6. Build your project using `swift build`
-6. If the build phase fails (more likely than not), add code that patches the generated Swift source files (e.g. using `awk` or `sed` [Module Files](#Module-Files) -- see blelow) to correct the errors the compiler complains about
+7. If the build phase fails (more likely than not), add code that patches the generated Swift source files (e.g. using `awk` or `sed` — see [Module Files](#Module-Files) below) to correct the errors the compiler complains about
 
 ## What is new?
 
-Version 18 adds the `--overwrite` switch for forcing regeneration of generated files and introduces experimental Windows support.
+Version 18 adds the `--overwrite` switch for forcing regeneration of generated files, introduces incremental generation (skipping files that are newer than all inputs), and adds Windows support (validated in CI with Swift 6.2 and MSYS2).
 
 Version 17 adds support for generating documentation using [DocC](https://www.swift.org/documentation/docc/).
 
