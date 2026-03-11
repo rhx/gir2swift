@@ -75,6 +75,10 @@ public struct Gir2Swift: ParsableCommand {
     @Option(name: .short, help: "Add the given .swift file as the main (hand-crafted) Swift file for your library target.")
     var moduleBoilerPlateFile: String = ""
 
+    /// Force regeneration even when outputs are newer than inputs.
+    @Flag(name: .long, help: "Overwrite generated files even when they are newer than all inputs.")
+    var overwrite = false
+
     /// By default, the gir2swift searches for manifest in the work directory. As for now, the search can't be sidabled.
     @Option(name: .long, help: "Custom path to manifest.")
     var manifest: String = "gir2swift-manifest.yaml"
@@ -171,6 +175,31 @@ public struct Gir2Swift: ParsableCommand {
             }
         case false:
             for girFile in girFilesToGenerate {
+                let node = girFile.components(separatedBy: "/").last?.stringByRemoving(suffix: ".gir") ?? girFile
+                let configuredInputs = configuredGenerationInputs(
+                    node: node,
+                    girFile: girFile,
+                    prerequisiteGirFiles: Array(girsToPreload),
+                    manifestURL: manifestURL,
+                    moduleBoilerPlateFile: moduleBoilerPlateFile,
+                    targetDirectoryURL: targetDirectoryURL,
+                    additionalInputFiles: postProcess + (manifestPlan?.postProcess ?? [])
+                )
+                if let target {
+                    let expectedOutputs = expectedGeneratedOutputs(
+                        node: node,
+                        outputDirectory: target,
+                        useAlphaNames: generateAlphaFiles,
+                        hasNamespaceOutput: !(namespace.isEmpty && extensionNamespace.isEmpty),
+                        targetDirectoryURL: targetDirectoryURL
+                    )
+                    if !shouldGenerateOutputs(inputFiles: configuredInputs, outputFiles: expectedOutputs, overwrite: overwrite) {
+                        if verbose {
+                            print("Skipping \(node): generated Swift files are up to date.", to: &Streams.stdErr)
+                        }
+                        continue
+                    }
+                }
                 process_gir(file: girFile, for: targetDirectoryURL, boilerPlate: moduleBoilerPlate, to: target, docCHostingBasePath: docCHostingBasePath, split: singleFilePerClass, generateAll: allFilesGenerate, useAlphaNames: generateAlphaFiles, postProcess: postProcess + (manifestPlan?.postProcess ?? []), pkgConfig: pkgConfig)
             }
         }
@@ -182,4 +211,3 @@ public struct Gir2Swift: ParsableCommand {
         }
     }
 }
-

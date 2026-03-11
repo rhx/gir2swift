@@ -1,0 +1,72 @@
+name: Windows CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [development, main]
+  pull_request:
+    branches: [development, main]
+    paths:
+      - ".github/workflows/windows-ci.yml"
+      - "Package.swift"
+      - "Sources/**"
+      - "Tests/**"
+
+jobs:
+  build-windows:
+    name: Windows (Swift ${{ matrix.swift }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - swift: "6.2"
+            swift-tag: "swift-6.2-release"
+            swift-build: "6.2-RELEASE"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # SwiftLibXML uses unsafeFlags on Windows (SPM's pkg-config does not
+      # interoperate with MSYS2's pkgconf), so SPM refuses to fetch it as a
+      # remote dependency.  We clone it locally and reference it via path.
+      - name: Clone SwiftLibXML
+        shell: pwsh
+        run: git clone --branch development https://github.com/rhx/SwiftLibXML.git "$env:GITHUB_WORKSPACE\..\SwiftLibXML"
+
+      - name: Setup Swift
+        uses: compnerd/gha-setup-swift@main
+        with:
+          swift-version: ${{ matrix.swift-tag }}
+          swift-build: ${{ matrix.swift-build }}
+          cache: true
+
+      - name: Install MSYS2 libxml2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          release: true
+          install: >-
+            mingw-w64-x86_64-libxml2
+
+      # Use the MSYS2 shell so cygpath resolves the correct Windows paths
+      # regardless of where msys2/setup-msys2 installed MSYS2.
+      # Swift's lld-link requires an MSVC-compatible import library (xml2.lib);
+      # MSYS2 ships libxml2.dll.a (a GNU archive of COFF import objects) which
+      # lld can read directly, so copying it suffices.
+      - name: Set libxml2 environment variables and create xml2.lib
+        shell: msys2 {0}
+        run: |
+          echo "LIBXML_INCLUDE_PATH=$(cygpath -w /mingw64/include)" >> "$GITHUB_ENV"
+          echo "LIBXML_LIBRARY_PATH=$(cygpath -w /mingw64/lib)"    >> "$GITHUB_ENV"
+          cygpath -w /mingw64/bin >> "$GITHUB_PATH"
+          cp /mingw64/lib/libxml2.dll.a /mingw64/lib/xml2.lib
+
+      - name: Swift version
+        run: swift --version
+
+      - name: Build
+        run: swift build --build-tests
+
+      - name: Run tests
+        run: swift test

@@ -111,7 +111,7 @@ public final class GIR {
         //
         // set up name space prefix
         //
-        if let ns = xml.xpath("//gir:namespace", namespaces: namespaces, defaultPrefix: "gir")?.makeIterator().next() {
+        if let ns = xml.xpath("//gir:namespace", namespaces: namespaces, defaultPrefix: "gir")?.first {
             if let name = ns.attribute(named: "name") {
                 prefix = name
                 GIR.prefix = name

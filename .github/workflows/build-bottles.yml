@@ -1,0 +1,186 @@
+name: Build Bottles
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to build (for example 18.0.0)"
+        required: true
+  workflow_call:
+    inputs:
+      tag:
+        description: "Release tag to build"
+        required: false
+        type: string
+
+env:
+  MACOS_BREW: libxml2 gobject-introspection pkgconf
+  UBUNTU_APT: libxml2-dev gobject-introspection libgirepository1.0-dev pkg-config
+
+jobs:
+  build-windows:
+    name: Build Windows Binary
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # SwiftLibXML uses unsafeFlags on Windows (SPM's pkg-config does not
+      # interoperate with MSYS2's pkgconf), so SPM refuses to fetch it as a
+      # remote dependency.  We clone it locally and reference it via path.
+      - name: Clone SwiftLibXML
+        shell: pwsh
+        run: git clone --branch development https://github.com/rhx/SwiftLibXML.git "$env:GITHUB_WORKSPACE\..\SwiftLibXML"
+
+      - name: Setup Swift
+        uses: compnerd/gha-setup-swift@main
+        with:
+          swift-version: "swift-6.2-release"
+          swift-build: "6.2-RELEASE"
+          cache: true
+
+      - name: Install MSYS2 libxml2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          release: true
+          install: >-
+            mingw-w64-x86_64-libxml2
+
+      # Use the MSYS2 shell so cygpath resolves the correct Windows paths
+      # regardless of where msys2/setup-msys2 installed MSYS2.
+      # Swift's lld-link requires an MSVC-compatible import library (xml2.lib);
+      # MSYS2 ships libxml2.dll.a (a GNU archive of COFF import objects) which
+      # lld can read directly, so copying it suffices.
+      - name: Set libxml2 environment variables and create xml2.lib
+        shell: msys2 {0}
+        run: |
+          echo "LIBXML_INCLUDE_PATH=$(cygpath -w /mingw64/include)" >> "$GITHUB_ENV"
+          echo "LIBXML_LIBRARY_PATH=$(cygpath -w /mingw64/lib)"    >> "$GITHUB_ENV"
+          cygpath -w /mingw64/bin >> "$GITHUB_PATH"
+          cp /mingw64/lib/libxml2.dll.a /mingw64/lib/xml2.lib
+
+      - name: Swift version
+        run: swift --version
+
+      - name: Build release
+        run: swift build -c release
+
+      - name: Determine architecture
+        shell: bash
+        run: |
+          ARCH=$(uname -m)
+          echo "ARCH=$ARCH" >> "$GITHUB_ENV"
+
+      - name: Create archive
+        shell: pwsh
+        run: |
+          $Tag = "${{ inputs.tag || github.event.inputs.tag || github.ref_name }}"
+          New-Item -ItemType Directory -Force -Path bottle | Out-Null
+          Copy-Item .build/release/gir2swift.exe bottle/
+          Compress-Archive -Path bottle/* -DestinationPath "gir2swift-$Tag-windows-${{ env.ARCH }}.zip"
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag || github.event.inputs.tag || github.ref_name }}
+          files: gir2swift-${{ inputs.tag || github.event.inputs.tag || github.ref_name }}-windows-${{ env.ARCH }}.zip
+
+  build-macos:
+    name: Build macOS Bottle
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "26.1.1"
+
+      - name: Install macOS dependencies
+        run: |
+          brew install $MACOS_BREW
+          mv /Library/Developer/CommandLineTools /Library/Developer/CommandLineTools.orig || sudo mv /Library/Developer/CommandLineTools /Library/Developer/CommandLineTools.orig
+
+      - name: Swift version
+        run: swift --version
+
+      - name: Build release
+        run: swift build -c release
+
+      - name: Determine version and platform
+        run: |
+          TAG="${{ inputs.tag || github.event.inputs.tag || github.ref_name }}"
+          VERSION="${TAG#v}"
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "arm64" ]; then
+            PLATFORM="arm64_sequoia"
+          else
+            PLATFORM="sequoia"
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "PLATFORM=$PLATFORM" >> "$GITHUB_ENV"
+
+      - name: Create Homebrew bottle
+        run: |
+          mkdir -p gir2swift/${{ env.VERSION }}/bin
+          cp .build/release/gir2swift gir2swift/${{ env.VERSION }}/bin/
+          tar czf gir2swift-${{ env.VERSION }}.${{ env.PLATFORM }}.bottle.tar.gz gir2swift
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          files: gir2swift-${{ env.VERSION }}.${{ env.PLATFORM }}.bottle.tar.gz
+
+  build-linux:
+    name: Build Linux Bottle
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.2"
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y $UBUNTU_APT
+
+      - name: Swift version
+        run: swift --version
+
+      - name: Build release
+        run: swift build -c release
+
+      - name: Determine version and platform
+        run: |
+          TAG="${{ inputs.tag || github.event.inputs.tag || github.ref_name }}"
+          VERSION="${TAG#v}"
+          ARCH=$(uname -m)
+          PLATFORM="${ARCH}_linux"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "PLATFORM=$PLATFORM" >> "$GITHUB_ENV"
+
+      - name: Create Homebrew bottle
+        run: |
+          mkdir -p gir2swift/${{ env.VERSION }}/bin
+          cp .build/release/gir2swift gir2swift/${{ env.VERSION }}/bin/
+          tar czf gir2swift-${{ env.VERSION }}.${{ env.PLATFORM }}.bottle.tar.gz gir2swift
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          files: gir2swift-${{ env.VERSION }}.${{ env.PLATFORM }}.bottle.tar.gz

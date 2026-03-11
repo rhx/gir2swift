@@ -1,8 +1,4 @@
-#if os(Linux)
-    import Glibc
-#else
-    import Darwin
-#endif
+import Foundation
 
 @usableFromInline
 enum Streams {
@@ -15,8 +11,7 @@ enum Streams {
     struct StandardError: TextOutputStream {
         @usableFromInline
         mutating func write(_ string: String) {
-            fputs(string, stderr)
+            FileHandle.standardError.write(Data(string.utf8))
         }
     }
 }
-
