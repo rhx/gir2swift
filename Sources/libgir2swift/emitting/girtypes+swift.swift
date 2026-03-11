@@ -418,15 +418,15 @@ public extension GIR.Argument {
     }
 
     /// Append a question mark if the receiver is nullable
-    /// - Parameter templateName: The string to optionally turn into an optional
+    /// - Parameter typeName: The string to optionally turn into an optional
     /// - Returns: The original string, with or without a `?` appended
     @inlinable func optionalIfNullable(_ typeName: String) -> String {
         let typeName = isNullable ? (typeName + "?") : typeName
         return typeName
     }
 
-    /// Append a question mark if the receiver is nullable or optionial
-    /// - Parameter templateName: The string to optionally turn into an optional
+    /// Append a question mark if the receiver is nullable or optional
+    /// - Parameter typeName: The string to optionally turn into an optional
     /// - Returns: The original string, with or without a `?` appended
     @inlinable func optionalIfNullableOrOptional(_ typeName: String) -> String {
         let typeName = isNullable || isOptional ? (typeName + "?") : typeName

@@ -41,6 +41,8 @@ extension GIR {
         ///   - comment: Documentation text for the data type
         ///   - introspectable: Set to `true` if introspectable
         ///   - deprecated: Documentation on deprecation status if non-`nil`
+        ///   - isPrivate: Set to `true` if this is a private type
+        ///   - isReadable: Set to `true` if this is a readable type
         ///   - isWritable: Set to `true` if this is a writable type
         ///   - contains: Array of C types contained within this type
         ///   - tupleSize: Size of the given tuple if non-`nil`
@@ -86,8 +88,10 @@ extension GIR {
         ///   - node: `XMLElement` whose descendants to construct this C type from
         ///   - index: Index within the siblings of the `node`
         ///   - nameAttr: Key for the attribute to extract the `name` property from
-        ///   - typeAttr: Key for the attribute to extract the `type` property from
-        ///   - scopeAttr: Key for the attribute to extract the  scope string from
+        ///   - privateAttr: Key for the attribute to extract the privacy status from
+        ///   - readableAttr: Key for the attribute to extract the readability status from
+        ///   - writableAttr: Key for the attribute to extract the writability status from
+        ///   - scopeAttr: Key for the attribute to extract the scope string from
         public init(fromChildrenOf node: XMLElement, at index: Int, nameAttr: String = "name", privateAttr: String = "private", readableAttr: String = "readable", writableAttr: String = "writable", scopeAttr: String = "scope") {
             cname = node.attribute(named: "identifier") ?? ""
 

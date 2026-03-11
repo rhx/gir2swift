@@ -122,6 +122,7 @@ public class GIRType: Hashable {
     ///   - ctype: The name of the type in C
     ///   - superType: The parent or alias type (or `nil` if fundamental)
     ///   - isAlias: An indicator whether the type is an alias of its supertype that does not need casting
+    ///   - conversions: Conversion dictionary to use
     @inlinable
     public convenience init(name: String, swiftName: String? = nil, typeName: String? = nil, ctype: String, superType: TypeReference? = nil, isAlias: Bool = false, conversions: [GIRType : [TypeConversion]] = [:]) {
         precondition(isAlias == false || superType != nil)
@@ -140,12 +141,13 @@ public class GIRType: Hashable {
     /// Convenience initialiser for a top-level GIR type
     /// - Note: this will record a type without a namespace
     /// - Parameters:
-    ///   - knownName: The uqualified name of the type known at top level in the default `Swift` namespace.
+    ///   - knownName: The unqualified name of the type known at top level in the default `Swift` namespace.
     ///   - swiftName: The name of the type in Swift (empty or `nil` if same as `name`)
     ///   - typeName: The name of the underlying type (empty or `nil` if same as `swiftName`)
     ///   - ctype: The name of the type in C
     ///   - superType: The parent or alias type (or `nil` if fundamental)
     ///   - isAlias: An indicator whether the type is an alias of its supertype that does not need casting
+    ///   - conversions: Conversion dictionary to use
     @inlinable
     public convenience init(_ knownName: String, swiftName: String? = nil, typeName: String? = nil, ctype: String, superType: TypeReference? = nil, isAlias: Bool = false, conversions: [GIRType : [TypeConversion]] = [:]) {
         precondition(isAlias == false || superType != nil)
@@ -243,9 +245,9 @@ public class GIRType: Hashable {
         return conversion[i].castToTarget(from: expression)
     }
 
-    /// Return  an explicitly known cast to convert the given expression to the target type
+    /// Return an explicitly known cast to convert the given expression to the target type
     /// - Parameters:
-    ///   - expression: The expression to cast
+    ///   - e: The expression to cast
     ///   - source: The source type to cast from
     ///   - pointerLevel: The number of indirection levels (pointers)
     ///   - const: An indicator whether the cast is to a `const` value
@@ -306,10 +308,10 @@ public class GIRType: Hashable {
 
     /// Return the default cast to convert the given expression from the source type
     /// - Parameters:
-    ///   - expression: The expression to cast
+    ///   - e: The expression to cast
     ///   - source: The source type to cast from
-    ///   - pointerLevel: The number of indirection levels (pointers)
-    ///   - const: An indicator whether the cast is to a `const` value
+    ///   - indirection: The number of indirection levels (pointers)
+    ///   - isConst: An indicator whether the cast is to a `const` value
     ///   - isConstSource: An indicator whether the source expression is a `const` value
     /// - Returns: The cast expression string
     @inlinable
@@ -323,8 +325,7 @@ public class GIRType: Hashable {
 
     /// Return the default cast to convert the given expression to the receiver
     /// - Parameters:
-    ///   - expression: The expression to cast
-    ///   - source: The source type to cast from
+    ///   - e: The expression to cast
     ///   - pointerLevel: The number of indirection levels (pointers)
     ///   - const: An indicator whether the cast is to a `const` value
     ///   - isConstSource: An indicator whether the source expression is a `const` value
@@ -382,8 +383,7 @@ public class GIRType: Hashable {
 public final class GIRStringType: GIRType {
     /// Return the default cast to convert the given expression to a string
     /// - Parameters:
-    ///   - expression: The expression to cast
-    ///   - source: The source type to cast from
+    ///   - e: The expression to cast
     ///   - pointerLevel: The number of indirection levels (pointers)
     ///   - const: An indicator whether the cast is to a `const` value
     ///   - isConstSource: An indicator whether the source expression is a `const` value
@@ -400,8 +400,7 @@ public final class GIRStringType: GIRType {
 public final class GIRRawPointerType: GIRType {
     /// Return the default cast to convert the given expression to an opaque pointer
     /// - Parameters:
-    ///   - expression: The expression to cast
-    ///   - source: The source type to cast from
+    ///   - e: The expression to cast
     ///   - pointerLevel: The number of indirection levels (pointers)
     ///   - const: An indicator whether the cast is to a `const` value
     ///   - isConstSource: An indicator whether the source expression is a `const` value
@@ -419,8 +418,7 @@ public final class GIRRawPointerType: GIRType {
 public final class GIRRecordType: GIRType {
     /// Return the default cast to convert the given expression to an opaque pointer
     /// - Parameters:
-    ///   - expression: The expression to cast
-    ///   - source: The source type to cast from
+    ///   - e: The expression to cast
     ///   - pointerLevel: The number of indirection levels (pointers)
     ///   - const: An indicator whether the cast is to a `const` value
     ///   - isConstSource: An indicator whether the source expression is a `const` value
@@ -463,6 +461,7 @@ public final class GIRGenericType: GIRType {
     /// Designated initialiser for a generic GIR type
     /// - Parameters:
     ///   - name: The name of the type without a namespace
+    ///   - containedType: The type contained within this generic type
     ///   - namespace: The namespace (empty if top-level C)
     ///   - swiftName: The name of the type in Swift (empty or `nil` if same as `name`)
     ///   - typeName: The name of the underlying type (empty or `nil` if same as `swiftName`)
@@ -478,8 +477,7 @@ public final class GIRGenericType: GIRType {
 
     /// Return the default cast to convert the given expression to an opaque pointer
     /// - Parameters:
-    ///   - expression: The expression to cast
-    ///   - source: The source type to cast from
+    ///   - e: The expression to cast
     ///   - pointerLevel: The number of indirection levels (pointers)
     ///   - const: An indicator whether the cast is to a `const` value
     ///   - isConstSource: Indicator whether the source is a constant pointer.
@@ -496,8 +494,7 @@ public final class GIRGenericType: GIRType {
 public final class GIROpaquePointerType: GIRType {
     /// Return the default cast to convert the given expression to an opaque pointer
     /// - Parameters:
-    ///   - expression: The expression to cast
-    ///   - source: The source type to cast from
+    ///   - e: The expression to cast
     ///   - pointerLevel: The number of indirection levels (pointers)
     ///   - const: An indicator whether the cast is to a `const` value
     ///   - isConstSource: Indicator whether the source is a constant pointer.
