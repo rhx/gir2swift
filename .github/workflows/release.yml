@@ -68,7 +68,7 @@ jobs:
           lines.append('  homepage "https://github.com/rhx/gir2swift"')
           lines.append(f'  url "https://github.com/rhx/gir2swift/archive/refs/tags/{tag}.tar.gz"')
           lines.append(f'  sha256 "{source_sha}"')
-          lines.append('  license "LGPL-3.0-or-later"')
+          lines.append('  license "BSD-2-Clause"')
           lines.append('  env :std')
           lines.append('  head "https://github.com/rhx/gir2swift.git", branch: "main"')
           lines.append('')
